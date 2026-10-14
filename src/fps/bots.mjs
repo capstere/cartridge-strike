@@ -2,6 +2,7 @@
 // bundled. Collision and paths come only from the accepted floor adapter.
 import { MemorySystem, SeekBehavior, State, StateMachine, Vector3, Vehicle } from '../../vendor/yuka/yuka.module.js';
 import { WEAPONS } from './config.mjs';
+import { distanceSegment } from './physics.mjs';
 
 const distance = (a, b) => Math.hypot(a.x - b.x, a.z - b.z);
 const eye = a => ({ x: a.x, y: a.y + a.height - .12, z: a.z });
@@ -27,6 +28,9 @@ export class BotController {
     this.target = null; this.records = []; this.heardSerial = 0; this.nextGrenade = game.state.time + 5;
     this.stuckTime = 0; this.replans = 0; this.lastPosition = position(actor); this.lastProgress = game.state.time; this.lastReplan = game.state.time;
     this.command = {}; this.distanceTravelled = 0;
+    this.routePlan = null; this.routeStarted = false; this.lastContactReport = -Infinity;
+    actor.aiRole = actor.team === 'analysts' ? ['site','south guard','north guard','hostage guard','PQC support'][actor.index] : ['bomb','rescue','rescue flank','support','flank'][actor.index];
+    actor.aiLane = null;
   }
   shop() {
     const a = this.actor, game = this.game;
@@ -58,6 +62,14 @@ export class BotController {
           record.timeBecameVisible = now;
         } else record.focusTime = Math.min(this.profile.settleTime, (record.focusTime ?? 0) + now - record.lastSeenAt);
         record.lastSeenAt = now;
+        if (now - this.lastContactReport > 4) {
+          // Team reports only positions actually seen; stale contacts decay. This
+          // shared memory never reads enemy positions while choosing a route.
+          const contacts = game.tacticalContacts ??= [];
+          contacts.push({ team: actor.team, x: enemy.x, z: enemy.z, at: now });
+          if (contacts.length > 48) contacts.shift();
+          this.lastContactReport = now;
+        }
         record.timeLastSensed = now; record.lastSensedPosition.set(enemy.x, enemy.y + enemy.height * .6, enemy.z);
       }
       if (record.visible && !visible && this.burstTargetId === enemy.id) { this.burstRemaining = 0; this.burstUntil = 0; this.nextBurstAt = Math.max(this.nextBurstAt, now + .15); }
@@ -92,7 +104,8 @@ export class BotController {
       this.perceive();
       // Defusing and planting keep priority once in progress; fighting cannot
       // repeatedly reset the last second of a valid objective interaction.
-      const nextMode = actor.action ? 'objective' : this.target ? 'combat' : this.investigation && !this.urgentObjective() ? 'investigate' : 'objective';
+      const readyToPlant = game.bomb.carrierId === actor.id && game.interaction(actor)?.type === 'plant';
+      const nextMode = actor.action || readyToPlant ? 'objective' : this.target ? 'combat' : this.investigation && !this.urgentObjective() ? 'investigate' : 'objective';
       if (nextMode !== this.mode) { this.mode = nextMode; this.machine.changeTo(nextMode); }
       this.command = {}; this.aimGoal = null; this.machine.update();
     }
@@ -172,7 +185,10 @@ export class BotController {
         }
         this.setGoal(this.guardPoint(b, actor.index)); return;
       }
-      const guard = actor.index < 2 ? anchors.bomb : anchors.hostages[(actor.index - 2) % anchors.hostages.length];
+      const positions = game.world.tactical?.guardPoints;
+      // Keep three bot teammates around the two site entrances and PQC; the
+      // human is no longer left alone while three defenders all chase I12.
+      const guard = positions ? [anchors.bomb, positions.south, positions.north, anchors.hostages[0], positions.pqc][actor.index] : actor.index < 2 ? anchors.bomb : anchors.hostages[(actor.index - 2) % anchors.hostages.length];
       this.setGoal(this.guardPoint(guard, actor.index));
       if (distance(actor, this.goal) < .35) {
         this.setGoal(null); this.command.yaw = actor.yaw + .55;
@@ -252,6 +268,11 @@ export class BotController {
     if (equipped.slot === 'grenade') { this.aimGoal.pitch = .08; this.setGoal(null); return; }
     if (equipped.slot === 'knife' && d > 1.3 || d > 22) this.setGoal(point);
     else this.setGoal(null);
+    // The objective carrier/flanker can cross a distant firing angle toward its
+    // assigned entrance instead of every bot stopping at the first visible
+    // doorway. Ordinary collision, movement inaccuracy and damage still apply.
+    const flankGoal = this.routePlan?.gates[0] ?? (game.bomb.carrierId === actor.id && distance(actor,game.world.anchors.bomb)<4 ? game.world.anchors.bomb : null);
+    if (actor.team === 'counterAnalysts' && [0,4].includes(actor.index) && flankGoal && actor.hp > 35 && d > 5) this.setGoal(flankGoal);
     if (now > this.nextGrenade && d > 4 && d < 14 && now >= target.reactionAt && target.focusTime > .7) {
       const grenade = actor.inventory.he ? 'he' : actor.inventory.flash ? 'flash' : actor.inventory.smoke ? 'smoke' : null;
       if (grenade) {
@@ -260,10 +281,40 @@ export class BotController {
       }
     }
   }
+  chooseRoute() {
+    const { game, actor } = this, tactical = game.world.tactical;
+    if (!tactical || this.routeStarted || this.mode !== 'objective' || actor.team !== 'counterAnalysts' || actor.x < -10 || !this.goal || this.goal.x > -15 || game.bomb.status === 'planted' || game.hostages.some(h => h.escortId === actor.id)) return;
+    const room = game.world.roomAt(this.goal.x, this.goal.z), lab = ['I01','I02'].includes(room?.id);
+    const preferred = actor.index === 4 || actor.index === 2 || actor.index === 0 && (game.state.round + game.seed) % 2 === 0 ? 'flank' : 'direct';
+    const contacts = (game.tacticalContacts ?? []).filter(c => c.team === actor.team && game.state.time >= c.at && game.state.time - c.at < 150);
+    const candidates = tactical.lanes.map(lane => {
+      const plan = tactical.candidate(lane.id, actor, this.goal, { lab });
+      if (!plan) return null;
+      const assigned = game.actors.filter(a => a !== actor && a.alive && a.team === actor.team && a.bot?.routePlan?.laneId === lane.id).length;
+      const congestion = game.actors.filter(a => a !== actor && a.alive && a.team === actor.team && distance(a, plan.gates[0]) < 4).length;
+      const risk = contacts.reduce((sum,c) => sum + (plan.path.some((p,i) => distanceSegment(c.x,c.z,[i?plan.path[i-1].x:actor.x,i?plan.path[i-1].z:actor.z],[p.x,p.z]) < 3) ? 1 - (game.state.time-c.at)/150 : 0),0);
+      return { ...plan, score: plan.length * .035 + assigned * 2.5 + congestion + Math.min(8,risk*1.5) + (lane.id === preferred ? -6 : 0) + game.random() * .4 };
+    }).filter(Boolean).sort((a,b)=>a.score-b.score);
+    if (!candidates.length) return;
+    const chosen = candidates[0]; this.routeStarted = true;
+    this.routePlan = { laneId: chosen.laneId, gates: chosen.gates.map(p=>({...p})), lab };
+    actor.aiLane = chosen.laneId;
+    game.emit('route', actor, { lane: chosen.laneId, role: actor.aiRole, plannedLength: chosen.length });
+    this.nextPath = 0;
+  }
   follow(dt, input) {
     const { game, actor } = this;
+    this.chooseRoute();
+    // Gates survive short combat interruptions, but never pull an escort back
+    // toward the lab or prevent an urgent planted-bomb objective.
+    const outbound = this.mode === 'objective' && this.goal?.x < -15 && game.bomb.status !== 'planted' && !game.hostages.some(h => h.escortId === actor.id);
+    if (outbound && this.routePlan) {
+      while (this.routePlan.gates.length && distance(actor,this.routePlan.gates[0]) < .22) { this.routePlan.gates.shift(); this.nextPath = 0; }
+    }
+    const destination = outbound && this.routePlan?.gates.length ? this.routePlan.gates[0] : this.goal;
+    if (this.routePlan && (game.bomb.status === 'planted' || game.hostages.some(h => h.escortId === actor.id) || this.mode === 'objective' && this.goal?.x > -15)) this.routePlan.gates = [];
     if (game.state.time >= this.nextPath) {
-      this.path = game.world.findPath(actor, this.goal); this.nextPath = game.state.time + 1.1;
+      this.path = game.world.findPath(actor, destination); this.nextPath = game.state.time + 1.1;
     }
     while (this.path.length && distance(actor, this.path[0]) < .055) this.path.shift();
     const waypoint = this.path[0]; if (!waypoint) return;

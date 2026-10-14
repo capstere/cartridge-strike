@@ -1,9 +1,11 @@
 import * as THREE from '../../vendor/three/three.module.js';
 import { GLTFLoader } from '../../vendor/three/addons/loaders/GLTFLoader.js';
 import { mergeGeometries } from '../../vendor/three/addons/utils/BufferGeometryUtils.js';
-import { makeActor,makeWeapon,cartridge,animateActor,animateWeapon,animateCorpse } from './models.mjs';
+import { makeActor,makeWeapon,cartridge,animateActor,animateWeapon,animateCorpse,disposeWeaponResources } from './models.mjs';
 import { createMaterialRegistry,applyMetreUV } from './materials.mjs';
 import { buildDecor } from './decor.mjs';
+import { buildCartridgeProps } from './cartridge-props.mjs';
+import { disposeCartridgeResources } from './cartridge-v11.mjs';
 import { CombatEffects } from './effects.mjs';
 const boxGeo=new THREE.BoxGeometry(1,1,1),sphereGeo=new THREE.SphereGeometry(1,12,8),smokeGeo=new THREE.PlaneGeometry(2,2);
 // Inherited RGB arrays were authored for the old direct-output WebGL palette.
@@ -14,7 +16,7 @@ function surfaceGeometry(p,y){const vs=p.map(q=>new THREE.Vector2(...q)),g=new T
 function contactTexture(){const c=document.createElement('canvas');c.width=c.height=64;const ctx=c.getContext('2d'),g=ctx.createRadialGradient(32,32,4,32,32,32);g.addColorStop(0,'rgba(9,15,20,.42)');g.addColorStop(.55,'rgba(9,15,20,.22)');g.addColorStop(1,'rgba(9,15,20,0)');ctx.fillStyle=g;ctx.fillRect(0,0,64,64);return new THREE.CanvasTexture(c);}
 export class Renderer{
  constructor(canvas,world,settings){
-  this.world=world;this.settings=settings;this.renderer=new THREE.WebGLRenderer({canvas,antialias:true,powerPreference:'high-performance'});this.renderer.info.autoReset=false;this.renderer.setPixelRatio(Math.min(devicePixelRatio,1.5));this.renderer.outputColorSpace=THREE.SRGBColorSpace;this.renderer.toneMapping=THREE.ACESFilmicToneMapping;this.renderer.toneMappingExposure=1.04;this.renderer.shadowMap.enabled=settings.graphics!=='low';this.renderer.shadowMap.type=THREE.PCFSoftShadowMap;
+  this.world=world;this.settings=settings;this.renderer=new THREE.WebGLRenderer({canvas,antialias:true,powerPreference:'high-performance'});this.renderer.info.autoReset=false;this.quality=settings.graphics;this.renderer.setPixelRatio(Math.min(devicePixelRatio,settings.graphics==='low'?.85:1.5));this.renderer.outputColorSpace=THREE.SRGBColorSpace;this.renderer.toneMapping=THREE.ACESFilmicToneMapping;this.renderer.toneMappingExposure=1.04;this.renderer.shadowMap.enabled=settings.graphics!=='low';this.renderer.shadowMap.type=THREE.PCFSoftShadowMap;this.renderer.shadowMap.autoUpdate=false;this.shadowAt=-Infinity;
   this.scene=new THREE.Scene();this.scene.background=new THREE.Color(0x28353d);this.scene.add(new THREE.HemisphereLight(0xd6e5ee,0x899298,1.35));this.camera=new THREE.PerspectiveCamera(76,1,.035,180);this.camera.rotation.order='YXZ';
   this.viewScene=new THREE.Scene();this.viewScene.add(new THREE.HemisphereLight(0xe2eff7,0x6c665b,1.45));const gunLight=new THREE.DirectionalLight(0xffe7c8,2.1);gunLight.position.set(-1,2,1);this.viewScene.add(gunLight);this.viewCamera=new THREE.PerspectiveCamera(60,1,.01,5);
   this.shadowOnlyMaterial=new THREE.MeshBasicMaterial({colorWrite:false,depthWrite:false});this.shadowDepthMaterial=new THREE.MeshDepthMaterial({depthPacking:THREE.RGBADepthPacking,side:THREE.DoubleSide});this.actorShadowGeometry=new THREE.CapsuleGeometry(.19,1.3,4,8);this.actorShadows=new Map();this.smokeMap=this.cloudTexture();this.registry=createMaterialRegistry(this.renderer,settings);this.makeEnvironment();this.lights=[];for(let i=0;i<2;i++){const light=new THREE.SpotLight(i?0xddeaf1:0xffedcd,32,11,1.02,.65,1.4);light.castShadow=true;light.shadow.mapSize.set(1024,1024);light.shadow.bias=-.0006;light.shadow.normalBias=.025;light.shadow.camera.near=.08;this.scene.add(light,light.target);this.lights.push(light);}this.lightAt=-1;
@@ -36,9 +38,42 @@ export class Renderer{
   for(const l of desc.labels)label(this.scene,l.text.replace(' · PASSERKORT',' · ÖPPEN'),l.x,l.y,l.z,l.width,l.height,{fg:l.color,bg:l.accent,yaw:l.yaw});
   for(const[p,c,txt]of[[this.world.anchors.bomb,0xe5a04e,'GX LAB 5 · PLANTERA'],[this.world.anchors.rescue,0x76c8ae,'D06 · RÄDDNINGSZON']]){const ring=new THREE.Mesh(new THREE.RingGeometry(p.radius-.04,p.radius,64),new THREE.MeshBasicMaterial({color:c,side:THREE.DoubleSide,transparent:true,opacity:.6}));ring.rotation.x=-Math.PI/2;ring.position.set(p.x,.018,p.z);this.scene.add(ring);const sign=label(this.scene,txt,p.x,.02,p.z,p.radius*1.6,.26,{fg:'#f1e7d2',bg:'#384a4b'});sign.rotation.x=-Math.PI/2;}
   const shadows=[];for(const b of desc.boxes.filter(b=>b.asset||b.furnishingId&&b.h>.5)){if(b.y-b.h/2>.15)continue;const g=new THREE.PlaneGeometry(Math.min(b.w+.24,2.8),Math.min(b.d+.24,2.8));g.rotateX(-Math.PI/2);g.translate(b.x,.012,b.z);shadows.push(g);}if(shadows.length){const mesh=new THREE.Mesh(mergeGeometries(shadows),this.contactMaterial);this.scene.add(mesh);shadows.forEach(g=>g.dispose());}
-  this.fixtures=desc.boxes.filter(b=>b.material==='emissive'&&b.y>2.3).map(b=>({x:b.x,y:2.66,z:b.z}));if(!this.fixtures.length)this.fixtures=this.world.navigation.nodes.filter((n,i)=>i%18===0).map(n=>({...n,y:2.66}));this.decor=buildDecor(this.world,this.registry);this.scene.add(this.decor);await this.registry.ready;
+  this.fixtures=desc.boxes.filter(b=>b.material==='emissive'&&b.y>2.3).map(b=>({x:b.x,y:2.66,z:b.z}));if(!this.fixtures.length)this.fixtures=this.world.navigation.nodes.filter((n,i)=>i%18===0).map(n=>({...n,y:2.66}));this.decor=buildDecor(this.world,this.registry);this.scene.add(this.decor);this.cartridgeProps=buildCartridgeProps(this.world);this.scene.add(this.cartridgeProps);await this.registry.ready;await this.warmPrograms();
  }
- updateLights(p,t){this.renderer.shadowMap.enabled=this.settings.graphics!=='low';if(t-this.lightAt<.3)return;this.lightAt=t;const nearest=this.fixtures.filter(f=>Math.hypot(f.x-p.x,f.z-p.z)<12&&this.world.segmentClear(f,{x:p.x,y:1.4,z:p.z},{vision:false})).sort((a,b)=>Math.hypot(a.x-p.x,a.z-p.z)-Math.hypot(b.x-p.x,b.z-p.z));this.lights.forEach((l,i)=>{const f=nearest[i];l.visible=!!f;if(f){l.position.set(f.x,f.y,f.z);l.target.position.set(f.x,0,f.z);}});}
+ smokeMaterial(){return new THREE.MeshLambertMaterial({map:this.smokeMap,color:0xa5afa9,transparent:true,opacity:.85,depthWrite:false,side:THREE.DoubleSide,forceSinglePass:true});}
+ async warmPrograms(){
+  // Compile the real room/material variants while Start still shows loading.
+  // Corridors can have zero, one or two visible lamps. Otherwise crossing a
+  // doorway can synchronously compile dozens of programs during combat.
+  const started=performance.now(),visible=this.lights.map(l=>l.visible),shadows=this.renderer.shadowMap.enabled,textures=new Set([this.smokeMap]);
+  this.scene.traverse(o=>{for(const m of [].concat(o.material||[]))for(const v of Object.values(m))if(v?.isTexture&&!v.isRenderTargetTexture)textures.add(v);});
+  for(const texture of textures)this.renderer.initTexture(texture);
+  this.smokeWarmMaterial=this.smokeMaterial();
+  const smoke=new THREE.InstancedMesh(smokeGeo,this.smokeWarmMaterial,1);
+  try{
+   for(const shadowed of [false,true])for(let count=0;count<=2;count++){
+    this.renderer.shadowMap.enabled=shadowed;this.lights.forEach((light,i)=>{light.visible=i<count;});
+    await this.renderer.compileAsync(this.scene,this.camera);
+    await this.renderer.compileAsync(smoke,this.camera,this.scene);
+   }
+  }finally{this.lights.forEach((light,i)=>{light.visible=visible[i];});this.renderer.shadowMap.enabled=shadows;smoke.dispose();}
+  // Keep the warm-up material alive: disposing it releases its shader refs.
+  this.warmup={milliseconds:performance.now()-started,programs:this.renderer.info.programs.length,textures:textures.size};
+ }
+ updateLights(p,t){
+  const shadows=this.settings.graphics!=='low';
+  if(this.quality!==this.settings.graphics){this.quality=this.settings.graphics;this.renderer.setPixelRatio(Math.min(devicePixelRatio,shadows?1.5:.85));this.resize();this.shadowAt=-Infinity;this.lightAt=-1;}
+  this.renderer.shadowMap.enabled=shadows;
+  // Animated casters update at 30 Hz; contact shadows and all gameplay/render
+  // motion stay per-frame. Do not redraw two static room maps at 60+ Hz.
+  this.renderer.shadowMap.needsUpdate=shadows&&t-this.shadowAt>=1/30-1e-8;
+  if(this.renderer.shadowMap.needsUpdate)this.shadowAt=t;
+  if(t-this.lightAt<.3)return;this.lightAt=t;
+  const nearest=this.fixtures.filter(f=>Math.hypot(f.x-p.x,f.z-p.z)<12&&this.world.segmentClear(f,{x:p.x,y:1.4,z:p.z},{vision:false})).sort((a,b)=>Math.hypot(a.x-p.x,a.z-p.z)-Math.hypot(b.x-p.x,b.z-p.z));
+  let changed=false;
+  this.lights.forEach((l,i)=>{const f=nearest[i];if(l.visible!==!!f||f&&(l.position.x!==f.x||l.position.z!==f.z))changed=true;l.visible=!!f;if(f){l.position.set(f.x,f.y,f.z);l.target.position.set(f.x,0,f.z);}});
+  if(changed&&shadows){this.renderer.shadowMap.needsUpdate=true;this.shadowAt=t;}
+ }
  corpsePose(model,a,time){const age=time-a.deathAt;if(age<0||age>18)return false;if(!model.userData.fall){let choice=null;for(let i=0;i<12;i++){const angle=a.yaw+i*Math.PI/6;let free=0;for(let d=.2;d<1.7;d+=.15){if(!this.world.canOccupy(a.x+Math.sin(angle)*d,a.z+Math.cos(angle)*d,.25,.68,0))break;free=d;}if(!choice||free>choice.free)choice={angle,free};}model.userData.fall=choice;}
  model.userData.contact&&(model.userData.contact.visible=false);return animateCorpse(model,a,time,model.userData.fall);}
  resize(){const w=innerWidth,h=innerHeight;this.renderer.setSize(w,h,false);this.camera.aspect=this.viewCamera.aspect=w/h;this.camera.updateProjectionMatrix();this.viewCamera.updateProjectionMatrix();}
@@ -48,7 +83,34 @@ export class Renderer{
  this.updateLights(p,t);this.combatEffects.update(t,this.effectTime==null?0:Math.max(0,Math.min(.1,t-this.effectTime)),this.camera);this.effectTime=t;
  for(const a of [...s.actors,...s.hostages]){let caster=this.actorShadows.get(a.id);if(!caster){caster=new THREE.Mesh(this.actorShadowGeometry,this.shadowOnlyMaterial);caster.customDepthMaterial=this.shadowDepthMaterial;caster.castShadow=true;this.scene.add(caster);this.actorShadows.set(a.id,caster);}caster.visible=(a.alive!==false)&&!a.rescued;caster.position.set(a.x,(a.y||0)+(a.height||1.7)/2,a.z);caster.scale.set(1,(a.height||1.7)/1.68,1);let model=this.actors.get(a.id);const hostage=!a.team;if(!model){model=makeActor(a.team||'hostage',a.id,hostage);model.traverse(o=>{if(o.isMesh)o.castShadow=false;});this.actors.set(a.id,model);this.scene.add(model);const shadow=new THREE.Mesh(new THREE.PlaneGeometry(.62,.62),this.contactMaterial);shadow.rotation.x=-Math.PI/2;this.scene.add(shadow);model.userData.contact=shadow;}const dead=!hostage&&!a.alive;model.visible=a.id!==p.id&&(hostage?!a.rescued:!dead||Number.isFinite(a.deathAt)&&t-a.deathAt<18);model.userData.contact.visible=model.visible&&!dead;model.userData.contact.position.set(a.x,.014,a.z);if(!model.visible)continue;if(dead){model.visible=this.corpsePose(model,a,t);continue;}model.userData.fall=null;model.position.set(a.x,a.y||0,a.z);model.rotation.set(0,a.yaw||0,0);animateActor(model,a,t,dt,{cameraYaw:this.camera.rotation.y,shotAt:model.userData.shotAt??-Infinity});model.traverse(o=>{if(o.isMesh)o.castShadow=false;});}
  for(const g of s.grenades){let model=this.grenades.get(g.id);if(!model){model=cartridge(g.type||g.kind,1.1);this.grenades.set(g.id,model);this.scene.add(model);}model.position.set(g.x,g.y,g.z);model.rotation.set(t*4,t*3,0);}for(const [id,m]of this.grenades)if(!s.grenades.some(g=>g.id===id)){this.disposeTransient(m);this.grenades.delete(id);}
- for(const smoke of s.smokes){const id=smoke.id||smoke.until;let cloud=this.smokes.get(id);if(!cloud){cloud=new THREE.Group();const material=new THREE.MeshLambertMaterial({map:this.smokeMap,color:0xa5afa9,transparent:true,opacity:.85,depthWrite:false,side:THREE.DoubleSide});for(let i=0;i<48;i++){const radius=smoke.radius||3,ang=i*2.39996,ring=Math.sqrt((i+.5)/48)*radius*.84,x=smoke.x+Math.cos(ang)*ring,z=smoke.z+Math.sin(ang)*ring,y=.25+(i%5)*.49;const pt={x,y,z};if(!this.world.segmentClear({x:smoke.x,y:Math.max(.2,smoke.y),z:smoke.z},pt,{vision:false}))continue;let safeRadius=Math.min(.57+(i%3)*.12,y,2.85-y);for(let k=0;k<8;k++){const angle=k*Math.PI/4,hit=this.world.raycast(pt,{x:Math.cos(angle),y:0,z:Math.sin(angle)},safeRadius*1.1,{vision:false});if(hit)safeRadius=Math.min(safeRadius,hit.distance*.92);}if(safeRadius<.08)continue;const m=new THREE.Mesh(smokeGeo,material);m.position.set(x,y,z);m.scale.setScalar(safeRadius);cloud.add(m);}this.smokes.set(id,cloud);this.scene.add(cloud);}const life=smoke.until-t;cloud.scale.setScalar(1);for(const [i,m] of cloud.children.entries()){m.quaternion.copy(this.camera.quaternion);m.rotateZ(i*2.4+t*.04);m.material.opacity=Math.min(.95,Math.max(0,life/2)*.9);}}
+ for(const smoke of s.smokes){
+  const id=smoke.id||smoke.until;let cloud=this.smokes.get(id);
+  if(!cloud){
+   // One draw for the same collision-clipped billboard cloud. The physical
+   // smoke volume and AI sight tests remain owned by Game/physics.
+   const material=this.smokeMaterial(),puffs=[];
+   for(let i=0;i<48;i++){
+    const radius=smoke.radius||3,ang=i*2.39996,ring=Math.sqrt((i+.5)/48)*radius*.84,x=smoke.x+Math.cos(ang)*ring,z=smoke.z+Math.sin(ang)*ring,y=.25+(i%5)*.49,pt={x,y,z};
+    if(!this.world.segmentClear({x:smoke.x,y:Math.max(.2,smoke.y),z:smoke.z},pt,{vision:false}))continue;
+    let size=Math.min(.57+(i%3)*.12,y,2.85-y);
+    for(let k=0;k<8;k++){const angle=k*Math.PI/4,hit=this.world.raycast(pt,{x:Math.cos(angle),y:0,z:Math.sin(angle)},size*1.1,{vision:false});if(hit)size=Math.min(size,hit.distance*.92);}
+    // A spinning billboard can touch geometry above/below its centre. Bound
+    // its entire disc by exact 3D distance to nearby oriented solid boxes.
+    for(const b of this.world.staticBoxes){
+     const dx=x-b.x,dz=z-b.z,ex=Math.max(0,Math.abs(b.cos*dx-b.sin*dz)-b.w/2),ey=Math.max(0,Math.abs(y-b.y)-b.h/2),ez=Math.max(0,Math.abs(b.sin*dx+b.cos*dz)-b.d/2),distance2=ex*ex+ey*ey+ez*ez;
+     if(distance2<size*size)size=Math.sqrt(distance2)*.92;
+    }
+    if(size>=.08)puffs.push({position:new THREE.Vector3(x,y,z),size:size/Math.SQRT2,phase:i*2.4});
+   }
+   cloud=new THREE.InstancedMesh(smokeGeo,material,puffs.length);cloud.name='collision-clipped-smoke';cloud.instanceMatrix.setUsage(THREE.DynamicDrawUsage);cloud.userData.puffs=puffs;
+   // Conservative static sphere includes all clipped, camera-facing quads.
+   cloud.boundingSphere=new THREE.Sphere(new THREE.Vector3(smoke.x,1.4,smoke.z),(smoke.radius||3)+1.5);
+   this.smokes.set(id,cloud);this.scene.add(cloud);
+  }
+  const matrix=this.smokeMatrix??=new THREE.Matrix4(),quat=this.smokeQuaternion??=new THREE.Quaternion(),spin=this.smokeSpin??=new THREE.Quaternion(),axis=this.smokeAxis??=new THREE.Vector3(0,0,1),scale=this.smokeScale??=new THREE.Vector3();
+  cloud.userData.puffs.forEach((p,i)=>{spin.setFromAxisAngle(axis,p.phase+t*.04);quat.copy(this.camera.quaternion).multiply(spin);scale.setScalar(p.size);matrix.compose(p.position,quat,scale);cloud.setMatrixAt(i,matrix);});
+  cloud.instanceMatrix.needsUpdate=true;cloud.material.opacity=Math.min(.95,Math.max(0,(smoke.until-t)/2)*.9);
+ }
  for(const [id,m]of this.smokes)if(!s.smokes.some(q=>(q.id||q.until)===id)){this.disposeTransient(m);this.smokes.delete(id);}
  const bomb=s.bomb;this.bombModel.visible=!!bomb&&['planted','dropped'].includes(bomb.status);if(this.bombModel.visible){this.bombModel.position.set(bomb.x,(bomb.y||0)+.05,bomb.z);this.bombModel.rotation.y=.3;}
  for(const d of s.drops){let m=this.drops.get(d.id);if(!m){m=makeWeapon(d.item?.id||'ar47',{viewmodel:false});m.rotation.z=Math.PI/2;m.scale.setScalar(.8);this.drops.set(d.id,m);this.scene.add(m);}m.position.set(d.x,.15,d.z);}for(const [id,m] of this.drops)if(!s.drops.some(d=>d.id===id)){this.disposeTransient(m);this.drops.delete(id);}
@@ -58,7 +120,7 @@ export class Renderer{
  this.renderer.info.reset();this.renderer.autoClear=true;this.renderer.render(this.scene,this.camera);if(this.weaponModel?.visible){this.renderer.autoClear=false;this.renderer.clearDepth();this.renderer.render(this.viewScene,this.viewCamera);}this.stats.drawCalls=this.renderer.info.render.calls;this.stats.triangles=this.renderer.info.render.triangles;const now=performance.now();this.frameTimes.push(now-this.lastFrame);this.lastFrame=now;if(this.frameTimes.length>120)this.frameTimes.shift();this.stats.fps=Math.round(1000/(this.frameTimes.reduce((a,b)=>a+b,0)/this.frameTimes.length));
  }
  smokeOpacity(actor,smokes){let value=0;for(const sm of smokes){const d=Math.hypot(actor.x-sm.x,actor.z-sm.z);if(d<(sm.radius||3)&&this.world.segmentClear({x:actor.x,y:(actor.y||0)+1,z:actor.z},{x:sm.x,y:Math.max(.5,sm.y),z:sm.z},{vision:false}))value=Math.max(value,Math.min(.97,((sm.radius||3)-d)*.8));}return value;}
- resetTransient(){this.combatEffects.clear();this.effectTime=null;this.lightAt=-1;for(const model of this.actors.values()){model.userData.fall=null;model.rotation.set(0,0,0);}for(const f of this.effects)this.disposeTransient(f.mesh);this.effects=[];for(const map of [this.grenades,this.smokes,this.drops]){for(const m of map.values())this.disposeTransient(m);map.clear();}this.recoil=0;this.hitUntil=0;this.damageUntil=0;this.damageDirection=null;this.shotAt=-1;this.throwAt=-1;this.swingAt=-1;this.muzzleUntil=0;this.switchAt=-1;this.muzzle.visible=false;this.bombModel.visible=false;this.lastWeapon='';this.frameTimes=[];this.lastFrame=performance.now();}
- disposeTransient(object){this.scene.remove(object);const mats=new Set(),geos=new Set();object.traverse(o=>{if(o.material)mats.add(o.material);if(o.geometry&&o.geometry!==boxGeo&&o.geometry!==sphereGeo&&o.geometry!==smokeGeo)geos.add(o.geometry);});for(const m of mats){if(m.map!==this.smokeMap&&m.map!==this.muzzle.material.map)m.map?.dispose();m.dispose();}for(const g of geos)g.dispose();}
- dispose(){window.removeEventListener('resize',this.onResize);this.combatEffects.dispose();this.registry.dispose();this.decor?.userData.dispose?.();this.environment.dispose();this.smokeMap.dispose();this.actorShadowGeometry.dispose();this.shadowOnlyMaterial.dispose();this.shadowDepthMaterial.dispose();this.renderer.dispose();}
+ resetTransient(){this.combatEffects.clear();this.effectTime=null;this.lightAt=-1;this.shadowAt=-Infinity;for(const model of this.actors.values()){model.userData.fall=null;model.rotation.set(0,0,0);}for(const f of this.effects)this.disposeTransient(f.mesh);this.effects=[];for(const map of [this.grenades,this.smokes,this.drops]){for(const m of map.values())this.disposeTransient(m);map.clear();}this.recoil=0;this.hitUntil=0;this.damageUntil=0;this.damageDirection=null;this.shotAt=-1;this.throwAt=-1;this.swingAt=-1;this.muzzleUntil=0;this.switchAt=-1;this.muzzle.visible=false;this.bombModel.visible=false;this.lastWeapon='';this.frameTimes=[];this.lastFrame=performance.now();}
+ disposeTransient(object){this.scene.remove(object);if(object.isInstancedMesh)object.dispose();const mats=new Set(),geos=new Set();object.traverse(o=>{if(o.material&&!o.material.userData.sharedWeapon)mats.add(o.material);if(o.geometry&&!o.geometry.userData.sharedWeapon&&o.geometry!==boxGeo&&o.geometry!==sphereGeo&&o.geometry!==smokeGeo)geos.add(o.geometry);});for(const m of mats){if(m.map!==this.smokeMap&&m.map!==this.muzzle.material.map)m.map?.dispose();m.dispose();}for(const g of geos)g.dispose();}
+ dispose(){window.removeEventListener('resize',this.onResize);this.combatEffects.dispose();this.registry.dispose();this.decor?.userData.dispose?.();this.cartridgeProps?.userData.dispose?.();disposeCartridgeResources();disposeWeaponResources();this.smokeWarmMaterial?.dispose();this.environment.dispose();this.smokeMap.dispose();this.actorShadowGeometry.dispose();this.shadowOnlyMaterial.dispose();this.shadowDepthMaterial.dispose();this.renderer.dispose();}
 }

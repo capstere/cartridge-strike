@@ -5,13 +5,27 @@ import { ACTOR_RADIUS, SpatialIndex, polygonBounds } from './physics.mjs';
  * All edges are swept with the actor footprint. The old reviewed routes provide samples
  * in narrow apertures where a regular grid alone could miss a valid existing doorway.
  */
-export function createNavigation(data,physics,{spacing=.70,radius=ACTOR_RADIUS+.002}={}){
+export function createNavigation(data,physics,{spacing=.70,radius=ACTOR_RADIUS+.002,clearanceCacheLimit=8192}={}){
   const graph=new Graph(),nodes=[],index=new SpatialIndex(1),dedup=new Map(),edgeKeys=new Set(),cache=new Map();
   const started=performance.now();
+  const clearanceCache=new Map(),clearanceStats={calls:0,hits:0,samples:0,size:0,limit:Math.max(0,Math.floor(clearanceCacheLimit))};
+  let cacheClearance=false;
+  function remember(key,result){
+    if(key){if(clearanceCache.size>=clearanceStats.limit)clearanceCache.delete(clearanceCache.keys().next().value);clearanceCache.set(key,result);clearanceStats.size=clearanceCache.size;}
+    return result;
+  }
   function clear(a,b,r=radius){
+    // Static capsule clearance is symmetric. Preserve every coordinate bit in
+    // the key: rounding could accidentally permit a wall-edge penetration.
+    // Dynamic actors are resolved separately by Game and never enter this cache.
+    let key=null;
+    if(cacheClearance){
+      clearanceStats.calls++;
+      if(clearanceStats.limit){const first=a.x<b.x||a.x===b.x&&a.z<=b.z;const p=first?a:b,q=first?b:a;key=`${r}:${p.x},${p.z}:${q.x},${q.z}`;const cached=clearanceCache.get(key);if(cached!==undefined){clearanceStats.hits++;return cached;}}
+    }
     const distance=Math.hypot(b.x-a.x,b.z-a.z),steps=Math.max(1,Math.ceil(distance/.075));
-    for(let i=0;i<=steps;i++)if(!physics.canOccupy(a.x+(b.x-a.x)*i/steps,a.z+(b.z-a.z)*i/steps,r))return false;
-    return true;
+    for(let i=0;i<=steps;i++){if(cacheClearance)clearanceStats.samples++;if(!physics.canOccupy(a.x+(b.x-a.x)*i/steps,a.z+(b.z-a.z)*i/steps,r))return remember(key,false);}
+    return remember(key,true);
   }
   function add(x,z){
     const key=`${x.toFixed(3)},${z.toFixed(3)}`;if(dedup.has(key))return dedup.get(key);
@@ -48,6 +62,8 @@ export function createNavigation(data,physics,{spacing=.70,radius=ACTOR_RADIUS+.
   // Label connected components once; an impossible objective must fail loudly, never teleport.
   const component=new Int32Array(nodes.length).fill(-1),out=[];let components=0;
   for(const n of nodes)if(component[n.id]<0){const queue=[n.id];component[n.id]=components;for(let q=0;q<queue.length;q++){graph.getEdgesOfNode(queue[q],out);for(const e of out)if(component[e.to]<0){component[e.to]=components;queue.push(e.to);}}components++;}
+  // Construction performs many one-off probes; only retain live path queries.
+  cacheClearance=true;
   function nearest(point){
     for(const distance of [1.2,2.6,5.2,10]){
       const choices=[...index.nearby(point.x,point.z,distance)].sort((a,b)=>Math.hypot(a.x-point.x,a.z-point.z)-Math.hypot(b.x-point.x,b.z-point.z));
@@ -71,5 +87,5 @@ export function createNavigation(data,physics,{spacing=.70,radius=ACTOR_RADIUS+.
     }
     return path;
   }
-  return {findPath,clear,nearest,nodes,graph,statistics:{nodes:nodes.length,edges:edgeKeys.size,components,buildMs:Math.round(performance.now()-started),library:'Yuka Graph/NavNode/NavEdge/AStar'}};
+  return {findPath,clear,nearest,nodes,graph,statistics:{nodes:nodes.length,edges:edgeKeys.size,components,buildMs:Math.round(performance.now()-started),clearance:clearanceStats,library:'Yuka Graph/NavNode/NavEdge/AStar'}};
 }

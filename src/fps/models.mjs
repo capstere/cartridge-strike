@@ -5,6 +5,7 @@ import * as THREE from '../../vendor/three/three.module.js';
 import { RoundedBoxGeometry } from '../../vendor/three/addons/geometries/RoundedBoxGeometry.js';
 import { mergeGeometries } from '../../vendor/three/addons/utils/BufferGeometryUtils.js';
 import { WEAPONS } from './config.mjs';
+import { makeBagCartridges } from './cartridge-v11.mjs';
 
 const Y = new THREE.Vector3(0, 1, 0);
 const clamp = (v, lo = 0, hi = 1) => Math.max(lo, Math.min(hi, v));
@@ -96,14 +97,16 @@ function label(parent, text, x, y, z, w, h, { background = '#e0ddd0', foreground
   const m = mesh(parent, new THREE.PlaneGeometry(w, h), material(0xffffff, .87, 0, { map, side: THREE.DoubleSide }), x, y, z);
   m.rotation.y = yaw; return m;
 }
+let sharedFabricTexture;
 function fabricMap() {
+  if(sharedFabricTexture)return sharedFabricTexture;
   const data = new Uint8Array(32 * 32 * 4);
   for (let y = 0; y < 32; y++) for (let x = 0; x < 32; x++) {
     const i = (y * 32 + x) * 4; const v = ((x + y) % 3 === 0 ? 160 : 206) + ((x * 13 + y * 7) % 17);
     data[i] = data[i + 1] = data[i + 2] = v; data[i + 3] = 255;
   }
   const map = new THREE.DataTexture(data, 32, 32); map.wrapS = map.wrapT = THREE.RepeatWrapping;
-  map.repeat.set(3, 4); map.needsUpdate = true; return map;
+  map.repeat.set(3, 4); map.needsUpdate = true;sharedFabricTexture=map;return map;
 }
 function cloth(color) { return material(color, .91, 0, { roughnessMap: fabricMap(), bumpMap: fabricMap(), bumpScale: .00075 }); }
 
@@ -145,11 +148,10 @@ function makeBag() {
     tube(bag, [[-.118, -.13, side * .063], [0, -.137, side * .067], [.118, -.13, side * .063]], .0024, seams);
     for (let i = 0; i < 4; i++) tube(bag, [[-.1 + i * .065, .12, side * .055], [-.08 + i * .058, .04, side * .069], [-.1 + i * .065, -.10, side * .065]], .0011, seams);
   }
-  for (let i = 0; i < 3; i++) {
-    const c = cartridge(['he', 'smoke', 'flash'][i], .54); c.position.set((i - 1) * .071, -.12, (i % 2) * .028 - .014); c.rotation.z = (i - 1) * .14; bag.add(c);
-  }
-  label(bag, 'Cepheid\ncartridges', 0, -.012, -.071, .19, .095, { yaw: Math.PI, background: '#e5ece8', foreground: '#244955' });
-  consolidateRigidTree(bag); return bag;
+  label(bag, 'Cepheid\ncartridges', 0, .045, -.071, .18, .065, { yaw: Math.PI, background: '#e5ece8', foreground: '#244955' });
+  // Consolidate only the film/seams. Cartridge templates are shared by all bags
+  // and must never be baked/disposed as per-actor private geometry.
+  consolidateRigidTree(bag);bag.add(makeBagCartridges());return bag;
 }
 
 function glove(parent, x, y, z, side, palmMat, rubber, cuffMat, { view = false } = {}) {
@@ -174,8 +176,19 @@ function sleeve(parent, a, b, clothMat, cuffMat) {
   return m;
 }
 
+let sharedMachiningTexture;
+function machiningMap() {
+  if(sharedMachiningTexture)return sharedMachiningTexture;
+  const data=new Uint8Array(64*64*4);
+  for(let y=0;y<64;y++)for(let x=0;x<64;x++){
+    const at=(y*64+x)*4,grain=((x*17+y*31)%19),scratch=y%17===0&&x%23<12?30:0;
+    const value=211+grain-scratch;data[at]=data[at+1]=data[at+2]=value;data[at+3]=255;
+  }
+  const map=new THREE.DataTexture(data,64,64);map.wrapS=map.wrapT=THREE.RepeatWrapping;map.repeat.set(8,8);map.needsUpdate=true;
+  sharedMachiningTexture=map;return map;
+}
 function weaponPalette() {
-  return { steel: material(0x44515a, .36, .82), edge: material(0x7b8588, .3, .88), black: material(0x192227, .49, .1), polymer: material(0x2c3438, .77, .02), dark: material(0x10171a, .61), wood: material(0x76503a, .49), tan: material(0x82735c, .72), brass: material(0xa9843a, .32, .75), lens: material(0x22464b, .12, .7), paint: material(0xbcc2b7, .5), red: material(0xad4d37, .6) };
+  return { steel: material(0x44515a, .42, .82, {roughnessMap:machiningMap(),bumpMap:machiningMap(),bumpScale:.00008}), edge: material(0x7b8588, .35, .88, {roughnessMap:machiningMap()}), black: material(0x192227, .49, .1), polymer: material(0x2c3438, .77, .02), dark: material(0x10171a, .61), wood: material(0x76503a, .49), tan: material(0x82735c, .72), brass: material(0xa9843a, .32, .75), lens: material(0x22464b, .12, .7), paint: material(0xbcc2b7, .5), red: material(0xad4d37, .6) };
 }
 function rail(parent, z0, z1, y, p, width = .047) {
   bevel(parent, 0, y, (z0 + z1) / 2, width, .012, Math.abs(z1 - z0), p.black, .002);
@@ -318,7 +331,7 @@ function bomb(root, p) {
   consolidate(body); return { grip: new THREE.Vector3(.12, -.019, .034), support: new THREE.Vector3(-.12, -.019, .034), muzzle: new THREE.Vector3() };
 }
 
-export function makeWeapon(id = 'p9', { viewmodel = true } = {}) {
+function buildWeapon(id = 'p9', { viewmodel = true } = {}) {
   const root = group(null, `weapon-${id}`), weapon = group(root, 'weapon'), p = weaponPalette();
   let parts;
   if (['smoke', 'flash', 'he'].includes(id)) {
@@ -355,6 +368,80 @@ export function makeWeapon(id = 'p9', { viewmodel = true } = {}) {
   root.userData = { ...root.userData, ...parts, id, weapon, arms, leftHand, rightHand, viewmodel, pump: weapon.userData.pump,
     magazineHome: parts.magazine?.position.clone(), magazineGrip, reloadGrip: new THREE.Vector3(), slideHome: parts.slide?.position.clone(), authored: 'Cartridge Strike original geometry' };
   return root;
+}
+
+
+// Bare world weapons recur across bots and drops. Build their immutable mesh
+// resources once, while every actor keeps its own animated transform hierarchy.
+const worldWeaponTemplates = new Map();
+function markSharedWeaponResources(root) {
+  root.traverse(object => {
+    if (!object.isMesh) return;
+    object.geometry.userData.sharedWeapon = true;
+    for (const mat of Array.isArray(object.material) ? object.material : [object.material]) {
+      mat.userData.sharedWeapon = true;
+      for (const value of Object.values(mat)) if (value?.isTexture) value.userData.sharedWeapon = true;
+    }
+  });
+}
+function instantiateWorldWeapon(template) {
+  const nodes = new Map();
+  function node(source) {
+    // Object3D.copy/clone JSON-serializes userData. Weapon metadata contains
+    // child-object pointers (pump, slide, magazine), so copy transforms directly.
+    const copy = source.isMesh ? new THREE.Mesh(source.geometry, source.material) : source.isGroup ? new THREE.Group() : new THREE.Object3D();
+    nodes.set(source, copy); copy.name = source.name;
+    copy.position.copy(source.position); copy.rotation.order = source.rotation.order;
+    copy.quaternion.copy(source.quaternion); copy.scale.copy(source.scale);
+    copy.matrix.copy(source.matrix); copy.matrixWorld.copy(source.matrixWorld);
+    copy.matrixAutoUpdate = source.matrixAutoUpdate; copy.matrixWorldAutoUpdate = source.matrixWorldAutoUpdate;
+    copy.visible = source.visible; copy.castShadow = source.castShadow; copy.receiveShadow = source.receiveShadow;
+    copy.frustumCulled = source.frustumCulled; copy.renderOrder = source.renderOrder; copy.layers.mask = source.layers.mask;
+    for (const child of source.children) copy.add(node(child));
+    return copy;
+  }
+  const root = node(template), memo = new Map();
+  function metadata(value) {
+    if (value === null || typeof value !== 'object') return value;
+    if (value.isObject3D) {
+      const copy = nodes.get(value); if (!copy) throw new Error('Weapon metadata points outside its own template');
+      return copy;
+    }
+    if (memo.has(value)) return memo.get(value);
+    if (value.isVector2 || value.isVector3 || value.isVector4 || value.isEuler || value.isQuaternion || value.isMatrix3 || value.isMatrix4 || value.isColor) {
+      const copy = value.clone(); memo.set(value, copy); return copy;
+    }
+    const copy = Array.isArray(value) ? [] : {};
+    memo.set(value, copy); for (const [key, entry] of Object.entries(value)) copy[key] = metadata(entry);
+    return copy;
+  }
+  for (const [source, copy] of nodes) copy.userData = metadata(source.userData);
+  root.userData.sharedWeaponInstance = true;
+  return root;
+}
+export function makeWeapon(id = 'p9', { viewmodel = true } = {}) {
+  if (viewmodel) return buildWeapon(id, { viewmodel });
+  let template = worldWeaponTemplates.get(id);
+  if (!template) {
+    template = buildWeapon(id, { viewmodel: false }); markSharedWeaponResources(template);
+    worldWeaponTemplates.set(id, template);
+  }
+  return instantiateWorldWeapon(template);
+}
+/** Final renderer teardown only. Removing a drop or restarting a round must
+ * retain these shared resources for the surviving actors and later rounds. */
+export function disposeWeaponResources() {
+  const geometries = new Set(), materials = new Set(), textures = new Set();
+  for (const template of worldWeaponTemplates.values()) template.traverse(object => {
+    if (!object.isMesh) return; geometries.add(object.geometry);
+    for (const material of Array.isArray(object.material) ? object.material : [object.material]) materials.add(material);
+  });
+  for (const material of materials) for (const value of Object.values(material)) if (value?.isTexture) textures.add(value);
+  for (const geometry of geometries) geometry.dispose();
+  for (const material of materials) material.dispose();
+  for (const texture of textures) texture.dispose();
+  if (textures.has(sharedMachiningTexture)) sharedMachiningTexture = null;
+  worldWeaponTemplates.clear();
 }
 
 function torsoGeometry(mat, parent) {
@@ -402,6 +489,13 @@ export function makeActor(team, id, isHostage = false) {
     bevel(chest, -.072, .20, -.121, .055, .081, .005, material(0xdde7e1, .8), .002);
     label(chest, 'VISITOR\n05', -.071, .20, -.125, .050, .060, { yaw: Math.PI, background: '#dde7e1', foreground: '#416057' });
   }
+  if(!isHostage){
+    // Radio, webbing and a flex lead share the existing rigid material batches.
+    bevel(chest,-.102,.356,-.114,.045,.082,.029,strap,.005);
+    cylinder(chest,[-.113,.397,-.11],[-.119,.445,-.105],.003,.0025,strap,6);
+    for(let i=0;i<3;i++)bevel(chest,-.102,.35+i*.009,-.130,.028,.003,.002,metal,.0005);
+    tube(chest,[[-.094,.392,-.12],[-.062,.415,-.13],[-.045,.46,-.08]],.0025,strap);
+  }
   consolidate(chest);
   const head = group(torso, 'head', 0, .665, -.005);
   ellipsoid(head, 0, 0, 0, .096, .127, .090, skin, 20);
@@ -447,6 +541,10 @@ export function makeActor(team, id, isHostage = false) {
     const arm = group(torso, side < 0 ? 'left-arm' : 'right-arm', side * .147, .409, -.004);
     const elbow = [side * .005, -.188, -.041], wrist = [-side * .12, -.253, side < 0 ? -.269 : -.14];
     sleeve(arm, [0, -.015, 0], elbow, fabric, strap);
+    if(!isHostage){
+      const patch=bevel(arm,side*.047,-.073,-.013,.012,.064,.055,armor,.004);patch.rotation.z=-side*.10;
+      for(let j=0;j<2;j++)bevel(arm,side*.055,-.069+j*.014,-.013,.003,.004,.036,fabric,.001);
+    }
     capsule(arm, elbow, wrist, .045, fabric, .92);
     ellipsoid(arm, elbow[0], elbow[1], elbow[2] + .025, .046, .052, .026, armor, 12);
     glove(arm, wrist[0], wrist[1], wrist[2], side, armor, boots, strap);

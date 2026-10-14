@@ -1,5 +1,5 @@
 /** Deterministic furnishing layer. Geometry, photo uncertainty and collision share one record. */
-export const FURNISHING_VERSION = 'floor5-fps-1';
+export const FURNISHING_VERSION = 'floor5-fps-0.7';
 
 const colors = { white:[.88,.9,.89], dark:[.055,.067,.076], blue:[.14,.24,.35], green:[.18,.31,.20], wood:[.57,.44,.30], steel:[.53,.58,.59] };
 const bounds = p => [Math.min(...p.map(v=>v[0])),Math.min(...p.map(v=>v[1])),Math.max(...p.map(v=>v[0])),Math.max(...p.map(v=>v[1]))];
@@ -77,9 +77,8 @@ export function createFurnishings(data, inherited, {inside,distanceSegment}) {
       part('lower-shelf',0,.16,0,w,.07,d,'steel','metal');
       part('top',0,.81,0,w,.06,d,'steel','metal');
       for(const dx of [-w/2+.04,w/2-.04])for(const dz of [-d/2+.04,d/2-.04])part(`post-${dx}-${dz}`,dx,.46,dz,.035,.82,.035,'steel','metal');
-      part('instrument',0,1.01,0,w*.67,.34,d*.73,'white');
-      part('instrument-cap',0,1.20,0,w*.67,.06,d*.73,[.50,.13,.11]);
-      part('screen',0,1.02,-d*.38,w*.40,.15,.02,'dark');
+      part('handle',0,1.00,d/2-.035,w,.035,.035,'steel','metal');
+      for(const dx of [-w/2+.07,w/2-.07])for(const dz of [-d/2+.07,d/2-.07])part(`wheel-${dx}-${dz}`,dx,.065,dz,.08,.12,.06,'dark');
     }
     return true;
   }
@@ -109,6 +108,13 @@ export function createFurnishings(data, inherited, {inside,distanceSegment}) {
     const id=`fps-${o.id}-instrument`;
     const b={id,roomId:'I02',x,y:1.12,z,w:Math.min(.47,x1-x0-.08),h:.45,d:Math.min(.38,z1-z0-.08),color:colors.white,material:'furniture',angle:0};
     if(b.w>.08&&b.d>.08){boxes.push(b,{...b,id:id+'-red-cap',y:1.37,h:.06,color:[.54,.14,.10]});instances.push({id,roomId:'I02',prefab:'bench-instrument',asset:'parametric',transform:{x,y:.88,z,yaw:0},footprint:{w:b.w,d:b.d},source:'P27: white benchtop instruments with red tops; PQC photo placement remains preliminary',collision:{type:'visible-box-parts',parts:[id,id+'-red-cap']}});}
+  }
+  // Fictional game dressing in included rooms, protected by the same route envelopes.
+  // These are generic empty supply carts, not a claim of actual equipment placement.
+  for(const roomId of ['I01','I04']){
+    const room=roomMap.get(roomId),[x0,z0,x1,z1]=bounds(room.polygon);let placed=false;
+    for(let z=z0+.52;z<z1-.52&&!placed;z+=.4)for(let x=x0+.62;x<x1-.62&&!placed;x+=.4)
+      placed=furnish(roomId,'lab-cart',x,z,.70,.46,'fictional FPS supply cart; no verified instrument placement');
   }
   // Reused inherited furniture is recorded with its actual source footprint and photo caveats.
   const inheritedManifest=data.obstacles.map(o=>({id:o.id,roomId:o.roomId||'I26',prefab:/desk/.test(o.kind)?'desk-bank':o.kind,asset:'src/world.js procedural furniture',transform:{sourcePolygon:o.id},collision:{type:'visible-box-and-surface-parts',sourcePolygon:o.polygon},source:o.roomId==='I01'?'P28–P32, preliminary GX photo mapping':o.roomId==='I02'?'P23–P27, preliminary PQC photo mapping':o.roomId==='I04'?'standard lab furnishing; NEG has no confirmed photo':'P21/P22/P33 and reviewed furniture footprint'}));

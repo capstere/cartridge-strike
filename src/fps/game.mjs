@@ -66,7 +66,7 @@ export class Game {
   get spectator() { return this.player?.alive ? this.player : this.actors.find(a => a.alive && a.team === this.team) ?? this.actors.find(a => a.alive) ?? this.player; }
   start(team = this.team) {
     if (!TEAMS[team]) throw new Error('Unknown team');
-    this.team = team; this.random = seededRandom(this.seed); this.events = []; this.soundEvents = []; this.accumulator = 0; this.eventSerial = 0;
+    this.team = team; this.tacticalContacts = []; this.random = seededRandom(this.seed); this.events = []; this.soundEvents = []; this.accumulator = 0; this.eventSerial = 0;
     Object.assign(this.state, { phase: 'buy', time: 0, round: 0, score: { analysts: 0, counterAnalysts: 0 }, lossStreak: { analysts: 0, counterAnalysts: 0 }, actors: [], history: [], paused: false });
     for (const side of Object.keys(TEAMS)) for (let i = 0; i < 5; i++) {
       const isPlayer = side === team && i === 0;
