@@ -1,0 +1,54 @@
+<!doctype html><html lang="sv"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,nofollow"><title>Cartridge Strike · Licenser</title><style>body{max-width:70rem;margin:2rem auto;padding:0 1rem;font:16px/1.6 system-ui}pre{white-space:pre-wrap;overflow-wrap:anywhere}a{overflow-wrap:anywhere}</style></head><body><a href="./fps/">Till spelet</a><h1>Källor och licenser</h1><ul><li><a href="./licenses/ambientcg-CC0-1.0.txt">licenses/ambientcg-CC0-1.0.txt</a></li>
+<li><a href="./licenses/kenney-furniture-kit-CC0.txt">licenses/kenney-furniture-kit-CC0.txt</a></li>
+<li><a href="./licenses/kenney-impact-sounds-CC0.txt">licenses/kenney-impact-sounds-CC0.txt</a></li>
+<li><a href="./licenses/kenney-sci-fi-sounds-CC0.txt">licenses/kenney-sci-fi-sounds-CC0.txt</a></li>
+<li><a href="./licenses/polyhaven-CC0-1.0.txt">licenses/polyhaven-CC0-1.0.txt</a></li>
+<li><a href="./licenses/three-LICENSE">licenses/three-LICENSE</a></li>
+<li><a href="./licenses/yuka-LICENSE">licenses/yuka-LICENSE</a></li></ul><pre># Cartridge Strike: actual third-party reuse
+
+Audited 2026-10-14. Runtime dependencies and assets are local. Exact files, source archive hashes and individual SHA-256 hashes are recorded in [docs/fps-assets.json](docs/fps-assets.json). `package-lock.json` pins npm package integrity. Private floor plans and photographs were not sent to any asset provider.
+
+## Three.js 0.180.0 — MIT
+
+Copyright © 2010–2025 Three.js authors. Full upstream license: [licenses/three-LICENSE](licenses/three-LICENSE).
+
+Source: [Three.js r180](https://github.com/mrdoob/three.js/tree/r180). Vendored in `vendor/three/`: `three.core.js`, `three.module.js`, `addons/math/Capsule.js`, `addons/math/Octree.js`, `addons/loaders/GLTFLoader.js`, `addons/utils/BufferGeometryUtils.js`, and `addons/geometries/RoundedBoxGeometry.js`.
+
+Three supplies rendering, GLB asset loading and actual Capsule/Octree collision, using the project&#39;s accepted floor geometry. Collision/movement follows the approach inspected in the [official r180 FPS example](https://github.com/mrdoob/three.js/blob/r180/examples/games_fps.html). The example&#39;s level and external models were not imported. Original upstream MIT notices remain with the vendored code. `src/fps/physics.mjs` adapts `Octree.split` in a bounded `FloorOctree` subclass to propagate subdivision limits to children; intersection algorithms remain upstream.
+
+## Yuka 0.7.8 — MIT
+
+Copyright © 2022 Yuka authors. Full upstream license: [licenses/yuka-LICENSE](licenses/yuka-LICENSE).
+
+Source: [Yuka](https://github.com/Mugen87/yuka), exact npm release `0.7.8`, locally vendored in `vendor/yuka/yuka.module.js`. AI executes Yuka `MemorySystem`/`MemoryRecord`, `StateMachine`, `Vehicle` and `SeekBehavior`; navigation uses `Graph`, `NavNode`, `NavEdge` and `AStar` with routes generated from the accepted floor and project-specific team/objective behavior.
+
+[Dive](https://github.com/Mugen87/dive) was inspected for perception/steering organization; no Dive models, audio, map or navmesh was imported. Dive&#39;s code license does not license its mixed-source assets. No Valve or Counter-Strike assets are used.
+
+## Kenney Furniture Kit — CC0 1.0
+
+Source: [official Furniture Kit](https://kenney.nl/assets/furniture-kit). The downloaded archive&#39;s license identifies **Furniture Kit 2.0**, while the website update list says 1.0; the archive SHA-256, not a floating version label, identifies these bytes. License copied unchanged to [licenses/kenney-furniture-kit-CC0.txt](licenses/kenney-furniture-kit-CC0.txt).
+
+Selected self-contained GLBs: `chairDesk`, `computerScreen`, `bookcaseClosedDoors`, and `pottedPlant` in `assets/fps/models/`. Source geometry/material bytes are unchanged; runtime normalizes origins and scales models to the shared physical furniture envelopes. These are standard furnishing assumptions, not evidence of exact real-world inventory. All four selected package previews were visually inspected; bounding coordinates were inspected for every selected GLB.
+
+## Kenney Impact Sounds 1.0 and Sci-Fi Sounds 1.0 — CC0 1.0
+
+Sources: [Impact Sounds](https://kenney.nl/assets/impact-sounds), [Sci-Fi Sounds](https://kenney.nl/assets/sci-fi-sounds). Licenses copied unchanged to [Impact license](licenses/kenney-impact-sounds-CC0.txt) and [Sci-Fi license](licenses/kenney-sci-fi-sounds-CC0.txt).
+
+Fifteen selected `.ogg` files in `assets/fps/audio/` are decoded and actually played by `src/fps/audio.mjs`: three carpet footsteps, three concrete footsteps, metal/soft/generic impacts, two explosion layers, a laser transient and a computer cue. Concrete footsteps are pitch-adjusted as a stylized vinyl proxy; the pack does not claim a vinyl recording. Runtime filtering, pitch, distance, wall damping and volume adapt the source samples. Additional original Web Audio synthesis supplies per-weapon transients, plastic-bag rustle, grenade hiss, bomb beeps and result cues. No audio source bytes are altered.
+
+All three Kenney archives explicitly permit personal, educational and commercial use under [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/). Attribution is optional; credit is retained here: **Kenney — www.kenney.nl**.
+
+## Development-only tooling
+
+Playwright `1.55.1` (`@playwright/test`, Apache-2.0) runs browser acceptance checks. It is not a runtime network dependency and is not shipped as game code. Its package contains the upstream license in `node_modules/@playwright/test/LICENSE` after `npm ci`.
+
+## ambientCG and Poly Haven — four local PBR sets, CC0 1.0
+
+Created using **Fabric045**, **Concrete034** and **Wood051** from ambientCG.com, by Lennart Demes, licensed under the Creative Commons CC0 1.0 Universal License. [Provider license](https://docs.ambientcg.com/license/) explicitly covers redistribution of raw assets in games. Full legal code retained in `licenses/ambientcg-CC0-1.0.txt`.
+
+Official sources: [Fabric045](https://ambientcg.com/view?id=Fabric045), [Concrete034](https://ambientcg.com/view?id=Concrete034), [Wood051](https://ambientcg.com/view?id=Wood051). Their dated **1K-JPG** downloads are pinned by archive and individual file SHA-256 in `docs/fps-assets.json`. Only twelve required color/OpenGL-normal/roughness JPEGs are shipped in `assets/fps/materials/`; no high resolution archive, displacement, blend or USD assets are included.
+
+`src/fps/materials.mjs` actually loads these maps locally. Colors use sRGB, normal/roughness use data space, UVs are in metres. Source bytes are unchanged. Runtime tinting gives carpet its blue office palette and walls warm off-white paint. Concrete034 is a smooth concrete source adapted with low relief and a subdued green tint as an **artistic epoxy/vinyl proxy**, not a claim that the provider recorded a vinyl material. Wood keeps its source grain. The fourth set is [White Plaster 02 by Rob Tuytel, Poly Haven](https://polyhaven.com/a/white_plaster_02), downloaded as three 1K JPEG maps. [Poly Haven licenses its assets CC0](https://polyhaven.com/license); the full legal code is retained in `licenses/polyhaven-CC0-1.0.txt`. Individual upstream URLs/MD5 and local SHA-256 values pin these files. The color-map contribution is reduced at runtime to 14% for walls and 10% for ceilings to represent opaque paint over bare plaster; standard PBR normal/roughness remain. Filename normalization changes no source bytes. Each selected color image was visually inspected. Private floor photos were not uploaded to either provider.
+
+The synthetic screen/paper atlases, geometric cups, folders, jackets, cables, cartridge cartons, whiteboard diagrams and restrained sole scuffs in `src/fps/decor.mjs` are original project content. They contain no actual workplace data. New ambient ventilation/equipment hum and damage cues in `src/fps/audio.mjs` use original Web Audio synthesis plus the already licensed Kenney impacts. Audio perception remains separate from bot hearing.
+</pre></body></html>

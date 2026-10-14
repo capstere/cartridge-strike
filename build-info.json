@@ -1,0 +1,363 @@
+{
+  "schemaVersion": 1,
+  "gameVersion": "0.6.0",
+  "entrypoint": "fps/index.html",
+  "files": [
+    {
+      "path": "assets/fps/audio/computerNoise_000.ogg",
+      "bytes": 119024,
+      "sha256": "1527944e16eb14b48ee03fe3e7ce6aae94262833a4e1f83928d451a7414fe4e1"
+    },
+    {
+      "path": "assets/fps/audio/explosionCrunch_000.ogg",
+      "bytes": 28274,
+      "sha256": "4b597d658d0ae101f0a030fbeea5fc3a4292ab85f017470a8254a8e7959cbd69"
+    },
+    {
+      "path": "assets/fps/audio/footstep_carpet_000.ogg",
+      "bytes": 6353,
+      "sha256": "b9524658b52a99a20590f8feefc103088637fd13ea8ec35811aee785e1f2f330"
+    },
+    {
+      "path": "assets/fps/audio/footstep_carpet_001.ogg",
+      "bytes": 6411,
+      "sha256": "9af3c3f76705107339e72036e4053bdca3eaa50ad31c8c929f42ce8d40e5d781"
+    },
+    {
+      "path": "assets/fps/audio/footstep_carpet_002.ogg",
+      "bytes": 6411,
+      "sha256": "9af3c3f76705107339e72036e4053bdca3eaa50ad31c8c929f42ce8d40e5d781"
+    },
+    {
+      "path": "assets/fps/audio/footstep_concrete_000.ogg",
+      "bytes": 5808,
+      "sha256": "d7267e183067757c92c169de2a379abea592cfca6b39bb2e8feea15221ad79fe"
+    },
+    {
+      "path": "assets/fps/audio/footstep_concrete_001.ogg",
+      "bytes": 6308,
+      "sha256": "507a75eb19b897087855a3be3cf11a12d7fa37d143ad535eeebe0b8031c7325d"
+    },
+    {
+      "path": "assets/fps/audio/footstep_concrete_002.ogg",
+      "bytes": 6255,
+      "sha256": "b21fa546d74941196b25da8a20b7010abd8c05c4fcf93545d1f344e66a664e13"
+    },
+    {
+      "path": "assets/fps/audio/impactGeneric_light_000.ogg",
+      "bytes": 5827,
+      "sha256": "f0e982611e97512fee5f777986b67e8b435434b601f94992ec044f7e89fb5acb"
+    },
+    {
+      "path": "assets/fps/audio/impactMetal_light_000.ogg",
+      "bytes": 7651,
+      "sha256": "33b5e6e37c6e9d54e07bf5a89b12c76e879f40c1ea83cdd82714df1d6f9fec6d"
+    },
+    {
+      "path": "assets/fps/audio/impactMetal_light_001.ogg",
+      "bytes": 6967,
+      "sha256": "fba69c467ddd85da7b1d82e259f936b876d9ba6a3d6f1b24bdd10468e46bfe08"
+    },
+    {
+      "path": "assets/fps/audio/impactMetal_medium_000.ogg",
+      "bytes": 7117,
+      "sha256": "a96f879fec0864a8938e0c745b6996a6c5679c16a234ce31a01cc995e8401003"
+    },
+    {
+      "path": "assets/fps/audio/impactSoft_medium_000.ogg",
+      "bytes": 5351,
+      "sha256": "7d3ba0bb5e60a11b5d3e558c141303dcf494256675fbf753c0d252d2cf0481e3"
+    },
+    {
+      "path": "assets/fps/audio/laserSmall_000.ogg",
+      "bytes": 7286,
+      "sha256": "72b589eadd41781257ac859e4f4d030222e623390e4a1a83f6d05329a6e026f1"
+    },
+    {
+      "path": "assets/fps/audio/lowFrequency_explosion_000.ogg",
+      "bytes": 14317,
+      "sha256": "3cb48d86dab63140cfb9aaeea4d4a6846abaca5831d157d8adbec0490da26343"
+    },
+    {
+      "path": "assets/fps/materials/Concrete034/Concrete034_1K-JPG_Color.jpg",
+      "bytes": 269501,
+      "sha256": "8ceb9186d990b31fce785e06fdc6974c160f1d27c43f6160266f164deba713aa"
+    },
+    {
+      "path": "assets/fps/materials/Concrete034/Concrete034_1K-JPG_NormalGL.jpg",
+      "bytes": 821681,
+      "sha256": "e509eb9dfa978e780fbebfd2acacc2ce158b5b7ced722ddc0759039dd51e18ca"
+    },
+    {
+      "path": "assets/fps/materials/Concrete034/Concrete034_1K-JPG_Roughness.jpg",
+      "bytes": 217708,
+      "sha256": "a4a9e39857a19afd23a778e5abf44fcdf6bd7f93918f1cf6878b41933e553511"
+    },
+    {
+      "path": "assets/fps/materials/Fabric045/Fabric045_1K-JPG_Color.jpg",
+      "bytes": 1124059,
+      "sha256": "c262b80d58ae5ad1e87e690188f372a822ad4cdc08f59d944ea5818ac363c9d3"
+    },
+    {
+      "path": "assets/fps/materials/Fabric045/Fabric045_1K-JPG_NormalGL.jpg",
+      "bytes": 2462113,
+      "sha256": "31649ae483d26bc8c795de1994c6ceb365212b548dd2f09f0484bb45b0b76005"
+    },
+    {
+      "path": "assets/fps/materials/Fabric045/Fabric045_1K-JPG_Roughness.jpg",
+      "bytes": 615798,
+      "sha256": "33f128a7adca7e9f42c9b95790ce31a5611e0ec1b831778bd4290c1fff4fddaf"
+    },
+    {
+      "path": "assets/fps/materials/WhitePlaster02/WhitePlaster02_1K-JPG_Color.jpg",
+      "bytes": 527219,
+      "sha256": "a1ebbe091bd1ae93d2abd5de8d69f9003a8d0ee6532bcf9a87c2492c97051f23"
+    },
+    {
+      "path": "assets/fps/materials/WhitePlaster02/WhitePlaster02_1K-JPG_NormalGL.jpg",
+      "bytes": 652310,
+      "sha256": "eb572ca3630d5bfde72e2601b1f02412da23ca005cd19384dced8690be4cb783"
+    },
+    {
+      "path": "assets/fps/materials/WhitePlaster02/WhitePlaster02_1K-JPG_Roughness.jpg",
+      "bytes": 295900,
+      "sha256": "4ff1fe957cd161b07f721fe6c28a9459c8c2e8ec65627a26c16e483a07c80d85"
+    },
+    {
+      "path": "assets/fps/materials/Wood051/Wood051_1K-JPG_Color.jpg",
+      "bytes": 871537,
+      "sha256": "f3c6c5456457e8d05c1fee4d2f186f41d0aea2b8a06859b69ce2934e11aa8798"
+    },
+    {
+      "path": "assets/fps/materials/Wood051/Wood051_1K-JPG_NormalGL.jpg",
+      "bytes": 1583401,
+      "sha256": "9078dc50c43b55831ae322460fc96b62df68c7a148400bd7755ab2788fec1708"
+    },
+    {
+      "path": "assets/fps/materials/Wood051/Wood051_1K-JPG_Roughness.jpg",
+      "bytes": 680793,
+      "sha256": "b5736b940d721b49922cb14eebd52fd34f134b7ef99331ecf28565ce40358098"
+    },
+    {
+      "path": "assets/fps/models/bookcaseClosedDoors.glb",
+      "bytes": 22644,
+      "sha256": "ff33f535acdb1825c0e958a293642b39665adcae0b1317b650e83d2bb687f4e2"
+    },
+    {
+      "path": "assets/fps/models/chairDesk.glb",
+      "bytes": 39016,
+      "sha256": "46406619186034cbe92b19b79a5f1a8e3f442a17a70a7524ef2c0ad0f35095c6"
+    },
+    {
+      "path": "assets/fps/models/computerScreen.glb",
+      "bytes": 6404,
+      "sha256": "5942cbad29a2d2b956619569926e81d50a4174403d592fece6556e57632dc643"
+    },
+    {
+      "path": "assets/fps/models/pottedPlant.glb",
+      "bytes": 7576,
+      "sha256": "5b760eda2766f75fda36b2c5df652a1662f82981ef64cd8fa7fe7bcd386b3a15"
+    },
+    {
+      "path": "fps/index.html",
+      "bytes": 7031,
+      "sha256": "529082f8c2759e5712f012707ad19ec2baf0510da687a0ac8b0be96b47f31fd9"
+    },
+    {
+      "path": "fps/style.css",
+      "bytes": 13925,
+      "sha256": "aacc0afd7c6b528ac8b7605376f4a543b551a900ea19ea3934efe96659a7b81a"
+    },
+    {
+      "path": "licenses/ambientcg-CC0-1.0.txt",
+      "bytes": 7048,
+      "sha256": "a2010f343487d3f7618affe54f789f5487602331c0a8d03f49e9a7c547cf0499"
+    },
+    {
+      "path": "licenses/kenney-furniture-kit-CC0.txt",
+      "bytes": 614,
+      "sha256": "bc0de1a0742cb490f9ed4bae0bd284286ebb27e23149b9917c7d8c0d590b8b29"
+    },
+    {
+      "path": "licenses/kenney-impact-sounds-CC0.txt",
+      "bytes": 608,
+      "sha256": "b49aa9c56b04528b95913de13e506a0f7c5e807b9925db9bfef86af1f91120db"
+    },
+    {
+      "path": "licenses/kenney-sci-fi-sounds-CC0.txt",
+      "bytes": 571,
+      "sha256": "a9767b25c3533f69d03af136480efad08efba19a9f0d89616992b34c79fd6186"
+    },
+    {
+      "path": "licenses/polyhaven-CC0-1.0.txt",
+      "bytes": 7048,
+      "sha256": "a2010f343487d3f7618affe54f789f5487602331c0a8d03f49e9a7c547cf0499"
+    },
+    {
+      "path": "licenses/three-LICENSE",
+      "bytes": 1081,
+      "sha256": "bfe119ea4fd413f5f7ca3fcd63adb0c4a073ed39daa2fe7d3e6b769e21272601"
+    },
+    {
+      "path": "licenses/yuka-LICENSE",
+      "bytes": 1072,
+      "sha256": "5053117e2e3ef2326460d86f6073271c9d7ef56ebda09e2983538003293d593e"
+    },
+    {
+      "path": "src/floor5-data.js",
+      "bytes": 234583,
+      "sha256": "3a50ee195a5154abf3a65c04249667221119daf7edadbc3db88b231ede9f4455"
+    },
+    {
+      "path": "src/fps/app.mjs",
+      "bytes": 19312,
+      "sha256": "4fe08cb64fededa9c9c4fbf61f1f8bc0f70c2c76d8141e186b61ff625ca4959e"
+    },
+    {
+      "path": "src/fps/audio.mjs",
+      "bytes": 17304,
+      "sha256": "88f111ae52dd7fc32d1f707649267bde97614fe49247028adae2827947df30b3"
+    },
+    {
+      "path": "src/fps/bots.mjs",
+      "bytes": 17034,
+      "sha256": "4b47ea3a171d0ff7d92fee2002caceb78b5ab2321de64d99a88f82cff2adb1b7"
+    },
+    {
+      "path": "src/fps/config.mjs",
+      "bytes": 5365,
+      "sha256": "ff9afb06f3cf1f08d20a7816f6c828513d1c16e314703c880db1b492c4d90958"
+    },
+    {
+      "path": "src/fps/decor.mjs",
+      "bytes": 11066,
+      "sha256": "6b607e9ccf6e2835c50d5a21ef52fc99b1029f10a16bbcf20be4b28b8959e404"
+    },
+    {
+      "path": "src/fps/effects.mjs",
+      "bytes": 7587,
+      "sha256": "cf08de300833faa2b99f5ad448880bb7ef6a1404476c699c31dc0398adfd73d3"
+    },
+    {
+      "path": "src/fps/furnishings.mjs",
+      "bytes": 8728,
+      "sha256": "fcd8c4a33a1d5df38f8d24e4e22cf18124b5d880fa43e4186305df5981eeea6b"
+    },
+    {
+      "path": "src/fps/game.mjs",
+      "bytes": 37072,
+      "sha256": "c19c1b4ad60665678313cdf92f8de5478e6b69d07760df963e50da8f1e3beefa"
+    },
+    {
+      "path": "src/fps/materials.mjs",
+      "bytes": 5047,
+      "sha256": "5b872ee7ecb35f4af0ed9bf73cd4422b37e4fb3bba0e91aa21ffdb072dce9265"
+    },
+    {
+      "path": "src/fps/models.mjs",
+      "bytes": 42034,
+      "sha256": "2e919aa967fbab3602bc3e06c66b7e3170456599985b2e6f4e7c6e420e3c7324"
+    },
+    {
+      "path": "src/fps/navigation.mjs",
+      "bytes": 4685,
+      "sha256": "e82a19b2a8c06f605026311d747b2fd80e920e2f1aa1f941b0b9465ac2dceaab"
+    },
+    {
+      "path": "src/fps/physics.mjs",
+      "bytes": 13044,
+      "sha256": "96f9f533b5331f56b1b1f78d74e354210d65e2d4e14895a6a0200aa25c18708d"
+    },
+    {
+      "path": "src/fps/render.mjs",
+      "bytes": 22656,
+      "sha256": "4a1e947f61efe642dd9b2049cbb10d22f3eff486c53cfb62e7aae57f04c62d17"
+    },
+    {
+      "path": "src/fps/world.mjs",
+      "bytes": 3788,
+      "sha256": "63a26f3b5a07ccb44bff68c9e65c2824da4e578afc3b7d2cae485499df2647ee"
+    },
+    {
+      "path": "src/world.js",
+      "bytes": 14570,
+      "sha256": "7db3a98578f29fe2f96a9bdd1917e6621a13341d46717e752702ecbc28f40671"
+    },
+    {
+      "path": "vendor/package.json",
+      "bytes": 33,
+      "sha256": "a90fc33418afa2b9cbf4768524b021135b965ecdf993457505bfae3ac44a8428"
+    },
+    {
+      "path": "vendor/three/addons/geometries/RoundedBoxGeometry.js",
+      "bytes": 6476,
+      "sha256": "c1b7c9bd2cddff2e3f3a0723f618a3d364a47450e3d25771d21faed88410bec8"
+    },
+    {
+      "path": "vendor/three/addons/loaders/GLTFLoader.js",
+      "bytes": 114739,
+      "sha256": "67ac5551fdafa6e349bd80c8f8e5e39c136d6b2fb1ad647db9abb21dc86f9e4a"
+    },
+    {
+      "path": "vendor/three/addons/math/Capsule.js",
+      "bytes": 3543,
+      "sha256": "be54c3c58483a7f6b0184dbc6ffdcea58ac13515a7d9fd19ed675b9edfc5f319"
+    },
+    {
+      "path": "vendor/three/addons/math/Octree.js",
+      "bytes": 14863,
+      "sha256": "f71364b8d033e03acef6d33c81198e11595f8053cdceffaf77d3040c541eb536"
+    },
+    {
+      "path": "vendor/three/addons/utils/BufferGeometryUtils.js",
+      "bytes": 35539,
+      "sha256": "fda7e946b8e0b5ab39b779206589e7a1079a22eb24efb89d7223e03fdfb1f751"
+    },
+    {
+      "path": "vendor/three/three.core.js",
+      "bytes": 1403455,
+      "sha256": "eb077d2417f61d3e6d9264c317cabc4ea35769ed6b0ab533067292a550784c20"
+    },
+    {
+      "path": "vendor/three/three.module.js",
+      "bytes": 603113,
+      "sha256": "c8211c69345d2e9949dc7a8ac969380497aa0600a5a8ac6a459c8cd02dd9cb8a"
+    },
+    {
+      "path": "vendor/yuka/yuka.module.js",
+      "bytes": 442887,
+      "sha256": "9b0c24534a47f2e1c9549a63a5e00a850577e22fe8d18dbc7a532008a027cb89"
+    },
+    {
+      "path": "credits.html",
+      "bytes": 8024,
+      "sha256": "fb8c203b125cba854eee8ae943af05b1bad0496d79f120c4324df9a1dc3ac138"
+    },
+    {
+      "path": "index.html",
+      "bytes": 619,
+      "sha256": "851822b26e7424b066fc99d2f2ccca16ea4a5bba09b963d152a0cd714c268dda"
+    },
+    {
+      "path": ".nojekyll",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "robots.txt",
+      "bytes": 26,
+      "sha256": "331ea9090db0c9f6f597bd9840fd5b171830f6e0b3ba1cb24dfa91f0c95aedc1"
+    }
+  ],
+  "bytes": 13573210,
+  "sourceDirectoriesExcluded": [
+    "references",
+    "reviews",
+    "docs",
+    "archive",
+    "prototypes",
+    "tests",
+    "tools"
+  ],
+  "playableLayoutStillPublic": true
+}
