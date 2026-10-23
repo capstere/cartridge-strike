@@ -14,12 +14,13 @@
       <section class="intro">
         <p class="eyebrow"><span class="status-dot"></span> VÅNING 5 / LOKALT 5 MOT 5</p>
         <h1>CARTRIDGE<br><span>STRIKE</span><i>05</i></h1>
-        <p class="lead">Två lag. En våning.<br>Bomben eller gisslan avgör.</p>
+        <p class="lead">Två lag. En våning.<br>Klassiska uppdrag eller oändlig action.</p>
         <div class="mission-strip"><div><b>01</b><span>GX LAB 5<br><strong>Plantera / försvara</strong></span></div><div><b>12</b><span>HISSRUM 12<br><strong>Eskortera / bevaka</strong></span></div></div>
-        <p class="small">Fiktivt spel på våningens accepterade planlösning.<br>Du + fyra botar mot fem botar · Först till fem rundor.</p>
+        <p class="small">Fiktivt spel på våningens accepterade planlösning.<br>Du + fyra botar mot fem botar · Välj ditt spelläge.</p>
         <a class="text-link" href="../credits.html" target="_blank" rel="noopener">Källor och licenser ↗</a>
       </section>
       <section class="selection card">
+        <div class="mode-picker"><label for="game-mode">SPELLÄGE</label><select id="game-mode" aria-label="Spelläge"><option value="classic">Klassiska rundor · bomb och gisslan</option><option value="endless">Endless Action · oändlig auto-respawn</option></select><p id="mode-description">Klassiska rundor. Först till fem vinster.</p><label id="loadout-row" hidden>Startvapen <select id="loadout" aria-label="Startvapen"><option value="smg">Vector C</option><option value="shotgun">Pump 8</option><option value="sniper">Scope 5</option><option value="bazooka">Bazooka</option></select></label></div>
         <div class="card-top"><span>VÄLJ DITT LAG</span><span>5 V 5</span></div>
         <button class="team-option selected" data-team="analysts" aria-pressed="true"><span class="team-icon analysts">A</span><span><strong>Analysts</strong><small>Start i PQC · I02</small><em>Försvara, stoppa räddningen och desarmera.</em></span><span class="radio-dot"></span></button>
         <button class="team-option" data-team="counterAnalysts" aria-pressed="false"><span class="team-icon counter">CA</span><span><strong>Counter Analysts</strong><small>Start vid D06</small><em>Plantera i GX LAB 5 eller rädda båda gisslan.</em></span><span class="radio-dot"></span></button>
@@ -29,7 +30,7 @@
         <div id="menu-settings"></div><details><summary>Kontroller</summary><div class="controls-list"><span>WASD <b>Rör dig</b></span><span>Shift <b>Smyg</b></span><span>Ctrl / Space <b>Huka / hoppa</b></span><span>Mus / R <b>Skjut / ladda om</b></span><span>E <b>Uppdrag</b></span><span>B / Tab <b>Köp / resultat</b></span><span>1–5 / Q <b>Utrustning / senaste</b></span><span>G / M <b>Släpp / taktisk karta</b></span></div></details>
       </section>
     </div>
-    <footer><span>CARTRIDGE STRIKE / 0.7</span><span>HYBRID · BOMB + RÄDDNING</span><span>FRISTÅENDE BOTSPEL</span></footer>
+    <footer><span>CARTRIDGE STRIKE / ACTION 0.8</span><span>HYBRID · BOMB + RÄDDNING</span><span>FRISTÅENDE BOTSPEL</span></footer>
   </main>
   <div id="hud" hidden>
     <div class="top-hud"><div class="score analysts"><strong id="score-a">0</strong><span>ANALYSTS <small id="alive-a">5 kvar</small></span></div><div class="round-clock"><small id="round-label">RUNDA 1</small><b id="timer">0:15</b><small id="phase">KÖPFAS</small></div><div class="score counter"><span>COUNTER ANALYSTS <small id="alive-ca">5 kvar</small></span><strong id="score-ca">0</strong></div></div>
@@ -38,11 +39,11 @@
     <div id="objectives"><span id="bomb-status"></span><span id="hostage-status"></span></div>
     <div id="crosshair"><i></i><i></i><i></i><i></i></div><div id="hitmarker">×</div>
     <div id="prompt"><kbd>E</kbd><span id="prompt-text"></span><div class="progress"><div id="action-progress"></div></div></div>
-    <div id="notification" role="status"></div>
+    <div id="notification" role="status"></div><aside id="radio-menu" hidden aria-label="Radiokommandon"><strong>RADIO <kbd>Z</kbd></strong><div id="radio-options"></div><small>Tryck 1–6 · Z stänger</small></aside><div id="radio-caption" aria-live="polite"></div><div id="spawn-protection" hidden>SPAWNSKYDD · skjuter du försvinner skyddet</div>
     <div id="round-result" hidden><small id="result-kicker">RUNDA AVGJORD</small><h2 id="result-title"></h2><p id="result-reason"></p></div>
-    <div id="spectate" hidden>UTSLAGEN · <span></span><small id="death-cause"></small><small>← → Byt lagkamrat · Nästa runda startar automatiskt</small><button id="death-restart">STARTA OM MATCHEN <kbd>Enter</kbd></button></div>
+    <div id="spectate" hidden>UTSLAGEN · <span></span><small id="death-cause"></small><small id="respawn-status">← → Byt lagkamrat · Nästa runda startar automatiskt</small><button id="death-restart">STARTA OM MATCHEN <kbd>Enter</kbd></button></div>
     <div class="bottom-hud"><div class="vitals"><span class="health-symbol">+</span><strong id="health">100</strong><div><span>HÄLSA</span><small id="armor"></small></div></div><div class="inventory"><div id="weapon-slots"></div><small id="money">800 ¤</small></div><div class="ammo"><small id="weapon-name">PISTOL</small><strong id="ammo">20 <span>/ 120</span></strong><span id="reload-text"></span></div></div>
-    <div class="key-hints">SHIFT smyg &nbsp; CTRL huka &nbsp; SPACE hopp &nbsp; R ladda om &nbsp; E interagera &nbsp; G släpp &nbsp; ESC paus</div>
+    <div class="key-hints">Z radio &nbsp; SHIFT smyg &nbsp; CTRL huka &nbsp; SPACE hopp &nbsp; R ladda om &nbsp; E interagera &nbsp; G släpp &nbsp; ESC paus</div>
     <div id="difficulty-label"></div><div id="perf"></div>
   </div>
   <div id="flash-overlay"></div><div id="damage-overlay"></div><div id="damage-direction">⌃</div><div id="smoke-overlay"></div>

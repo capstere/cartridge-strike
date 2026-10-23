@@ -4,6 +4,7 @@ import { createPhysics, ACTOR_RADIUS, insidePolygon, distanceSegment } from './p
 import { createNavigation } from './navigation.mjs';
 import { createFurnishings } from './furnishings.mjs';
 import { createTacticalMap } from './tactical-map.mjs';
+import { createLivingPlan } from './living-floor-plan.mjs';
 
 let sharedWorld;
 const flatPoint=p=>({x:p[0],y:0,z:p[1]});
@@ -14,6 +15,11 @@ export function createWorld({fresh=false}={}){
   const inherited=source.build({doors:{D06:true,D08:true}});
   const furnishings=createFurnishings(data,inherited,{inside:insidePolygon,distanceSegment});
   const description={...inherited,boxes:[...inherited.boxes,...furnishings.boxes],surfaces:[...inherited.surfaces],labels:[...inherited.labels.map(l=>({...l,text:l.text.replace(' · PASSERKORT',' · OPEN')})),...furnishings.labels],furnishings:furnishings.instances};
+  // I12 is a freight staging room in the supplied reference, not a lounge.
+  description.boxes=description.boxes.filter(b=>!b.id.startsWith('fps-I12-sofa-'));
+  furnishings.instances=furnishings.instances.filter(f=>!(f.roomId==='I12'&&f.prefab==='sofa'));
+  const living=createLivingPlan(data,description);
+  description.boxes.push(...living.boxes);
   const physics=createPhysics(description,data);
   const navigation=createNavigation(data,physics);
   const roomAt=(x,z)=>data.rooms.find(r=>r.status!=='uncertain'&&insidePolygon(x,z,r.polygon))||data.corridors.find(r=>insidePolygon(x,z,r.polygon))||null;
@@ -44,7 +50,7 @@ export function createWorld({fresh=false}={}){
     {text:'D06 · RESCUE / BUY',x:rescue.x,y:.025,z:rescue.z,yaw:0,width:2,height:.48,color:'#92e8e4',accent:'#164b53',floor:true}
   );
   const materialAt=(x,z)=>{const r=roomAt(x,z);return r&&(['I01','I02','I03','I04','I29'].includes(r.id)||/RESTROOM|STÄD|PENTRY/.test(r.name))?'vinyl':'carpet';};
-  const world={description,data,anchors,tactical,furnishings,roomAt,materialAt,...physics,findPath:navigation.findPath,navigation,statistics:{...physics.statistics,navigation:navigation.statistics,furnishings:furnishings.instances.length}};
+  const world={description,data,anchors,tactical,furnishings,living,roomAt,materialAt,...physics,findPath:navigation.findPath,navigation,statistics:{...physics.statistics,navigation:navigation.statistics,furnishings:furnishings.instances.length}};
   if(!fresh)sharedWorld=world;
   return world;
 }

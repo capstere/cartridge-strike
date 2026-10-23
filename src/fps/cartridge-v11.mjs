@@ -233,22 +233,27 @@ function addMeasuredV112(T,model,isOpen,detail){
 
 const detailProfiles = {
  near: {curves:4,sides:12,lineSegments:24,labelSegments:12,omit:/Fine radial underside rib|Underside molded boss|mould witness|Serrated PCR edge tooth|Film perimeter|Film Seal/},
- far: {curves:2,sides:6,lineSegments:8,labelSegments:6,omit:/molding|mould witness|molded boss|corner bead| shell lip|shell seam|Film|Concentric|valve|Valve|underside|Underside|PCR edge tooth|peripheral bead|peripheral molding| PCR web|PCR web|mounting bead|perimeter seam|reinforcing rib|surround|guide floor|Retaining tongue|shoulder|Small distal|front latch lip|peripheral rim/}
+ mid: {curves:2,sides:6,lineSegments:8,labelSegments:6,omit:/molding|mould witness|molded boss|corner bead| shell lip|shell seam|Film|Concentric|valve|Valve|underside|Underside|PCR edge tooth|peripheral bead|peripheral molding| PCR web|PCR web|mounting bead|perimeter seam|reinforcing rib|surround|guide floor|Retaining tongue|shoulder|Small distal|front latch lip|peripheral rim/}
 };
 let sharedMaterials;
 const templates = new Map(), clusters = new Map();
 function getMaterials(){
  if(sharedMaterials)return sharedMaterials;
- let map=null;
+ let map=null,atlas=null;
  if(typeof document!=='undefined'){
   const canvas=document.createElement('canvas');canvas.width=canvas.height=512;const c=canvas.getContext('2d');
   c.fillStyle='#f4f3e8';c.fillRect(0,0,512,512);c.fillStyle='#0b73bd';c.fillRect(0,20,512,35);
   c.fillStyle='#173546';c.font='600 49px Arial,sans-serif';c.textAlign='center';c.textBaseline='middle';c.fillText(CARTRIDGE_LABEL,256,232,480);
   c.strokeStyle='#b6c4c5';c.lineWidth=2;c.strokeRect(28,86,456,335);
   map=new THREE.CanvasTexture(canvas);map.colorSpace=THREE.SRGBColorSpace;map.anisotropy=4;
+  // The far model uses one material: label on the left, an untextured white
+  // swatch on the right multiplied by the inherited vertex colours.
+  const sheet=document.createElement('canvas');sheet.width=1024;sheet.height=512;const a=sheet.getContext('2d');
+  a.fillStyle='#ffffff';a.fillRect(0,0,1024,512);a.drawImage(canvas,0,0);
+  atlas=new THREE.CanvasTexture(sheet);atlas.colorSpace=THREE.SRGBColorSpace;atlas.anisotropy=4;
  }
  const mat=(color,roughness,extra={})=>new THREE.MeshStandardMaterial({color,roughness,metalness:0,...extra});
- sharedMaterials={blue:mat('#0072c6',.48),milk:mat('#eef0e9',.38,{side:THREE.DoubleSide}),edge:mat('#ccd4d4',.39),clear:mat('#d8e8e9',.24,{side:THREE.DoubleSide}),label:mat(0xffffff,.78,{map}),far:mat(0xffffff,.45,{vertexColors:true,side:THREE.DoubleSide})};
+ sharedMaterials={blue:mat('#0072c6',.48),milk:mat('#eef0e9',.38,{side:THREE.DoubleSide}),edge:mat('#ccd4d4',.39),clear:mat('#d8e8e9',.24,{side:THREE.DoubleSide}),label:mat(0xffffff,.78,{map}),mid:mat(0xffffff,.45,{vertexColors:true,side:THREE.DoubleSide}),far:mat(0xffffff,.45,{map:atlas,vertexColors:true,side:THREE.DoubleSide})};
  for(const [key,m]of Object.entries(sharedMaterials)){m.name=`v11.3-${key}`;m.userData.sharedCartridge=true;}
  return sharedMaterials;
 }
@@ -264,8 +269,9 @@ function canonicalMaterial(original,model){
  * Metres are baked into the buffers; base sits at y=0 and label faces +Z.
  */
 export function cartridgeGeometry({detail='near',open=false}={}){
- if(!detailProfiles[detail])throw new Error(`Unknown cartridge detail: ${detail}`);
+ if(!detailProfiles[detail]&&detail!=='far')throw new Error(`Unknown cartridge detail: ${detail}`);
  const key=`${detail}:${!!open}`;if(templates.has(key))return templates.get(key);
+ if(detail==='far'){const result=farGeometry(open);templates.set(key,result);return result;}
  const model=createCartridge(THREE,{labelMaterial:getMaterials().label},detailProfiles[detail]);
  addMeasuredV112(THREE,model,open,detailProfiles[detail]);model.root.updateMatrixWorld(true);
  const bins=new Map(),features=[];model.root.traverse(o=>{if(!o.isMesh&&o.userData.feature)features.push({name:o.name,...o.userData});});const sourceTriangles=model.meshes.reduce((n,m)=>n+(m.geometry.index?.count||m.geometry.attributes.position.count)/3,0);
@@ -275,37 +281,95 @@ export function cartridgeGeometry({detail='near',open=false}={}){
   g.applyMatrix4(m.matrixWorld);g.scale(.001,.001,.001);
   for(const name of Object.keys(g.attributes))if(!['position','normal','uv'].includes(name))g.deleteAttribute(name);
   if(!g.attributes.uv)g.setAttribute('uv',new THREE.Float32BufferAttribute(new Float32Array(g.attributes.position.count*2),2));
-  if(detail==='far'&&material!==getMaterials().label){const colors=new Float32Array(g.attributes.position.count*3);for(let i=0;i<g.attributes.position.count;i++)material.color.toArray(colors,i*3);g.setAttribute('color',new THREE.Float32BufferAttribute(colors,3));material=getMaterials().far;}
+  if(detail==='mid'&&material!==getMaterials().label){const colors=new Float32Array(g.attributes.position.count*3);for(let i=0;i<g.attributes.position.count;i++)material.color.toArray(colors,i*3);g.setAttribute('color',new THREE.Float32BufferAttribute(colors,3));material=getMaterials().mid;}
   if(!bins.has(material))bins.set(material,[]);bins.get(material).push(g);m.geometry.dispose();
  }
  const parts=[];let triangles=0;
  for(const [material,geometries]of bins){const geometry=mergeGeometries(geometries,false);geometries.forEach(g=>g.dispose());geometry.computeBoundingSphere();geometry.computeBoundingBox();geometry.userData.sharedCartridge=true;parts.push({geometry,material});triangles+=geometry.attributes.position.count/3;}
  for(const m of new Set(Object.values(model.materials)))m.dispose();
- const result={detail,open:!!open,parts,triangles,sourceTriangles,features,dimensions:{...model.dimensions,units:'m',scale:.001},lidPivot:[0,.05712,-.0166116],label:CARTRIDGE_LABEL};templates.set(key,result);return result;
+ const bounds=new THREE.Box3();for(const part of parts)bounds.union(part.geometry.boundingBox);
+ const result={detail,open:!!open,parts,triangles,sourceTriangles,features,bounds,dimensions:{...model.dimensions,units:'mm',geometryUnits:'m',scale:.001},lidPivot:[0,.05712,-.0166116],label:CARTRIDGE_LABEL};templates.set(key,result);return result;
+}
+/** Cluster the existing medium mesh, never replace the inherited silhouette
+ * with an unrelated box. Colour boundaries stay separate; duplicate/degenerate
+ * triangles are removed. Exact template extrema and the curved label survive.
+ * This level is used only when its projected extent is roughly twenty pixels. */
+function simplifySurface(source,cellSize){
+ const position=source.attributes.position,color=source.attributes.color,box=source.boundingBox,clusters=new Map(),mapping=[];
+ for(let i=0;i<position.count;i++){
+  const point=[position.getX(i),position.getY(i),position.getZ(i)],rgb=[color.getX(i),color.getY(i),color.getZ(i)];
+  const key=point.map(v=>Math.round(v/cellSize)).join(':')+':'+rgb.join(':');
+  let cluster=clusters.get(key);if(!cluster){cluster={index:clusters.size,sum:[0,0,0],count:0,color:rgb,extreme:[null,null,null]};clusters.set(key,cluster);}
+  point.forEach((v,k)=>{cluster.sum[k]+=v;const axis=['x','y','z'][k];if(Math.abs(v-box.min[axis])<1e-8)cluster.extreme[k]=box.min[axis];else if(Math.abs(v-box.max[axis])<1e-8)cluster.extreme[k]=box.max[axis];});cluster.count++;mapping.push(cluster.index);
+ }
+ const vertices=[...clusters.values()].map(c=>c.sum.map((v,k)=>c.extreme[k]??v/c.count)),colours=[...clusters.values()].map(c=>c.color),seen=new Set(),positions=[],colors=[],uv=[];
+ for(let i=0;i<mapping.length;i+=3){const ids=mapping.slice(i,i+3);if(new Set(ids).size!==3)continue;
+  const key=[...ids].sort((a,b)=>a-b).join(':');if(seen.has(key))continue;seen.add(key);
+  const [a,b,c]=ids.map(id=>vertices[id]),ab=[b[0]-a[0],b[1]-a[1],b[2]-a[2]],ac=[c[0]-a[0],c[1]-a[1],c[2]-a[2]];
+  const area=Math.hypot(ab[1]*ac[2]-ab[2]*ac[1],ab[2]*ac[0]-ab[0]*ac[2],ab[0]*ac[1]-ab[1]*ac[0]);if(area<1e-12)continue;
+  for(const id of ids){positions.push(...vertices[id]);colors.push(...colours[id]);uv.push(.75,.5);}
+ }
+ const geometry=new THREE.BufferGeometry();geometry.setAttribute('position',new THREE.Float32BufferAttribute(positions,3));geometry.setAttribute('color',new THREE.Float32BufferAttribute(colors,3));geometry.setAttribute('uv',new THREE.Float32BufferAttribute(uv,2));geometry.computeVertexNormals();return geometry;
+}
+function farGeometry(open){
+ const source=cartridgeGeometry({detail:'mid',open}),body=source.parts.find(p=>p.material!==getMaterials().label),label=source.parts.find(p=>p.material===getMaterials().label);
+ const shell=simplifySurface(body.geometry,.0045),labelGeo=label.geometry.clone(),uv=labelGeo.attributes.uv;
+ for(let i=0;i<uv.count;i++)uv.setX(i,uv.getX(i)*.5);
+ labelGeo.setAttribute('color',new THREE.Float32BufferAttribute(new Float32Array(labelGeo.attributes.position.count*3).fill(1),3));
+ const geometry=mergeGeometries([shell,labelGeo],false);shell.dispose();labelGeo.dispose();geometry.computeBoundingSphere();geometry.computeBoundingBox();geometry.userData.sharedCartridge=true;
+ return {...source,detail:'far',parts:[{geometry,material:getMaterials().far}],triangles:geometry.attributes.position.count/3,sourceTriangles:source.triangles,bounds:geometry.boundingBox.clone(),simplification:{method:'source-vertex-clustering',cellMetres:.0045,labelGeometryPreserved:true}};
+}
+
+export const CARTRIDGE_LOD_PIXELS=Object.freeze({near:56,mid:20,hysteresis:.18});
+const projectedPoint=new THREE.Vector3(),viewModel=new THREE.Matrix4();
+/** Maximum projected sample extent in actual render pixels. Each sample has its
+ * own bounds so the middle of a large instancing cell cannot downgrade a close
+ * cartridge. FOV, zoom, camera depth, parent transforms and viewport all count. */
+export class CartridgeLOD extends THREE.LOD{
+ constructor(samples){super();this.samples=samples.map(b=>b.clone());this.selectedLevel=null;}
+ update(camera){
+  const viewportHeight=camera.userData.cartridgeViewportHeight||1080,projection=camera.projectionMatrix.elements;
+  viewModel.multiplyMatrices(camera.matrixWorldInverse,this.matrixWorld);let pixels=0;
+  for(const box of this.samples){let x0=Infinity,x1=-Infinity,y0=Infinity,y1=-Infinity,front=0,clipped=0;
+   for(let i=0;i<8;i++){
+    projectedPoint.set(i&1?box.max.x:box.min.x,i&2?box.max.y:box.min.y,i&4?box.max.z:box.min.z).applyMatrix4(viewModel);
+    const depth=-projectedPoint.z;if(depth<=camera.near){clipped++;continue;}front++;
+    const denominator=camera.isOrthographicCamera?1:depth,x=projectedPoint.x*projection[0]/denominator,y=projectedPoint.y*projection[5]/denominator;
+    x0=Math.min(x0,x);x1=Math.max(x1,x);y0=Math.min(y0,y);y1=Math.max(y1,y);
+   }
+   if(front&&clipped){pixels=Infinity;break;}
+   if(front)pixels=Math.max(pixels,(x1-x0)*viewportHeight*(camera.aspect||1)*.5,(y1-y0)*viewportHeight*.5);
+  }
+  const {near,mid,hysteresis:h}=CARTRIDGE_LOD_PIXELS,thresholds=[near,mid];let next=this.selectedLevel;
+  if(next===null)next=pixels>=near?0:pixels>=mid?1:2;
+  else{while(next<2&&pixels<thresholds[next]*(1-h))next++;while(next>0&&pixels>thresholds[next-1]*(1+h))next--;}
+  this.selectedLevel=next;this._currentLevel=next;this.userData.projectedPixels=pixels;this.userData.activeDetail=['near','mid','far'][next];
+  this.levels.forEach((level,i)=>{level.object.visible=i===next;});
+ }
 }
 function geometryGroup(template){const g=new THREE.Group();for(const {geometry,material}of template.parts){const m=new THREE.Mesh(geometry,material);m.castShadow=false;m.receiveShadow=true;g.add(m);}return g;}
 /** Shared unscaled reference model, suitable for inspection or a single prop. */
 export function makeCounterAnalystCartridge({open=false,lod=true}={}){
- const near=cartridgeGeometry({open}),root=lod?new THREE.LOD():new THREE.Group();root.name='Counter Analyst · Cartridge v11.3';
- const model=geometryGroup(near);if(lod){root.addLevel(model,0);root.addLevel(geometryGroup(cartridgeGeometry({detail:'far',open})),6);}else root.add(model);
+ const near=cartridgeGeometry({open}),root=lod?new CartridgeLOD([near.bounds]):new THREE.Group();root.name='Counter Analyst · Cartridge v11.3';
+ if(lod){for(const [i,detail]of ['near','mid','far'].entries())root.addLevel(geometryGroup(cartridgeGeometry({detail,open})),i);}else root.add(geometryGroup(near));
  root.userData={cartridgeVersion:'11.3',label:CARTRIDGE_LABEL,privateDerivative:true,open:!!open,nominalScale:.001};return root;
 }
 const BAG_TRANSFORMS=[{x:-.064,y:-.122,z:-.014,yaw:Math.PI-.2,roll:-.12},{x:0,y:-.122,z:.016,yaw:Math.PI+.12,roll:.07},{x:.064,y:-.122,z:-.012,yaw:Math.PI-.09,roll:.16}];
-/** Three 1.35x visual scale samples; the bag's common cluster is built once.
- * One merged draw per shared material, no transparency inside the bag.
- */
+const bagMatrix=p=>new THREE.Matrix4().compose(new THREE.Vector3(p.x,p.y,p.z),new THREE.Quaternion().setFromEuler(new THREE.Euler(0,p.yaw,p.roll)),new THREE.Vector3(1.35,1.35,1.35));
+/** Three 1.35x visual scale samples; one shared rigid cluster per detail level.
+ * One far draw, with no transparent cartridge surface inside the bag. */
 export function makeBagCartridges(){
- const root=new THREE.LOD();root.name='bag-cartridges-v11.3';root.userData={cartridgeCount:3,cartridgeVersion:'11.3',label:CARTRIDGE_LABEL,privateDerivative:true};
- for(const [detail,distance]of [['near',0],['far',3]]){
+ const bounds=cartridgeGeometry().bounds,root=new CartridgeLOD(BAG_TRANSFORMS.map(p=>bounds.clone().applyMatrix4(bagMatrix(p))));root.name='bag-cartridges-v11.3';root.userData={cartridgeCount:3,cartridgeVersion:'11.3',label:CARTRIDGE_LABEL,privateDerivative:true};
+ for(const [level,detail]of ['near','mid','far'].entries()){
   if(!clusters.has(detail)){
    const template=cartridgeGeometry({detail}),parts=[];
    for(const {geometry,material}of template.parts){
-    const geos=BAG_TRANSFORMS.map(p=>geometry.clone().applyMatrix4(new THREE.Matrix4().compose(new THREE.Vector3(p.x,p.y,p.z),new THREE.Quaternion().setFromEuler(new THREE.Euler(0,p.yaw,p.roll)),new THREE.Vector3(1.35,1.35,1.35))));
+    const geos=BAG_TRANSFORMS.map(p=>geometry.clone().applyMatrix4(bagMatrix(p)));
     const merged=mergeGeometries(geos,false);geos.forEach(g=>g.dispose());merged.computeBoundingSphere();merged.userData.sharedCartridge=true;parts.push({geometry:merged,material});
    }
    clusters.set(detail,{parts});
   }
-  root.addLevel(geometryGroup(clusters.get(detail)),distance);
+  root.addLevel(geometryGroup(clusters.get(detail)),level);
  }
  return root;
 }

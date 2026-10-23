@@ -8,6 +8,7 @@ export const MATERIAL_LIBRARY = Object.freeze({
   carpet: { source: 'Fabric045', metres: [.65,.65], color: 0x496179, roughness: 1, normal: .38 },
   fabric: { source: 'Fabric045', metres: [.38,.38], color: 0x334c63, roughness: 1, normal: .24 },
   vinyl: { source: 'Concrete034', metres: [1.1,.55], color: 0xd6dfd7, roughness: .52, normal: .11 },
+  labVinyl: { source: 'Concrete034', metres: [1.1,.55], color: 0xb9c9ca, roughness: .67, normal: .055, colorMapStrength: .24 },
   wall: { source: 'WhitePlaster02', metres: [1,1], color: 0xe8e3d6, roughness: .88, normal: .10, colorMapStrength: .14 },
   ceiling: { source: 'WhitePlaster02', metres: [.6,.6], color: 0xd9dedb, roughness: .95, normal: .07, colorMapStrength: .10 },
   wood: { source: 'Wood051', metres: [.8,.8], color: 0xffffff, roughness: .73, normal: .16 },

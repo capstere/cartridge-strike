@@ -21,7 +21,7 @@ export const TEAMMATE_DIFFICULTY = Object.freeze({ ...DIFFICULTIES.normal, id: '
   reactionMin: .32, reactionMax: .32, turnSpeed: 6, initialAimError: .06, steadyAimError: .018, settleTime: .6,
   burstMin: 4, burstMax: 6, pauseMin: .18, pauseMax: .35, humanDamage: 1 });
 export const CONFIG = Object.freeze({
-  difficulty: DEFAULT_DIFFICULTY,
+  difficulty: DEFAULT_DIFFICULTY, mode: 'classic', friendlyFire: false, hostageDamage: false, wanderers: true, respawnDelay: 3, spawnProtection: 1.8,
   fixedStep: 1 / 60, maxCatchUp: .25, buyTime: 15, roundTime: 120, bombTime: 40,
   plantTime: 3, defuseTime: 5, resultTime: 5, matchWins: 5,
   health: 100, startMoney: 800, winMoney: 3250, lossMoney: 1400,
@@ -46,6 +46,7 @@ export const WEAPONS = Object.freeze({
   smg: { ...primary, id: 'smg', name: 'Vector C', cost: 1250, magazine: 30, reserve: 120, damage: 18, interval: .075, reload: 1.8, movingSpread: .027 },
   shotgun: { ...primary, id: 'shotgun', name: 'Pump 8', cost: 1800, magazine: 8, reserve: 32, damage: 13, pellets: 8, interval: .85, reload: 2.6, range: 30, spread: .055, movingSpread: .075, automatic: false },
   sniper: { ...primary, id: 'sniper', name: 'Scope 5', cost: 4750, magazine: 5, reserve: 25, damage: 105, interval: 1.25, reload: 2.9, range: 130, spread: .001, movingSpread: .095, automatic: false },
+  bazooka: { ...primary, id: 'bazooka', name: 'Bazooka', cost: 3600, magazine: 1, reserve: 5, damage: 150, interval: 1.1, reload: 2.8, range: 88, spread: 0, movingSpread: 0, automatic: false, recoil: .06, projectile: true },
   knife: { id: 'knife', name: 'Kniv', slot: 'knife', cost: 0, damage: 45, range: 1.65, interval: .6, pellets: 1, spread: 0, movingSpread: 0, recoil: .035 },
   smoke: { id: 'smoke', name: 'Smoke Cartridge', slot: 'grenade', cost: 300, limit: 1, interval: .6 },
   flash: { id: 'flash', name: 'Flash Cartridge', slot: 'grenade', cost: 200, limit: 2, interval: .6 },

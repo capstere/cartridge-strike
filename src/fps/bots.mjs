@@ -2,6 +2,7 @@
 // bundled. Collision and paths come only from the accepted floor adapter.
 import { MemorySystem, SeekBehavior, State, StateMachine, Vector3, Vehicle } from '../../vendor/yuka/yuka.module.js';
 import { WEAPONS } from './config.mjs';
+import {actionObjective,friendlyLineClear} from './action-rules.mjs';
 import { distanceSegment } from './physics.mjs';
 
 const distance = (a, b) => Math.hypot(a.x - b.x, a.z - b.z);
@@ -122,6 +123,7 @@ export class BotController {
       input.yaw = actor.yaw + Math.max(-turn, Math.min(turn, angleDelta(this.aimGoal.yaw, actor.yaw)));
       input.pitch = actor.pitch + Math.max(-turn, Math.min(turn, this.aimGoal.pitch - actor.pitch));
     }
+    if(input.fire&&!friendlyLineClear(this))input.fire=false;
     if (input.fire && !game.config.botFire) input.fire = false;
     // A cached visual record must not allow a shot after the target crosses a
     // wall/smoke between perception ticks. Recheck physical sight each shot.
@@ -171,6 +173,7 @@ export class BotController {
     this.goal = { x: goal.x, z: goal.z };
   }
   planObjective() {
+    if(actionObjective(this))return;
     const { game, actor } = this, b = game.bomb, anchors = game.world.anchors;
     actor.aiState = 'uppdrag';
     if (actor.team === 'analysts') {
@@ -208,14 +211,14 @@ export class BotController {
       else this.setGoal(anchors.bomb);
       return;
     }
-    const escorted = game.hostages.filter(h => !h.rescued && h.escortId === actor.id);
+    const escorted = game.hostages.filter(h => h.alive!==false && !h.rescued && h.escortId === actor.id);
     if (escorted.length) {
       this.setGoal(anchors.rescue); actor.aiState = 'eskorterar';
       // Keep pace with the physical follower, including around corners.
       if (escorted.some(h => distance(h, actor) > 3)) this.setGoal(null);
       return;
     }
-    const available = game.hostages.filter(h => !h.rescued && !h.escortId);
+    const available = game.hostages.filter(h => h.alive!==false && !h.rescued && !h.escortId);
     if (available.length) {
       const eligible = game.actors.filter(a => a.alive && a.team === actor.team && a.bot && b.carrierId !== a.id && !game.hostages.some(h => h.escortId === a.id)).sort((a, c) => a.index - c.index);
       const rank = eligible.indexOf(actor);

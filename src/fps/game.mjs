@@ -1,5 +1,6 @@
 import { CONFIG, TEAMS, WEAPONS, PRIORITY, seededRandom, DIFFICULTIES, DEFAULT_DIFFICULTY, TEAMMATE_DIFFICULTY } from './config.mjs';
 import { BotController } from './bots.mjs';
+import {prepareActionRound,tickActionState,recordActionDeath,sendRadio,launchRocket,updateRockets,isEndless} from './action-rules.mjs';
 export { CONFIG, TEAMS, WEAPONS, DIFFICULTIES, DEFAULT_DIFFICULTY };
 
 export const distance = (a, b) => Math.hypot(a.x - b.x, a.z - b.z);
@@ -12,11 +13,11 @@ const EPS = 1e-8;
 /** One resolver owns the complete hybrid rule table. Candidates carry simulation
  * timestamps; render order cannot change priority at equal timestamps. */
 export function resolveRound(state, candidates = []) {
-  if (state.phase !== 'active' || state.result) return null;
+  if (state.mode === 'endless' || state.phase !== 'active' || state.result) return null;
   const list = candidates.filter(e => e.at <= state.time + EPS);
   const planted = state.bomb.status === 'planted';
   if (planted && state.time + EPS >= state.bomb.deadline) list.push({ reason: 'detonation', winner: 'counterAnalysts', at: state.bomb.deadline });
-  if (state.hostages.length && state.hostages.every(h => h.rescued)) list.push({ reason: 'rescue', winner: 'counterAnalysts', at: Math.max(...state.hostages.map(h => h.rescuedAt ?? state.time)) });
+  if (state.hostages.length && state.hostages.every(h => h.alive!==false && h.rescued)) list.push({ reason: 'rescue', winner: 'counterAnalysts', at: Math.max(...state.hostages.map(h => h.rescuedAt ?? state.time)) });
   const analysts = state.actors.filter(a => a.team === 'analysts' && a.alive).length;
   const counters = state.actors.filter(a => a.team === 'counterAnalysts' && a.alive).length;
   if (!analysts && counters) list.push({ reason: 'elimination', winner: 'counterAnalysts', at: state.time });
@@ -97,8 +98,10 @@ export class Game {
     const carrier = this.actors.find(a => a.team === 'counterAnalysts');
     s.bomb = { status: 'carried', carrierId: carrier.id, x: carrier.x, y: 0, z: carrier.z, deadline: Infinity, nextBeep: Infinity };
     for (const actor of this.actors) if (actor.bot) actor.bot.shop();
+    prepareActionRound(this);
     this.emit('round', null, { round: s.round });
   }
+  radio(id, actor=this.player) { return sendRadio(this,id,actor); }
   startInventory(team) {
     const id = team === 'analysts' ? 'p9' : 'p12';
     return { primary: null, pistol: this.weaponItem(id), knife: { id: 'knife', ammo: Infinity, reserve: 0 }, smoke: 0, flash: 0, he: 0 };
@@ -123,6 +126,7 @@ export class Game {
       s.phase = 'active'; this.emit('start', null);
     }
     this.roundCandidates = []; this.pendingDamage = [];
+    tickActionState(this,dt);
     for (const actor of this.actors) {
       if (!actor.alive) continue;
       actor.recoil *= Math.exp(-8 * dt);
@@ -140,6 +144,7 @@ export class Game {
       actor.interactHeld = !!controls.interact;
     }
     this.updateGrenades(dt);
+    updateRockets(this,dt,rayActor);
     for (const hit of this.pendingDamage) this.damage(hit.target, hit.amount, hit.source, hit.kind, hit);
     this.updateHostages(dt);
     this.updateBomb();
@@ -182,7 +187,7 @@ export class Game {
   }
   moveBody(actor, dx, dy, dz) {
     const before = point(actor), projectedY = Math.max(0, actor.y + dy);
-    const bodies = [...this.actors.filter(a => a.alive), ...this.hostages.filter(h => !h.rescued)].filter(other => other !== actor &&
+    const bodies = [...this.actors.filter(a => a.alive), ...this.hostages.filter(h => h.alive!==false && !h.rescued)].filter(other => other !== actor &&
       projectedY < other.y + other.height - .02 && projectedY + actor.height > other.y + .02);
     let x = actor.x, z = actor.z, remainingX = dx, remainingZ = dz;
     actor.blockedBy = null;
@@ -238,17 +243,17 @@ export class Game {
     const reject = reason => ({ ok: false, reason });
     const w = WEAPONS[id];
     if (!w || !w.cost) return reject('Utrustningen kan inte köpas.');
-    if (!actor?.alive || this.phase !== 'buy') return reject('Köp är endast öppet under köptiden.');
-    if (!this.inBuyZone(actor)) return reject('Gå till lagets köpzon.');
+    if (!actor?.alive || (this.phase !== 'buy' && !(isEndless(this)&&this.phase==='active'))) return reject('Köp är endast öppet under köptiden.');
+    if (!isEndless(this)&&!this.inBuyZone(actor)) return reject('Gå till lagets köpzon.');
     if (w.team && w.team !== actor.team) return reject('Vapnet tillhör det andra laget.');
-    if (actor.money < w.cost) return reject('För lite krediter.');
+    if (!isEndless(this)&&actor.money < w.cost) return reject('För lite krediter.');
     if (w.slot === 'grenade' && actor.inventory[id] >= w.limit) return reject('Granatfacket är fullt.');
     if (w.slot === 'armor' && actor.armor >= 100) return reject('Rustningen är redan full.');
     if (w.slot === 'primary' && actor.inventory.primary?.id === id) return reject('Du har redan detta vapen.');
-    actor.money -= w.cost;
+    if(!isEndless(this))actor.money -= w.cost;
     if (w.slot === 'grenade') actor.inventory[id]++;
     else if (w.slot === 'armor') actor.armor = 100;
-    else { if (actor.inventory.primary) this.dropItem(actor, actor.inventory.primary); actor.inventory.primary = this.weaponItem(id); this.select(id, actor); }
+    else { if (actor.inventory.primary) this.dropItem(actor, actor.inventory.primary); actor.inventory.primary = this.weaponItem(id); actor.loadout=id; this.select(id, actor); }
     this.emit('buy', actor, { item: id }); return { ok: true };
   }
   select(slot, actor = this.player) {
@@ -277,7 +282,7 @@ export class Game {
     if (!item || !w.reload || item.ammo >= w.magazine || !item.reserve) return false;
     actor.reloadUntil = this.state.time + w.reload; this.emit('reload', actor, { weapon: actor.weapon, duration: w.reload }); return true;
   }
-  dropItem(actor, item) { this.state.drops.push({ ...point(actor), id: `drop-${++this.eventSerial}`, type: 'weapon', item: { ...item } }); }
+  dropItem(actor, item) { this.state.drops.push({ ...point(actor), id: `drop-${++this.eventSerial}`, type: 'weapon', createdAt:this.state.time, item: { ...item } }); }
   drop(actor = this.player) {
     if (!actor?.alive || !['buy', 'active'].includes(this.phase)) return false;
     if (actor.weapon === 'bomb' && this.bomb.carrierId === actor.id) {
@@ -301,19 +306,21 @@ export class Game {
     actor.recoil += w.recoil;
     this.emit('shot', actor, { weapon: actor.weapon, yaw: actor.yaw, pitch: actor.pitch, targetId: actor.bot?.target?.entity?.id,
       detectedAt: actor.bot?.target?.detectedAt, reactionAt: actor.bot?.target?.reactionAt });
+    actor.spawnProtectedUntil=0;
     if (actor.bot) actor.bot.onShot();
+    if(w.projectile){launchRocket(this,actor,direction(actor.yaw,actor.pitch));return true;}
     for (let i = 0; i < w.pellets; i++) {
       const dir = direction(actor.yaw + (this.random() - .5) * spread, actor.pitch + (this.random() - .5) * spread);
       const wall = this.world.raycast(origin, dir, w.range, { vision: false });
       let nearest = wall?.distance ?? w.range, victim = null;
-      for (const target of this.actors) {
-        if (!target.alive || target === actor) continue;
+      for (const target of [...this.actors,...(this.config.hostageDamage?this.hostages:[])]) {
+        if (!target.alive || target.rescued || target === actor) continue;
         const hit = rayActor(origin, dir, target, nearest);
         if (hit !== null && hit < nearest) { nearest = hit; victim = target; }
       }
       const hitPoint = { x: origin.x + dir.x * nearest, y: origin.y + dir.y * nearest, z: origin.z + dir.z * nearest };
       if (victim) {
-        if (victim.team !== actor.team) {
+        if (victim.team !== actor.team || this.config.friendlyFire) {
           this.pendingDamage.push({ target: victim, amount: w.damage, source: actor, kind: actor.weapon, point: hitPoint, direction: dir, sourcePosition: origin });
         }
       } else if (wall) this.emit('impact', null, { ...hitPoint, sourceId: actor.id, surface: wall.material ?? 'wall', normal: wall.normal, direction: dir });
@@ -322,7 +329,9 @@ export class Game {
     return true;
   }
   damage(target, amount, source, kind = 'shot', context = {}) {
-    if (this.phase !== 'active' || !target?.alive || !Number.isFinite(amount) || amount <= 0 || (source && source.team === target.team)) return false;
+    if (this.phase !== 'active' || !target?.alive || !Number.isFinite(amount) || amount <= 0 || (source && source.team && source.team === target.team && !this.config.friendlyFire && !(source===target&&kind==='bazooka'))) return false;
+    if(target.spawnProtectedUntil>this.state.time)return false;
+    if(target.kind==='hostage'&&!this.config.hostageDamage)return false;
     if (target.isPlayer && source && !source.isPlayer && source.team !== target.team) amount *= DIFFICULTIES[this.state.difficulty].humanDamage;
     const absorbed = Math.min(target.armor || 0, amount * .32); target.armor = Math.max(0, (target.armor || 0) - absorbed);
     const dealt = Math.min(target.hp, amount - absorbed); target.hp = Math.max(0, target.hp - dealt);
@@ -337,8 +346,10 @@ export class Game {
     if (target.hp > 0) return true;
     target.alive = false; target.deaths++; target.action = null; target.reloadUntil = 0; target.deathAt = this.state.time;
     target.deathCause = { sourceId: source?.id, sourceName: source?.name, weapon: kind, point: { ...hitPoint }, direction: { ...incoming } };
-    if (source) { source.kills++; source.money = Math.min(this.config.maxMoney, source.money + this.config.killMoney); }
-    if (target.inventory.primary) this.dropItem(target, target.inventory.primary);
+    if (source && source!==target && target.team && source.team!==target.team) { source.kills++; source.money = Math.min(this.config.maxMoney, source.money + this.config.killMoney); }
+    if (target.inventory?.primary) this.dropItem(target, target.inventory.primary);
+    if(target.kind==='hostage'){target.escortId=null;target.path=[];}
+    recordActionDeath(this,target,source);
     if (this.bomb.carrierId === target.id) Object.assign(this.bomb, { status: 'dropped', carrierId: null, ...point(target) });
     for (const hostage of this.hostages) if (hostage.escortId === target.id) { hostage.escortId = null; hostage.path = []; }
     this.emit('kill', target, { ...detail, deathAt: target.deathAt }); return true;
@@ -391,8 +402,8 @@ export class Game {
       this.state.smokes.push({ ...point(grenade), y: grenade.y + 1, id: grenade.id, radius: c.smokeRadius, until: this.state.time + c.smokeDuration }); return;
     }
     const owner = this.actors.find(a => a.id === grenade.ownerId), origin = { ...point(grenade), y: grenade.y + .08 };
-    for (const actor of this.actors) {
-      if (!actor.alive) continue;
+    for (const actor of [...this.actors,...(this.config.hostageDamage?this.hostages:[])]) {
+      if (!actor.alive||actor.rescued) continue;
       const target = eye(actor), d = Math.hypot(target.x - origin.x, target.y - origin.y, target.z - origin.z);
       if (grenade.type === 'he') {
         // Solid glass is cover for blast; clear glass only permits vision/flash.
@@ -406,13 +417,14 @@ export class Game {
   }
   interaction(actor = this.player, targetId = null) {
     if (!actor?.alive || this.phase !== 'active') return null;
+    if(isEndless(this))return null;
     const b = this.bomb, range = this.config.interactDistance;
     const reaches = target => distance(actor, target) < range && this.world.segmentClear(eye(actor), { ...point(target), y: (target.y ?? 0) + .4 }, { vision: false });
     if (actor.team === 'analysts' && b.status === 'planted' && reaches(b)) return { type: 'defuse', target: b, duration: this.config.defuseTime };
     if (actor.team === 'counterAnalysts') {
       if (b.carrierId === actor.id && distance(actor, this.world.anchors.bomb) <= this.world.anchors.bomb.radius && actor.onGround) return { type: 'plant', target: b, duration: this.config.plantTime };
       if (b.status === 'dropped' && reaches(b)) return { type: 'pickupBomb', target: b };
-      const hostage = this.hostages.filter(h => !h.rescued && (!h.escortId || h.escortId === actor.id) && (!targetId || h.id === targetId))
+      const hostage = this.hostages.filter(h => h.alive!==false && !h.rescued && (!h.escortId || h.escortId === actor.id) && (!targetId || h.id === targetId))
         .sort((a, c) => distance(actor, a) - distance(actor, c)).find(reaches);
       if (hostage) return { type: 'escort', target: hostage };
     }
@@ -459,7 +471,7 @@ export class Game {
   }
   updateHostages(dt) {
     for (const hostage of this.hostages) {
-      if (hostage.rescued) continue;
+      if (hostage.rescued||hostage.alive===false) continue;
       const escort = this.actors.find(a => a.id === hostage.escortId && a.alive);
       if (!escort) { hostage.escortId = null; hostage.path = []; continue; }
       const rescue = this.world.anchors.rescue;
@@ -491,7 +503,7 @@ export class Game {
     }
   }
   finishRound(result) {
-    const s = this.state; if (s.result || s.phase !== 'active') return false;
+    const s = this.state; if (isEndless(this)||s.result || s.phase !== 'active') return false;
     s.result = { ...result, round: s.round }; s.history.push(s.result); s.phase = 'result'; s.resultDeadline = s.time + this.config.resultTime;
     if (result.winner) s.score[result.winner]++;
     for (const team of Object.keys(TEAMS)) {

@@ -4,7 +4,7 @@
  */
 import * as THREE from '../../vendor/three/three.module.js';
 import { mergeGeometries } from '../../vendor/three/addons/utils/BufferGeometryUtils.js';
-import { cartridgeGeometry, CARTRIDGE_LABEL } from './cartridge-v11.mjs';
+import { cartridgeGeometry, CartridgeLOD, CARTRIDGE_LABEL } from './cartridge-v11.mjs';
 import { insidePolygon } from './physics.mjs';
 const bounds=p=>[Math.min(...p.map(q=>q[0])),Math.min(...p.map(q=>q[1])),Math.max(...p.map(q=>q[0])),Math.max(...p.map(q=>q[1]))];
 const hash=s=>[...s].reduce((n,c)=>(Math.imul(n,31)+c.charCodeAt(0))>>>0,7);
@@ -50,16 +50,22 @@ export function cartridgePlacements(world){
 export function buildCartridgeProps(world){
  const group=new THREE.Group();group.name='cartridge-v11.3-props';const {items,supports,placementAssumption}=cartridgePlacements(world),cells=new Map(),ownedGeometries=[],ownedMaterials=[],ownedTextures=[];
  for(const p of items){const key=`${Math.floor(p.x/8)}:${Math.floor(p.z/8)}:${p.open}`;if(!cells.has(key))cells.set(key,[]);cells.get(key).push(p);}
- let nearCalls=0,farCalls=0,nearTriangles=0,farTriangles=0;
+ const budgets={near:{calls:0,triangles:0},mid:{calls:0,triangles:0},far:{calls:0,triangles:0}};
  const matrix=new THREE.Matrix4(),q=new THREE.Quaternion(),scale=new THREE.Vector3(),pos=new THREE.Vector3();
  for(const [key,cell]of cells){
-  const lod=new THREE.LOD(),cx=cell.reduce((s,p)=>s+p.x,0)/cell.length,cz=cell.reduce((s,p)=>s+p.z,0)/cell.length;lod.position.set(cx,0,cz);lod.name=`cartridge-cell-${key}`;
-  for(const [detail,distance]of [['near',0],['far',4]]){
+  const cx=cell.reduce((s,p)=>s+p.x,0)/cell.length,cz=cell.reduce((s,p)=>s+p.z,0)/cell.length;
+  const transforms=cell.map(p=>{pos.set(p.x-cx,p.y,p.z-cz);q.setFromEuler(new THREE.Euler(0,p.yaw,p.roll));scale.setScalar(p.scale);return matrix.compose(pos,q,scale).clone();});
+  // The nearest/largest individual sample governs a shared batch. Measuring
+  // the cell centre or its combined bounds would hide close details or keep
+  // dozens of distant samples unnecessarily in the high-detail tier.
+  const bounds=cartridgeGeometry({open:cell[0].open}).bounds;
+  const lod=new CartridgeLOD(transforms.map(transform=>bounds.clone().applyMatrix4(transform)));lod.position.set(cx,0,cz);lod.name=`cartridge-cell-${key}`;
+  for(const [level,detail]of ['near','mid','far'].entries()){
    const template=cartridgeGeometry({detail,open:cell[0].open}),batch=new THREE.Group();
    for(const {geometry,material}of template.parts){const mesh=new THREE.InstancedMesh(geometry,material,cell.length);mesh.name=`Counter Analyst ${detail}`;mesh.castShadow=false;mesh.receiveShadow=true;mesh.userData.cartridgeVersion='11.3';
-    cell.forEach((p,i)=>{pos.set(p.x-cx,p.y,p.z-cz);q.setFromEuler(new THREE.Euler(0,p.yaw,p.roll));scale.setScalar(p.scale);matrix.compose(pos,q,scale);mesh.setMatrixAt(i,matrix);});mesh.instanceMatrix.needsUpdate=true;mesh.computeBoundingSphere();batch.add(mesh);
+    transforms.forEach((transform,i)=>mesh.setMatrixAt(i,transform));mesh.instanceMatrix.needsUpdate=true;mesh.computeBoundingSphere();batch.add(mesh);
    }
-   lod.addLevel(batch,distance);if(detail==='near'){nearCalls+=template.parts.length;nearTriangles+=template.triangles*cell.length;}else{farCalls+=template.parts.length;farTriangles+=template.triangles*cell.length;}
+   lod.addLevel(batch,level);budgets[detail].calls+=template.parts.length;budgets[detail].triangles+=template.triangles*cell.length;
   }
   group.add(lod);
  }
@@ -80,7 +86,7 @@ export function buildCartridgeProps(world){
  const contactMaterial=new THREE.MeshBasicMaterial({map:contactMap,transparent:true,depthWrite:false,polygonOffset:true,polygonOffsetFactor:-1});ownedMaterials.push(contactMaterial);
  const contactParts=items.map(p=>{const g=new THREE.PlaneGeometry(p.roll?.085:.065,.065);g.rotateX(-Math.PI/2);g.rotateY(p.yaw);g.translate(p.x,p.y-(p.roll?.029:0)+.0001,p.z);return g;});
  const contacts=mergeGeometries(contactParts,false);contactParts.forEach(g=>g.dispose());ownedGeometries.push(contacts);group.add(new THREE.Mesh(contacts,contactMaterial));
- group.userData={privateDerivative:true,cartridgeVersion:'11.3',label:CARTRIDGE_LABEL,cosmetic:true,placements:items,counts:{total:items.length,open:items.filter(p=>p.open).length,...Object.fromEntries([...new Set(items.map(p=>p.kind))].map(kind=>[kind,items.filter(p=>p.kind===kind).length]))},budget:{nearCalls:nearCalls+boxes.size+1,farCalls:farCalls+boxes.size+1,nearTriangles,farTriangles,cells:cells.size},placementAssumption,
+ group.userData={privateDerivative:true,cartridgeVersion:'11.3',label:CARTRIDGE_LABEL,cosmetic:true,placements:items,counts:{total:items.length,open:items.filter(p=>p.open).length,...Object.fromEntries([...new Set(items.map(p=>p.kind))].map(kind=>[kind,items.filter(p=>p.kind===kind).length]))},budget:{...Object.fromEntries(Object.entries(budgets).flatMap(([detail,b])=>[[`${detail}Calls`,b.calls+boxes.size+1],[`${detail}Triangles`,b.triangles]])),cells:cells.size},placementAssumption,
   dispose(){group.traverse(o=>{if(o.isInstancedMesh)o.dispose();});ownedGeometries.forEach(g=>g.dispose());ownedMaterials.forEach(m=>m.dispose());ownedTextures.forEach(t=>t.dispose());group.clear();}};
  return group;
 }
