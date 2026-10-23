@@ -1,0 +1,65 @@
+name: Stage approved public runtime 0.10
+on:
+  push:
+    branches: [release/import-0.10-2026-10-23]
+    paths: [.github/workflows/import-approved-runtime.yml]
+permissions:
+  contents: write
+jobs:
+  import:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+      - name: Verify approved public-only ZIP before importing
+        env:
+          # Expiring read URL for approved public game files ONLY, not private source.
+          PUBLIC_PACKAGE_URL: 'https://sdmntprnortheu.oaiusercontent.com/files/00000000-ec04-81f4-be02-ebad8f9328ae/raw?se=2026-10-23T21%3A24%3A12Z&sp=r&sv=2026-02-06&sr=b&scid=cf3125bd-b5ba-567e-b1e8-9f6da6880e2e&skoid=40ce4b34-a373-4a62-b0bf-44befe221915&sktid=a48cca56-e6da-484e-a814-9c849652bcb3&skt=2026-10-23T06%3A22%3A31Z&ske=2026-10-24T06%3A22%3A31Z&sks=b&skv=2026-02-06&sig=ucHQElkp2ttIN221DAUFlMNoWSYyC8mcPKPQO4k3leQ%3D'
+        run: |
+          python3 - <<'PY'
+          import os,io,zipfile,json,hashlib,urllib.request,pathlib,re,stat
+          data=urllib.request.urlopen(os.environ['PUBLIC_PACKAGE_URL'],timeout=60).read(35000000)
+          assert hashlib.sha256(data).hexdigest()=='db91245d404ff51e0150102baa437ad220ee14dcfdc8b173d52bb4208adf64df','Archive digest mismatch'
+          root=pathlib.Path(os.environ['RUNNER_TEMP'])/'runtime010';root.mkdir()
+          with zipfile.ZipFile(io.BytesIO(data)) as z:
+              entries=[i for i in z.infolist() if not i.is_dir()]
+              assert len(entries)==len({i.filename for i in entries})==106
+              assert sum(i.file_size for i in entries)<30000000
+              raw=z.read('build-info.json')
+              assert hashlib.sha256(raw).hexdigest()=='1dbcb8ea12b077f412e1efbd73e6c30f9d1627a194aa34e86d7280fe805b5d3e'
+              info=json.loads(raw)
+              assert info['gameVersion']=='0.10.0' and info['release']['mode']=='public-release' and info['release']['publicReleaseEligible'] is True
+              files={f['path']:f for f in info['files']}
+              assert {i.filename for i in entries}==set(files)|{'build-info.json'}
+              allowed=re.compile(r'^(?:\.nojekyll|build-info\.json|credits\.html|index\.html|robots\.txt|fps/(?:index\.html|style\.css)|src/(?:floor5-data|world)\.js|src/fps/[\w-]+\.mjs|vendor/(?:package\.json|(?:three|yuka)/[\w./-]+\.js)|assets/fps/(?:models/[\w.-]+\.glb|audio/[\w.-]+\.(?:ogg|wav)|materials/[\w./-]+\.(?:jpg|jpeg|png|webp|ktx2))|licenses/[\w.-]+)$')
+              for i in entries:
+                  p=i.filename
+                  assert allowed.fullmatch(p) and not any(x in ('..','.','') for x in p.split('/')) and '\\' not in p,p
+                  assert not stat.S_ISLNK(i.external_attr>>16),p
+                  b=z.read(p)
+                  if p in files:assert len(b)==files[p]['bytes'] and hashlib.sha256(b).hexdigest()==files[p]['sha256'],p
+                  out=root/p;out.parent.mkdir(parents=True,exist_ok=True);out.write_bytes(b)
+          print('Verified 106 public runtime files, 0.10.0, exact approved package.')
+          PY
+      - name: Stage clean runtime commit without moving main
+        env:
+          BASE: 0c21b3df20fc25a3d3b7eca720ff8603b9f4c8a0
+          DEST: release/runtime-0.10-2026-10-23
+        run: |
+          set -euo pipefail
+          test "$(git ls-remote origin refs/heads/main | cut -f1)" = "$BASE"
+          test -z "$(git ls-remote origin refs/heads/$DEST)"
+          export GIT_INDEX_FILE="$RUNNER_TEMP/runtime010.index"
+          git read-tree --empty
+          git --work-tree="$RUNNER_TEMP/runtime010" add --all
+          tree=$(git write-tree)
+          test "$tree" = 'a67fb1829801088e12cc195ae4f23c7306279e77'
+          test "$(git ls-tree -r --name-only "$tree" | wc -l)" -eq 106
+          git ls-tree -r --name-only "$tree" | grep -E '^(\.github|references|reviews|docs|tests|tools|archive|prototypes)/' && exit 1 || true
+          export GIT_AUTHOR_NAME='capstere' GIT_AUTHOR_EMAIL='197086804+capstere@users.noreply.github.com'
+          export GIT_COMMITTER_NAME="$GIT_AUTHOR_NAME" GIT_COMMITTER_EMAIL="$GIT_AUTHOR_EMAIL"
+          commit=$(printf '%s\n' 'Publish approved Cartridge Strike 0.10: corrected Visual Depth and Combat Flow' '' 'Owner-requested release 2026-10-23. Tested source 506301f, merged PR13 at 23a2cf9. Only public-approved runtime and licenses; no private originals or private Git history.' | git commit-tree "$tree" -p "$BASE")
+          git push origin "$commit:refs/heads/$DEST"
+          printf 'Staged commit: %s\nRuntime tree: %s\n' "$commit" "$tree" >> "$GITHUB_STEP_SUMMARY"
