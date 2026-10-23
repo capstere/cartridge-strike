@@ -1,3 +1,4 @@
+import {controlObjective,combatSpawnCandidates,activeControl} from './combat-flow.mjs';
 /** Arcade rules. Simulation time only; visual/audio systems never own damage or respawns. */
 import {seededRandom, WEAPONS} from './config.mjs';
 import {BotController} from './bots.mjs';
@@ -40,13 +41,15 @@ export function respawnPoint(g,a){
  const anchors=g.world.anchors[a.team]||g.world.anchors.hostages;
  const home=anchors[a.index%anchors.length]||anchors[0];
  const nodes=g.world.navigation?.nodes||[];
- const candidates=[...anchors,...nodes.filter(n=>anchors.some(h=>dist(n,h)<7)).filter((_,i)=>i%3===0)].slice(0,180);
+ const candidates=[...combatSpawnCandidates(g,a),...anchors,...nodes.filter(n=>anchors.some(h=>dist(n,h)<7)).filter((_,i)=>i%3===0)].slice(0,180);
  const living=aliveBodies(g).filter(o=>o!==a);
  let best=null,bestScore=-Infinity;
  for(const p of candidates){
   if(g.world.canOccupy&&!g.world.canOccupy(p.x,p.z,a.radius+.015,a.height,0))continue;
   if(living.some(o=>dist(o,p)<(o.radius||.2)+a.radius+.12))continue;
-  let score=-dist(p,home)*.08;
+  if(p.frontline&&living.some(o=>o.team&&o.team!==a.team&&dist(o,p)<7))continue;
+  const control=activeControl(g);
+  let score=-dist(p,home)*.08-(control?dist(p,control)*.22:0);
   for(const e of living.filter(o=>o.team&&o.team!==a.team)){
    const d=dist(e,p),visible=g.world.segmentClear({...p,y:1.4},eye(e),{vision:true});
    score+=Math.min(d,22)*.025-(visible?Math.max(0,18-d)*1.1:0);
@@ -102,6 +105,7 @@ export function actionObjective(bot){
   if(dist(a,order.point)<1+(.25*a.index))bot.setGoal(null);return true;
  }
  if(!isEndless(g))return false;
+ if(controlObjective(bot))return true;
  // Shared public patrol destinations, not enemy coordinates. Perception still needs sight/hearing.
  const w=g.world,points=[w.anchors.bomb,w.tactical?.guardPoints?.south,w.anchors.rescue,w.tactical?.guardPoints?.north,...w.anchors.hostages].filter(Boolean);
  const phase=Math.floor((s.time+a.index*4)/18),target=points[(phase+a.index)%points.length];

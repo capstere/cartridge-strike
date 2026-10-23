@@ -1,3 +1,4 @@
+import {upgradeViewSurfaces,disposeViewSurfaces} from './view-surface.mjs';
 /** Public model API: original meshes/mechanisms + read-only presentation upgrades.
  * model-primitives.mjs retains existing mechanisms and adds the fictional bazooka.
  * Keeping the original geometry in one module avoids duplicate active versions.
@@ -12,7 +13,7 @@ import { createViewMotion, viewMotion, strideSample, solveLeg, clamp } from './p
 
 export function makeWeapon(id='p9',options={}) {
   const model=primitiveWeapon(id,options);
-  if(options.viewmodel!==false){fitPresentationHands(model);model.userData.presentationMotion=createViewMotion();}
+  if(options.viewmodel!==false){fitPresentationHands(model);upgradeViewSurfaces(model);model.userData.presentationMotion=createViewMotion();}
   return model;
 }
 export function animateWeapon(model,actor,time,dt,options={}) {
@@ -93,6 +94,6 @@ export function animateActor(model,actor,time,dt,options={}) {
   if(d.bag){d.bag.rotation.x=Math.sin(g.phase*Math.PI*2+.7)*pace*.065;d.bag.rotation.z=Math.sin(g.phase*Math.PI*2+.3)*pace*.045;}
   // Arms, weapon sockets, hit reaction, corpses and animation timings remain original.
 }
-export function disposeWeaponResources(){disposePresentationHands();disposePrimitiveWeapons();}
+export function disposeWeaponResources(){disposeViewSurfaces();disposePresentationHands();disposePrimitiveWeapons();}
 
 export function animateCorpse(model,actor,time,options={}){return model.userData.avatar?authoredCorpse(model,actor,time,options):primitiveCorpse(model,actor,time,options);}

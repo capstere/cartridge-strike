@@ -1,3 +1,4 @@
+import {initializeCombat,tickCombat,combatEvent} from './combat-flow.mjs';
 import { CONFIG, TEAMS, WEAPONS, PRIORITY, seededRandom, DIFFICULTIES, DEFAULT_DIFFICULTY, TEAMMATE_DIFFICULTY } from './config.mjs';
 import { BotController } from './bots.mjs';
 import {prepareActionRound,tickActionState,recordActionDeath,sendRadio,launchRocket,updateRockets,isEndless} from './action-rules.mjs';
@@ -99,6 +100,7 @@ export class Game {
     s.bomb = { status: 'carried', carrierId: carrier.id, x: carrier.x, y: 0, z: carrier.z, deadline: Infinity, nextBeep: Infinity };
     for (const actor of this.actors) if (actor.bot) actor.bot.shop();
     prepareActionRound(this);
+    initializeCombat(this);
     this.emit('round', null, { round: s.round });
   }
   radio(id, actor=this.player) { return sendRadio(this,id,actor); }
@@ -146,6 +148,7 @@ export class Game {
     this.updateGrenades(dt);
     updateRockets(this,dt,rayActor);
     for (const hit of this.pendingDamage) this.damage(hit.target, hit.amount, hit.source, hit.kind, hit);
+    tickCombat(this,dt);
     this.updateHostages(dt);
     this.updateBomb();
     s.smokes = s.smokes.filter(smoke => smoke.until > s.time);
@@ -523,6 +526,7 @@ export class Game {
   emit(type, actor, extra = {}) {
     const event = { type, time: this.state.time, serial: ++this.eventSerial, ...(actor ? { ...point(actor), actorId: actor.id, team: actor.team } : {}), ...extra };
     this.events.push(event);
+    combatEvent(this,event);
     if (['shot', 'step', 'jump', 'land', 'reload', 'throw', 'bounce', 'he', 'plant', 'defuse', 'rustle'].includes(type)) this.soundEvents.push(event);
     if (this.events.length > 2500) this.events.splice(0, this.events.length - 2500);
     return event;
