@@ -1,0 +1,66 @@
+name: Stage approved public runtime 0.8
+on:
+  push:
+    branches: [release/import-0.8-2026-10-23]
+    paths: [.github/workflows/import-approved-runtime.yml]
+permissions:
+  contents: write
+jobs:
+  import:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+      - name: Download and independently verify the approved public-only artifact
+        env:
+          # Short-lived read access to this already-public-approved game ZIP only.
+          # Not a repository token; no private source files/history in the archive.
+          PUBLIC_PACKAGE_URL: 'https://sdmntprnortheu.oaiusercontent.com/files/00000000-8818-81f4-ab07-1ab53c36a527/raw?se=2026-10-23T10%3A10%3A56Z&sp=r&sv=2026-02-06&sr=b&scid=ee6ab7e6-d3ee-517d-9a1d-9c6e156a86c9&skoid=40ce4b34-a373-4a62-b0bf-44befe221915&sktid=a48cca56-e6da-484e-a814-9c849652bcb3&skt=2026-10-23T06%3A24%3A12Z&ske=2026-10-24T06%3A24%3A12Z&sks=b&skv=2026-02-06&sig=MYGojzaH8rVKhRlCLoEAnS7q3aXcBqfPYsE63RZT0qc%3D'
+        run: |
+          python3 - <<'PY'
+          import os,io,zipfile,json,hashlib,urllib.request,pathlib,re,stat
+          data=urllib.request.urlopen(os.environ['PUBLIC_PACKAGE_URL'],timeout=60).read(35000000)
+          assert hashlib.sha256(data).hexdigest()=='df90941a1c02e65bf20c2d4fa9eaf18ca9688b459b02b08627757136d09a6e83','Archive digest mismatch'
+          root=pathlib.Path(os.environ['RUNNER_TEMP'])/'runtime08';root.mkdir()
+          with zipfile.ZipFile(io.BytesIO(data)) as z:
+              entries=[i for i in z.infolist() if not i.is_dir()]
+              assert len(entries)==len({i.filename for i in entries})==99
+              assert sum(i.file_size for i in entries)<30000000
+              raw=z.read('build-info.json')
+              assert hashlib.sha256(raw).hexdigest()=='a6b99c24c5f187027d2a77f68c72536d452677ba5c20cd44c070f29dcfb68cdb'
+              info=json.loads(raw)
+              assert info['gameVersion']=='0.8.0' and info['release']['mode']=='public-release' and info['release']['publicReleaseEligible'] is True
+              files={f['path']:f for f in info['files']}
+              assert {i.filename for i in entries}==set(files)|{'build-info.json'}
+              allowed=re.compile(r'^(?:\.nojekyll|build-info\.json|credits\.html|index\.html|robots\.txt|fps/(?:index\.html|style\.css)|src/(?:floor5-data|world)\.js|src/fps/[\w-]+\.mjs|vendor/(?:package\.json|(?:three|yuka)/[\w./-]+\.js)|assets/fps/(?:models/[\w.-]+\.glb|audio/[\w.-]+\.(?:ogg|wav)|materials/[\w./-]+\.(?:jpg|jpeg|png|webp|ktx2))|licenses/[\w.-]+)$')
+              for i in entries:
+                  p=i.filename
+                  assert allowed.fullmatch(p) and not any(x in ('..','.','') for x in p.split('/')) and '\\' not in p,p
+                  assert not stat.S_ISLNK(i.external_attr>>16),p
+                  b=z.read(p)
+                  if p in files:
+                      assert len(b)==files[p]['bytes'] and hashlib.sha256(b).hexdigest()==files[p]['sha256'],p
+                  out=root/p;out.parent.mkdir(parents=True,exist_ok=True);out.write_bytes(b)
+          print('Verified 99 public runtime files, 0.8.0, exact approved package.')
+          PY
+      - name: Create a clean runtime-only commit; do not move main
+        env:
+          BASE: a02e891aaa369d56df8bd9351ccdd9bc48992042
+          DEST: release/runtime-0.8-2026-10-23
+        run: |
+          set -euo pipefail
+          test "$(git ls-remote origin refs/heads/main | cut -f1)" = "$BASE"
+          test -z "$(git ls-remote origin refs/heads/$DEST)"
+          export GIT_INDEX_FILE="$RUNNER_TEMP/runtime08.index"
+          git read-tree --empty
+          git --work-tree="$RUNNER_TEMP/runtime08" add --all
+          tree=$(git write-tree)
+          test "$(git ls-tree -r --name-only "$tree" | wc -l)" -eq 99
+          git ls-tree -r --name-only "$tree" | grep -E '^(\.github|references|reviews|docs|tests|tools|archive|prototypes)/' && exit 1 || true
+          export GIT_AUTHOR_NAME='capstere' GIT_AUTHOR_EMAIL='197086804+capstere@users.noreply.github.com'
+          export GIT_COMMITTER_NAME="$GIT_AUTHOR_NAME" GIT_COMMITTER_EMAIL="$GIT_AUTHOR_EMAIL"
+          commit=$(printf '%s\n' 'Publish approved Cartridge Strike 0.8: Living Floor, characters and Endless Action' '' 'Public runtime only, approved by owner 2026-10-23. Source gameplay: onboard 148e643. No private originals or private source history copied.' | git commit-tree "$tree" -p "$BASE")
+          git push origin "$commit:refs/heads/$DEST"
+          printf 'Staged runtime commit: %s\nRuntime tree: %s\n' "$commit" "$tree" >> "$GITHUB_STEP_SUMMARY"
