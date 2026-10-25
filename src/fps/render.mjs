@@ -1,4 +1,6 @@
 import {makeWeapon} from './models.mjs';
+import {WEAPONS} from './config.mjs';
+import {buildFacilityScene} from './facility-scene.mjs';
 import {installFocusLighting} from './strike-kit-environment.mjs';
 import {VisualDepth} from './visual-depth.mjs';
 import {inspectPose} from './view-surface.mjs';
@@ -72,7 +74,10 @@ export class Renderer extends EngineRenderer {
       this.actionVisuals=new ActionVisuals(this.scene,world);
       await loadCharacterLibrary();
       if(this.presentationDisposed)return;
-      this.livingScene=buildLivingScene(world,this.registry);
+      this.facilityScene=await buildFacilityScene(world,settings);
+      if(this.presentationDisposed){this.facilityScene?.dispose();return;}
+      this.livingScene=buildLivingScene(world,this.registry,{replacedProps:this.facilityScene?.plan.replacedProps,refinedFreight:!!this.facilityScene});
+      if(this.facilityScene)this.scene.add(this.facilityScene.root);
       this.scene.add(this.livingScene.root);this.livingScene.decorateCeilings(this.scene);
       freezeStaticTransforms(this.livingScene.root);
       const started=performance.now(),field=await bakeLightfield(world,this.fixtures,{maxSize:96});
@@ -93,19 +98,34 @@ export class Renderer extends EngineRenderer {
       this.presentationReport={kind:'approximate-startup-indirect-field',width:field.width,height:field.height,
         sources:field.sources,visibilityChecks:field.checks,materials:this.presentationRestores.length,
         milliseconds:performance.now()-started,geometryChanged:false,photometricValidation:false};
-      const visibility=this.lights.map(light=>light.visible),shadows=this.renderer.shadowMap.enabled;
+      // Prepare the actual rigged models and all first-use world weapon materials.
+      // Previously these only existed after Start and compiled during combat.
+      const startupActors=[];
+      for(const side of ['analysts','counterAnalysts'])for(let i=0;i<5;i++)startupActors.push(this.actorModel({id:`${side}-${i}`,team:side}));
+      for(let i=0;i<2;i++)startupActors.push(this.actorModel({id:`hostage-${i}`}));
+      this.worldWeaponWarmup=new THREE.Group();this.worldWeaponWarmup.name='world-weapon-preload';
+      for(const w of Object.values(WEAPONS))if(!['armor'].includes(w.slot))this.worldWeaponWarmup.add(makeWeapon(w.id,{viewmodel:false}));
+      this.scene.add(this.worldWeaponWarmup);
+      const visibility=this.lights.map(light=>light.visible),shadows=this.renderer.shadowMap.enabled,previousTarget=this.renderer.getRenderTarget();
       try {
-        for(const shadowed of [false,true])for(let count=0;count<=this.lights.length;count++){
+        // Standard renders the world into a linear HDR target. Compiling only
+        // the default framebuffer leaves different shader variants cold.
+        for(const target of [null,this.visualDepth.target])for(const shadowed of [false,true])for(let count=0;count<=this.lights.length;count++){
+          this.renderer.setRenderTarget(target);
           this.renderer.shadowMap.enabled=shadowed;this.lights.forEach((light,i)=>light.visible=i<count);
           await this.renderer.compileAsync(this.scene,this.camera);
         }
-      } finally { this.renderer.shadowMap.enabled=shadows;this.lights.forEach((light,i)=>light.visible=visibility[i]); }
+      } finally { this.renderer.setRenderTarget(previousTarget);this.renderer.shadowMap.enabled=shadows;this.lights.forEach((light,i)=>light.visible=visibility[i]); }
       // Compile the three new first-person models before Start, not on first weapon switch.
-      this.kitWarmup=[];
-      for(const id of ['p9','p12','cr4']){
+      const depth=this.visualDepth;
+      for(const material of [depth.aoMaterial,depth.material]){depth.quad.material=material;await this.renderer.compileAsync(depth.scene,depth.camera);}
+      depth.quad.material=depth.material;
+      this.worldWeaponWarmup.visible=false;for(const actor of startupActors)actor.visible=false;
+      this.kitWarmup=[];this.weaponWarmup=[];
+      for(const id of Object.values(WEAPONS).filter(w=>w.slot!=='armor').map(w=>w.id)){
         if(this.presentationDisposed)return;
         const model=makeWeapon(id);this.weaponCache.set(id,model);this.viewScene.add(model);
-        try{await this.renderer.compileAsync(this.viewScene,this.viewCamera);this.kitWarmup.push(id);}
+        try{await this.renderer.compileAsync(this.viewScene,this.viewCamera);this.weaponWarmup.push(id);if(['p9','p12','cr4'].includes(id))this.kitWarmup.push(id);}
         finally{this.viewScene.remove(model);}
       }
     });
@@ -146,7 +166,7 @@ export class Renderer extends EngineRenderer {
   }
   dispose(){
     if(this.presentationDisposed)return;this.presentationDisposed=true;
-    this.focusLighting?.dispose();
+    this.focusLighting?.dispose();this.facilityScene?.dispose();
     for(const restore of this.presentationRestores||[])restore();
     window.removeEventListener('keydown',this.onInspectKey);this.renderer.render=this.nativeRender;this.visualDepth?.dispose();this.combatVisuals?.dispose();this.actionVisuals?.dispose();disposeCharacterLibrary();this.presentationRestores=[];this.presentationField?.dispose();this.livingScene?.dispose();super.dispose();
   }

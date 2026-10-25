@@ -1,11 +1,11 @@
 {
   "schemaVersion": 1,
-  "gameVersion": "0.11.0",
+  "gameVersion": "0.12.0",
   "entrypoint": "fps/index.html",
   "release": {
     "mode": "public-release",
     "publicReleaseEligible": true,
-    "policySha256": "0203eaba65e3acb4f57106f3a28185c5a64934aaead9a7f719dae6c99b8e8b50",
+    "policySha256": "dec547056d12c365fe473ef5cfe7af0000ac98dc9b684239001878ac3ec9c358",
     "derivatives": [
       {
         "id": "cartridge-v11.3",
@@ -26,6 +26,55 @@
           }
         ],
         "runtimeDigest": "693cc4139eed938985286796d59acfe39167531a9ff2794033b177961822f58d",
+        "distributionApproved": true
+      },
+      {
+        "id": "nord01-facility",
+        "source": {
+          "repository": "capstere/onboard",
+          "commit": "566ae1fadabb1f45d644e04cdbeebefb0b81a197",
+          "path": "asset-portfolio/nord-01/source/build_assets.py",
+          "sha256": "14de641905d6fe2a70c377d74132a8d0fe1b28b890a3019168993e3ff25adde4"
+        },
+        "runtimeFiles": [
+          {
+            "path": "assets/fps/models/nord01-access_terminal-lod0.glb",
+            "sha256": "8fcd1685b7908e27e98daae25fae0fa75da13c3b88f3aa966db6694839ba538c"
+          },
+          {
+            "path": "assets/fps/models/nord01-access_terminal-lod2.glb",
+            "sha256": "6af1b9a3f74a827cb66024e7b44140e7427dee006a6ad3302d1f008d6f54fdfe"
+          },
+          {
+            "path": "assets/fps/models/nord01-medical_case-lod0.glb",
+            "sha256": "c7579a593d944d0f32f3554b8ca0b0254de65ae0658d2de0204ef695b6a52b10"
+          },
+          {
+            "path": "assets/fps/models/nord01-security_locker-lod0.glb",
+            "sha256": "4368ceb4cd3a26d1c8a3ead0413f71cd5204274410b46b031c423b5d1388b277"
+          },
+          {
+            "path": "assets/fps/models/nord01-security_locker-lod2.glb",
+            "sha256": "a08cb42c5a564981f520c2c38aaed6f82e448926a501cf7fe6b0dd14a56a5028"
+          },
+          {
+            "path": "assets/fps/models/nord01-strip_light-lod0.glb",
+            "sha256": "11785a1708dfae00d37628e3f06dee5cf95175ce49b0fc5bd867f0bd83b96f53"
+          },
+          {
+            "path": "assets/fps/models/nord01-supply_crate-lod0.glb",
+            "sha256": "a021e8b54ee354f0a41e4ceaa37b994e68e444b8d715033d47d6f3d4bed3a67d"
+          },
+          {
+            "path": "assets/fps/models/nord01-wall_vent-lod0.glb",
+            "sha256": "25482d2abec3a01920b9f213bf5df6223ac5df4df3a578a53da7c095e2c97757"
+          },
+          {
+            "path": "assets/fps/models/nord01-wall_vent-lod2.glb",
+            "sha256": "5b0b934e822c8275bfee08812a3dbd1940fda3d8174f6247b336824748e8ef99"
+          }
+        ],
+        "runtimeDigest": "8a7ce0c88e66352a739f9ac0deaabfa0d88a8b78bd073f8fc99d67deee3dad6f",
         "distributionApproved": true
       }
     ]
@@ -75,6 +124,36 @@
       "path": "assets/fps/audio/explosionCrunch_000.ogg",
       "bytes": 28274,
       "sha256": "4b597d658d0ae101f0a030fbeea5fc3a4292ab85f017470a8254a8e7959cbd69"
+    },
+    {
+      "path": "assets/fps/audio/ffsl-f_charge_rifle-1.mp3",
+      "bytes": 4965,
+      "sha256": "7e7afbc429f8e026260bd9987d17bfd5f6efcd96aad102bc62a6328b92185e96"
+    },
+    {
+      "path": "assets/fps/audio/ffsl-f_magin_pistol.mp3",
+      "bytes": 4197,
+      "sha256": "83d64cd3bfbf2aa32f0aab60ff33ce68ce48f03d1e210a57cd505c5ccfcec0c8"
+    },
+    {
+      "path": "assets/fps/audio/ffsl-f_magin_rifle-1.mp3",
+      "bytes": 3141,
+      "sha256": "b571d0085ed95ad51565a5198535ed06088a71a4210d9de5c93231b2e8f72e94"
+    },
+    {
+      "path": "assets/fps/audio/ffsl-f_magout_pistol.mp3",
+      "bytes": 3285,
+      "sha256": "914d8ea0fc1cb86a076ed6fd32a0de17f84097bcb3409cc5a401361c5e7b7d7a"
+    },
+    {
+      "path": "assets/fps/audio/ffsl-f_magout_rifle-1.mp3",
+      "bytes": 6861,
+      "sha256": "81a8699d6b4f0530a97c371b5dfc6f9148475a1ee898a397c7b954e962b4c50f"
+    },
+    {
+      "path": "assets/fps/audio/ffsl-f_slide_pistol-1.mp3",
+      "bytes": 1869,
+      "sha256": "1045bc354b1655704cba2ee77bed1d56536d57ecb292e838fb715d212eb837b3"
     },
     {
       "path": "assets/fps/audio/footstep_carpet_000.ogg",
@@ -217,6 +296,51 @@
       "sha256": "5942cbad29a2d2b956619569926e81d50a4174403d592fece6556e57632dc643"
     },
     {
+      "path": "assets/fps/models/nord01-access_terminal-lod0.glb",
+      "bytes": 29648,
+      "sha256": "8fcd1685b7908e27e98daae25fae0fa75da13c3b88f3aa966db6694839ba538c"
+    },
+    {
+      "path": "assets/fps/models/nord01-access_terminal-lod2.glb",
+      "bytes": 18576,
+      "sha256": "6af1b9a3f74a827cb66024e7b44140e7427dee006a6ad3302d1f008d6f54fdfe"
+    },
+    {
+      "path": "assets/fps/models/nord01-medical_case-lod0.glb",
+      "bytes": 22340,
+      "sha256": "c7579a593d944d0f32f3554b8ca0b0254de65ae0658d2de0204ef695b6a52b10"
+    },
+    {
+      "path": "assets/fps/models/nord01-security_locker-lod0.glb",
+      "bytes": 38028,
+      "sha256": "4368ceb4cd3a26d1c8a3ead0413f71cd5204274410b46b031c423b5d1388b277"
+    },
+    {
+      "path": "assets/fps/models/nord01-security_locker-lod2.glb",
+      "bytes": 18476,
+      "sha256": "a08cb42c5a564981f520c2c38aaed6f82e448926a501cf7fe6b0dd14a56a5028"
+    },
+    {
+      "path": "assets/fps/models/nord01-strip_light-lod0.glb",
+      "bytes": 14632,
+      "sha256": "11785a1708dfae00d37628e3f06dee5cf95175ce49b0fc5bd867f0bd83b96f53"
+    },
+    {
+      "path": "assets/fps/models/nord01-supply_crate-lod0.glb",
+      "bytes": 22360,
+      "sha256": "a021e8b54ee354f0a41e4ceaa37b994e68e444b8d715033d47d6f3d4bed3a67d"
+    },
+    {
+      "path": "assets/fps/models/nord01-wall_vent-lod0.glb",
+      "bytes": 40648,
+      "sha256": "25482d2abec3a01920b9f213bf5df6223ac5df4df3a578a53da7c095e2c97757"
+    },
+    {
+      "path": "assets/fps/models/nord01-wall_vent-lod2.glb",
+      "bytes": 22048,
+      "sha256": "5b0b934e822c8275bfee08812a3dbd1940fda3d8174f6247b336824748e8ef99"
+    },
+    {
       "path": "assets/fps/models/pottedPlant.glb",
       "bytes": 7576,
       "sha256": "5b760eda2766f75fda36b2c5df652a1662f82981ef64cd8fa7fe7bcd386b3a15"
@@ -238,8 +362,8 @@
     },
     {
       "path": "fps/style.css",
-      "bytes": 19569,
-      "sha256": "65018cb04dc70d755c61db5fed065b39258236e444d199781e64df04e2bc25e2"
+      "bytes": 20525,
+      "sha256": "1e6fa08f6d395d0677933e25d14fe07500bbe0e2cffad8ac4eac3831d573637a"
     },
     {
       "path": "licenses/action-audio.txt",
@@ -248,6 +372,11 @@
     },
     {
       "path": "licenses/ambientcg-CC0-1.0.txt",
+      "bytes": 7048,
+      "sha256": "a2010f343487d3f7618affe54f789f5487602331c0a8d03f49e9a7c547cf0499"
+    },
+    {
+      "path": "licenses/free-firearm-sound-library-CC0.txt",
       "bytes": 7048,
       "sha256": "a2010f343487d3f7618affe54f789f5487602331c0a8d03f49e9a7c547cf0499"
     },
@@ -265,6 +394,11 @@
       "path": "licenses/kenney-sci-fi-sounds-CC0.txt",
       "bytes": 571,
       "sha256": "a9767b25c3533f69d03af136480efad08efba19a9f0d89616992b34c79fd6186"
+    },
+    {
+      "path": "licenses/nord01-original.txt",
+      "bytes": 1343,
+      "sha256": "feffd364dc0b869909e1c3ccce3ea08f4c5271ffa896fc0ad44d32ddaa324427"
     },
     {
       "path": "licenses/polyhaven-CC0-1.0.txt",
@@ -313,13 +447,18 @@
     },
     {
       "path": "src/fps/app.mjs",
-      "bytes": 23814,
-      "sha256": "a59f3dcfcbe241d7d524b680e92a6db0454be121f125f041bedd8ed3d7e46954"
+      "bytes": 23940,
+      "sha256": "c34233dc2c06fc63e1c531be50d34e921d4a1da86cf58a6a58b7694fc6b3302d"
     },
     {
       "path": "src/fps/audio.mjs",
       "bytes": 17304,
       "sha256": "88f111ae52dd7fc32d1f707649267bde97614fe49247028adae2827947df30b3"
+    },
+    {
+      "path": "src/fps/authored-hand-data.mjs",
+      "bytes": 849739,
+      "sha256": "a061ad5d251ec2247dd9ca2d5bb979a32692f6f45815e9437cc708a74eb78fbe"
     },
     {
       "path": "src/fps/bots.mjs",
@@ -338,13 +477,13 @@
     },
     {
       "path": "src/fps/character-actors.mjs",
-      "bytes": 5730,
-      "sha256": "ed1b9f2295eea2592392009efc884a56592dc19124ae9ab528a87ff33007ce1e"
+      "bytes": 6336,
+      "sha256": "d184bb08ceca69f024c3196081f7f28e12e2ff44b17cbe7f997e61be3565379a"
     },
     {
       "path": "src/fps/character-library.mjs",
-      "bytes": 13736,
-      "sha256": "7be23872944666150f3b170bdd55d1d01b911e68a2385d0bfe97eb8746e09844"
+      "bytes": 16079,
+      "sha256": "7f9cc45dbf2af63b5e55750bf1ae62edf17efd01fa6a50cbe95a362f6e22d204"
     },
     {
       "path": "src/fps/combat-audio.mjs",
@@ -387,6 +526,16 @@
       "sha256": "7e2688b99dc7a2fc23cb3f2e8bbd00da266784703bb6254dde537ae9231e3122"
     },
     {
+      "path": "src/fps/facility-assets.mjs",
+      "bytes": 7581,
+      "sha256": "fe7acabc8965c0612d296054ccf2ff40992c42602778cb4c5ebcbd48cc1fd1aa"
+    },
+    {
+      "path": "src/fps/facility-scene.mjs",
+      "bytes": 12317,
+      "sha256": "0bc661ff9d1e7f2a1d602bb55cbbd34233dd1d447ee1131bd2ac20746a1c09d2"
+    },
+    {
       "path": "src/fps/furnishings.mjs",
       "bytes": 9249,
       "sha256": "3076ab459cdbd5df0c5b5e449834c03f7cea3eb2103db20eae5aeafc05f69b91"
@@ -395,6 +544,11 @@
       "path": "src/fps/game.mjs",
       "bytes": 38558,
       "sha256": "25fe6a335bf1674d5677a07bf8d6420753b2f4ebefc83fa1b57ed38505ddb99e"
+    },
+    {
+      "path": "src/fps/hand-materials.mjs",
+      "bytes": 7784,
+      "sha256": "c11965f87a2f0da16543209f2093d6067fdd0c2941c6752612cdb84d63654db5"
     },
     {
       "path": "src/fps/living-floor-art.mjs",
@@ -408,8 +562,8 @@
     },
     {
       "path": "src/fps/living-floor-scene.mjs",
-      "bytes": 19391,
-      "sha256": "ebd4fa8dcae864cb2037f9c5c11291a47ac244d6804fc7c6383f8ed794ce4a2e"
+      "bytes": 19647,
+      "sha256": "bec8a0f69601751b553945960919d7231361e6d210a93cfa9c1bad840c68e524"
     },
     {
       "path": "src/fps/materials.mjs",
@@ -453,13 +607,13 @@
     },
     {
       "path": "src/fps/render-engine.mjs",
-      "bytes": 28779,
-      "sha256": "e6979c00ec5488f288fcd1cb61ad036908130dd9ec2bc2109a769a0de9067b23"
+      "bytes": 29422,
+      "sha256": "2ca8e19a715c6c9bf16c5008a7ef5ebb160bb9e918d40f156200d3cc97428b35"
     },
     {
       "path": "src/fps/render.mjs",
-      "bytes": 10742,
-      "sha256": "561bda0346d572bcbbbf14540e264b50029e20220da967ffc6839133795b2518"
+      "bytes": 12675,
+      "sha256": "2f3cc4edd673f37c00c66b515baa863adf0d21c5144c767f10a21f8723069189"
     },
     {
       "path": "src/fps/room-visuals.mjs",
@@ -467,9 +621,14 @@
       "sha256": "894486f3975d6ff12d616dc3394c3f14a3284b647cced41a5e75667096db572d"
     },
     {
+      "path": "src/fps/static-asset-library.mjs",
+      "bytes": 4985,
+      "sha256": "02f1cebe74cd7da2f34242218a2f2b73d09f1d117443d00d29a26d6138f2713a"
+    },
+    {
       "path": "src/fps/strike-kit-audio.mjs",
-      "bytes": 5447,
-      "sha256": "721ecd9b5c338f3444743edc7b5b2c4bfbd8a079d194ba8a73b1bbb4eb6613e8"
+      "bytes": 6803,
+      "sha256": "fff6646dec72d4508b372e2e79e1400d115a843d83e93b3107922f6b83c5ee1a"
     },
     {
       "path": "src/fps/strike-kit-environment.mjs",
@@ -477,9 +636,14 @@
       "sha256": "a0c4c27678f969f87ba93fe48b9d10801d63b964c3b3e96186ce6b0aa778b73c"
     },
     {
+      "path": "src/fps/strike-kit-hands.mjs",
+      "bytes": 11071,
+      "sha256": "71f5e90011f4d38ec696becda91b9b974e7f7b422cf3ccb86385f1b3dfaa7226"
+    },
+    {
       "path": "src/fps/strike-kit-models.mjs",
-      "bytes": 19535,
-      "sha256": "481eabd86ae32fb0cb75fcc48065505027bb2c0815c5c432a64dc6ed804afbc9"
+      "bytes": 14809,
+      "sha256": "327137da7df4640ff269a4841a13a9ebad4d1e6aec077ddc47b6bc6e756ea615"
     },
     {
       "path": "src/fps/strike-kit-timing.mjs",
@@ -558,8 +722,8 @@
     },
     {
       "path": "credits.html",
-      "bytes": 10374,
-      "sha256": "88c5bcbe1bdaf2ae3a024fc011bba501dfc7e85af4f3001ea451170b09eba256"
+      "bytes": 11600,
+      "sha256": "aa16044adc5d90b5f1c177e3b3f1e0669d69906687f98f7d28b358db483c7c9b"
     },
     {
       "path": "index.html",
@@ -577,7 +741,7 @@
       "sha256": "331ea9090db0c9f6f597bd9840fd5b171830f6e0b3ba1cb24dfa91f0c95aedc1"
     }
   ],
-  "bytes": 18029465,
+  "bytes": 19187126,
   "sourceDirectoriesExcluded": [
     "references",
     "reviews",

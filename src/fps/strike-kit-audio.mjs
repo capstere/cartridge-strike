@@ -1,10 +1,14 @@
 /** Strike Kit audio: authored cached PCM + simulation-synchronised reload Foley.
- * All buffers are original synthesized sound-design layers, not recordings from
- * another game. No network, new AI hearing events or match-RNG calls.
+ * Gunshots are original synthesized sound-design layers. Six recorded CC0
+ * mechanical cues are registered in reviews/industrial-reference/audio-provenance.json. No external network, new AI hearing events or match-RNG calls.
  */
 import {AudioSystem as CombatAudio} from './combat-audio.mjs';
 import {kitWeapon,RELOAD_CUES,reloadIsEmpty} from './strike-kit-timing.mjs';
-export const KIT_AUDIO_VERSION='strike-kit-audio-1';
+export const KIT_AUDIO_VERSION='strike-kit-audio-2';
+export const KIT_FOLEY = Object.freeze({
+ 'p9:out:0':'f_magout_pistol.mp3', 'p9:in:0':'f_magin_pistol.mp3', 'p9:action:0':'f_slide_pistol-1.mp3',
+ 'cr4:out:0':'f_magout_rifle-1.mp3', 'cr4:in:0':'f_magin_rifle-1.mp3', 'cr4:action:0':'f_charge_rifle-1.mp3'
+});
 export function kitPCM(kind,weapon='p9',sampleRate=48000,variant=0){
  const rifle=weapon==='cr4',duration=kind==='shot'?(rifle?.34:.29):kind==='tail'?.48:kind==='out'?.20:kind==='in'?.23:.16;
  const data=new Float32Array(Math.ceil(sampleRate*duration));let seed=19073+variant*7919+(rifle?1103:37),low=0,body=0;
@@ -31,15 +35,29 @@ export function kitPCM(kind,weapon='p9',sampleRate=48000,variant=0){
  for(let i=0;i<data.length;i++)data[i]*=gain;return data;
 }
 export class AudioSystem extends CombatAudio{
- constructor(world,settings){super(world,settings);this.kitBuffers=new Map();this.kitReloads=new Map();this.kitStats={shots:0,foley:0,tails:0,cancelled:0};this.kitReady=false;}
- async unlock(){const ok=await super.unlock();if(!ok||this.kitReady)return ok;
+ constructor(world,settings){super(world,settings);this.kitBuffers=new Map();this.kitReloads=new Map();this.kitStats={shots:0,foley:0,tails:0,cancelled:0};this.kitReady=false;this.recordedFoley=new Map();this.foleyLoadPromise=null;}
+ async unlock(){const ok=await super.unlock();if(!ok||this.disposed)return false;
+  if(!this.kitReady){
   for(const weapon of['p9','cr4'])for(const kind of['shot','tail','release','out','in','action','draw'])for(let v=0;v<(kind==='shot'?3:1);v++){
    const pcm=kitPCM(kind,weapon,this.context.sampleRate,v),buffer=this.context.createBuffer(1,pcm.length,this.context.sampleRate);buffer.copyToChannel(pcm,0);this.kitBuffers.set(`${weapon}:${kind}:${v}`,buffer);
-  }this.kitReady=true;return true;
+  }this.kitReady=true;
+  }
+  // Decode once on the existing user-gesture unlock, never during a reload.
+  // A failed optional recording remains explicit in errors and uses the existing
+  // synthesized cue, so audio failure cannot change authoritative reload timing.
+  this.foleyLoadPromise??=Promise.all(Object.entries(KIT_FOLEY).map(async([key,file])=>{
+   try{
+    const response=await fetch(new URL(`../../assets/fps/audio/ffsl-${file}`,import.meta.url));
+    if(!response.ok)throw Error(`HTTP ${response.status}`);
+    const bytes=await response.arrayBuffer();if(this.disposed)return;
+    const buffer=await this.context.decodeAudioData(bytes);if(!this.disposed)this.recordedFoley.set(key,buffer);
+   }catch(error){if(!this.disposed)this.errors.push(`FFSL ${file}: ${error.message}`);}
+  }));
+  await this.foleyLoadPromise;return !this.disposed&&this.context.state==='running';
  }
  kitSample(kind,event,volume=1,variant=0){
-  const key=`${event.weapon==='cr4'?'cr4':'p9'}:${kind}:${variant}`,buffer=this.kitBuffers.get(key);if(!buffer||this.active.size>=94)return;
-  const source=this.context.createBufferSource();source.buffer=buffer;const c=this.channel(event,volume);
+  const key=`${event.weapon==='cr4'?'cr4':'p9'}:${kind}:${variant}`,recorded=this.recordedFoley.get(key),buffer=recorded||this.kitBuffers.get(key);if(!buffer||this.active.size>=94)return;
+  const source=this.context.createBufferSource();source.buffer=buffer;const c=this.channel(event,volume*(recorded?1.45:1));
   const position=event.position||event,distance=Math.hypot((position.x||0)-(this.listener?.x||0),(position.z||0)-(this.listener?.z||0));
   const filter=c.nodes[1];filter.frequency.value=Math.min(filter.frequency.value,18000/(1+distance*.075));
   source.connect(c.gain);this.track(source,c,buffer.duration+.005);
@@ -74,5 +92,5 @@ export class AudioSystem extends CombatAudio{
   }
  }
  reset(){super.reset();this.kitReloads?.clear();}
- async dispose(){this.kitBuffers.clear();this.kitReady=false;await super.dispose();}
+ async dispose(){this.recordedFoley.clear();this.kitBuffers.clear();this.kitReady=false;await super.dispose();}
 }
