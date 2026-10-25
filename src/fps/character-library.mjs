@@ -77,7 +77,7 @@ export function createAuthoredAvatar(team,id,isHostage=false){
   attached(new RoundedBoxGeometry(.13,.105,.23,2,.028),leather,new T.Vector3(x,.083,.044),foot,'boot-shell-'+side);
   attached(new RoundedBoxGeometry(.113,.16,.125,2,.025),leather,new T.Vector3(x,.17,-.009),foot,'boot-shaft-'+side);
   for(let i=0;i<3;i++)box([.075,.006,.007],rubber,[x,.139,.025+i*.022],foot,'boot-lace');
-  shoes.push(sole);
+  sole.geometry.computeBoundingBox();shoes.push(sole);
  }
  const pelvis=bones.get('pelvis'),chest=bones.get('spine_03'),head=bones.get('Head');
  if(!isHostage){
@@ -111,7 +111,7 @@ export function createAuthoredAvatar(team,id,isHostage=false){
  const idle=base.get('Idle_Loop');idle.play();if(!isHostage)upper.get('Pistol_Idle_Loop').play();mixer.update(0);root.updateMatrixWorld(true);root.traverse(o=>{if(o.isSkinnedMesh)o.skeleton.update();});
  const holder=new T.Group();holder.name='authored-humanoid-'+gender;holder.rotation.y=Math.PI;holder.add(root);
  const bounds=posedBounds(root),scale=1.69/(bounds.max.y-bounds.min.y);holder.scale.setScalar(scale);holder.position.y=-bounds.min.y*scale+.004;
- const state={holder,root,bones,mixer,base,upper,clips,materials,meshes,shoes,scale,seed,gender,ownedGeometry,activeBase:'Idle_Loop',activeUpper:isHostage?null:'Pistol_Idle_Loop',time:null,x:null,z:null,groundOffset:holder.position.y,isHostage,disposed:false};live.add(state);return state;
+ const state={holder,root,bones,mixer,base,upper,clips,materials,meshes,shoes,scale,seed,gender,ownedGeometry,activeBase:'Idle_Loop',activeUpper:isHostage?null:'Pistol_Idle_Loop',time:null,x:null,z:null,motionSpeed:0,groundOffset:holder.position.y,isHostage,disposed:false,groundInverse:new T.Matrix4(),groundMatrix:new T.Matrix4(),hitBase:new T.Quaternion(),hitRotation:new T.Quaternion(),hitEuler:new T.Euler(),hitApplied:false};live.add(state);return state;
 }
 const v=new T.Vector3(),inv=new T.Matrix4();
 /** Actual posed vertices, not the undeformed bind-pose AABB. Used at creation/death only. */
@@ -123,15 +123,30 @@ export function posedBounds(root){
 }
 function play(state,map,name,active,fade=.16){
  if(state[active]===name)return;const next=map.get(name),prev=map.get(state[active]);if(!next)return;
- next.reset().setEffectiveWeight(1).play();if(prev)next.crossFadeFrom(prev,fade,false);state[active]=name;
+ // Keep the planted/swinging foot at the same point when pace changes; restarting
+ // every Walk/Jog threshold made a bot repeatedly put the same foot forward.
+ const locomotion=active==='activeBase'&&/^(Walk|Jog|Sprint|Crouch_Fwd)/.test(name)&&/^(Walk|Jog|Sprint|Crouch_Fwd)/.test(state[active]||'');
+ const phase=locomotion&&prev?(prev.time/prev.getClip().duration)%1:0;
+ next.reset().setEffectiveWeight(1).play();if(locomotion)next.time=phase*next.getClip().duration;
+ if(prev)next.crossFadeFrom(prev,fade,false);state[active]=name;
 }
 /** Time is simulation time. Repeated paused renders cannot advance clips. */
 export function animateAuthored(state,actor,time,options={}){
- const elapsed=state.time===null?0:time-state.time,reset=elapsed<0||elapsed>.5||state.x!==null&&Math.hypot(actor.x-state.x,actor.z-state.z)>2;
- if(reset){state.mixer.stopAllAction();state.activeBase=null;state.activeUpper=null;state.holder.scale.setScalar(state.scale);state.holder.position.set(0,state.groundOffset,0);state.holder.rotation.set(0,Math.PI,0);}
- const crouch=actor.crouching||actor.height<1.3,speed=Math.max(0,Math.min(5,actor.moving||0));
- const name=actor.onGround===false?'Jump_Loop':crouch?(speed>.15?'Crouch_Fwd_Loop':'Crouch_Idle_Loop'):speed>3.5?'Sprint_Loop':speed>2?'Jog_Fwd_Loop':speed>.12?'Walk_Loop':'Idle_Loop';
- play(state,state.base,name,'activeBase');const action=state.base.get(name);action.timeScale=speed>.12?Math.max(.5,Math.min(1.45,speed/(crouch?1.2:name==='Walk_Loop'?1.4:name==='Jog_Fwd_Loop'?3:4.2))):1;
+ const elapsed=state.time===null?0:time-state.time,travel=state.x===null?0:Math.hypot(actor.x-state.x,actor.z-state.z),reset=elapsed<0||elapsed>.5||travel>2;
+ const spine=state.bones.get('spine_03');
+ // Remove last frame's additive reaction before the mixer evaluates. A paused
+ // render must never accumulate a new bend in the already-posed skeleton.
+ if(state.hitApplied){spine.quaternion.copy(state.hitBase);state.hitApplied=false;}
+ if(reset){state.mixer.stopAllAction();state.activeBase=null;state.activeUpper=null;state.motionSpeed=0;state.holder.scale.setScalar(state.scale);state.holder.position.set(0,state.groundOffset,0);state.holder.rotation.set(0,Math.PI,0);}
+ const crouch=actor.crouching||actor.height<1.3;
+ // Hostage state intentionally has no `moving` field. Use its real displacement
+ // so escorted visitors walk rather than slide in an idle pose.
+ const speed=Math.max(0,Math.min(5,Number.isFinite(actor.moving)?actor.moving:!reset&&elapsed>0?travel/elapsed:state.motionSpeed));
+ state.motionSpeed=speed;
+ const previous=state.activeBase,walkThreshold=previous==='Idle_Loop'?.16:.08,jogThreshold=previous==='Jog_Fwd_Loop'?1.8:2.15,sprintThreshold=previous==='Sprint_Loop'?3.25:3.6;
+ const name=actor.onGround===false?'Jump_Loop':crouch?(speed>(previous==='Crouch_Fwd_Loop'?.07:.16)?'Crouch_Fwd_Loop':'Crouch_Idle_Loop'):speed>sprintThreshold?'Sprint_Loop':speed>jogThreshold?'Jog_Fwd_Loop':speed>walkThreshold?'Walk_Loop':'Idle_Loop';
+ play(state,state.base,name,'activeBase');const action=state.base.get(name);
+ action.timeScale=/^(Walk|Jog|Sprint|Crouch_Fwd)/.test(name)?Math.min(1.65,speed/(crouch?1.2:name==='Walk_Loop'?1.4:name==='Jog_Fwd_Loop'?3:4.2)):1;
  if(!state.isHostage){
   const upper=actor.reloadUntil>time?'Pistol_Reload':time-(options.shotAt??-Infinity)<.14?'Pistol_Shoot':/^(knife|bomb|smoke|flash|he)$/.test(actor.weapon)?'Idle_Loop':'Pistol_Idle_Loop';
   play(state,state.upper,upper,'activeUpper',.10);
@@ -144,10 +159,24 @@ export function animateAuthored(state,actor,time,options={}){
   a.time=progress*Math.max(0,a.getClip().duration-.001);a.timeScale=0;
  }else if(!state.isHostage)state.upper.get('Pistol_Reload').timeScale=1;
  state.mixer.update(delta);
+ const hurtAge=time-(actor.hurtTime??-Infinity);
+ if(hurtAge>=0&&hurtAge<.30){
+  const pulse=Math.sin(Math.PI*Math.min(1,hurtAge/.30))*Math.exp(-hurtAge*5),direction=actor.hurtDirection,yaw=actor.yaw||0;
+  const dx=direction?.x||0,dz=direction?.z??-1,side=Math.cos(yaw)*dx-Math.sin(yaw)*dz,forward=Math.sin(yaw)*dx+Math.cos(yaw)*dz;
+  state.hitBase.copy(spine.quaternion);state.hitEuler.set(forward*.12*pulse,0,-side*.12*pulse);
+  spine.quaternion.multiply(state.hitRotation.setFromEuler(state.hitEuler));state.hitApplied=true;
+ }
  state.time=time;state.x=actor.x;state.z=actor.z;
  state.holder.scale.setScalar(state.scale);state.holder.rotation.set(0,Math.PI,0);state.holder.position.set(0,0,0);
- state.holder.updateWorldMatrix(true,true);const rootInverse=state.holder.parent?new T.Matrix4().copy(state.holder.parent.matrixWorld).invert():new T.Matrix4();let bottom=Infinity;
- for(const shoe of state.shoes){const g=shoe.geometry;g.computeBoundingBox();const b=g.boundingBox;for(const x of[b.min.x,b.max.x])for(const y of[b.min.y,b.max.y])for(const z of[b.min.z,b.max.z])bottom=Math.min(bottom,v.set(x,y,z).applyMatrix4(shoe.matrixWorld).applyMatrix4(rootInverse).y);}
+ state.holder.updateWorldMatrix(true,true);const rootInverse=state.groundInverse;rootInverse.identity();if(state.holder.parent)rootInverse.copy(state.holder.parent.matrixWorld).invert();let bottom=Infinity;
+ for(const shoe of state.shoes){
+  // Boot bounds are immutable. Transform only their lower support extent, with
+  // cached matrices; do not rescan rounded-box vertices every actor/frame.
+  const b=shoe.geometry.boundingBox,e=state.groundMatrix.multiplyMatrices(rootInverse,shoe.matrixWorld).elements;
+  const centreX=(b.min.x+b.max.x)*.5,centreY=(b.min.y+b.max.y)*.5,centreZ=(b.min.z+b.max.z)*.5;
+  const lower=e[1]*centreX+e[5]*centreY+e[9]*centreZ+e[13]-Math.abs(e[1])*(b.max.x-b.min.x)*.5-Math.abs(e[5])*(b.max.y-b.min.y)*.5-Math.abs(e[9])*(b.max.z-b.min.z)*.5;
+  bottom=Math.min(bottom,lower);
+ }
  if(Number.isFinite(bottom))state.holder.position.y=.004-bottom;
  state.holder.updateWorldMatrix(true,true);state.root.traverse(o=>{if(o.isSkinnedMesh)o.skeleton.update();});
 }

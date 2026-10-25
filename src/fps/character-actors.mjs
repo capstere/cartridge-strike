@@ -11,30 +11,40 @@ export function upgradeActor(model,team,id,isHostage){
  d.avatar=createAuthoredAvatar(team,id,isHostage);d.frame.add(d.avatar.holder);d.frame.add(d.weaponSocket);if(d.bag)d.frame.add(d.bag);
  d.characterRevision='quaternius-uniform-v1';return model;
 }
-function bonePoint(bone,model){return model.worldToLocal(bone.getWorldPosition(V()));}
+// Calls are synchronous; scratch vectors never escape into game/actor state.
+// Avoid dozens of short-lived vectors per visible rifle carrier and frame.
+const pointScratch=V(),heldScratch=V(),targetScratch=V(),start=V(),end=V(),from=V(),to=V();
+const correction=Q(),worldRotation=Q(),parentRotation=Q();
+const shoulder=V(),elbowNow=V(),wristNow=V(),direction=V(),bend=V(),elbowTarget=V(),handTarget=V();
+function bonePoint(bone,model){return model.worldToLocal(bone.getWorldPosition(pointScratch));}
 function alignBone(bone,child,target){
- const start=bone.getWorldPosition(V()),end=child.getWorldPosition(V()),from=end.sub(start).normalize(),to=target.clone().sub(start).normalize();
- const correction=Q().setFromUnitVectors(from,to),world=bone.getWorldQuaternion(Q()).premultiply(correction),parent=bone.parent.getWorldQuaternion(Q());bone.quaternion.copy(parent.invert().multiply(world));bone.updateWorldMatrix(false,true);
+ bone.getWorldPosition(start);child.getWorldPosition(end);from.copy(end).sub(start).normalize();to.copy(target).sub(start).normalize();
+ correction.setFromUnitVectors(from,to);bone.getWorldQuaternion(worldRotation).premultiply(correction);bone.parent.getWorldQuaternion(parentRotation);
+ bone.quaternion.copy(parentRotation.invert().multiply(worldRotation));bone.updateWorldMatrix(false,true);
 }
 function supportHand(state,target){
  const upper=state.bones.get('upperarm_l'),lower=state.bones.get('lowerarm_l'),hand=state.bones.get('hand_l');
- const a=upper.getWorldPosition(V()),b=lower.getWorldPosition(V()),c=hand.getWorldPosition(V()),l1=a.distanceTo(b),l2=b.distanceTo(c);
- const ab=target.clone().sub(a),distance=Math.max(.01,Math.min(l1+l2-.005,ab.length())),direction=ab.normalize();
- let bend=b.clone().sub(a).addScaledVector(direction,-b.clone().sub(a).dot(direction));if(bend.length()<.001)bend.set(-1,-1,0).addScaledVector(direction,-direction.dot(new T.Vector3(-1,-1,0)));bend.normalize();
- const along=(l1*l1-l2*l2+distance*distance)/(2*distance),height=Math.sqrt(Math.max(0,l1*l1-along*along)),elbow=a.clone().addScaledVector(direction,along).addScaledVector(bend,height);
- alignBone(upper,lower,elbow);alignBone(lower,hand,a.clone().addScaledVector(direction,distance));
+ upper.getWorldPosition(shoulder);lower.getWorldPosition(elbowNow);hand.getWorldPosition(wristNow);
+ const l1=shoulder.distanceTo(elbowNow),l2=elbowNow.distanceTo(wristNow);
+ direction.copy(target).sub(shoulder);const distance=Math.max(.01,Math.min(l1+l2-.005,direction.length()));direction.normalize();
+ bend.copy(elbowNow).sub(shoulder);bend.addScaledVector(direction,-bend.dot(direction));
+ if(bend.lengthSq()<.000001){bend.set(-1,-1,0);bend.addScaledVector(direction,-direction.dot(bend));}bend.normalize();
+ const along=(l1*l1-l2*l2+distance*distance)/(2*distance),height=Math.sqrt(Math.max(0,l1*l1-along*along));
+ elbowTarget.copy(shoulder).addScaledVector(direction,along).addScaledVector(bend,height);
+ handTarget.copy(shoulder).addScaledVector(direction,distance);
+ alignBone(upper,lower,elbowTarget);alignBone(lower,hand,handTarget);
 }
 export function syncAuthoredActor(model,actor,time,options={}){
  const d=model.userData,s=d.avatar;animateAuthored(s,actor,time,options);
  model.updateMatrixWorld(true);
  if(d.bag){const hip=bonePoint(s.bones.get('pelvis'),model);d.bag.position.set(hip.x+.26,hip.y-.10,hip.z+.025);d.bag.rotation.set(Math.sin(time*3+s.seed)*Math.min(.035,(actor.moving||0)*.01),0,.04);}
  if(!d.isHostage&&d.weaponModel){
-  const wrist=bonePoint(s.bones.get('hand_r'),model),gun=d.weaponModel,grip=gun.userData.grip||V(),pitch=Math.max(-.65,Math.min(.65,actor.pitch||0));
-  d.weaponSocket.rotation.set(pitch,0,0);const held=grip.clone().multiplyScalar(.85).applyEuler(d.weaponSocket.rotation);
-  d.weaponSocket.position.copy(wrist).add(new T.Vector3(0,-.012,-.043)).sub(held);d.weaponSocket.updateWorldMatrix(true,true);
-  s.gunHandLocal=new T.Matrix4().copy(s.bones.get('hand_r').matrixWorld).invert().multiply(d.weaponSocket.matrixWorld);
+  const wrist=bonePoint(s.bones.get('hand_r'),model),gun=d.weaponModel,grip=gun.userData.grip,pitch=Math.max(-.65,Math.min(.65,actor.pitch||0));
+  d.weaponSocket.rotation.set(pitch,0,0);const held=heldScratch.copy(grip||heldScratch.set(0,0,0)).multiplyScalar(.85).applyEuler(d.weaponSocket.rotation);
+  d.weaponSocket.position.copy(wrist).sub(held);d.weaponSocket.position.y-=.012;d.weaponSocket.position.z-=.043;d.weaponSocket.updateWorldMatrix(true,true);
+  s.gunHandLocal??=new T.Matrix4();s.gunHandLocal.copy(s.bones.get('hand_r').matrixWorld).invert().multiply(d.weaponSocket.matrixWorld);
   if(!(actor.reloadUntil>time)&&WEAPONS[actor.weapon]?.slot==='primary'){
-   const target=gun.localToWorld(gun.userData.support.clone()).add(new T.Vector3(0,.006,.024));supportHand(s,target);
+   const target=gun.localToWorld(targetScratch.copy(gun.userData.support));target.y+=.006;target.z+=.024;supportHand(s,target);
    s.root.traverse(o=>{if(o.isSkinnedMesh)o.skeleton.update();});
   }
  }

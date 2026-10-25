@@ -8,7 +8,8 @@ import { bounds, CREForm } from './living-floor-plan.mjs';
 import { createLivingArt, ART_TILES, VALUE_TILES } from './living-floor-art.mjs';
 const C={blue:0x203f6b,bluebox:0x6e8a9a,rubber:0x242d32,steel:0xa6afb0,yellow:0xe0b82f,cream:0xe7e5db,cardboard:0xb68b58,wood:0xa78760,ceramic:0xced6d0,teal:0x427a79,stone:0xc7ccca};
 const hash=s=>[...s].reduce((n,c)=>(Math.imul(n,31)+c.charCodeAt(0))>>>0,19);
-export function buildLivingScene(world,registry){
+export function buildLivingScene(world,registry,{replacedProps=[],refinedFreight=false}={}){
+ const replaced=new Set(replacedProps);
  const root=new THREE.Group();root.name='living-floor';const art=createLivingArt(),owned=[],batches=new Map(),texts=new Map();
  const paint=new THREE.MeshStandardMaterial({vertexColors:true,roughness:.72,metalness:.025});paint.name='living-paint';
  const metal=new THREE.MeshStandardMaterial({vertexColors:true,roughness:.37,metalness:.72});metal.name='living-metal';
@@ -57,12 +58,14 @@ export function buildLivingScene(world,registry){
  function binder(x,y,z,color,yaw=0){box(x,y+.16,z,.065,.32,.25,color,paint,yaw,.004);box(x,y+.16,z+.128,.035,.20,.003,0xe4e6dd,paint,yaw);}
  // Render the exact colliding pieces. Details never replace their physical records.
  for(const b of world.living.boxes){
+  if([...replaced].some(id=>b.id.startsWith(id)))continue;
   if(b.id.includes('-wheel-')||b.id.includes('-caster-'))add(new THREE.CylinderGeometry(b.h/2,b.h/2,b.d,10),paint,b.x,b.y,b.z,{x:Math.PI/2},C.rubber,true);
   else if(b.finish==='blue'&&Math.min(b.w,b.h,b.d)<.031){const dims=[b.w,b.h,b.d],axis=dims.indexOf(Math.max(...dims)),a=[b.x,b.y,b.z],v=[...a];a[axis]-=dims[axis]/2;v[axis]+=dims[axis]/2;rod(a,v,.014,C.blue);}
   else if(!b.id.endsWith('-coffee-machine'))box(b.x,b.y,b.z,b.w,b.h,b.d,b.id.includes('-tote-')?0xacc6cb:C[b.finish]||C.cream,b.finish==='steel'?metal:b.finish==='teal'?fabric:paint,0,b.h>.2?.014:0,true);
   if(b.finish==='cardboard')carton(b);
  }
  for(const p of world.living.props){
+  if(replaced.has(p.id))continue;
   const {x,z,w,d,h,type}=p;
   if(type==='creform'){
    const s=CREForm[p.variant],px=(s.innerW+.028)/2,pz=(s.innerD+.028)/2;
@@ -148,8 +151,8 @@ export function buildLivingScene(world,registry){
   box(liftX,1.33,z,2.94,2.64,.065,0x263c48,metal);
   for(const side of[-1,1]){
    const dx=liftX+side*.70;box(dx,1.31,z+.045,1.365,2.52,.055,0x315c73,metal,0,.014);box(dx,.30,z+.080,1.30,.43,.009,0xaeb9b8,metal);
-   box(dx,2.12,z+.078,.50,.08,.035,0xdbdfd7,paint);rod([dx-side*.40,1.04,z+.105],[dx-side*.40,1.35,z+.105],.014,0xb7c3c5,metal);
-   text(dx,1.77,z+.08,.65,.20,side<0?'GODSHISS':'HISS 12');
+   if(!refinedFreight)box(dx,2.12,z+.078,.50,.08,.035,0xdbdfd7,paint);rod([dx-side*.40,1.04,z+.105],[dx-side*.40,1.35,z+.105],.014,0xb7c3c5,metal);
+   if(!refinedFreight)text(dx,1.77,z+.08,.65,.20,side<0?'GODSHISS':'HISS 12');
    for(const y of[.22,1.30,2.35])box(dx+side*.60,y,z+.09,.055,.14,.030,0xb9c3c5,metal);
   }
   // Focused freight front: separated inner panels, recessed seams, rubber seals
@@ -166,14 +169,14 @@ export function buildLivingScene(world,registry){
   box(liftX,2.63,z+.10,2.96,.065,.07,0x879ba2,metal,0,.008);
   box(liftX,.025,z+.16,2.97,.028,.20,0xa9b4b6,metal,0,.004);
   for(let k=0;k<8;k++)box(liftX,.042,z+.085+k*.022,2.83,.002,.005,0x3a4e59);
-  text(cx-3.0,1.92,z+.04,.72,.48,'12',0,'#e7e5dc','#264b61');
-  text(cx-3.0,1.52,z+.04,1.10,.12,'MATERIAL / VÅNING 5',0,'#e7e5dc','#264b61');
+  if(!refinedFreight){text(cx-3.0,1.92,z+.04,.72,.48,'12',0,'#e7e5dc','#264b61');
+    text(cx-3.0,1.52,z+.04,1.10,.12,'MATERIAL / VÅNING 5',0,'#e7e5dc','#264b61');}
   box(liftX,2.71,z+.08,.46,.20,.045,0x20343e);text(liftX,2.71,z+.105,.31,.16,'5',0,'#152730','#8fdbb8');
   box(liftX+1.67,1.31,z,.16,.44,.07,0xc1c5bd,metal);for(const y of[1.22,1.37])add(new THREE.SphereGeometry(.023,8,6),glow,liftX+1.67,y,z+.055,{},y<1.3?0x70c39d:0xcf5547);
   for(const yy of[2.45,2.57])for(let xx=x0+.55;xx<x1-.35;xx+=.78){box(xx,yy,z0+.15,.04,.07,.04,0x687c80,metal,0,.005);}
   const redX=cx-1.84;box(redX,1.13,z,1.34,2.26,.065,0x8d282d,paint);box(redX,1.09,z+.046,1.22,2.10,.035,0xb54540,paint,0,.005);rod([redX-.50,.99,z+.10],[redX+.50,.99,z+.10],.017,0xc8bba2,metal);text(redX,2.40,z+.06,1.15,.24,'SERVICE',0,'#eaece3','#314d4f');
   // West blue double door appearance from the reference, kept sealed by source walls.
-  const wz=z1-1.50,wx=x0+.10;for(const s of[-1,1])box(wx,1.14,wz+s*.53,1.04,2.24,.065,0x225d85,paint,Math.PI/2,.009);text(wx+.05,1.82,wz,1.45,.22,'MATERIAL',Math.PI/2);
+  const wz=z1-1.50,wx=x0+.10;for(const s of[-1,1])box(wx,1.14,wz+s*.53,1.04,2.24,.065,0x225d85,paint,Math.PI/2,.009);if(!refinedFreight)text(wx+.05,1.82,wz,1.45,.22,'MATERIAL',Math.PI/2);
   for(const y of[2.45,2.57])rod([x0+.18,y,z0+.16],[x1-.18,y,z0+.16],.025,0xc6c9c3,metal);
   rod([x1-.22,2.55,z0+.16],[x1-.22,2.55,z1-.20],.022,0xb9beb8,metal);
   for(const p of world.living.props.filter(p=>p.roomId==='I12')){

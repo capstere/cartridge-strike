@@ -6,6 +6,8 @@
 import * as T from '../../vendor/three/three.module.js';
 import {RoundedBoxGeometry} from '../../vendor/three/addons/geometries/RoundedBoxGeometry.js';
 import {mergeGeometries} from '../../vendor/three/addons/utils/BufferGeometryUtils.js';
+import {createHandMaterials} from './hand-materials.mjs';
+import {createKitHand,createKitSleeve,poseKitFingers,fitKitSleeve} from './strike-kit-hands.mjs';
 import {WEAPONS} from './config.mjs';
 import {kitWeapon,reloadPose,reloadPhase,reloadIsEmpty,smooth,envelope} from './strike-kit-timing.mjs';
 const Y=new T.Vector3(0,1,0),owned=new Set();
@@ -19,10 +21,9 @@ function materials(){
  const rough=own(new T.DataTexture(a,128,128));rough.wrapS=rough.wrapT=T.RepeatWrapping;rough.needsUpdate=true;
  palette={steel:mat('anodised-graphite',0x45515a,.34,.88),edge:mat('machined-edge',0xa3adb2,.27,.85),
  black:mat('rubber',0x111b22,.87),polymer:mat('sand-polymer',0x8b806c,.79,.02),
- inset:mat('deep-insets',0x0b1117,.68,.15),accent:mat('safety-mark',0xdca65f,.52,.18),
- glove:mat('glove',0xffffff,.91),cloth:mat('sleeve',0x31485b,.97)};
+ inset:mat('deep-insets',0x0b1117,.68,.15),accent:mat('safety-mark',0xdca65f,.52,.18)};
  for(const m of Object.values(palette)){m.roughnessMap=rough;m.envMapIntensity=.85;}
- palette.glove.vertexColors=true;return palette;
+ Object.assign(palette,createHandMaterials(own));return palette;
 }
 const group=(p,name)=>{const g=new T.Group();g.name=name;p?.add(g);return g;};
 function mesh(p,g,m,x=0,y=0,z=0){const o=new T.Mesh(g,m);o.position.set(x,y,z);o.castShadow=false;o.receiveShadow=true;p.add(o);return o;}
@@ -124,80 +125,18 @@ function carbine(root,m){
  return {weapon:gun,magazine:mag,slide:bolt,muzzle:new T.Vector3(0,.022,-.645),grip:new T.Vector3(.039,-.105,.020),support:new T.Vector3(-.010,-.047,-.358)};
 }
 
-/** One smooth, skinned glove per hand: wrist + palm + 15 phalange joints.
- * The opposing thumb and individually curved fingers are actual articulated mesh.
- */
-function glove(parent,side){
- const root=group(parent,side>0?'kit-trigger-hand':'kit-support-hand');
- const pos=[],uv=[],col=[],si=[],sw=[],indices=[],bones=[],fingerRoots=[];
- const palm=new T.Bone();palm.name='palm';bones.push(palm);
- const tint=new T.Color(0x4d5961),pad=new T.Color(0x26323a),stitch=new T.Color(0x879195);
- function vert(x,y,z,u,v,b0,b1,w,c=tint){pos.push(x,y,z);uv.push(u,v);si.push(b0,b1,0,0);sw.push(1-w,w,0,0);col.push(c.r,c.g,c.b);}
- function loft(rings,segments,b0=0,b1=0,weights=null,offset=[0,0,0],colorFn=null){
-  const start=pos.length/3;
-  for(let r=0;r<rings.length;r++)for(let j=0;j<=segments;j++){
-   const [y,rx,rz]=rings[r],a=j/segments*Math.PI*2;
-   vert(offset[0]+Math.cos(a)*rx,offset[1]+y,offset[2]+Math.sin(a)*rz,j/segments,r/(rings.length-1),b0,b1,weights?weights[r]:0,colorFn?colorFn(r,j,a):tint);
-  }
-  for(let r=0;r<rings.length-1;r++)for(let j=0;j<segments;j++){const a=start+r*(segments+1)+j,b=a+segments+1;indices.push(a,b,a+1,a+1,b,b+1);}
- }
- loft([[-.076,.023,.016],[-.070,.025,.018],[-.055,.028,.018],[-.032,.035,.019],[-.009,.040,.019],[.015,.040,.017],[.032,.034,.014],[.036,.028,.010]],16,0,0,null,[0,0,0],(r,j,a)=>r<2?pad:Math.sin(a)>.6&&r>2?pad:tint);
- const roots=[[-.029,.028,0,.029,.023,.020],[-.010,.036,0,.033,.025,.021],[.010,.034,0,.031,.023,.020],[.029,.025,0,.025,.019,.017]];
- for(let f=0;f<5;f++){
-  const isThumb=f===4,def=isThumb?[-.042,-.020,.001,.028,.024,.020]:[...roots[f]];def[0]*=side;
-  const base=bones.length;let prev=palm,cy=0;const bs=[];
-  for(let k=0;k<3;k++){const b=new T.Bone();b.name=`finger-${f}-${k}`;b.position.set(k===0?def[0]:0,k===0?def[1]:def[2+k],k===0?def[2]:0);prev.add(b);bones.push(b);bs.push(b);prev=b;}
-  if(isThumb){bs[0].rotation.z=-.72*side;bs[0].rotation.y=-.55*side;}
-  fingerRoots.push(bs);
-  const radius=isThumb?.010:.0075-(f===3?.001:0);
-  // Skin a continuous tube through the three joints in bind coordinates.
-  const lens=def.slice(3),total=lens.reduce((a,b)=>a+b,0),start=pos.length/3,n=10,rs=12;
-  for(let r=0;r<=rs;r++){
-   const y=total*r/rs;let k=0,offset=0;if(y>lens[0]){k=1;offset=lens[0];}if(y>lens[0]+lens[1]){k=2;offset=lens[0]+lens[1];}
-   const blend=k<2?smooth((y-offset)/lens[k]):0,taper=r===rs?.001:radius*(1-.25*r/rs)*(1+.07*Math.cos(r*Math.PI/2));
-   for(let j=0;j<=n;j++){
-    const a=j/n*Math.PI*2;let x=Math.cos(a)*taper,yy=y,z=Math.sin(a)*taper*.88;
-    if(isThumb){const v=new T.Vector3(x,yy,z).applyEuler(bs[0].rotation);x=v.x;yy=v.y;z=v.z;}
-    vert(def[0]+x,def[1]+yy,def[2]+z,j/n,r/rs,base+k,base+Math.min(2,k+1),blend,(r===3||r===7)&&Math.sin(a)>.1?pad:tint);
-   }
-  }
-  for(let r=0;r<rs;r++)for(let j=0;j<n;j++){const a=start+r*(n+1)+j,b=a+n+1;indices.push(a,b,a+1,a+1,b,b+1);}
- }
- const geometry=own(new T.BufferGeometry());geometry.setAttribute('position',new T.Float32BufferAttribute(pos,3));geometry.setAttribute('normal',new T.Float32BufferAttribute(new Float32Array(pos.length),3));geometry.setAttribute('uv',new T.Float32BufferAttribute(uv,2));geometry.setAttribute('color',new T.Float32BufferAttribute(col,3));geometry.setAttribute('skinIndex',new T.Uint16BufferAttribute(si,4));geometry.setAttribute('skinWeight',new T.Float32BufferAttribute(sw,4));geometry.setIndex(indices);geometry.computeVertexNormals();geometry.userData.sharedWeapon=true;
- const skin=new T.SkinnedMesh(geometry,materials().glove);skin.name='kit-skinned-glove';skin.frustumCulled=false;skin.add(palm);skin.bind(own(new T.Skeleton(bones)));skin.updateMatrix();skin.matrixAutoUpdate=true;root.add(skin);
- root.userData={fingers:fingerRoots,skin,palm,side};return root;
-}
-function setFingers(hand,grip,trigger=false){
- hand.userData.fingers.forEach((bs,f)=>{
-  const thumb=f===4,side=hand.userData.side;
-  // Curl toward the palm/weapon, and mirror thumb opposition for the left hand.
-  bs[0].rotation.set(-(thumb?.32:trigger&&f===0?.24:.48)*grip,thumb?-.55*side:0,thumb?-.72*side:0);
-  bs[1].rotation.x=-(thumb?.58:trigger&&f===0?.34:1.03)*grip;
-  bs[2].rotation.x=-(thumb?.37:trigger&&f===0?.24:.76)*grip;
- });
- hand.userData.skin.skeleton.update();
-}
 function palmBasis(u,v,n){return new T.Quaternion().setFromRotationMatrix(new T.Matrix4().makeBasis(new T.Vector3(...u),new T.Vector3(...v),new T.Vector3(...n)));}
 const rightQ=palmBasis([0,-1,0],[0,0,-1],[1,0,0]),leftPistolQ=palmBasis([0,1,0],[0,0,-1],[-1,0,0]),leftRifleQ=palmBasis([0,0,-1],[1,0,0],[0,-1,0]);
-function forearm(root,side){
- const g=group(root,'kit-forearm-'+side),m=materials();
- // Smooth tapered sleeve with a broad elbow and small wrist, not a stretched capsule.
- const geo=own(new T.CylinderGeometry(.026,.050,1,18,8,true));geo.userData.sharedWeapon=true;
- const sleeve=mesh(g,geo,m.cloth);sleeve.updateMatrix();sleeve.matrixAutoUpdate=false;
- const cuff=mesh(g,own(new T.CylinderGeometry(.027,.029,.022,18)),m.black);cuff.geometry.userData.sharedWeapon=true;cuff.position.y=.49;cuff.updateMatrix();cuff.matrixAutoUpdate=false;
- g.userData={sleeve,cuff};return g;
-}
-function updateArm(arm,wrist,anchor){
- const d=new T.Vector3().subVectors(wrist,anchor),len=d.length();arm.position.copy(anchor).addScaledVector(d,.5);arm.quaternion.setFromUnitVectors(Y,d.normalize());arm.scale.set(1,len,1);
-}
+const RIGHT_SHOULDER=new T.Vector3(.26,-.66,.32),LEFT_SHOULDER=new T.Vector3(-.30,-.35,.14);
 export function makeKitWeapon(id){
  if(!kitWeapon(id))return null;
  const root=group(null,'weapon-'+id),m=materials(),rifle=id==='cr4',parts=rifle?carbine(root,m):pistol(root,id,m),arms=group(root,'viewmodel-arms');
- const right=glove(arms,1),left=glove(arms,-1),rightArm=forearm(arms,1),leftArm=forearm(arms,-1);
+ const right=createKitHand(arms,1,{material:m.glove,own}),left=createKitHand(arms,-1,{material:m.glove,own}),rightArm=createKitSleeve(arms,1,{material:m.cloth,own}),leftArm=createKitSleeve(arms,-1,{material:m.cloth,own});
+ right.userData.weapon=id;left.userData.weapon=id;
  right.position.copy(parts.grip);right.quaternion.copy(rightQ);left.position.copy(parts.support);left.quaternion.copy(rifle?leftRifleQ:leftPistolQ);
- setFingers(right,1,true);setFingers(left,1);
+ poseKitFingers(right,1,true);poseKitFingers(left,1);
  left.userData.home=left.position.clone();
- root.userData={...parts,id,viewmodel:true,heroKit:true,visualVariant:'strike-kit-0.11',arms,rightHand:right,leftHand:left,
+ root.userData={...parts,id,viewmodel:true,heroKit:true,visualVariant:'strike-kit-authored-hands',arms,rightHand:right,leftHand:left,
   rightArm,leftArm,magazineHome:parts.magazine.position.clone(),magazineGrip:new T.Vector3(0,rifle?-.075:-.02,0),reloadGrip:new T.Vector3(),slideHome:parts.slide.position.clone(),
   viewSurfaces:{materials:8,kind:'new-authored-geometry-and-skinned-hands'},emptyReload:false,reloadToken:0,
   authored:'Original fictional game art. Not a real-weapon CAD model.'};
@@ -226,12 +165,11 @@ export function animateKitWeapon(model,actor,time,dt,{shotAt=-Infinity,switchAt=
   d.leftHand.quaternion.slerp(leftPistolQ,pose.grip);
   if(pose.action>0){const boltGrip=new T.Vector3(-.032,.060,rifle?.034:.015);d.leftHand.position.lerp(boltGrip,pose.action);}
  }
- const curl=reloading&&p>.41&&p<.49?.50:1;setFingers(d.leftHand,curl);setFingers(d.rightHand,1,true);
+ const curl=reloading&&p>.41&&p<.49?.50:1;poseKitFingers(d.leftHand,curl);poseKitFingers(d.rightHand,1,true);
  // A small trigger curl reacts only to confirmed shot events; never changes aim.
- d.rightHand.userData.fingers[0][1].rotation.x-=shot*.20;
- const wrist=new T.Vector3(0,-.070,0);
- d.rightHand.updateMatrix();updateArm(d.rightArm,wrist.clone().applyMatrix4(d.rightHand.matrix),new T.Vector3(.22,-.36,.28));
- d.leftHand.updateMatrix();updateArm(d.leftArm,wrist.clone().applyMatrix4(d.leftHand.matrix),new T.Vector3(-.30,-.35,.22));
+ {const b=d.rightHand.userData.fingers[0][1],u=b.userData;u.bend.setFromAxisAngle(u.flexAxis,u.curl-shot*.20);b.quaternion.copy(u.rest).multiply(u.bend);}
+ fitKitSleeve(d.rightArm,d.rightHand,RIGHT_SHOULDER);
+ fitKitSleeve(d.leftArm,d.leftHand,LEFT_SHOULDER);
  model.updateMatrixWorld(true);d.leftHand.userData.skin.skeleton.update();d.rightHand.userData.skin.skeleton.update();
  d.kitPose={progress:p,empty:d.emptyReload,reloading,magazineHidden:!d.magazine.visible};
  return {muzzle:model.localToWorld(d.muzzle.clone()),reloading};
