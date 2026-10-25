@@ -1,3 +1,5 @@
+import {makeWeapon} from './models.mjs';
+import {installFocusLighting} from './strike-kit-environment.mjs';
 import {VisualDepth} from './visual-depth.mjs';
 import {inspectPose} from './view-surface.mjs';
 import {CombatVisuals} from './combat-visuals.mjs';
@@ -86,6 +88,7 @@ export class Renderer extends EngineRenderer {
           const restore=installField(material,texture,field.bounds);if(restore)this.presentationRestores.push(restore);
         }
       });
+      this.focusLighting=installFocusLighting(this.scene,world);
       // Preserve the existing two shadow lights and quality-specific shadow budgets.
       this.presentationReport={kind:'approximate-startup-indirect-field',width:field.width,height:field.height,
         sources:field.sources,visibilityChecks:field.checks,materials:this.presentationRestores.length,
@@ -97,6 +100,14 @@ export class Renderer extends EngineRenderer {
           await this.renderer.compileAsync(this.scene,this.camera);
         }
       } finally { this.renderer.shadowMap.enabled=shadows;this.lights.forEach((light,i)=>light.visible=visibility[i]); }
+      // Compile the three new first-person models before Start, not on first weapon switch.
+      this.kitWarmup=[];
+      for(const id of ['p9','p12','cr4']){
+        if(this.presentationDisposed)return;
+        const model=makeWeapon(id);this.weaponCache.set(id,model);this.viewScene.add(model);
+        try{await this.renderer.compileAsync(this.viewScene,this.viewCamera);this.kitWarmup.push(id);}
+        finally{this.viewScene.remove(model);}
+      }
     });
   }
   requestInspect(game){
@@ -112,12 +123,15 @@ export class Renderer extends EngineRenderer {
     if(this.weaponModel&&p){
       if(p.id!==this.inspectActor||p.weapon!==this.inspectWeapon||!p.alive||p.reloadUntil>t||(this.shotAt??-Infinity)>=this.inspectAt)this.inspectAt=-Infinity;
       const pose=inspectPose(t-this.inspectAt,{reducedMotion:this.settings.reducedMotion});
+      // Show the authored side profile and gripping hands instead of the stock end.
+      if(this.weaponModel.userData.heroKit){pose.rotation[1]*=-1.3;pose.rotation[2]*=-.67;}
       this.weaponModel.position.x+=pose.position[0];this.weaponModel.position.y+=pose.position[1];this.weaponModel.position.z+=pose.position[2];this.weaponModel.rotation.x+=pose.rotation[0];this.weaponModel.rotation.y+=pose.rotation[1];this.weaponModel.rotation.z+=pose.rotation[2];
       this.weaponModel.updateMatrixWorld(true);
     }
   }
   materialFor(b){
-    if(['finish-I12','finish-I13','finish-I21','finish-I38'].includes(b.id))return this.registry.get('vinyl',{color:b.id==='finish-I12'?0x777f7d:0x8d9998,roughness:.86});
+    if(b.id==='finish-I12')return this.registry.get('vinyl',{color:0x56676d,roughness:.53,normalScale:new THREE.Vector2(.08,.08)});
+    if(['finish-I13','finish-I21','finish-I38'].includes(b.id))return this.registry.get('vinyl',{color:b.id==='finish-I12'?0x777f7d:0x8d9998,roughness:.86});
     return super.materialFor(b);
   }
   render(game,viewActor,dt){
@@ -132,6 +146,7 @@ export class Renderer extends EngineRenderer {
   }
   dispose(){
     if(this.presentationDisposed)return;this.presentationDisposed=true;
+    this.focusLighting?.dispose();
     for(const restore of this.presentationRestores||[])restore();
     window.removeEventListener('keydown',this.onInspectKey);this.renderer.render=this.nativeRender;this.visualDepth?.dispose();this.combatVisuals?.dispose();this.actionVisuals?.dispose();disposeCharacterLibrary();this.presentationRestores=[];this.presentationField?.dispose();this.livingScene?.dispose();super.dispose();
   }

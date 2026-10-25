@@ -2,7 +2,7 @@ import {CombatHUD} from './combat-hud.mjs';
 import { createWorld } from './world.mjs';
 import { Game, TEAMS, WEAPONS, CONFIG, DIFFICULTIES } from './game.mjs';
 import { Renderer } from './render.mjs';
-import { AudioSystem } from './combat-audio.mjs';
+import { AudioSystem } from './strike-kit-audio.mjs';
 import {RADIO,isEndless} from './action-rules.mjs';
 
 const $=id=>document.getElementById(id),testMode=new URLSearchParams(location.search).has('test');

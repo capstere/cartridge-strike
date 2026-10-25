@@ -147,13 +147,30 @@ export function buildLivingScene(world,registry){
   const liftX=cx+1.04;
   box(liftX,1.33,z,2.94,2.64,.065,0x263c48,metal);
   for(const side of[-1,1]){
-   const dx=liftX+side*.70;box(dx,1.31,z+.045,1.365,2.52,.055,0x64828e,paint,0,.009);box(dx,.30,z+.080,1.30,.43,.009,0xaeb9b8,metal);
+   const dx=liftX+side*.70;box(dx,1.31,z+.045,1.365,2.52,.055,0x315c73,metal,0,.014);box(dx,.30,z+.080,1.30,.43,.009,0xaeb9b8,metal);
    box(dx,2.12,z+.078,.50,.08,.035,0xdbdfd7,paint);rod([dx-side*.40,1.04,z+.105],[dx-side*.40,1.35,z+.105],.014,0xb7c3c5,metal);
    text(dx,1.77,z+.08,.65,.20,side<0?'GODSHISS':'HISS 12');
    for(const y of[.22,1.30,2.35])box(dx+side*.60,y,z+.09,.055,.14,.030,0xb9c3c5,metal);
   }
+  // Focused freight front: separated inner panels, recessed seams, rubber seals
+  // and brushed kick plates. All stay within the existing closed facade.
+  for(const side of[-1,1]){
+   const dx=liftX+side*.70;
+   box(dx,1.38,z+.079,1.22,1.22,.012,0x264d64,paint,0,.008);
+   box(dx,1.39,z+.087,1.17,1.16,.004,0x3d667d,metal,0,.004);
+   box(liftX+side*1.45,1.32,z+.095,.065,2.65,.045,0x879ba2,metal,0,.007);
+   box(liftX+side*.016,1.30,z+.087,.023,2.50,.012,0x111f26);
+   for(const yy of[.15,.49])for(const u of[-.53,.53])add(new THREE.CylinderGeometry(.009,.009,.006,12),metal,dx+u,yy,z+.091,{x:Math.PI/2},0x647d86);
+   for(const yy of[.30,1.10,2.22])box(liftX+side*1.25,yy,z+.107,.11,.20,.04,0x6c838c,metal,0,.009);
+  }
+  box(liftX,2.63,z+.10,2.96,.065,.07,0x879ba2,metal,0,.008);
+  box(liftX,.025,z+.16,2.97,.028,.20,0xa9b4b6,metal,0,.004);
+  for(let k=0;k<8;k++)box(liftX,.042,z+.085+k*.022,2.83,.002,.005,0x3a4e59);
+  text(cx-3.0,1.92,z+.04,.72,.48,'12',0,'#e7e5dc','#264b61');
+  text(cx-3.0,1.52,z+.04,1.10,.12,'MATERIAL / VÅNING 5',0,'#e7e5dc','#264b61');
   box(liftX,2.71,z+.08,.46,.20,.045,0x20343e);text(liftX,2.71,z+.105,.31,.16,'5',0,'#152730','#8fdbb8');
   box(liftX+1.67,1.31,z,.16,.44,.07,0xc1c5bd,metal);for(const y of[1.22,1.37])add(new THREE.SphereGeometry(.023,8,6),glow,liftX+1.67,y,z+.055,{},y<1.3?0x70c39d:0xcf5547);
+  for(const yy of[2.45,2.57])for(let xx=x0+.55;xx<x1-.35;xx+=.78){box(xx,yy,z0+.15,.04,.07,.04,0x687c80,metal,0,.005);}
   const redX=cx-1.84;box(redX,1.13,z,1.34,2.26,.065,0x8d282d,paint);box(redX,1.09,z+.046,1.22,2.10,.035,0xb54540,paint,0,.005);rod([redX-.50,.99,z+.10],[redX+.50,.99,z+.10],.017,0xc8bba2,metal);text(redX,2.40,z+.06,1.15,.24,'SERVICE',0,'#eaece3','#314d4f');
   // West blue double door appearance from the reference, kept sealed by source walls.
   const wz=z1-1.50,wx=x0+.10;for(const s of[-1,1])box(wx,1.14,wz+s*.53,1.04,2.24,.065,0x225d85,paint,Math.PI/2,.009);text(wx+.05,1.82,wz,1.45,.22,'MATERIAL',Math.PI/2);
@@ -163,10 +180,31 @@ export function buildLivingScene(world,registry){
    const pw=p.w+.17,pd=p.d+.17,col=p.type==='bins'?0xe4bd3d:p.type==='pallet'?0x58b087:0x478fb1;
    for(const side of[-1,1]){box(p.x,.016,p.z+side*pd/2,pw,.003,.035,col);box(p.x+side*pw/2,.016,p.z,.035,.003,pd,col);}
   }
+  for(const p of world.living.props.filter(p=>p.roomId==='I12')){
+   if(p.type==='bins')for(let k=0;k<3;k++){
+    const u=p.x+(k-1)*p.w/3,front=p.z+p.d/2-.054;
+    box(u,.80,front,.31,.065,.025,0x34434a,paint,0,.011);
+    for(const side of[-1,1])box(u+side*.245,.44,front-.012,.022,.52,.028,0xd0a523,paint,0,.009);
+    text(u,.66,front+.006,.35,.055,['RETURN','MATERIAL','EMPTY'][k],0,'#e8e6d7','#244b61');
+   }
+   if(p.type==='creform'){
+    for(const side of[-1,1])box(p.x+side*(p.w/2-.015),.14,p.z+p.d/2-.02,.07,.12,.06,0x909e9f,metal,0,.01);
+   }
+  }
   // A floor lane is clipped to I12, not interpreted as a validated escape route.
   const laneX=liftX;
   for(let iz=z0+1;iz<z1-1;iz+=.45)for(const side of[-1,1])box(laneX+side*.62,.018,iz,.025,.003,.23,0x6bb9b0);
   text(cx,2.42,z1-.075,2.4,.28,'HISSRUM 12  /  MATERIAL',Math.PI,'#153e54','#f0f1e5');
+ }
+ // The existing D38 approach receives a restrained wayfinding/header band.
+ const freightDoor=world.data.doors.find(d=>d.id==='D38');
+ if(freightDoor){const [x,z]=freightDoor.center,alongX=Math.abs(freightDoor.b[0]-freightDoor.a[0])>.1,yaw=alongX?0:Math.PI/2;
+  const nx=Math.sin(yaw),nz=Math.cos(yaw);
+  text(x+nx*.105,2.54,z+nz*.105,freightDoor.width+.42,.15,'12 / MATERIAL',yaw,'#264b61','#f0efe4');
+  for(const side of[-1,1]){
+   const dx=x+Math.cos(yaw)*side*(freightDoor.width/2+.045),dz=z-Math.sin(yaw)*side*(freightDoor.width/2+.045);
+   box(dx,1.18,dz,.055,2.36,.085,0x597382,metal,yaw,.006);
+  }
  }
  // Ceiling tile grid uses a shared original texture, not another layer of geometry.
  const ct=document.createElement('canvas');ct.width=ct.height=256;const cc=ct.getContext('2d');cc.fillStyle='#e3e5de';cc.fillRect(0,0,256,256);cc.fillStyle='#adb7b4';cc.fillRect(0,0,256,3);cc.fillRect(0,0,3,256);cc.fillStyle='#f5f4e9';cc.fillRect(4,4,248,1);cc.fillRect(4,4,1,248);for(let i=0;i<230;i++){cc.fillStyle=i%2?'#d7ddd6':'#e9eae3';cc.fillRect((i*71)%251,(i*113)%251,1,1);}
