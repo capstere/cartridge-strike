@@ -1,11 +1,11 @@
 {
   "schemaVersion": 1,
-  "gameVersion": "0.10.0",
+  "gameVersion": "0.11.0",
   "entrypoint": "fps/index.html",
   "release": {
     "mode": "public-release",
     "publicReleaseEligible": true,
-    "policySha256": "88bf42700ff535a0583cc2e362c6c69c92804a1efe0c6336a799a38e47d5f0f6",
+    "policySha256": "0203eaba65e3acb4f57106f3a28185c5a64934aaead9a7f719dae6c99b8e8b50",
     "derivatives": [
       {
         "id": "cartridge-v11.3",
@@ -233,13 +233,13 @@
     },
     {
       "path": "fps/index.html",
-      "bytes": 8077,
-      "sha256": "3f6b3f6d51b47b70bce6e09160f6ee91d7852e59b42622830bd1ef24d0cd3a39"
+      "bytes": 8075,
+      "sha256": "54a4ea6da3e357479054998d49f86ecb97bcabdc215a98b2c84b255db45842c2"
     },
     {
       "path": "fps/style.css",
-      "bytes": 18574,
-      "sha256": "93395040f0d430a4f0d72b6822cd427d738cf0e6e266d85ffc37112fe64a0af9"
+      "bytes": 19569,
+      "sha256": "65018cb04dc70d755c61db5fed065b39258236e444d199781e64df04e2bc25e2"
     },
     {
       "path": "licenses/action-audio.txt",
@@ -313,8 +313,8 @@
     },
     {
       "path": "src/fps/app.mjs",
-      "bytes": 23810,
-      "sha256": "1821c960f63e8222454988d5804d203d9f0137811e9cd68494e2fa1eb0a9382a"
+      "bytes": 23814,
+      "sha256": "a59f3dcfcbe241d7d524b680e92a6db0454be121f125f041bedd8ed3d7e46954"
     },
     {
       "path": "src/fps/audio.mjs",
@@ -359,7 +359,7 @@
     {
       "path": "src/fps/combat-hud.mjs",
       "bytes": 5310,
-      "sha256": "40b2d1c13d9496043028335e9205debda47853fd10069e0f8d382cafe85ba36d"
+      "sha256": "85647f03adf4e9de562f4390d8d4b8818cff30468862946c4d20f3ed89bf5335"
     },
     {
       "path": "src/fps/combat-visuals.mjs",
@@ -408,8 +408,8 @@
     },
     {
       "path": "src/fps/living-floor-scene.mjs",
-      "bytes": 17043,
-      "sha256": "79999e10fce2c3407ecb1b8644085d927ed1a618603f7fd872d02e8df33b2070"
+      "bytes": 19391,
+      "sha256": "ebd4fa8dcae864cb2037f9c5c11291a47ac244d6804fc7c6383f8ed794ce4a2e"
     },
     {
       "path": "src/fps/materials.mjs",
@@ -423,8 +423,8 @@
     },
     {
       "path": "src/fps/models.mjs",
-      "bytes": 6282,
-      "sha256": "26078d418e2c6de887deccb5739d55ea60844519c394bb4f03f86c386401cae1"
+      "bytes": 6599,
+      "sha256": "ff1772db90a83eae63421242f2d420ee658ae32e4b084c8acd5904b5873075fe"
     },
     {
       "path": "src/fps/navigation.mjs",
@@ -458,13 +458,33 @@
     },
     {
       "path": "src/fps/render.mjs",
-      "bytes": 9781,
-      "sha256": "2f5ce7ce7654b62d29c1a9972d8546fa3bd9e112a4a058aff2d8a9904a798f97"
+      "bytes": 10742,
+      "sha256": "561bda0346d572bcbbbf14540e264b50029e20220da967ffc6839133795b2518"
     },
     {
       "path": "src/fps/room-visuals.mjs",
       "bytes": 17965,
       "sha256": "894486f3975d6ff12d616dc3394c3f14a3284b647cced41a5e75667096db572d"
+    },
+    {
+      "path": "src/fps/strike-kit-audio.mjs",
+      "bytes": 5447,
+      "sha256": "721ecd9b5c338f3444743edc7b5b2c4bfbd8a079d194ba8a73b1bbb4eb6613e8"
+    },
+    {
+      "path": "src/fps/strike-kit-environment.mjs",
+      "bytes": 7240,
+      "sha256": "a0c4c27678f969f87ba93fe48b9d10801d63b964c3b3e96186ce6b0aa778b73c"
+    },
+    {
+      "path": "src/fps/strike-kit-models.mjs",
+      "bytes": 19535,
+      "sha256": "481eabd86ae32fb0cb75fcc48065505027bb2c0815c5c432a64dc6ed804afbc9"
+    },
+    {
+      "path": "src/fps/strike-kit-timing.mjs",
+      "bytes": 1638,
+      "sha256": "4df24f89b1c2d919a1e35b361d1a57bef3d89c40686790a326f454727fc3ad40"
     },
     {
       "path": "src/fps/tactical-map.mjs",
@@ -557,7 +577,7 @@
       "sha256": "331ea9090db0c9f6f597bd9840fd5b171830f6e0b3ba1cb24dfa91f0c95aedc1"
     }
   ],
-  "bytes": 17990982,
+  "bytes": 18029465,
   "sourceDirectoriesExcluded": [
     "references",
     "reviews",

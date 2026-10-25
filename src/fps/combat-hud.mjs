@@ -22,7 +22,7 @@ export class CombatHUD{
   const f=g.state.combatFlow,z=activeControl(g),card=this.nodes['control-card'];card.hidden=!z;
   // Replace the redundant old objective strip, rather than cover it with a panel.
   document.getElementById('objectives').hidden=!!z;
-  document.getElementById('spawn-protection').style.top=z?(window.innerWidth<=900?'208px':'246px'):'';
+  document.getElementById('spawn-protection').style.top=z?(window.innerWidth<=900?'162px':'180px'):'';
   Object.assign(document.getElementById('spectate').style,{top:'auto',bottom:'230px'});
   Object.assign(this.nodes['combat-recap'].style,{top:'auto',bottom:'128px',transform:'translateX(-50%)'});
   this.nodes['combat-warning'].style.top='calc(50% - 62px)';

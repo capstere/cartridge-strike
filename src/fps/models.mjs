@@ -1,3 +1,5 @@
+import {kitWeapon} from './strike-kit-timing.mjs';
+import {makeKitWeapon,animateKitWeapon,disposeKitModels} from './strike-kit-models.mjs';
 import {upgradeViewSurfaces,disposeViewSurfaces} from './view-surface.mjs';
 /** Public model API: original meshes/mechanisms + read-only presentation upgrades.
  * model-primitives.mjs retains existing mechanisms and adds the fictional bazooka.
@@ -12,13 +14,14 @@ import { fitPresentationHands, disposePresentationHands } from './presentation-h
 import { createViewMotion, viewMotion, strideSample, solveLeg, clamp } from './presentation-motion.mjs';
 
 export function makeWeapon(id='p9',options={}) {
-  const model=primitiveWeapon(id,options);
-  if(options.viewmodel!==false){fitPresentationHands(model);upgradeViewSurfaces(model);model.userData.presentationMotion=createViewMotion();}
+  const hero=options.viewmodel!==false&&kitWeapon(id);
+  const model=hero?makeKitWeapon(id):primitiveWeapon(id,options);
+  if(options.viewmodel!==false){if(!hero){fitPresentationHands(model);upgradeViewSurfaces(model);}model.userData.presentationMotion=createViewMotion();}
   return model;
 }
 export function animateWeapon(model,actor,time,dt,options={}) {
   // Preserve exact magazine/slide timing, hand-to-magazine attachment and action pose.
-  const pose=primitiveWeaponAnimation(model,actor,time,dt,options);
+  const pose=model.userData.heroKit?animateKitWeapon(model,actor,time,dt,options):primitiveWeaponAnimation(model,actor,time,dt,options);
   const state=model.userData.presentationMotion;
   if(state){
     const offset=viewMotion(state,actor,time,{weapon:model.userData.id,shotAt:options.shotAt,reducedMotion:options.reducedMotion});
@@ -94,6 +97,6 @@ export function animateActor(model,actor,time,dt,options={}) {
   if(d.bag){d.bag.rotation.x=Math.sin(g.phase*Math.PI*2+.7)*pace*.065;d.bag.rotation.z=Math.sin(g.phase*Math.PI*2+.3)*pace*.045;}
   // Arms, weapon sockets, hit reaction, corpses and animation timings remain original.
 }
-export function disposeWeaponResources(){disposeViewSurfaces();disposePresentationHands();disposePrimitiveWeapons();}
+export function disposeWeaponResources(){disposeKitModels();disposeViewSurfaces();disposePresentationHands();disposePrimitiveWeapons();}
 
 export function animateCorpse(model,actor,time,options={}){return model.userData.avatar?authoredCorpse(model,actor,time,options):primitiveCorpse(model,actor,time,options);}
