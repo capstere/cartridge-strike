@@ -1,11 +1,11 @@
 {
   "schemaVersion": 1,
-  "gameVersion": "0.13.1",
+  "gameVersion": "0.13.2",
   "entrypoint": "fps/index.html",
   "release": {
     "mode": "public-release",
     "publicReleaseEligible": true,
-    "policySha256": "ba4f5d2daa7b7d5bad9af4a213c80c5fefec244095ded20a6c832729cd1de9f7",
+    "policySha256": "c4202323ac89858655bf26fb3a2ffdbd50def848ebcc3f992f7545cf4d46c567",
     "derivatives": [
       {
         "id": "cartridge-v11.3",
@@ -296,7 +296,7 @@
           },
           {
             "path": "src/fps/riposte-fx-pool.mjs",
-            "sha256": "d9f4745dd85ac0e7a055fe5cf576db3b5c51cc314926c6ed4a0459c6d3dbfaff"
+            "sha256": "eea8b5a0a319705de7bfb6a538c16fe637dd02975fac4b5b68b1fdb7811f34a2"
           },
           {
             "path": "src/fps/riposte-pbr-materials.mjs",
@@ -315,7 +315,7 @@
             "sha256": "2e692c370f226245144a3bc732ecdd2bbe6345ee836f7432c92348be1226377e"
           }
         ],
-        "runtimeDigest": "fa36465e56b0f68b5d722c11534c8ac7eea6f771c0b06cfafd3cd8b75bc951ba",
+        "runtimeDigest": "cc558969ac4a34e1c5f65950f8f0ed318221058cb906768eb09f7e9f2fc05f9d",
         "distributionApproved": true
       }
     ]
@@ -1063,8 +1063,8 @@
     },
     {
       "path": "src/fps/riposte-fx-pool.mjs",
-      "bytes": 1470,
-      "sha256": "d9f4745dd85ac0e7a055fe5cf576db3b5c51cc314926c6ed4a0459c6d3dbfaff"
+      "bytes": 2146,
+      "sha256": "eea8b5a0a319705de7bfb6a538c16fe637dd02975fac4b5b68b1fdb7811f34a2"
     },
     {
       "path": "src/fps/riposte-pbr-materials.mjs",
@@ -1207,7 +1207,7 @@
       "sha256": "331ea9090db0c9f6f597bd9840fd5b171830f6e0b3ba1cb24dfa91f0c95aedc1"
     }
   ],
-  "bytes": 19949818,
+  "bytes": 19950494,
   "sourceDirectoriesExcluded": [
     "references",
     "reviews",
