@@ -1,4 +1,5 @@
-/** Bounded cosmetic effects and adult fantasy dwarfs; no combat targets or game-state writes. */
+/** Bounded cosmetic effects and adult fantasy dwarfs; reads authoritative hit/death state; never writes game state. */
+import {smoothstep} from './riposte-fps-math.mjs';
 import * as T from '../../vendor/three/three.module.js';
 import {RoundedBoxGeometry} from '../../vendor/three/addons/geometries/RoundedBoxGeometry.js';
 import {mergeGeometries} from '../../vendor/three/addons/utils/BufferGeometryUtils.js';
@@ -74,7 +75,9 @@ export class ActionVisuals{
   for(const a of s.wanderers||[]){
    ids.add(a.id);let model=this.dwarfs.get(a.id);if(!model){model=cloneDwarf(this.templates[a.variant]);this.root.add(model);this.dwarfs.set(a.id,model);}
    model.visible=game.config.wanderers&&Math.hypot(camera.position.x-a.x,camera.position.z-a.z)<30;
-   model.position.set(a.x,a.y||0,a.z);model.rotation.y=a.yaw||0;
+   if(!model.visible)continue;
+   model.position.set(a.x,a.y||0,a.z);model.rotation.set(0,a.yaw||0,0);
+   if(a.alive===false){const fall=smoothstep(0,.55,t-a.deathAt);model.rotation.z=fall*1.45;model.position.y=.10*fall;model.visible=t-a.deathAt<9;continue;}
    const wave=Math.sin(a.steps*13),moving=a.moving>.03?1:0;
    model.userData.legs.forEach((p,i)=>p.rotation.x=wave*(i?-1:1)*.42*moving);
    model.userData.arms.forEach((p,i)=>p.rotation.x=-wave*(i?-1:1)*.30*moving);

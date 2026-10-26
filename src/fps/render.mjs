@@ -1,3 +1,5 @@
+import {buildDoorVisuals} from './door-visuals.mjs';
+import {buildRiposteProps} from './riposte-props.mjs';
 import {makeWeapon} from './models.mjs';
 import {WEAPONS} from './config.mjs';
 import {buildFacilityScene} from './facility-scene.mjs';
@@ -58,6 +60,7 @@ export class Renderer extends EngineRenderer {
     // use the unmodified native renderer. Restore this hook at final teardown.
     this.nativeRender=this.renderer.render.bind(this.renderer);this.inDepthPass=false;
     this.renderer.render=(scene,camera)=>{
+      if(scene===this.scene&&!this.inDepthPass)this.doorVisuals?.update(camera,this.renderer.shadowMap.enabled?this.lights:[]);
       if(scene===this.scene&&!this.inDepthPass&&this.settings.graphics!=='low'){
         this.inDepthPass=true;try{this.visualDepth.render(scene,camera);}finally{this.inDepthPass=false;}return;
       }
@@ -79,6 +82,10 @@ export class Renderer extends EngineRenderer {
       this.livingScene=buildLivingScene(world,this.registry,{replacedProps:this.facilityScene?.plan.replacedProps,refinedFreight:!!this.facilityScene});
       if(this.facilityScene)this.scene.add(this.facilityScene.root);
       this.scene.add(this.livingScene.root);this.livingScene.decorateCeilings(this.scene);
+      [this.doorVisuals,this.riposteProps]=await Promise.all([buildDoorVisuals(world.doors),buildRiposteProps(world)]);
+      if(this.presentationDisposed){this.doorVisuals?.dispose();this.riposteProps?.dispose();return;}
+      if(this.doorVisuals)this.scene.add(this.doorVisuals.root);this.scene.add(this.riposteProps.root);
+      freezeStaticTransforms(this.riposteProps.root);
       freezeStaticTransforms(this.livingScene.root);
       const started=performance.now(),field=await bakeLightfield(world,this.fixtures,{maxSize:96});
       if(this.presentationDisposed)return;
@@ -155,6 +162,7 @@ export class Renderer extends EngineRenderer {
     return super.materialFor(b);
   }
   render(game,viewActor,dt){
+    // Door instance culling runs at the world-draw hook, after camera/lights update.
     this.presentationGame=game;this.combatVisuals?.update(game);this.livingScene?.update(game.state.time);this.actionVisuals?.update(game,this.camera);super.render(game,viewActor,dt);
   }
   events(events,game){this.combatVisuals?.events(events,game);super.events(events.filter(e=>e.type!=='hit'||(e.sourceId===game.player?.id&&game.actors.some(a=>a.id===e.actorId&&a.team!==game.player.team))),game);this.actionVisuals?.events(events,game);}
@@ -166,6 +174,7 @@ export class Renderer extends EngineRenderer {
   }
   dispose(){
     if(this.presentationDisposed)return;this.presentationDisposed=true;
+    this.doorVisuals?.dispose();this.riposteProps?.dispose();
     this.focusLighting?.dispose();this.facilityScene?.dispose();
     for(const restore of this.presentationRestores||[])restore();
     window.removeEventListener('keydown',this.onInspectKey);this.renderer.render=this.nativeRender;this.visualDepth?.dispose();this.combatVisuals?.dispose();this.actionVisuals?.dispose();disposeCharacterLibrary();this.presentationRestores=[];this.presentationField?.dispose();this.livingScene?.dispose();super.dispose();

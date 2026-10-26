@@ -128,6 +128,7 @@ export class Game {
       s.phase = 'active'; this.emit('start', null);
     }
     this.roundCandidates = []; this.pendingDamage = [];
+    this.world.doors?.update(s.time,dt,[...this.actors,...this.hostages,...(this.config.wanderers?s.wanderers||[]:[])]);
     tickActionState(this,dt);
     for (const actor of this.actors) {
       if (!actor.alive) continue;
@@ -316,7 +317,7 @@ export class Game {
       const dir = direction(actor.yaw + (this.random() - .5) * spread, actor.pitch + (this.random() - .5) * spread);
       const wall = this.world.raycast(origin, dir, w.range, { vision: false });
       let nearest = wall?.distance ?? w.range, victim = null;
-      for (const target of [...this.actors,...(this.config.hostageDamage?this.hostages:[])]) {
+      for (const target of [...this.actors,...(this.config.hostageDamage?this.hostages:[]),...(this.config.wanderers?this.state.wanderers||[]:[])]) {
         if (!target.alive || target.rescued || target === actor) continue;
         const hit = rayActor(origin, dir, target, nearest);
         if (hit !== null && hit < nearest) { nearest = hit; victim = target; }
@@ -326,7 +327,7 @@ export class Game {
         if (victim.team !== actor.team || this.config.friendlyFire) {
           this.pendingDamage.push({ target: victim, amount: w.damage, source: actor, kind: actor.weapon, point: hitPoint, direction: dir, sourcePosition: origin });
         }
-      } else if (wall) this.emit('impact', null, { ...hitPoint, sourceId: actor.id, surface: wall.material ?? 'wall', normal: wall.normal, direction: dir });
+      } else if (wall) this.emit('impact', null, { ...hitPoint, sourceId: actor.id, surface: wall.material ?? 'wall', surfaceId: wall.id, normal: wall.normal, direction: dir });
       this.emit('tracer', actor, { from: origin, to: hitPoint, weapon: actor.weapon });
     }
     return true;
@@ -335,6 +336,7 @@ export class Game {
     if (this.phase !== 'active' || !target?.alive || !Number.isFinite(amount) || amount <= 0 || (source && source.team && source.team === target.team && !this.config.friendlyFire && !(source===target&&kind==='bazooka'))) return false;
     if(target.spawnProtectedUntil>this.state.time)return false;
     if(target.kind==='hostage'&&!this.config.hostageDamage)return false;
+    if(target.kind==='dwarf'&&!this.config.wanderers)return false;
     if (target.isPlayer && source && !source.isPlayer && source.team !== target.team) amount *= DIFFICULTIES[this.state.difficulty].humanDamage;
     const absorbed = Math.min(target.armor || 0, amount * .32); target.armor = Math.max(0, (target.armor || 0) - absorbed);
     const dealt = Math.min(target.hp, amount - absorbed); target.hp = Math.max(0, target.hp - dealt);
@@ -405,7 +407,7 @@ export class Game {
       this.state.smokes.push({ ...point(grenade), y: grenade.y + 1, id: grenade.id, radius: c.smokeRadius, until: this.state.time + c.smokeDuration }); return;
     }
     const owner = this.actors.find(a => a.id === grenade.ownerId), origin = { ...point(grenade), y: grenade.y + .08 };
-    for (const actor of [...this.actors,...(this.config.hostageDamage?this.hostages:[])]) {
+    for (const actor of [...this.actors,...(this.config.hostageDamage?this.hostages:[]),...(this.config.wanderers?this.state.wanderers||[]:[])]) {
       if (!actor.alive||actor.rescued) continue;
       const target = eye(actor), d = Math.hypot(target.x - origin.x, target.y - origin.y, target.z - origin.z);
       if (grenade.type === 'he') {
@@ -443,7 +445,7 @@ export class Game {
   }
   interact(actor, input) {
     const interaction = input.interact ? this.interaction(actor, input.interactTarget) : null;
-    if (!interaction) { actor.action = null; return; }
+    if (!interaction) { actor.action = null;if(input.interact){const door=this.world.doors?.nearest(actor);if(door)this.world.doors.request(door,this.state.time,actor);} return; }
     if (interaction.duration) {
       if (actor.moving > .15 || !actor.onGround) { actor.action = null; return; }
       if (!actor.action || actor.action.type !== interaction.type) {

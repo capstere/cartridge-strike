@@ -130,8 +130,7 @@ export async function buildFacilityScene(world,settings){
   // Replace cargo rather than nesting the new case inside the old cartons.
   // Each instance fits an existing solid cargo box; the physical gaps remain.
   if(plan.palletBase&&plan.cargo.length){
-    const p=plan.palletBase;box(p.x,p.y,p.z,p.w,p.h,p.d,paint,0xa78760);
-    for(let k=0;k<7;k++)box(p.x-p.w/2+.08+k*(p.w-.16)/6,.197,p.z,.09,.018,p.d,paint,0xa78760);
+    // Pallet geometry is supplied by the shared Riposte adapter; cargo remains NORD-01.
     const prototype=library.instantiate('supply_crate'),bounds=new T.Box3().setFromObject(prototype.object),size=bounds.getSize(new T.Vector3()),center=bounds.getCenter(new T.Vector3());
     const transforms=plan.cargo.map(b=>matrix(b.x,b.y,b.z,b.angle||0,[b.w/size.x,b.h/size.y,b.d/size.z]).multiply(new T.Matrix4().makeTranslation(-center.x,-center.y,-center.z)));
     prototype.release();const crates=library.instantiateBatch('supply_crate',transforms);handles.push(crates);staticRoot.add(crates.object);assetPlacements+=plan.cargo.length;
