@@ -15,6 +15,6 @@ export class EffectBatch{
  release(transform){this.active--;transform.visible=false;this.free.push(transform);}
  begin(){this.count=0;}
  write(transform){if(this.count>=this.capacity)return;transform.updateMatrix();this.mesh.setMatrixAt(this.count++,transform.matrix);}
- flush(){this.mesh.count=this.count;this.mesh.visible=this.count>0;if(this.count)this.mesh.instanceMatrix.needsUpdate=true;}
+ flush(){this.mesh.count=this.count;this.mesh.visible=this.count>0;if(this.count){const attribute=this.mesh.instanceMatrix;attribute.clearUpdateRanges();attribute.addUpdateRange(0,this.count*16);attribute.needsUpdate=true;}}
  dispose(){this.mesh.removeFromParent();this.mesh.dispose();this.free=[];}
 }
