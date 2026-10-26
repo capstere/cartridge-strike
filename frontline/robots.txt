@@ -1,0 +1,5 @@
+User-agent: *
+Allow: /
+Disallow: /api/
+
+Sitemap: https://capstere.github.io/cartridge-strike/frontline/sitemap.xml
