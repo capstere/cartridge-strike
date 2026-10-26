@@ -41,3 +41,62 @@ select{font:inherit;background:#0d1920;color:var(--paper);border:1px solid #4b64
  #combat-session{bottom:107px;padding:7px 10px}
  .key-hints{opacity:.7}
 }
+
+/* Touchscreen FPS: independent gamepad-like overlay, never steals menu scrolling. */
+#mobile-controls[hidden]{display:none!important}
+#mobile-controls{position:fixed;inset:0;z-index:12;pointer-events:none;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;touch-action:none;overscroll-behavior:none}
+#mobile-controls .mobile-look-zone{position:absolute;right:0;top:0;width:60%;height:100%;pointer-events:auto;touch-action:none;z-index:1}
+#mobile-controls .mobile-stick-zone{position:absolute;left:0;bottom:2%;width:42%;height:59%;pointer-events:auto;touch-action:none;z-index:2}
+#mobile-controls .mobile-stick{position:absolute;left:50%;top:55%;width:112px;height:112px;border:2px solid #a2ebd9a6;border-radius:50%;background:#0b28338a;transform:translate(-50%,-50%);opacity:.18;transition:opacity .12s ease;box-shadow:0 0 20px #051117a1;pointer-events:none}
+#mobile-controls .mobile-stick.active{opacity:.95}
+#mobile-controls .mobile-stick-nub{position:absolute;left:calc(50% - 22px);top:calc(50% - 22px);width:44px;height:44px;border-radius:50%;background:#8bffdf90;border:2px solid #c8fff2;box-shadow:0 0 15px #0006}
+#mobile-controls .mobile-button{position:absolute;z-index:3;display:grid;place-items:center;min-width:48px;min-height:48px;padding:3px 6px;border:1.5px solid #93c7c9ba;border-radius:50%;background:#122f3dcc;color:#edfffc;font-size:10px;font-weight:800;letter-spacing:.04em;line-height:1.05;text-shadow:0 1px 2px #000b;touch-action:none;pointer-events:auto;-webkit-tap-highlight-color:transparent;box-shadow:0 3px 12px #0008}
+#mobile-controls .mobile-button.pressed{background:#56ac9ecc;transform:scale(.94)}
+#mobile-controls .mobile-fire{width:80px;height:80px;right:3%;bottom:19%;font-size:17px;background:#b45634b8;border-color:#ffc0a1}
+#mobile-controls .mobile-jump{width:58px;height:58px;right:18%;bottom:35%}
+#mobile-controls .mobile-crouch{width:56px;height:56px;right:18%;bottom:11%}
+#mobile-controls .mobile-interact{width:60px;height:60px;right:30%;bottom:21%;background:#234f4ed9}
+#mobile-controls .mobile-reload{right:3%;bottom:51%}
+#mobile-controls .mobile-weapon{right:26%;bottom:46%}
+#mobile-controls .mobile-grenade{right:36%;bottom:6%}
+#mobile-controls .mobile-sneak{left:3%;top:26%;min-width:50px}
+#mobile-controls .mobile-buy{left:3%;top:max(10px,env(safe-area-inset-top));background:#244b40dc}
+#mobile-controls .mobile-pause{right:3%;top:max(10px,env(safe-area-inset-top));border-radius:10px;width:55px;height:42px;min-height:42px}
+#mobile-controls .mobile-drop{left:18%;top:26%;min-width:50px}
+#mobile-controls.mobile-dead .mobile-button:not(.mobile-pause):not(.mobile-buy){opacity:.3;pointer-events:none}
+#mobile-controls .mobile-portrait-note{display:none;position:absolute;top:19%;left:50%;transform:translateX(-50%);width:max-content;max-width:85vw;padding:9px 12px;border-radius:8px;background:#07212dee;color:white;text-align:center;font-size:12px;z-index:4;pointer-events:none}
+html.touch-fps #game{touch-action:none}
+@media (pointer:coarse){
+  html.touch-fps #menu{touch-action:pan-y}
+  html.touch-fps #menu .menu-layout{gap:16px;padding:14px max(14px,env(safe-area-inset-left)) 22px}
+  html.touch-fps #menu .intro h1{font-size:clamp(28px,5vw,52px);margin:10px 0}
+  html.touch-fps #menu .intro .lead{font-size:14px;line-height:1.3;margin-bottom:12px}
+  html.touch-fps #menu .selection{max-height:none}
+  html.touch-fps #menu .team-option{min-height:70px;padding:8px;margin-bottom:5px}
+  html.touch-fps #menu .primary{min-height:48px}
+  html.touch-fps #menu .mode-picker{padding-bottom:6px;margin-bottom:6px}
+  html.touch-fps #menu footer{display:none}
+  html.touch-fps #hud .map-panel,html.touch-fps #hud .key-hints,html.touch-fps #hud #difficulty-label{display:none}
+  html.touch-fps #hud .bottom-hud{bottom:2px;left:8%;right:8%;transform:scale(.65);transform-origin:bottom center}
+  html.touch-fps #hud .top-hud{transform:scale(.68);transform-origin:top center;margin:2px auto}
+  html.touch-fps #hud #objectives{top:52px;max-width:85vw;padding:3px 7px;font-size:9px}
+  html.touch-fps #hud #killfeed{top:65px;right:2%;font-size:9px;opacity:.8}
+  html.touch-fps #hud #prompt{font-size:11px}
+  html.touch-fps #pause .pause-card{max-height:90dvh;overflow-y:auto}
+  html.touch-fps #buy .buy-card{max-height:90dvh;overflow-y:auto}
+  html.touch-fps #fatal{inset:5%;padding:14px}
+}
+@media (orientation:landscape) and (pointer:coarse) and (max-height:550px){
+  html.touch-fps #menu .menu-layout{display:flex;align-items:flex-start;flex-direction:row;min-height:100%;padding-top:8px;padding-bottom:12px}
+  html.touch-fps #menu .intro,html.touch-fps #menu .selection{width:50%;min-width:0}
+  html.touch-fps #menu .selection{max-height:calc(100dvh - 18px);overflow-y:auto}
+  html.touch-fps #menu .intro .small,html.touch-fps #menu .mission-strip{display:none}
+}
+@media (orientation:portrait) and (pointer:coarse){
+  #mobile-controls .mobile-portrait-note{display:block}
+  #mobile-controls .mobile-look-zone{width:65%}
+  #mobile-controls .mobile-stick-zone{width:45%;height:42%}
+  #mobile-controls .mobile-fire{bottom:23%}
+  #mobile-controls .mobile-jump{bottom:36%}
+  #mobile-controls .mobile-crouch{bottom:14%}
+}
