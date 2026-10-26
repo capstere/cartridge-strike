@@ -12,8 +12,12 @@ export function fieldBounds(description) {
     Math.max(...points.map(p => p[0])) + .2, Math.max(...points.map(p => p[1])) + .2];
 }
 export function lampSample(point, lamps, visible) {
-  const near = lamps.map(l => ({ ...l, distance2: (l.x - point.x) ** 2 + (l.z - point.z) ** 2 }))
-    .filter(l => l.distance2 < 64).sort((a, b) => a.distance2 - b.distance2).slice(0, 4);
+  const near=[];
+  for(const lamp of lamps){
+    const distance2=(lamp.x-point.x)**2+(lamp.z-point.z)**2;if(distance2>=64)continue;
+    let at=0;while(at<near.length&&near[at].distance2<=distance2)at++;
+    if(at>=4)continue;near.splice(at,0,{x:lamp.x,y:lamp.y,z:lamp.z,distance2});if(near.length>4)near.pop();
+  }
   let energy = 0, tested = 0;
   for (const lamp of near) {
     tested++;

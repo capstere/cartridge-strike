@@ -58,6 +58,7 @@ export function buildLivingScene(world,registry,{replacedProps=[],refinedFreight
  function binder(x,y,z,color,yaw=0){box(x,y+.16,z,.065,.32,.25,color,paint,yaw,.004);box(x,y+.16,z+.128,.035,.20,.003,0xe4e6dd,paint,yaw);}
  // Render the exact colliding pieces. Details never replace their physical records.
  for(const b of world.living.boxes){
+  if(b.id.endsWith('-wood-base'))continue;
   if([...replaced].some(id=>b.id.startsWith(id)))continue;
   if(b.id.includes('-wheel-')||b.id.includes('-caster-'))add(new THREE.CylinderGeometry(b.h/2,b.h/2,b.d,10),paint,b.x,b.y,b.z,{x:Math.PI/2},C.rubber,true);
   else if(b.finish==='blue'&&Math.min(b.w,b.h,b.d)<.031){const dims=[b.w,b.h,b.d],axis=dims.indexOf(Math.max(...dims)),a=[b.x,b.y,b.z],v=[...a];a[axis]-=dims[axis]/2;v[axis]+=dims[axis]/2;rod(a,v,.014,C.blue);}
@@ -77,7 +78,7 @@ export function buildLivingScene(world,registry,{replacedProps=[],refinedFreight
   }else if(type==='bins'){
    for(let k=0;k<3;k++){const u=x+(k-1)*w/3;plane(u,.54,z+d/2-.055,.27,.25,labelMat,3);box(u,.82,z-.10,w/3-.11,.012,.13,0xb7a852);}
   }else if(type==='pallet'){
-   for(let k=0;k<7;k++)box(x-w/2+.08+k*(w-.16)/6,.197,z,.09,.018,d,C.wood);
+   // Detailed pallet base is supplied by the licensed reuse adapter.
   }else if(type==='shelf'){
    plane(x,h-.08,z+d/2+.02,w*.65,.15,labelMat,8);
   }else if(type==='planter'){

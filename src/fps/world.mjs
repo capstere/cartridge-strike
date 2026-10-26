@@ -1,6 +1,7 @@
 import '../floor5-data.js';
 import '../world.js';
 import { createPhysics, ACTOR_RADIUS, insidePolygon, distanceSegment } from './physics.mjs';
+import { createDoors } from './doors.mjs';
 import { createNavigation } from './navigation.mjs';
 import { createFurnishings } from './furnishings.mjs';
 import { createTacticalMap } from './tactical-map.mjs';
@@ -21,7 +22,7 @@ export function createWorld({fresh=false}={}){
   const living=createLivingPlan(data,description);
   description.boxes.push(...living.boxes);
   const physics=createPhysics(description,data);
-  const navigation=createNavigation(data,physics);
+  const navigation=createNavigation(data,{...physics,canOccupy:physics.staticCanOccupy});
   const roomAt=(x,z)=>data.rooms.find(r=>r.status!=='uncertain'&&insidePolygon(x,z,r.polygon))||data.corridors.find(r=>insidePolygon(x,z,r.polygon))||null;
   function freeGroup(target,count,{roomId=null,range=4,separation=.95,yaw=0}={}){
     const room=roomId?data.rooms.find(r=>r.id===roomId):null,candidates=[];
@@ -50,7 +51,8 @@ export function createWorld({fresh=false}={}){
     {text:'D06 · RESCUE / BUY',x:rescue.x,y:.025,z:rescue.z,yaw:0,width:2,height:.48,color:'#92e8e4',accent:'#164b53',floor:true}
   );
   const materialAt=(x,z)=>{const r=roomAt(x,z);return r&&(['I01','I02','I03','I04','I29'].includes(r.id)||/RESTROOM|STÄD|PENTRY/.test(r.name))?'vinyl':'carpet';};
-  const world={description,data,anchors,tactical,furnishings,living,roomAt,materialAt,...physics,findPath:navigation.findPath,navigation,statistics:{...physics.statistics,navigation:navigation.statistics,furnishings:furnishings.instances.length}};
+  const doors=createDoors(data,physics);physics.setDynamicBoxes(doors.boxes);
+  const world={doors,description,data,anchors,tactical,furnishings,living,roomAt,materialAt,...physics,findPath:navigation.findPath,navigation,statistics:{...physics.statistics,navigation:navigation.statistics,furnishings:furnishings.instances.length}};
   if(!fresh)sharedWorld=world;
   return world;
 }

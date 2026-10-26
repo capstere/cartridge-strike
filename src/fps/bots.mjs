@@ -3,11 +3,12 @@
 import { MemorySystem, SeekBehavior, State, StateMachine, Vector3, Vehicle } from '../../vendor/yuka/yuka.module.js';
 import { WEAPONS } from './config.mjs';
 import {actionObjective,friendlyLineClear} from './action-rules.mjs';
+import {angleDifference} from './riposte-fps-math.mjs';
 import { distanceSegment } from './physics.mjs';
 
 const distance = (a, b) => Math.hypot(a.x - b.x, a.z - b.z);
 const eye = a => ({ x: a.x, y: a.y + a.height - .12, z: a.z });
-const angleDelta = (a, b) => Math.atan2(Math.sin(a - b), Math.cos(a - b));
+const angleDelta = (a, b) => angleDifference(b,a);
 const position = a => ({ x: a.x, y: a.y ?? 0, z: a.z });
 const aimAt = (a, b) => ({ yaw: Math.atan2(-(b.x - a.x), -(b.z - a.z)), pitch: Math.atan2((b.y ?? 1) - (a.y + a.height - .12), distance(a, b)) });
 

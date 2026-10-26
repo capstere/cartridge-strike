@@ -15,9 +15,10 @@ const dist=(a,b)=>Math.hypot(a.x-b.x,a.z-b.z);
 const pos=a=>({x:a.x,y:a.y||0,z:a.z});
 const eye=a=>({...pos(a),y:(a.y||0)+(a.height||1.7)-.12});
 export const isEndless=g=>g.state.mode==='endless';
-const aliveBodies=g=>[...g.actors,...g.hostages].filter(a=>a.alive!==false&&!a.rescued);
+const aliveBodies=g=>[...g.actors,...g.hostages,...(g.config.wanderers?g.state.wanderers||[]:[])].filter(a=>a.alive!==false&&!a.rescued);
 
 export function prepareActionRound(g){
+ g.world.doors?.reset();
  const s=g.state;s.mode=MODES[g.config.mode]?g.config.mode:'classic';s.projectiles=[];s.orders={};
  s.radioAt=-Infinity;s.radioLog=[];
  for(const h of s.hostages)Object.assign(h,{alive:true,hp:100,armor:0,deaths:0,deathAt:null,kind:'hostage',respawnAt:null});
@@ -78,11 +79,11 @@ export function tickActionState(g,dt){
   }
   s.drops=s.drops.filter(d=>s.time-(d.createdAt??s.time)<25).slice(-24);
  }
- updateWanderers(g,dt);
+ if(g.config.wanderers){if(!s.wanderers?.length&&g.world.navigation?.nodes?.length)initializeWanderers(g);updateWanderers(g,dt);}
 }
 export function recordActionDeath(g,target,source){
  if(isEndless(g)){
-  target.respawnAt=g.state.time+(target.kind==='hostage'?10:g.config.respawnDelay);
+  target.respawnAt=g.state.time+(['hostage','dwarf'].includes(target.kind)?10:g.config.respawnDelay);
   if(target.team&&source?.team&&source!==target&&target.team!==source.team)g.state.score[source.team]++;
  }
  if(source&&source!==target&&source.team===target.team)source.teamKills=(source.teamKills||0)+1;
@@ -159,16 +160,20 @@ function initializeWanderers(g){
  if(!g.config.wanderers||!nodes.length)return;
  const start=g.world.navigation.nearest(g.world.anchors.analysts[0]);
  const roomNodes=new Map();
- for(const n of nodes){const room=g.world.roomAt(n.x,n.z);if(!room||roomNodes.has(room.id))continue;if(!g.world.findPath(start,n).length)continue;roomNodes.set(room.id,n);}
+ for(const n of nodes){const room=g.world.roomAt(n.x,n.z);if(!room||roomNodes.has(room.id)||!g.world.canOccupy(n.x,n.z,.2,.86))continue;if(!g.world.findPath(start,n).length)continue;roomNodes.set(room.id,n);}
  g.wanderNodes=[...roomNodes.values()];
  const points=[...g.wanderNodes];
  for(let i=0;i<Math.min(14,points.length);i++){
-  const p=points.splice(Math.floor(random()*points.length),1)[0];g.state.wanderers.push({id:`dwarf-${i}`,x:p.x,y:0,z:p.z,yaw:random()*6.28,height:.78,radius:.13,path:[],nextPlan:random()*4,moving:0,steps:0,variant:i%5});
+  const p=points.splice(Math.floor(random()*points.length),1)[0];g.state.wanderers.push({id:`dwarf-${i}`,name:`Fantasidvärg ${i+1}`,kind:'dwarf',hp:65,armor:0,alive:true,deaths:0,deathAt:null,respawnAt:null,spawn:{x:p.x,z:p.z},x:p.x,y:0,z:p.z,yaw:random()*6.28,height:.86,radius:.16,path:[],nextPlan:random()*4,moving:0,steps:0,variant:i%5});
  }
 }
 function updateWanderers(g,dt){
  const rand=g.wanderRandom,s=g.state;if(!rand)return;
  for(const a of s.wanderers||[]){
+  if(!a.alive){
+   if(isEndless(g)&&s.time>=a.respawnAt&&g.world.canOccupy(a.spawn.x,a.spawn.z,a.radius,a.height)&&!g.actors.some(o=>o.alive&&dist(o,a.spawn)<.6))Object.assign(a,a.spawn,{y:0,hp:65,alive:true,deathAt:null,respawnAt:null,path:[],nextPlan:s.time+1,moving:0,steps:0});
+   else continue;
+  }
   if(!a.path.length&&s.time>=a.nextPlan){
    const near=g.wanderNodes.filter(n=>dist(a,n)<17&&dist(a,n)>1);
    const choices=near.length?near:g.wanderNodes,target=choices[Math.floor(rand()*choices.length)];
