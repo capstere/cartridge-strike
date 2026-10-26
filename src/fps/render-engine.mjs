@@ -24,7 +24,7 @@ export function freezeStaticTransforms(root){root.updateWorldMatrix(true,true);r
 }
 export class Renderer{
  constructor(canvas,world,settings){
-  this.world=world;this.settings=settings;this.renderer=new THREE.WebGLRenderer({canvas,antialias:true,powerPreference:'high-performance'});this.renderer.info.autoReset=false;this.quality=settings.graphics;this.renderer.setPixelRatio(Math.min(devicePixelRatio,settings.graphics==='low'?.85:1.5));this.renderer.outputColorSpace=THREE.SRGBColorSpace;this.renderer.toneMapping=THREE.ACESFilmicToneMapping;this.renderer.toneMappingExposure=1.04;this.renderer.shadowMap.enabled=settings.graphics!=='low';this.renderer.shadowMap.type=THREE.PCFSoftShadowMap;this.renderer.shadowMap.autoUpdate=false;this.shadowAt=-Infinity;
+  this.world=world;this.settings=settings;this.renderer=new THREE.WebGLRenderer({canvas,antialias:!settings.mobile,powerPreference:settings.mobile?'low-power':'high-performance'});this.renderer.info.autoReset=false;this.quality=settings.graphics;this.renderer.setPixelRatio(Math.min(devicePixelRatio,settings.mobile?(settings.graphics==='low'?.78:1):(settings.graphics==='low'?.85:1.5)));this.renderer.outputColorSpace=THREE.SRGBColorSpace;this.renderer.toneMapping=THREE.ACESFilmicToneMapping;this.renderer.toneMappingExposure=1.04;this.renderer.shadowMap.enabled=settings.graphics!=='low';this.renderer.shadowMap.type=THREE.PCFSoftShadowMap;this.renderer.shadowMap.autoUpdate=false;this.shadowAt=-Infinity;
   this.scene=new THREE.Scene();this.scene.background=new THREE.Color(0x28353d);this.scene.add(new THREE.HemisphereLight(0xd6e5ee,0x899298,1.35));this.camera=new THREE.PerspectiveCamera(76,1,.035,180);this.camera.rotation.order='YXZ';
   this.viewScene=new THREE.Scene();this.viewScene.add(new THREE.HemisphereLight(0xe2eff7,0x6c665b,1.45));const gunLight=new THREE.DirectionalLight(0xffe7c8,2.1);gunLight.position.set(-1,2,1);this.viewScene.add(gunLight);this.viewCamera=new THREE.PerspectiveCamera(60,1,.01,5);
   this.shadowOnlyMaterial=new THREE.MeshBasicMaterial({colorWrite:false,depthWrite:false});this.shadowDepthMaterial=new THREE.MeshDepthMaterial({depthPacking:THREE.RGBADepthPacking,side:THREE.DoubleSide});this.actorShadowGeometry=new THREE.CapsuleGeometry(.19,1.3,4,8);this.actorShadows=new Map();this.smokeMap=this.cloudTexture();this.registry=createMaterialRegistry(this.renderer,settings);this.makeEnvironment();this.lights=[];for(let i=0;i<2;i++){const light=new THREE.SpotLight(i?0xddeaf1:0xffedcd,32,11,1.02,.65,1.4);light.castShadow=true;light.shadow.mapSize.set(1024,1024);light.shadow.bias=-.0006;light.shadow.normalBias=.025;light.shadow.camera.near=.08;this.scene.add(light,light.target);this.lights.push(light);}this.lightAt=-1;
@@ -53,7 +53,7 @@ export class Renderer{
   const shadows=[];for(const b of desc.boxes.filter(b=>b.asset||b.furnishingId&&b.h>.5)){if(b.y-b.h/2>.15)continue;const g=new THREE.PlaneGeometry(Math.min(b.w+.24,2.8),Math.min(b.d+.24,2.8));g.rotateX(-Math.PI/2);g.translate(b.x,.012,b.z);shadows.push(g);}if(shadows.length){const mesh=new THREE.Mesh(mergeGeometries(shadows),this.contactMaterial);this.scene.add(mesh);shadows.forEach(g=>g.dispose());}
   this.fixtures=desc.boxes.filter(b=>b.material==='emissive'&&b.y>2.3).map(b=>({x:b.x,y:2.66,z:b.z}));if(!this.fixtures.length)this.fixtures=this.world.navigation.nodes.filter((n,i)=>i%18===0).map(n=>({...n,y:2.66}));this.decor=buildDecor(this.world,this.registry);this.scene.add(this.decor);this.roomVisuals=buildRoomVisuals(this.world,this.registry,{plan:this.roomVisualPlan});this.scene.add(this.roomVisuals);this.cartridgeProps=buildCartridgeProps(this.world);this.scene.add(this.cartridgeProps);
   for(const root of this.scene.children)if(!dynamicRoots.has(root))freezeStaticTransforms(root);
-  await this.registry.ready;await this.warmPrograms();
+  await this.registry.ready;if(!this.settings.mobile)await this.warmPrograms();else this.warmup={milliseconds:0,programs:this.renderer.info.programs?.length||0,textures:0,lazyMobile:true};
  }
  smokeMaterial(){return new THREE.MeshLambertMaterial({map:this.smokeMap,color:0xa5afa9,transparent:true,opacity:.85,depthWrite:false,side:THREE.DoubleSide,forceSinglePass:true});}
  async warmPrograms(){
@@ -77,7 +77,7 @@ export class Renderer{
  }
  updateLights(p,t){
   const shadows=this.settings.graphics!=='low';
-  if(this.quality!==this.settings.graphics){this.quality=this.settings.graphics;this.renderer.setPixelRatio(Math.min(devicePixelRatio,shadows?1.5:.85));this.resize();this.shadowAt=-Infinity;this.lightAt=-1;}
+  if(this.quality!==this.settings.graphics){this.quality=this.settings.graphics;this.renderer.setPixelRatio(Math.min(devicePixelRatio,this.settings.mobile?(shadows?1:.78):(shadows?1.5:.85)));this.resize();this.shadowAt=-Infinity;this.lightAt=-1;}
   this.renderer.shadowMap.enabled=shadows;
   // Animated casters update at 30 Hz; contact shadows and all gameplay/render
   // motion stay per-frame. Do not redraw two static room maps at 60+ Hz.
