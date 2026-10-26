@@ -97,6 +97,24 @@ async function openOriginal(browser, mobile) {
     await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
     assert.equal((await page.evaluate(() => __fps.input())).fire, false, 'Fire must release');
 
+    // Simultaneous left movement + right fire should work with two fingers.
+    await cdp.send('Input.dispatchTouchEvent', {
+      type: 'touchStart', touchPoints: [
+        { x: stickX, y: stickY, id: 11 },
+        { x: fireX, y: fireY, id: 12 },
+      ],
+    });
+    await cdp.send('Input.dispatchTouchEvent', {
+      type: 'touchMove', touchPoints: [
+        { x: stickX + 12, y: stickY - 39, id: 11 },
+        { x: fireX, y: fireY, id: 12 },
+      ],
+    });
+    const combined = await page.evaluate(() => __fps.input());
+    assert.ok(combined.forward > .2 && combined.fire,
+      'Two simultaneous fingers must move and fire: ' + JSON.stringify(combined));
+    await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
+
     // Look drag is independent of left-stick input.
     const look = await page.locator('[data-mobile-look]').boundingBox();
     const lookX = look.x + look.width * .2, lookY = look.y + look.height * .25;
@@ -119,7 +137,7 @@ async function openOriginal(browser, mobile) {
     assert.equal((await page.evaluate(() => window.__pointerLockAttempts)), 0,
       'Resume must not attempt unsupported pointer lock');
 
-    console.log('MOBILE PASS: touch detection, low GPU, no pointer lock, movement, strafe, fire, aim, pause/resume', state);
+    console.log('MOBILE PASS: touch detection, low GPU, no pointer lock, movement, strafe, simultaneous move/fire, aim, pause/resume', state);
     await mobileCtx.close();
 
     const { context: desktopCtx, page: desktop, state: desktopState } = await openOriginal(browser, false);
