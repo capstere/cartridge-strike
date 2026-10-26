@@ -13,8 +13,24 @@ export class EffectBatch{
  }
  acquire(){this.active++;if(this.free.length)return this.free.pop();this.transforms++;return new T.Object3D();}
  release(transform){this.active--;transform.visible=false;this.free.push(transform);}
- begin(){this.count=0;}
- write(transform){if(this.count>=this.capacity)return;transform.updateMatrix();this.mesh.setMatrixAt(this.count++,transform.matrix);}
- flush(){this.mesh.count=this.count;this.mesh.visible=this.count>0;if(this.count){const attribute=this.mesh.instanceMatrix;attribute.clearUpdateRanges();attribute.addUpdateRange(0,this.count*16);attribute.needsUpdate=true;}}
+ begin(){this.count=0;this.dirtyStart=Infinity;this.dirtyEnd=0;}
+ write(transform){
+  if(this.count>=this.capacity)return;
+  transform.updateMatrix();const offset=this.count++*16,array=this.mesh.instanceMatrix.array,elements=transform.matrix.elements;
+  // Compare at the GPU buffer's float32 precision, including recycled/reordered slots.
+  for(let i=0;i<16;i++)if(array[offset+i]!==Math.fround(elements[i])){
+   this.mesh.setMatrixAt(offset/16,transform.matrix);
+   this.dirtyStart=Math.min(this.dirtyStart,offset);this.dirtyEnd=offset+16;break;
+  }
+ }
+ flush(){
+  this.mesh.count=this.count;this.mesh.visible=this.count>0;
+  if(this.dirtyEnd){
+   const attribute=this.mesh.instanceMatrix;let start=this.dirtyStart,end=this.dirtyEnd;
+   // Keep pending writes if rendering was skipped; the renderer clears consumed ranges.
+   for(const range of attribute.updateRanges){start=Math.min(start,range.start);end=Math.max(end,range.start+range.count);}
+   attribute.clearUpdateRanges();attribute.addUpdateRange(start,end-start);attribute.needsUpdate=true;
+  }
+ }
  dispose(){this.mesh.removeFromParent();this.mesh.dispose();this.free=[];}
 }
