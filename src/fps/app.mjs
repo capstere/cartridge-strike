@@ -21,6 +21,7 @@ const mobile=new MobileControls({
   onLook(dx,dy){if(modal||!game?.player?.alive)return;const k=settings.sensitivity*2.15;yaw-=dx*k;pitch=Math.max(-1.49,Math.min(1.49,pitch-dy*k));},
   onAction(action){
     if(!game)return;
+    if(action==='restart'){restartMatch();return;}
     if(action==='pause'){showPause();return;}
     if(action==='buy'){showBuy();return;}
     if(!game.player?.alive)return;
