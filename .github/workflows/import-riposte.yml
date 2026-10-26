@@ -1,0 +1,76 @@
+name: Import complete licensed FPS engine
+
+on:
+  push:
+    branches:
+      - feature/import-riposte-full-engine-20261026
+    paths:
+      - tools/import_riposte.py
+      - .github/workflows/import-riposte.yml
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Build sanitized standalone FPS
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout Cartridge Strike
+        uses: actions/checkout@v4
+      - name: Prepare Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Import pinned MIT source and build
+        run: python3 tools/import_riposte.py
+      - name: Verify game and restricted assets
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -s frontline/index.html
+          test -s frontline/source/LICENSE
+          test -s frontline/source/NOTICE.md
+          test ! -e frontline/source/assets/anim/clips.bin
+          test ! -e frontline/source/assets/rankup.mp3
+          test ! -e frontline/source/assets/logo.webp
+          test ! -e frontline/source/assets/sfx/fin/m_victory.mp3
+          test ! -e frontline/source/assets/sfx/fin/m_defeat.mp3
+          grep -q 'Cartridge Strike: Frontline' frontline/index.html
+          echo 'Source and standalone build validated.'
+      - name: Upload standalone game
+        uses: actions/upload-artifact@v4
+        with:
+          name: cartridge-strike-frontline
+          path: frontline/
+          if-no-files-found: error
+          retention-days: 2
+  commit:
+    name: Commit imported game to feature branch
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout branch
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+      - name: Download validated game
+        uses: actions/download-artifact@v4
+        with:
+          name: cartridge-strike-frontline
+          path: frontline/
+      - name: Commit and push playable edition
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -f frontline/
+          if git diff --cached --quiet; then
+            echo 'No changes to imported game.'
+          else
+            git commit -m 'Import playable Cartridge Strike Frontline from licensed Riposte 5.6.0 engine'
+            git push origin "HEAD:${GITHUB_REF_NAME}"
+          fi
