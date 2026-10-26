@@ -49,6 +49,11 @@ function capsuleFootprintRadius(b,y,height,r){
  * those limits avoids hundreds of megabytes of tiny nodes around coplanar office trim.
  */
 class FloorOctree extends Octree {
+  capsuleIntersect(capsule){
+    // Reject only proven empty space. All contact/resolution math stays upstream.
+    if(this.mayIntersectCapsule&&!this.mayIntersectCapsule(capsule))return false;
+    return super.capsuleIntersect(capsule);
+  }
   split(level){
     if(!this.box)return this;
     const half=this.box.max.clone().sub(this.box.min).multiplyScalar(.5),children=[];
@@ -135,6 +140,27 @@ export function createPhysics(description,data){
   }
   cube.dispose();
   const surfaces=description.surfaces.filter(s=>s.material==='table'||s.id.startsWith('floor-')||s.id.startsWith('ceiling-'));
+  const tableIndex=new SpatialIndex(),staticMotionScratch=[],tableMotionScratch=[];
+  for(const s of surfaces)if(s.material==='table'){const bounds=polygonBounds(s.polygon);tableIndex.insert({surface:s,bounds},bounds);}
+  octree.mayIntersectCapsule=c=>{
+    // Game actors are vertical. Preserve the generic upstream path for tilted or
+    // invalid capsules rather than approximating their swept horizontal segment.
+    if(c.start.x!==c.end.x||c.start.z!==c.end.z||!Number.isFinite(c.radius)||c.radius<0)return true;
+    const x=c.start.x,z=c.start.z,r=c.radius+EPS*10;
+    const low=Math.min(c.start.y,c.end.y)-c.radius-EPS,high=Math.max(c.start.y,c.end.y)+c.radius+EPS;
+    if(!Number.isFinite(x)||!Number.isFinite(z)||!Number.isFinite(low)||!Number.isFinite(high))return true;
+    for(const b of boxIndex.query(x,z,r,staticMotionScratch)){
+      // Match the Octree's threshold-trim exclusion; include complete capsule
+      // radius here, conservatively, including near feet/head and rotated boxes.
+      if(b.y+b.h/2<=.035||b.y+b.h/2<low||b.y-b.h/2>high)continue;
+      if(circleHitsBox(x,z,r,b))return true;
+    }
+    // Table tops/undersides are standalone triangles, not necessarily boxes.
+    // Their bounds deliberately admit false positives at concave edges/holes.
+    for(const {surface:s,bounds:b} of tableIndex.query(x,z,r,tableMotionScratch))
+      if(s.y>=low&&s.y<=high&&x+r>=b.minX&&x-r<=b.maxX&&z+r>=b.minZ&&z-r<=b.maxZ)return true;
+    return false;
+  };
   // Floor/ceiling are planar at known source heights: scopeAllowed + the exact
   // vertical bounds in move handle them without inserting thousands of overlapping
   // coplanar triangles into an Octree. Ray tests still use every source polygon.

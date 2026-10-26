@@ -1,11 +1,11 @@
 {
   "schemaVersion": 1,
-  "gameVersion": "0.13.2",
+  "gameVersion": "0.13.3",
   "entrypoint": "fps/index.html",
   "release": {
     "mode": "public-release",
     "publicReleaseEligible": true,
-    "policySha256": "c4202323ac89858655bf26fb3a2ffdbd50def848ebcc3f992f7545cf4d46c567",
+    "policySha256": "5dab16d82ec68989fe81c651cc088791ac0abb4cab58eceee3efbf8aacad939f",
     "derivatives": [
       {
         "id": "cartridge-v11.3",
@@ -276,7 +276,7 @@
           },
           {
             "path": "src/fps/physics.mjs",
-            "sha256": "c1bc7fb7ef23d7b06f72287580b6c312991eb2ad627ae84e2ae16eedf009ceb2"
+            "sha256": "60a6874ad4e6072248df25b8ccef5d3b5400a2e123dc82cf63a439082797b08b"
           },
           {
             "path": "src/fps/presentation-lightfield.mjs",
@@ -315,7 +315,7 @@
             "sha256": "2e692c370f226245144a3bc732ecdd2bbe6345ee836f7432c92348be1226377e"
           }
         ],
-        "runtimeDigest": "cc558969ac4a34e1c5f65950f8f0ed318221058cb906768eb09f7e9f2fc05f9d",
+        "runtimeDigest": "6c2847ef170c14dc6335cb711c8ec480a0f907b6a42b1847c1e1ad4b1cdb324f",
         "distributionApproved": true
       }
     ]
@@ -769,7 +769,7 @@
     {
       "path": "fps/index.html",
       "bytes": 8092,
-      "sha256": "3279ed6da88b3addbe529c4d569f120327607cf84ec15dc244020c3bbf85233a"
+      "sha256": "fcda3541660643e03a8b5e6c822ca47686d5f889ecf08ba1d6b050f3a31e3182"
     },
     {
       "path": "fps/style.css",
@@ -848,8 +848,8 @@
     },
     {
       "path": "src/floor5-data.js",
-      "bytes": 234583,
-      "sha256": "3a50ee195a5154abf3a65c04249667221119daf7edadbc3db88b231ede9f4455"
+      "bytes": 237068,
+      "sha256": "ea25a302b5d8f8db5d4d0e545244009bbd4ee1f0c616d56091067cae9d2b182a"
     },
     {
       "path": "src/fps/action-audio.mjs",
@@ -1023,8 +1023,8 @@
     },
     {
       "path": "src/fps/physics.mjs",
-      "bytes": 17424,
-      "sha256": "c1bc7fb7ef23d7b06f72287580b6c312991eb2ad627ae84e2ae16eedf009ceb2"
+      "bytes": 19145,
+      "sha256": "60a6874ad4e6072248df25b8ccef5d3b5400a2e123dc82cf63a439082797b08b"
     },
     {
       "path": "src/fps/presentation-hands.mjs",
@@ -1207,7 +1207,7 @@
       "sha256": "331ea9090db0c9f6f597bd9840fd5b171830f6e0b3ba1cb24dfa91f0c95aedc1"
     }
   ],
-  "bytes": 19950511,
+  "bytes": 19954717,
   "sourceDirectoriesExcluded": [
     "references",
     "reviews",
