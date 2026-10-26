@@ -1,0 +1,51 @@
+name: Cartridge Strike mobile FPS
+
+on:
+  push:
+    branches:
+      - feature/mobile-original-fps-20261026
+    paths:
+      - src/fps/**
+      - fps/**
+      - tools/mobile-smoke.cjs
+      - .github/workflows/mobile-original-fps.yml
+  pull_request:
+    paths:
+      - src/fps/**
+      - fps/**
+      - tools/mobile-smoke.cjs
+      - .github/workflows/mobile-original-fps.yml
+  workflow_dispatch:
+
+jobs:
+  test-mobile-and-desktop:
+    name: Touchscreen FPS + desktop regression
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: JavaScript syntax checks
+        run: |
+          set -euo pipefail
+          node --check src/fps/app.mjs
+          node --check src/fps/mobile-controls.mjs
+          node --check src/fps/render.mjs
+          node --check src/fps/render-engine.mjs
+          node --check tools/mobile-smoke.cjs
+      - name: Install browser test runtime
+        run: |
+          npm ci --prefix frontline/source/tools/dev --ignore-scripts
+          node frontline/source/tools/dev/node_modules/playwright-core/cli.js install chromium
+      - name: Test original Cartridge Strike in Chromium
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -m http.server 8765 --bind 127.0.0.1 >/tmp/fps-mobile-http.log 2>&1 &
+          SERVER_PID=$!
+          trap 'kill "$SERVER_PID" || true' EXIT
+          node tools/mobile-smoke.cjs

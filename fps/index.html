@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="sv">
 <head>
-  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover,user-scalable=no">
   <meta name="color-scheme" content="dark"><title>Cartridge Strike · Våning 5</title>
   <link rel="icon" href="data:,"><link rel="stylesheet" href="style.css">
   <script type="importmap">{"imports":{"three":"../vendor/three/three.module.js","three/addons/":"../vendor/three/addons/"}}</script>
@@ -30,7 +30,7 @@
         <div id="menu-settings"></div><details><summary>Kontroller</summary><div class="controls-list"><span>WASD <b>Rör dig</b></span><span>Shift <b>Smyg</b></span><span>Ctrl / Space <b>Huka / hoppa</b></span><span>Mus / R <b>Skjut / ladda om</b></span><span>E <b>Uppdrag</b></span><span>B / Tab <b>Köp / resultat</b></span><span>1–5 / Q <b>Utrustning / senaste</b></span><span>G / M <b>Släpp / taktisk karta</b></span><span>V <b>Inspektera vapnet</b></span></div></details>
       </section>
     </div>
-    <footer><span id="game-version">CARTRIDGE STRIKE / VERSION 0.13.3</span><span>HYBRID · BOMB + RÄDDNING</span><span>FRISTÅENDE BOTSPEL</span></footer>
+    <footer><span id="game-version">CARTRIDGE STRIKE / VERSION 0.13.4</span><span>HYBRID · BOMB + RÄDDNING</span><span>FRISTÅENDE BOTSPEL</span></footer>
   </main>
   <div id="hud" hidden>
     <div class="top-hud"><div class="score analysts"><strong id="score-a">0</strong><span>ANALYSTS <small id="alive-a">5 kvar</small></span></div><div class="round-clock"><small id="round-label">RUNDA 1</small><b id="timer">0:15</b><small id="phase">KÖPFAS</small></div><div class="score counter"><span>COUNTER ANALYSTS <small id="alive-ca">5 kvar</small></span><strong id="score-ca">0</strong></div></div>
@@ -51,6 +51,25 @@
   <section id="pause" class="modal-overlay" hidden><div class="card pause-card"><p class="eyebrow">MATCHEN ÄR PAUSAD</p><h2>Ta ett andetag.</h2><p>Alla rundtimers och botar väntar.</p><div id="pause-settings"></div><button id="resume" class="primary">FORTSÄTT →</button><button id="restart" class="secondary">NY MATCH / VÄLJ LAG</button><div class="controls-list"><span>E <b>Håll för plantera / desarmera</b></span><span>4 <b>Cykla cartridge-granater</b></span><span>5 <b>Uppdragsbomb</b></span><span>Tab <b>Resultattavla</b></span></div></div></section>
   <section id="scoreboard" class="modal-overlay" hidden><div class="card scoreboard-card"><div class="card-top"><span>MATCHRESULTAT</span><span id="board-round"></span></div><div id="score-tables"></div><p class="small">Håll Tab · Gisslan räknas inte in i lagen</p></div></section>
   <section id="match-end" class="modal-overlay" hidden><div class="card pause-card"><p class="eyebrow">MATCHEN ÄR AVGJORD</p><h2 id="match-winner"></h2><p id="match-score"></p><button id="new-match" class="primary">SPELA IGEN →</button></div></section>
+  <div id="mobile-controls" hidden aria-label="Mobilstyrning">
+    <div class="mobile-look-zone" data-mobile-look aria-label="Dra fingret här för att sikta"></div>
+    <div class="mobile-stick-zone" data-mobile-stick-zone aria-label="Rör dig med vänster tumme">
+      <div class="mobile-stick" data-mobile-stick><div class="mobile-stick-nub" data-mobile-nub></div></div>
+    </div>
+    <button type="button" class="mobile-button mobile-pause" data-mobile-action="pause" aria-label="Pausa spelet">PAUS</button>
+    <button type="button" class="mobile-button mobile-restart" data-mobile-action="restart" aria-label="Starta om matchen efter död">SPELA IGEN</button>
+    <button type="button" class="mobile-button mobile-buy" data-mobile-action="buy" aria-label="Köp vapen">KÖP</button>
+    <button type="button" class="mobile-button mobile-reload" data-mobile-action="reload" aria-label="Ladda om">LADDA</button>
+    <button type="button" class="mobile-button mobile-weapon" data-mobile-action="weapon" aria-label="Byt vapen">VAPEN</button>
+    <button type="button" class="mobile-button mobile-grenade" data-mobile-action="grenade" aria-label="Välj granat">GRAN.</button>
+    <button type="button" class="mobile-button mobile-fire" data-mobile-action="fire" aria-label="Skjut">ELD</button>
+    <button type="button" class="mobile-button mobile-jump" data-mobile-action="jump" aria-label="Hoppa">HOPP</button>
+    <button type="button" class="mobile-button mobile-crouch" data-mobile-action="crouch" aria-label="Huka">HUKA</button>
+    <button type="button" class="mobile-button mobile-interact" data-mobile-action="interact" aria-label="Håll för att interagera">HÅLL E</button>
+    <button type="button" class="mobile-button mobile-sneak" data-mobile-action="sneak" aria-label="Håll för att smyga">SMYG</button>
+    <button type="button" class="mobile-button mobile-drop" data-mobile-action="drop" aria-label="Släpp föremål">SLÄPP</button>
+    <div class="mobile-portrait-note">Vrid telefonen till liggande läge för bättre spelkontroll</div>
+  </div>
   <div id="fatal" hidden><h2>Spelet kunde inte startas</h2><pre></pre><p>Ladda om sidan och öppna spelet i en separat Chrome- eller Edge-flik på datorn.</p></div>
   <script type="module" src="../src/fps/app.mjs"></script>
 </body></html>

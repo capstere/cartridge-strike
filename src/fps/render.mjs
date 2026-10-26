@@ -87,6 +87,7 @@ export class Renderer extends EngineRenderer {
       if(this.doorVisuals)this.scene.add(this.doorVisuals.root);this.scene.add(this.riposteProps.root);
       freezeStaticTransforms(this.riposteProps.root);
       freezeStaticTransforms(this.livingScene.root);
+      if(!this.settings.mobile){
       const started=performance.now(),field=await bakeLightfield(world,this.fixtures,{maxSize:96});
       if(this.presentationDisposed)return;
       const texture=new THREE.DataTexture(field.data,field.width,field.height,THREE.RGBAFormat);
@@ -105,14 +106,16 @@ export class Renderer extends EngineRenderer {
       this.presentationReport={kind:'approximate-startup-indirect-field',width:field.width,height:field.height,
         sources:field.sources,visibilityChecks:field.checks,materials:this.presentationRestores.length,
         milliseconds:performance.now()-started,geometryChanged:false,photometricValidation:false};
+      }else{this.presentationReport={kind:'mobile-ambient-light',geometryChanged:false,photometricValidation:false};}
       // Prepare the actual rigged models and all first-use world weapon materials.
       // Previously these only existed after Start and compiled during combat.
       const startupActors=[];
       for(const side of ['analysts','counterAnalysts'])for(let i=0;i<5;i++)startupActors.push(this.actorModel({id:`${side}-${i}`,team:side}));
       for(let i=0;i<2;i++)startupActors.push(this.actorModel({id:`hostage-${i}`}));
       this.worldWeaponWarmup=new THREE.Group();this.worldWeaponWarmup.name='world-weapon-preload';
-      for(const w of Object.values(WEAPONS))if(!['armor'].includes(w.slot))this.worldWeaponWarmup.add(makeWeapon(w.id,{viewmodel:false}));
+      if(!this.settings.mobile)for(const w of Object.values(WEAPONS))if(!['armor'].includes(w.slot))this.worldWeaponWarmup.add(makeWeapon(w.id,{viewmodel:false}));
       this.scene.add(this.worldWeaponWarmup);
+      if(!this.settings.mobile){
       const visibility=this.lights.map(light=>light.visible),shadows=this.renderer.shadowMap.enabled,previousTarget=this.renderer.getRenderTarget();
       try {
         // Standard renders the world into a linear HDR target. Compiling only
@@ -127,9 +130,10 @@ export class Renderer extends EngineRenderer {
       const depth=this.visualDepth;
       for(const material of [depth.aoMaterial,depth.material]){depth.quad.material=material;await this.renderer.compileAsync(depth.scene,depth.camera);}
       depth.quad.material=depth.material;
+      }
       this.worldWeaponWarmup.visible=false;for(const actor of startupActors)actor.visible=false;
       this.kitWarmup=[];this.weaponWarmup=[];
-      for(const id of Object.values(WEAPONS).filter(w=>w.slot!=='armor').map(w=>w.id)){
+      if(!this.settings.mobile)for(const id of Object.values(WEAPONS).filter(w=>w.slot!=='armor').map(w=>w.id)){
         if(this.presentationDisposed)return;
         const model=makeWeapon(id);this.weaponCache.set(id,model);this.viewScene.add(model);
         try{await this.renderer.compileAsync(this.viewScene,this.viewCamera);this.weaponWarmup.push(id);if(['p9','p12','cr4'].includes(id))this.kitWarmup.push(id);}
