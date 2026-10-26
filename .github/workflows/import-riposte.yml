@@ -6,8 +6,13 @@ on:
       - feature/import-riposte-full-engine-20261026
     paths:
       - tools/import_riposte.py
+      - tools/frontline-smoke.cjs
       - .github/workflows/import-riposte.yml
   workflow_dispatch:
+
+concurrency:
+  group: cartridge-frontline-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   build:
@@ -38,6 +43,14 @@ jobs:
           test ! -e frontline/source/assets/sfx/fin/m_defeat.mp3
           grep -q 'Cartridge Strike: Frontline' frontline/index.html
           echo 'Source and standalone build validated.'
+      - name: Install Playwright browser for runtime smoke test
+        run: |
+          npm ci --prefix frontline/source/tools/dev --ignore-scripts
+          node frontline/source/tools/dev/node_modules/playwright-core/cli.js install chromium
+      - name: Verify real browser boot and WebGL UI
+        run: |
+          node tools/frontline-smoke.cjs
+          rm -rf frontline/source/tools/dev/node_modules
       - name: Upload standalone game
         uses: actions/upload-artifact@v4
         with:

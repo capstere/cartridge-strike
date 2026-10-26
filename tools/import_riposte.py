@@ -152,6 +152,7 @@ def patch_builder(builder: Path) -> None:
     end = text.index('shutil.copyfile("assets/icon/favicon.ico"', start)
     text = text[:start] + '# Steam Deck installer and branded artwork are not redistributed. Use the web PWA.\n' + text[end:]
     text = replace_once(text, 'SITE="https://www.playriposte.com"', f'SITE="{PUBLIC_URL}"', "canonical URL")
+    text = replace_once(text, 'json.dump({"id":"/","name":', 'json.dump({"id":"/cartridge-strike/frontline/","name":', "PWA app identity")
     builder.write_text(text, encoding="utf-8")
 
 
