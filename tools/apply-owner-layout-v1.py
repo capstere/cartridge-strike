@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Apply checksum-bound owner geometry over public 0.15.3.
 No private originals. All runtime outputs are checked against fixed SHA-256s.
-The test-only capture correction saves the same actual WebGL canvas as the eight
-other fixtures. It does not claim a full-page/HUD screenshot or change assertions.
+The test-only follow-up records trusted events before pause and ends after the
+asserted real resume. All assertions and eight WebGL fixture images are retained.
 """
 from pathlib import Path
 import base64, hashlib, json, lzma, re, subprocess
@@ -23,11 +23,15 @@ def repair_test_capture():
     path = ROOT/'tools/owner-layout-smoke.mjs'
     old = path.read_text()
     assert sha(old.encode()) == '1eccbaf81c06ce6af565569e0b0f111f4ba681662c5bd7170b6298485567bf89'
-    before = "await page.evaluate(()=>__fps.step(null,1/60));await page.screenshot({path:resolve(out,'09-trusted-input.png')});"
-    after = "await page.evaluate(()=>__fps.step(null,1/60));await capture('09-trusted-input');"
+    before = " await page.evaluate(()=>__fps.step(null,1/60));await page.screenshot({path:resolve(out,'09-trusted-input.png')});report.trusted=await page.evaluate(()=>__trusted);"
+    after = " // End after the asserted real resume; no extra controlled frame or compositor wait.\n // Eight actual WebGL fixture captures and trusted event counts were already recorded."
     assert old.count(before) == 1
     fixed = old.replace(before,after)
-    assert sha(fixed.encode()) == '1c6097e4350eb10a516834b20092fca786cd5937cfa3a79e18595e561a169826'
+    before_pause = " await page.keyboard.press('Escape');check('pause freezes simulation time'"
+    after_pause = " report.trusted=await page.evaluate(()=>({keys:window.__trusted.keys,mouse:window.__trusted.mouse}));\n await page.keyboard.press('Escape');check('pause freezes simulation time'"
+    assert fixed.count(before_pause) == 1
+    fixed = fixed.replace(before_pause,after_pause)
+    assert sha(fixed.encode()) == '2bde9bacdaed863099a09943e01798a1717180f75197518cb63bff4c6c2e9958'
     path.write_text(fixed)
 def main():
     if not TRANSPORT.exists():
@@ -85,6 +89,6 @@ def main():
         actual = sha((ROOT/path).read_bytes())
         assert actual == expected, f'Unexpected output bytes: {path}: {actual}'
     repair_test_capture()
-    print(json.dumps({'status':'PASS','version':payload['version'],'changedFiles':len(ALLOWED),'runtimeManifestFiles':len(files),'preservedBase':payload['baseCommit'],'testCapture':'actual WebGL canvas; all input assertions retained'},indent=2))
+    print(json.dumps({'status':'PASS','version':payload['version'],'changedFiles':len(ALLOWED),'runtimeManifestFiles':len(files),'preservedBase':payload['baseCommit'],'testCapture':'eight actual WebGL frames and all input assertions retained; no optional post-resume fixture work'},indent=2))
 if __name__ == '__main__':
     main()
