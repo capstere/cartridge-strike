@@ -102,3 +102,8 @@ html.touch-fps #game{touch-action:none}
   #mobile-controls .mobile-jump{bottom:36%}
   #mobile-controls .mobile-crouch{bottom:14%}
 }
+
+/* Riposte-style auto-trigger: hide manual trigger only when auto-fire is enabled. */
+#mobile-controls .mobile-fire[hidden]{display:none!important}
+html.touch-fps #crosshair.auto-target i{background:#78f7b0!important;box-shadow:0 0 8px #48d88eab}
+html.touch-fps #crosshair.auto-target::after{content:'AUTO';position:absolute;top:29px;left:50%;transform:translateX(-50%);font:bold 9px/1 system-ui,sans-serif;letter-spacing:.14em;color:#a0ffcf;text-shadow:0 1px 5px #00180f}

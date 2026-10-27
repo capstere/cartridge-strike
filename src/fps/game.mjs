@@ -141,7 +141,7 @@ export class Game {
       }
       const controls = actor.bot ? actor.bot.update(dt) : actor.isPlayer ? input : {};
       this.moveActor(actor, controls, dt);
-      if (controls.fire) this.fire(actor, !actor.fireHeld);
+      if (controls.fire) this.fire(actor, !!controls.autoFire || !actor.fireHeld);
       actor.fireHeld = !!controls.fire;
       this.interact(actor, controls);
       actor.interactHeld = !!controls.interact;
@@ -297,6 +297,39 @@ export class Game {
     this.dropItem(actor, this.item(actor)); actor.inventory[w.slot] = null;
     this.select(actor.inventory.pistol ? 'pistol' : 'knife', actor); return true;
   }
+  /**
+   * Mobile auto-trigger uses the EXACT shot ray / bounding-box / solid-world
+   * occlusion logic of fire(), not a nearest-enemy cone or a wallhack.
+   * It will not auto-fire into a teammate, hostage, smoke, wall or empty space.
+   */
+  reticleTarget(actor = this.player, yaw = actor?.yaw, pitch = actor?.pitch) {
+    if (!actor?.alive || this.phase !== 'active' || this.state.paused ||
+        actor.action || actor.reloadUntil || actor.flash >= .8) return null;
+    const w = WEAPONS[actor.weapon], item = this.item(actor);
+    if (!w || !['primary', 'pistol', 'knife'].includes(w.slot) ||
+        w.projectile || (w.slot !== 'knife' && (!item || item.ammo <= 0))) return null;
+    if (!Number.isFinite(yaw) || !Number.isFinite(pitch)) return null;
+
+    const from = eye(actor), dir = direction(yaw, pitch);
+    const wall = this.world.raycast(from, dir, w.range, { vision: false });
+    let nearest = wall?.distance ?? w.range, target = null;
+    // Like fire(), allies and neutral bodies occupy the ray even when
+    // friendly fire is disabled. We must not shoot *through* them.
+    for (const other of [...this.actors,
+      ...(this.config.hostageDamage ? this.hostages : []),
+      ...(this.config.wanderers ? this.state.wanderers || [] : [])]) {
+      if (other === actor || !other.alive || other.rescued) continue;
+      const hit = rayActor(from, dir, other, nearest);
+      if (hit !== null && hit < nearest) { nearest = hit; target = other; }
+    }
+    if (!target || target.team === actor.team || !target.team) return null;
+    const endpoint = {
+      x: from.x + dir.x * nearest, y: from.y + dir.y * nearest, z: from.z + dir.z * nearest,
+    };
+    if (this.smokeBlocks(from, endpoint)) return null;
+    return target;
+  }
+
   fire(actor = this.player, pressed = true) {
     const w = WEAPONS[actor.weapon];
     if (this.phase !== 'active' || !actor.alive || actor.reloadUntil || this.state.time + EPS < actor.nextShot || actor.action) return false;
