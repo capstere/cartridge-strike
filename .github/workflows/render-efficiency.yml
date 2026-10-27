@@ -1,0 +1,113 @@
+name: Cartridge Strike render efficiency
+on:
+  push:
+    branches: [feature/render-efficiency-20261027]
+    paths:
+      - src/fps/**
+      - fps/**
+      - tools/render-performance*
+      - tools/fixtures/**
+      - tools/apply-render-efficiency.py
+      - .github/workflows/render-efficiency.yml
+  pull_request:
+    paths:
+      - src/fps/**
+      - fps/**
+      - tools/render-performance*
+      - tools/fixtures/**
+      - .github/workflows/render-efficiency.yml
+  workflow_dispatch:
+
+concurrency:
+  group: render-efficiency-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: Rendering regression ${{ matrix.suite }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        suite: [render-performance, throwable-cartridge, focus-hud, mobile, precision, grenade]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Apply guarded presentation integration
+        run: python3 tools/apply-render-efficiency.py
+      - name: Syntax and deterministic tests
+        run: |
+          set -euo pipefail
+          for f in src/fps/{app,render-engine,render-budget,minimap-cache,tracer-batch}.mjs; do node --check "$f"; done
+          node --check tools/render-performance-smoke.cjs
+          mkdir -p node_modules/three
+          printf '%s\n' '{"name":"three","type":"module","exports":"./three.module.js"}' > node_modules/three/package.json
+          ln -s ../../vendor/three/three.module.js node_modules/three/three.module.js
+          node --test tools/recoil-autofire.test.mjs tools/precision.test.mjs tools/grenade.test.mjs tools/throwable-cartridge.test.mjs tools/render-performance.test.mjs
+      - name: Install pinned browser runtime
+        run: |
+          npm ci --prefix frontline/source/tools/dev --ignore-scripts
+          node frontline/source/tools/dev/node_modules/playwright-core/cli.js install chromium
+      - name: Verify actual gameplay and rendering
+        env:
+          SUITE: ${{ matrix.suite }}
+        run: |
+          set -euo pipefail
+          python3 -m http.server 8765 --bind 127.0.0.1 >/tmp/performance-http.log 2>&1 &
+          SERVER_PID=$!
+          trap 'kill "$SERVER_PID" || true' EXIT
+          node "tools/${SUITE}-smoke.cjs"
+      - name: Package validated runtime changes
+        if: matrix.suite == 'render-performance'
+        run: tar -czf performance-runtime.tgz src/fps/app.mjs src/fps/render-engine.mjs fps/index.html build-info.json
+      - uses: actions/upload-artifact@v4
+        if: matrix.suite == 'render-performance'
+        with:
+          name: performance-tested-runtime
+          path: performance-runtime.tgz
+          if-no-files-found: error
+          retention-days: 2
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: performance-review-${{ matrix.suite }}
+          path: test-results/
+          if-no-files-found: ignore
+          retention-days: 7
+
+  commit:
+    name: Publish validated rendering integration
+    if: github.event_name == 'push' && github.ref == 'refs/heads/feature/render-efficiency-20261027'
+    needs: test
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+      - uses: actions/download-artifact@v4
+        with:
+          name: performance-tested-runtime
+      - name: Commit only tested runtime paths
+        env:
+          EXPECTED_SHA: ${{ github.sha }}
+          BRANCH: ${{ github.ref_name }}
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$EXPECTED_SHA"
+          tar -xzf performance-runtime.tgz src/fps/app.mjs src/fps/render-engine.mjs fps/index.html build-info.json
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add src/fps/app.mjs src/fps/render-engine.mjs fps/index.html build-info.json
+          if ! git diff --cached --quiet; then
+            git commit -m 'Cartridge Strike 0.15.2: tested minimap cache, tracer pooling and idle render budget'
+            git push origin "HEAD:$BRANCH"
+          fi
