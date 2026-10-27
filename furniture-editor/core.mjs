@@ -2,7 +2,8 @@
  * This file deliberately has no imports from the active FPS, no mutations of game data,
  * and no storage or network side effects. The exported JSON is review-only.
  */
-export const EDITOR_VERSION = '1.0.0';
+import {LIBRARY_MAP} from './library/catalog.mjs';
+export const EDITOR_VERSION = '2.0.0';
 export const GAME_VERSION = '0.17.0';
 export const BASE_COMMIT = '7b99da56c9cc7f7e5bdbc626a174c8db9a9e33bc';
 export const PATCH_FORMAT = 'cartridge-strike-furniture-studio';
@@ -87,7 +88,7 @@ export function exportPatch(objects,baseline,{createdAt=new Date().toISOString()
  const base=new Map(baseline.map(o=>[o.id,o]));const placements=[],added=[],removed=[];
  for(const o of objects){const old=base.get(o.id);if(o.deleted){if(old)removed.push(o.id);continue;}
   const payload={id:o.id,roomId:o.roomId,kind:o.kind,x:round(o.x),z:round(o.z),yaw:round(normalizeAngle(o.yaw),6)};
-  if(!old)added.push({...payload,w:round(o.w),d:round(o.d),height:round(o.height)});
+  if(!old)added.push({...payload,w:round(o.w),d:round(o.d),height:round(o.height),...(o.assetId?{assetId:o.assetId,assetName:String(o.assetName||'3D-objekt').slice(0,90)}:{})});
   else if(isChanged(o,old))placements.push(payload);
  }
  for(const old of baseline)if(!objects.some(o=>o.id===old.id))removed.push(old.id);
@@ -111,9 +112,13 @@ export function parsePatch(document,baseline){
   if(![p.x,p.z,p.yaw].every(v=>typeof v==='number'&&Number.isFinite(v))||Math.abs(p.x)>100||Math.abs(p.z)>100||Math.abs(p.yaw)>100)
    throw Error('Ogiltiga koordinater eller rotationer.');
   if(typeof p.roomId!=='string'||p.roomId.length>20||typeof p.kind!=='string')throw Error('Felaktig möbeltyp.');
-  if(isNew){if(!/^NY-(STOL|BORD|SOFFA)-\d{1,5}$/.test(p.id)||!['chair','table','sofa'].includes(p.kind)||![p.w,p.d,p.height].every(v=>typeof v==='number'&&Number.isFinite(v)&&v>.05&&v<4))
-   throw Error('Ogiltig ny möbel.');
-   const obj={...p,source:'added'};get.set(obj.id,obj);items.push(obj);
+  if(isNew){
+   const classic=/^NY-(STOL|BORD|SOFFA)-\d{1,5}$/.test(p.id)&&['chair','table','sofa'].includes(p.kind)&&!p.assetId;
+   const curated=/^NY-OBJ-\d{1,5}$/.test(p.id)&&p.kind==='prop'&&typeof p.assetId==='string'&&
+     (LIBRARY_MAP.has(p.assetId)||/^local:[a-f0-9]{64}$/.test(p.assetId));
+   if((!classic&&!curated)||![p.w,p.d,p.height].every(v=>typeof v==='number'&&Number.isFinite(v)&&v>.05&&v<4))
+     throw Error('Ogiltig ny möbel eller okänd 3D-modell.');
+   const obj={...p,assetName:curated?String(p.assetName||LIBRARY_MAP.get(p.assetId)?.name||'Egen 3D-modell').slice(0,90):undefined,source:'added'};get.set(obj.id,obj);items.push(obj);
   }else{
    const obj=get.get(p.id);if(!obj||obj.kind!==p.kind||obj.roomId!==p.roomId)throw Error('Möbeln matchar inte aktuell spelplan: '+p.id);
    Object.assign(obj,{x:p.x,z:p.z,yaw:normalizeAngle(p.yaw)});
