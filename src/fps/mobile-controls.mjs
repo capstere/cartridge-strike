@@ -117,6 +117,16 @@ export class MobileControls {
     document.addEventListener('visibilitychange', () => { if (document.hidden) this.clear(); });
   }
 
+  /** Riposte default: crosshair auto-trigger, no on-screen trigger button. */
+  setAutoFire(enabled) {
+    this.autoFire = !!enabled;
+    if (!this.enabled || !this.root) return;
+    this.root.classList.toggle('mobile-auto-fire', this.autoFire);
+    const trigger = this.root.querySelector('[data-mobile-action="fire"]');
+    if (trigger) trigger.hidden = this.autoFire;
+    if (this.autoFire) this.state.fire = false;
+  }
+
   input() { return { ...this.state }; }
 
   clear() {
