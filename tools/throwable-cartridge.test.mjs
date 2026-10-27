@@ -1,12 +1,13 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import * as THREE from '../vendor/three/three.module.js';
+import { CONFIG } from '../src/fps/config.mjs';
 import { createThrowableCartridge, createThrownCartridge, updateThrownCartridge,
   disposeThrowableCartridges, CARTRIDGE_VISUAL } from '../src/fps/throwable-cartridge.mjs';
 import { cartridge, makeWeapon, disposeWeaponResources } from '../src/fps/model-primitives.mjs';
 import { Renderer } from '../src/fps/render-engine.mjs';
 
-const projectile = (id = 'test1', type = 'he') => ({ id, type, x: 3, y: 1.5, z: -2, vx: 4, vy: 3, vz: -8, fuse: 1.8 });
+const projectile = (id = 'test1', type = 'he') => ({ id, type, x: 3, y: 1.5, z: -2, vx: 4, vy: 3, vz: -8, radius: CONFIG.grenadeRadius, fuse: CONFIG.grenadeFuse });
 const meshes = model => { const found = []; model.traverse(o => { if (o.isMesh) found.push(o); }); return found; };
 for (const type of ['he', 'flash', 'smoke']) {
   test(`${type}: original moulded Cartridge fits the existing hand and draw budget`, () => {
@@ -53,8 +54,7 @@ test('world weapon and thrown shell use the same Cartridge family', () => {
 });
 test('new throws have distinct deterministic spin; animation consumes no randomness or gameplay state', () => {
   const g = projectile(), before = structuredClone(g), random = Math.random;
-  // Construct before guarding Math.random: Three.js legitimately uses entropy
-  // for object UUIDs. The animation itself must not use random state at all.
+  // Three.js object UUID construction is intentionally outside the entropy guard.
   const a = createThrownCartridge(g, 0), b = createThrownCartridge(projectile('test2'), 0);
   try {
     Math.random = () => { throw new Error('Randomness consumed by cosmetic animation'); };
@@ -70,16 +70,19 @@ test('paused simulation freezes spin even when render keeps running', () => {
   for (let i = 0; i < 20; i++) updateThrownCartridge(m, g, 4.05);
   assert.ok(m.quaternion.equals(q));
 });
-test('floor rest settles, fits above the floor and never moves the simulated grenade', () => {
-  const g = {...projectile(), y: .07, vx: 0, vy: 0, vz: 0}, before = structuredClone(g);
-  const m = createThrownCartridge(g, 0);
-  for (let i = 1; i <= 120; i++) updateThrownCartridge(m, g, i / 60);
-  const q = m.quaternion.clone();
-  updateThrownCartridge(m, g, 2.02);
-  assert.ok(q.angleTo(m.quaternion) < .0001, 'resting cartridge must stop spinning');
-  assert.ok(new THREE.Box3().setFromObject(m).min.y >= .0029, 'visual shell cannot sink through floor');
-  assert.deepEqual(g, before);
-});
+for (const radius of [CONFIG.grenadeRadius, .07, .14]) {
+  test(`floor rest uses collision radius ${radius} without floating or moving the simulation`, () => {
+    const g = {...projectile(), radius, y: radius, vx: 0, vy: 0, vz: 0}, before = structuredClone(g);
+    const m = createThrownCartridge(g, 0);
+    for (let i = 1; i <= 120; i++) updateThrownCartridge(m, g, i / 60);
+    const q = m.quaternion.clone();
+    updateThrownCartridge(m, g, 2.02);
+    assert.ok(q.angleTo(m.quaternion) < .0001, 'resting cartridge must stop spinning');
+    const bottom = new THREE.Box3().setFromObject(m).min.y;
+    assert.ok(bottom >= .0029 && bottom < .004, `floor contact: ${bottom}`);
+    assert.deepEqual(g, before);
+  });
+}
 test('flight orientation is stable across render rates for constant velocity', () => {
   const g = projectile(), a = createThrownCartridge(g, 0), b = createThrownCartridge(g, 0);
   for (let i = 1; i <= 60; i++) updateThrownCartridge(a, g, i / 60);
