@@ -1,3 +1,4 @@
+import { createThrowableCartridge, disposeThrowableCartridges } from './throwable-cartridge.mjs';
 import {buildBazookaParts} from './action-models.mjs';
 // Original Cartridge Strike models. No Valve art or downloaded character assets.
 // All dimensions are metres; cosmetic meshes never participate in gameplay RNG,
@@ -118,6 +119,7 @@ function fabricMap() {
 function cloth(color) { return material(color, .91, 0, { roughnessMap: fabricMap(), bumpMap: fabricMap(), bumpScale: .00075 }); }
 
 export function cartridge(type = 'he', scale = 1) {
+  if (['he', 'flash', 'smoke'].includes(type)) return createThrowableCartridge(type, scale);
   const root = group(null, `cartridge-${type}`), white = material(0xe6e4d9, .49), seam = material(0xb8bcb2, .6);
   const color = { smoke: 0x568b80, flash: 0xd3b768, he: 0xb06643, bomb: 0xc58845 }[type] || 0x739a9a;
   const lid = material(color, .51), dark = material(0x334649, .49, .2);
@@ -479,7 +481,7 @@ export function makeWeapon(id = 'p9', { viewmodel = true } = {}) {
 export function disposeWeaponResources() {
   const geometries = new Set(), materials = new Set(), textures = new Set();
   for (const template of worldWeaponTemplates.values()) template.traverse(object => {
-    if (!object.isMesh) return; geometries.add(object.geometry);
+    if (!object.isMesh || object.geometry.userData.sharedThrowableCartridge) return; geometries.add(object.geometry);
     for (const material of Array.isArray(object.material) ? object.material : [object.material]) materials.add(material);
   });
   for (const material of materials) for (const value of Object.values(material)) if (value?.isTexture) textures.add(value);
@@ -488,6 +490,7 @@ export function disposeWeaponResources() {
   for (const texture of textures) texture.dispose();
   if (textures.has(sharedMachiningTexture)) sharedMachiningTexture = null;
   worldWeaponTemplates.clear();
+  disposeThrowableCartridges();
 }
 
 function torsoGeometry(mat, parent) {
