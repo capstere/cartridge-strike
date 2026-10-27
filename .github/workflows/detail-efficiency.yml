@@ -1,0 +1,109 @@
+name: Cartridge Strike detail efficiency
+on:
+  push:
+    branches: [main, feature/detail-efficiency-20261027]
+    paths:
+      - src/fps/**
+      - fps/**
+      - tools/detail-*
+      - tools/apply-detail-efficiency.py
+      - .github/workflows/detail-efficiency.yml
+  pull_request:
+    paths:
+      - src/fps/**
+      - fps/**
+      - tools/detail-*
+      - .github/workflows/detail-efficiency.yml
+  workflow_dispatch:
+concurrency:
+  group: detail-efficiency-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  test:
+    name: Detail regression ${{ matrix.suite }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        suite: [detail-efficiency, render-performance, throwable-cartridge, focus-hud, mobile, precision, grenade]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Apply guarded detail integration
+        run: python3 tools/apply-detail-efficiency.py
+      - name: Syntax and deterministic regression tests
+        run: |
+          set -euo pipefail
+          for f in src/fps/{trajectory-cache,frame-time-window,grenade-assist,render-engine}.mjs; do node --check "$f"; done
+          node --check tools/detail-efficiency-smoke.cjs
+          mkdir -p node_modules/three
+          printf '%s\n' '{"name":"three","type":"module","exports":"./three.module.js"}' > node_modules/three/package.json
+          ln -s ../../vendor/three/three.module.js node_modules/three/three.module.js
+          node --test tools/*.test.mjs
+          git diff --exit-code -- src/fps/game.mjs src/fps/grenade-physics.mjs src/fps/physics.mjs src/fps/doors.mjs src/fps/world.mjs
+      - name: Install pinned browser runtime
+        run: |
+          npm ci --prefix frontline/source/tools/dev --ignore-scripts
+          node frontline/source/tools/dev/node_modules/playwright-core/cli.js install chromium
+      - name: Verify real mobile and desktop game
+        env:
+          SUITE: ${{ matrix.suite }}
+        run: |
+          set -euo pipefail
+          python3 -m http.server 8765 --bind 127.0.0.1 >/tmp/detail-http.log 2>&1 &
+          SERVER_PID=$!
+          trap 'kill "$SERVER_PID" || true' EXIT
+          node "tools/${SUITE}-smoke.cjs"
+      - name: Package validated integration
+        if: matrix.suite == 'detail-efficiency'
+        run: tar -czf detail-runtime.tgz src/fps/grenade-assist.mjs src/fps/render-engine.mjs fps/index.html build-info.json
+      - uses: actions/upload-artifact@v4
+        if: matrix.suite == 'detail-efficiency'
+        with:
+          name: detail-tested-runtime
+          path: detail-runtime.tgz
+          if-no-files-found: error
+          retention-days: 2
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: detail-review-${{ matrix.suite }}
+          path: test-results/
+          if-no-files-found: ignore
+          retention-days: 7
+  commit:
+    name: Publish validated detail integration
+    if: github.event_name == 'push' && github.ref == 'refs/heads/feature/detail-efficiency-20261027'
+    needs: test
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+      - uses: actions/download-artifact@v4
+        with:
+          name: detail-tested-runtime
+      - name: Commit only tested runtime paths
+        env:
+          EXPECTED_SHA: ${{ github.sha }}
+          BRANCH: ${{ github.ref_name }}
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$EXPECTED_SHA"
+          tar -xzf detail-runtime.tgz src/fps/grenade-assist.mjs src/fps/render-engine.mjs fps/index.html build-info.json
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add src/fps/grenade-assist.mjs src/fps/render-engine.mjs fps/index.html build-info.json
+          if ! git diff --cached --quiet; then
+            git commit -m 'Cartridge Strike 0.15.3: validated trajectory cache and frame statistics'
+            git push origin "HEAD:$BRANCH"
+          fi
