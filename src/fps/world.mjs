@@ -6,6 +6,8 @@ import { createNavigation } from './navigation.mjs';
 import { createFurnishings } from './furnishings.mjs';
 import { createTacticalMap } from './tactical-map.mjs';
 import { createLivingPlan } from './living-floor-plan.mjs';
+import {createFacilityDetails} from './facility-details.mjs';
+import {prepareGlass,createGlassState} from './destructible-glass.mjs';
 
 let sharedWorld;
 const flatPoint=p=>({x:p[0],y:0,z:p[1]});
@@ -19,6 +21,11 @@ export function createWorld({fresh=false}={}){
   // I12 is a freight staging room in the supplied reference, not a lounge.
   description.boxes=description.boxes.filter(b=>!b.id.startsWith('fps-I12-sofa-'));
   furnishings.instances=furnishings.instances.filter(f=>!(f.roomId==='I12'&&f.prefab==='sofa'));
+  const details=createFacilityDetails(data,description);
+  description.boxes.push(...details.boxes);
+  const diningChairs=data.obstacles.filter(o=>o.kind==='authored-chair'&&['I09','I10','I19'].includes(o.roomId));
+  for(const b of description.boxes)if((b.material==='fabric'&&diningChairs.some(o=>b.id.startsWith(o.id+'-')))||b.asset==='chairDesk'&&['I09','I10','I19'].includes(b.roomId))b.upholsteryColor=0xd76b28;
+  const glassPlan=prepareGlass(description,data);
   const living=createLivingPlan(data,description);
   description.boxes.push(...living.boxes);
   const physics=createPhysics(description,data);
@@ -65,7 +72,8 @@ export function createWorld({fresh=false}={}){
   );
   const materialAt=(x,z)=>{const r=roomAt(x,z);return r&&(['I01','I02','I03','I04','I29'].includes(r.id)||/RESTROOM|STÄD|PENTRY/.test(r.name))?'vinyl':'carpet';};
   physics.setDynamicBoxes(doors.boxes);
-  const world={doors,description,data,anchors,tactical,furnishings,living,roomAt,materialAt,...physics,findPath:navigation.findPath,navigation,statistics:{...physics.statistics,navigation:navigation.statistics,furnishings:furnishings.instances.length}};
+  const glass=createGlassState(glassPlan,physics,()=>navigation.invalidate());
+  const world={doors,glass,details,description,data,anchors,tactical,furnishings,living,roomAt,materialAt,...physics,findPath:navigation.findPath,navigation,statistics:{...physics.statistics,navigation:navigation.statistics,furnishings:furnishings.instances.length}};
   if(!fresh)sharedWorld=world;
   return world;
 }

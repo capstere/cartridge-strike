@@ -1,0 +1,137 @@
+name: Facility Details and Breakable Glass
+on:
+  push:
+    branches: [work/facility-details-glass-0.17.0]
+    paths: ['tools/facility-transfer/**','.github/workflows/facility-details-review.yml']
+  workflow_dispatch:
+concurrency:
+  group: facility-details-017
+  cancel-in-progress: true
+permissions:
+  contents: read
+jobs:
+  source:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Apply exact reviewed public-source patch
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import base64,lzma,hashlib,re,subprocess
+          parts=sorted(Path('tools/facility-transfer').glob('*.b64'))
+          assert [p.name for p in parts]==['000.b64','001.b64','002.b64']
+          raw=lzma.decompress(base64.b64decode(''.join(p.read_text().strip() for p in parts),validate=True))
+          assert hashlib.sha256(raw).hexdigest()=='6d1a483feb47249e24bcd9159d9702b54b4ff0597d9e82ec09ae44ffec844d52'
+          paths=re.findall(rb'^diff --git a/(\S+) b/(\S+)$',raw,re.M)
+          assert len(paths)==19
+          assert all(a==b and not a.startswith((b'references/',b'reviews/')) and b'..' not in a for a,b in paths)
+          subprocess.run(['git','apply','--check','-'],input=raw,check=True)
+          subprocess.run(['git','apply','-'],input=raw,check=True)
+          PY
+      - name: Deterministic mechanics, collision, traversal and exact release integrity
+        run: |
+          mkdir -p node_modules/three
+          printf '%s\n' '{"name":"three","type":"module","exports":"./three.module.js"}' > node_modules/three/package.json
+          ln -s ../../vendor/three/three.module.js node_modules/three/three.module.js
+          node --test tools/*.test.mjs
+          node tools/owner-door-traversal.mjs
+          node tools/verify-owner-runtime.mjs
+          node --check tools/facility-details-smoke.mjs
+  browser:
+    if: github.actor != 'github-actions[bot]'
+    name: WebGL ${{ matrix.suite }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    strategy:
+      fail-fast: false
+      max-parallel: 4
+      matrix:
+        suite: [facility-details, detail-efficiency, render-performance, throwable-cartridge, focus-hud, mobile, precision, grenade]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Apply checksum-bound source
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import base64,lzma,hashlib,subprocess
+          raw=lzma.decompress(base64.b64decode(''.join(p.read_text().strip() for p in sorted(Path('tools/facility-transfer').glob('*.b64'))),validate=True))
+          assert hashlib.sha256(raw).hexdigest()=='6d1a483feb47249e24bcd9159d9702b54b4ff0597d9e82ec09ae44ffec844d52'
+          subprocess.run(['git','apply','--check','-'],input=raw,check=True)
+          subprocess.run(['git','apply','-'],input=raw,check=True)
+          PY
+      - name: Install pinned Chromium
+        run: |
+          npm ci --prefix frontline/source/tools/dev --ignore-scripts --no-audit --no-fund
+          node frontline/source/tools/dev/node_modules/playwright-core/cli.js install chromium
+      - name: Actual WebGL, input and visual evidence
+        env:
+          SUITE: ${{ matrix.suite }}
+          EXPECTED_GAME_VERSION: '0.17.0'
+        run: |
+          set -euo pipefail
+          python3 -m http.server 8765 --bind 127.0.0.1 >/tmp/facility-http.log 2>&1 &
+          SERVER_PID=$!
+          trap 'kill "$SERVER_PID" || true' EXIT
+          if [ "$SUITE" = facility-details ]; then
+            node tools/facility-details-smoke.mjs
+          else
+            node "tools/${SUITE}-smoke.cjs"
+          fi
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: facility-017-${{ matrix.suite }}
+          path: test-results/
+          if-no-files-found: warn
+          retention-days: 14
+  commit-tested:
+    name: Commit verified source to feature branch
+    needs: [source,browser]
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Materialize tested patch and commit with head lease
+        env:
+          EXPECTED_SHA: ${{ github.sha }}
+          BRANCH: work/facility-details-glass-0.17.0
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          import base64,lzma,hashlib,re,subprocess
+          raw=lzma.decompress(base64.b64decode(''.join(p.read_text().strip() for p in sorted(Path('tools/facility-transfer').glob('*.b64'))),validate=True))
+          assert hashlib.sha256(raw).hexdigest()=='6d1a483feb47249e24bcd9159d9702b54b4ff0597d9e82ec09ae44ffec844d52'
+          subprocess.run(['git','apply','--check','-'],input=raw,check=True);subprocess.run(['git','apply','-'],input=raw,check=True)
+          subprocess.run(['node','tools/verify-owner-runtime.mjs'],check=True)
+          paths=[a.decode() for a,b in re.findall(rb'^diff --git a/(\S+) b/(\S+)$',raw,re.M)]
+          subprocess.run(['git','add','--',*paths],check=True)
+          PY
+          test "$(git ls-remote origin refs/heads/$BRANCH | cut -f1)" = "$EXPECTED_SHA"
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git rm -r tools/facility-transfer
+          git commit -m 'Cartridge Strike 0.17.0: tested facility details and per-pane breakable glass'
+          git push origin "HEAD:$BRANCH"

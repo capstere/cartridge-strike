@@ -32,6 +32,7 @@ export class SpatialIndex {
 
 function boxBounds(b){const c=Math.abs(Math.cos(b.angle||0)),s=Math.abs(Math.sin(b.angle||0)),hx=(b.w*c+b.d*s)/2,hz=(b.w*s+b.d*c)/2;return {minX:b.x-hx,maxX:b.x+hx,minZ:b.z-hz,maxZ:b.z+hz};}
 export function circleHitsBox(x,z,r,b){
+  if(b.disabled)return false;
   const dx=x-b.x,dz=z-b.z;
   if(Math.abs(dx)>b.w/2+b.d/2+r||Math.abs(dz)>b.w/2+b.d/2+r)return false;
   const lx=b.cos*dx-b.sin*dz,lz=b.sin*dx+b.cos*dz,qx=Math.max(Math.abs(lx)-b.w/2,0),qz=Math.max(Math.abs(lz)-b.d/2,0);
@@ -96,7 +97,7 @@ export function createPhysics(description,data){
   let dynamicBoxes=[],dynamicIndex=new SpatialIndex();
   const dynamicScratch=[],motionScratch=[];
   const scopeScratch=[],obstacleScratch=[],boxScratch=[];
-  const setDynamicBoxes=boxes=>{dynamicBoxes=boxes;dynamicIndex=new SpatialIndex();for(const b of boxes)dynamicIndex.insert(b,b.broadphaseBounds||boxBounds(b));};
+  const setDynamicBoxes=boxes=>{dynamicBoxes=[...boxes,...staticBoxes.filter(b=>b.glassId)];dynamicIndex=new SpatialIndex();for(const b of dynamicBoxes)dynamicIndex.insert(b,b.broadphaseBounds||boxBounds(b));};
   let lastFloor=null;
   function onFloor(x,z){
     // Consecutive capsule-ring and path samples usually stay in one polygon.
@@ -134,7 +135,7 @@ export function createPhysics(description,data){
   const transform=new Matrix4(),rotation=new Matrix4(),scale=new Matrix4();
   for(const b of staticBoxes){
     // Millimetre-scale threshold trim is walkable; rendered height and ray hits stay exact.
-    if(b.y+b.h/2<=.035)continue;
+    if(b.y+b.h/2<=.035||b.glassId)continue;
     transform.makeTranslation(b.x,b.y,b.z).multiply(rotation.makeRotationY(b.angle||0)).multiply(scale.makeScale(b.w,b.h,b.d));
     for(let i=0;i<vertices.count;i+=3){const vs=[0,1,2].map(k=>new Vector3().fromBufferAttribute(vertices,i+k).applyMatrix4(transform));const t=new Triangle(...vs);t.objectId=b.id;octree.addTriangle(t);}
   }
@@ -245,7 +246,7 @@ export function createPhysics(description,data){
     // neighbourhood Sets, and stop behind the nearest solid hit (also for AI rays).
     const stamp=++rayStamp;
     const test=b=>{
-      if(b._rayStamp===stamp)return;b._rayStamp=stamp;
+      if(b.disabled||b._rayStamp===stamp)return;b._rayStamp=stamp;
       if(vision&&b.material==='glass')return;
       const ox=o.x-b.x,oz=o.z-b.z,p=[b.cos*ox-b.sin*oz,o.y-b.y,b.sin*ox+b.cos*oz],d=[b.cos*dir.x-b.sin*dir.z,dir.y,b.sin*dir.x+b.cos*dir.z],half=[b.w/2,b.h/2,b.d/2];
       let enter=-Infinity,leave=Infinity,axis=-1,sign=0,ok=true;

@@ -8,7 +8,7 @@ const MAX_LEAVES = 256;
 /** One exact-input result for the current immutable floor + moving door boxes.
  * No rounding, approximate aim buckets, collision edits or gameplay RNG.
  * Unknown worlds fall back to normal prediction. A caller that edits the static
- * layout in place must clear() this cache; the current floor is immutable.
+ * layout in place must clear() this cache; glass break/reset revisions are tracked.
  */
 export class TrajectoryCache {
   constructor(predict = predictGrenade) {
@@ -21,7 +21,7 @@ export class TrajectoryCache {
   clear() {
     this.result = null; this.world = null; this.staticBoxes = null;
     this.staticCount = 0; this.raycast = null; this.leaves = null;
-    this.weapon = null; this.leafCount = 0;
+    this.weapon = null; this.leafCount = 0; this.glassRevision = -1;
   }
   read(actor, config, world) {
     const leaves = world?.doors?.boxes;
@@ -30,7 +30,8 @@ export class TrajectoryCache {
     let known = Array.isArray(leaves) && leaves.length <= MAX_LEAVES && Array.isArray(world.staticBoxes);
     let same = !!this.result && known && this.world === world && this.raycast === world.raycast &&
       this.staticBoxes === world.staticBoxes && this.staticCount === world.staticBoxes.length &&
-      this.leaves === leaves && this.leafCount === leaves.length && this.weapon === actor.weapon;
+      this.leaves === leaves && this.leafCount === leaves.length && this.weapon === actor.weapon &&
+      this.glassRevision === (world.glass?.revision ?? 0);
     let i = 0;
     for (const key of ACTOR_KEYS) {
       const value = actor[key];
@@ -59,7 +60,7 @@ export class TrajectoryCache {
     }
     this.world = world; this.raycast = world.raycast; this.staticBoxes = world.staticBoxes;
     this.staticCount = world.staticBoxes.length; this.leaves = leaves;
-    this.leafCount = leaves.length; this.weapon = actor.weapon;
+    this.leafCount = leaves.length; this.weapon = actor.weapon; this.glassRevision = world.glass?.revision ?? 0;
     i = 0;
     for (const key of ACTOR_KEYS) this.pose[i++] = actor[key];
     for (const key of CONFIG_KEYS) this.pose[i++] = config[key];

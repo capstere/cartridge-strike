@@ -1,17 +1,12 @@
 {
   "schemaVersion": 1,
-  "gameVersion": "0.16.0",
+  "gameVersion": "0.17.0",
   "entrypoint": "fps/index.html",
   "release": {
-    "mode": "owner-approved-layout-v1",
+    "mode": "owner-approved-facility-details-glass",
     "publicReleaseEligible": true,
-    "approvedOn": "2026-10-27",
-    "baseRepository": "capstere/cartridge-strike",
-    "baseCommit": "e9994b15994104488edd1b20a938c0567c125e03",
-    "layoutSourceRepository": "capstere/onboard",
-    "layoutSourceBranch": "work/owner-layout-v1-0.14.0",
-    "scope": "Owner v1 geometry, window/glass surfaces, doors, furniture and navigation over unchanged 0.15.3 mobile/combat/render runtime",
-    "privateOriginalsIncluded": false
+    "basedOn": "e1764d5627f1e8b217d0988abdc800213ad843bb",
+    "scope": "WC/kitchen furnishings, orange upholstery, generic display labs, blue facade, per-pane shootable glass; no reference files"
   },
   "files": [
     {
@@ -477,7 +472,7 @@
     {
       "path": "fps/index.html",
       "bytes": 10356,
-      "sha256": "acced533fc6b03a8fccb6d07c4b44612938a3187923f0d1f394d73d7c6b0f7ae"
+      "sha256": "05b222c856ca49af925c6a933d4cf7e47121fbd74effa42f762b776ab1445f78"
     },
     {
       "path": "fps/style.css",
@@ -665,14 +660,19 @@
       "sha256": "6b607e9ccf6e2835c50d5a21ef52fc99b1029f10a16bbcf20be4b28b8959e404"
     },
     {
+      "path": "src/fps/destructible-glass.mjs",
+      "bytes": 2380,
+      "sha256": "a0fb86803f9272f89da7c325d022229d37e77a7074e9b8e5b1d4cf4e6279d569"
+    },
+    {
       "path": "src/fps/door-visuals.mjs",
       "bytes": 4816,
       "sha256": "2813e0e0b02434493266ae4ef232d2688bd52429e4966f65dae99a2cb7b2d8a4"
     },
     {
       "path": "src/fps/doors.mjs",
-      "bytes": 4463,
-      "sha256": "452e4d3f78c34afdfd5eb8589dabb81e6abcb9b4d8af19ad620dab2c52b6c46b"
+      "bytes": 4659,
+      "sha256": "40f86da2d5d00d15cce8f26a959f20d81622e1e599553869db519d6c861ea8dd"
     },
     {
       "path": "src/fps/effects.mjs",
@@ -683,6 +683,16 @@
       "path": "src/fps/facility-assets.mjs",
       "bytes": 7581,
       "sha256": "fe7acabc8965c0612d296054ccf2ff40992c42602778cb4c5ebcbd48cc1fd1aa"
+    },
+    {
+      "path": "src/fps/facility-details-view.mjs",
+      "bytes": 6262,
+      "sha256": "cf9413c27e33f66b5b160dedf7802377a6e13583f427adbdfdb3886c94f991e3"
+    },
+    {
+      "path": "src/fps/facility-details.mjs",
+      "bytes": 6583,
+      "sha256": "d8fd4dce905454f98345474c95d8b3bff772800272802a6bfadc4cb26e1b0a87"
     },
     {
       "path": "src/fps/facility-scene.mjs",
@@ -706,8 +716,13 @@
     },
     {
       "path": "src/fps/game.mjs",
-      "bytes": 39468,
-      "sha256": "da88bd4fbd22be8eff1223b699b44e2172d79921696b7b284e15ea7bfa8ef74c"
+      "bytes": 39650,
+      "sha256": "bbc9eb146457cb139e00839f56c3479953ddf30e43b07e4b3a566630592ed008"
+    },
+    {
+      "path": "src/fps/glass-visuals.mjs",
+      "bytes": 3721,
+      "sha256": "d1e3a41c192e5dc71afefac68df804166bd0ab3dc4d13567d0f173b7a9fae35f"
     },
     {
       "path": "src/fps/grenade-assist.mjs",
@@ -766,13 +781,13 @@
     },
     {
       "path": "src/fps/navigation.mjs",
-      "bytes": 5870,
-      "sha256": "9be540e2f04527813326ca843721746316f7ccce85223d6c79430861d5848477"
+      "bytes": 5967,
+      "sha256": "a51487ed00d9314e70d509025850e7444dceca231d97dabbb7a5905fcecf79a8"
     },
     {
       "path": "src/fps/physics.mjs",
-      "bytes": 19145,
-      "sha256": "60a6874ad4e6072248df25b8ccef5d3b5400a2e123dc82cf63a439082797b08b"
+      "bytes": 19246,
+      "sha256": "59e544deb4fd29858ea2f80ca7ae8e3300fa82a477627c7b9dfb162dcad46d4c"
     },
     {
       "path": "src/fps/presentation-hands.mjs",
@@ -796,13 +811,13 @@
     },
     {
       "path": "src/fps/render-engine.mjs",
-      "bytes": 29654,
-      "sha256": "c99a28bcbfb65e0fd6227d19a7a3ddcee0e71a6fcb25292dde5745ce6ff6817c"
+      "bytes": 29810,
+      "sha256": "cda29394d72a75c14135200b1f01b175f236dcdedbd0fbf60d72f6a354fe152c"
     },
     {
       "path": "src/fps/render.mjs",
-      "bytes": 13681,
-      "sha256": "69139190ef0bc7d53c60041481b7ec640f0403e05679e30de42606d094808086"
+      "bytes": 14170,
+      "sha256": "15a122e4e85d62e178a6954dfe2dad051d4560048347b53988aae151ee8bb255"
     },
     {
       "path": "src/fps/riposte-audio.mjs",
@@ -901,8 +916,8 @@
     },
     {
       "path": "src/fps/trajectory-cache.mjs",
-      "bytes": 3226,
-      "sha256": "e35dabffa0280be84365b8a277e94d86f2bc028b8bbe67371e173cb15ffa57c8"
+      "bytes": 3370,
+      "sha256": "dc59fbe793294a0358ea393e74e409ca6c0a3b98a5e9f1b8153760d298790a3d"
     },
     {
       "path": "src/fps/view-surface.mjs",
@@ -916,8 +931,8 @@
     },
     {
       "path": "src/fps/world.mjs",
-      "bytes": 5401,
-      "sha256": "7e0a67e4bc65db8defc8b2dea802fc42f6adc196570738a3f5d3d86a6798fe81"
+      "bytes": 6095,
+      "sha256": "88d4707cc6dde4d7bb1efb4d564adcd58f431ae638a0d15657c50e805052e210"
     },
     {
       "path": "src/world.js",
@@ -1332,6 +1347,24 @@
       "src/fps/model-primitives.mjs",
       "src/fps/render-engine.mjs",
       "src/fps/render.mjs"
+    ]
+  },
+  "facilityDetails": {
+    "toilets": 12,
+    "basins": 12,
+    "kitchenDevices": 7,
+    "displayLabProps": 15,
+    "facadeSpans": 43,
+    "breakablePanes": 170,
+    "glassRules": "breaking shot stops; later rays pass; round reset restores panes; structural frames and excluded/outside scope remain solid",
+    "displayLabs": [
+      "X21",
+      "X06"
+    ],
+    "limitations": [
+      "Generic lab dressing, not a measured equipment inventory.",
+      "Excluded volumes and exterior floor boundaries stay inaccessible after breaking glazing.",
+      "No appliance simulation or lift/terrace access."
     ]
   }
 }

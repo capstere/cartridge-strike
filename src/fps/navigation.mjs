@@ -87,5 +87,6 @@ export function createNavigation(data,physics,{spacing=.70,radius=ACTOR_RADIUS+.
     }
     return path;
   }
-  return {findPath,clear,nearest,nodes,graph,statistics:{nodes:nodes.length,edges:edgeKeys.size,components,buildMs:Math.round(performance.now()-started),clearance:clearanceStats,library:'Yuka Graph/NavNode/NavEdge/AStar'}};
+  const invalidate=()=>{cache.clear();clearanceCache.clear();clearanceStats.size=0;};
+  return {findPath,clear,nearest,nodes,graph,invalidate,statistics:{nodes:nodes.length,edges:edgeKeys.size,components,buildMs:Math.round(performance.now()-started),clearance:clearanceStats,library:'Yuka Graph/NavNode/NavEdge/AStar'}};
 }
