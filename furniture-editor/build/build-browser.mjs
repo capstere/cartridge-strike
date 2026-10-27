@@ -43,7 +43,7 @@ try{
  await page.locator('#buildRedo').click();
  check('build redo restores edited sill',await page.evaluate(()=>Math.abs(__furnitureEditor.build.getEntries().find(e=>e.id==='WALL-001').sill-1.12)<.001));
  await page.locator('#buildSearch').fill('');
- await page.locator('#room').selectOption('I09');await page.locator('#focus').click();
+ await page.locator('#buildRoom').selectOption('I09');await page.locator('#focus').click();
  await page.locator('#buildTool').selectOption('glazed');
  await clickWorld(8.2,12.4);await clickWorld(10.4,12.4);
  check('actual two pointer clicks draw new full-height glazed wall',await page.evaluate(()=>__furnitureEditor.getPatch().architecture.added.some(e=>e.kind==='glazed')));
