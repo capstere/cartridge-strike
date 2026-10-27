@@ -1,3 +1,4 @@
+import { shotSpread } from './tactical-rules.mjs';
 import {initializeCombat,tickCombat,combatEvent} from './combat-flow.mjs';
 import { CONFIG, TEAMS, WEAPONS, PRIORITY, seededRandom, DIFFICULTIES, DEFAULT_DIFFICULTY, TEAMMATE_DIFFICULTY } from './config.mjs';
 import { BotController } from './bots.mjs';
@@ -339,7 +340,7 @@ export class Game {
     const item = this.item(actor);
     if (w.slot !== 'knife' && (!item || item.ammo <= 0)) { this.emit('empty', actor); return false; }
     if (w.slot !== 'knife') item.ammo--;
-    const origin = eye(actor), spread = (actor.moving > .3 ? w.movingSpread : w.spread) + actor.recoil * .18 + actor.flash * .12;
+    const origin = eye(actor), spread = shotSpread(actor, w);
     actor.recoil += w.recoil;
     this.emit('shot', actor, { weapon: actor.weapon, yaw: actor.yaw, pitch: actor.pitch, targetId: actor.bot?.target?.entity?.id,
       detectedAt: actor.bot?.target?.detectedAt, reactionAt: actor.bot?.target?.reactionAt });

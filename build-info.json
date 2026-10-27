@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "gameVersion": "0.13.3",
+  "gameVersion": "0.14.0",
   "entrypoint": "fps/index.html",
   "release": {
     "mode": "public-release",
@@ -1217,5 +1217,10 @@
     "tests",
     "tools"
   ],
-  "playableLayoutStillPublic": true
+  "playableLayoutStillPublic": true,
+  "precisionPack": {
+    "version": "0.14.0",
+    "sourceReference": "BenDBSS/Riposte-Frontline-Source@31ca050d",
+    "note": "Prior release provenance remains historical; see docs/precision-pack.md for this patch."
+  }
 }

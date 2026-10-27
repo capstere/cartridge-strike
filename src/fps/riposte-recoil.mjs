@@ -59,7 +59,7 @@ export class PlayerRecoil {
     this.lastShotAt = time;
     this.armed = false;
     const k = RECOIL.cat[d.cat];
-    let mult = k.mul * (actor.crouching ? RECOIL.crouch : 1) * (RECOIL.input[device] || 1);
+    let mult = k.mul * lerp(1, .66, clamp(actor.aimAmount || 0, 0, 1)) * (actor.crouching ? RECOIL.crouch : 1) * (RECOIL.input[device] || 1);
     if (actor.moving > 2.5) mult *= RECOIL.move;
     if (!actor.onGround) mult *= RECOIL.air;
 
