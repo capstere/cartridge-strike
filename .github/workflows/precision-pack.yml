@@ -51,7 +51,7 @@ jobs:
           node tools/precision-smoke.cjs
       - name: Archive tested integration files
         run: |
-          tar -czf precision-patch.tgz src/fps/app.mjs src/fps/game.mjs src/fps/riposte-recoil.mjs src/fps/render-engine.mjs fps/index.html fps/style.css build-info.json .github/workflows/mobile-original-fps.yml
+          tar -czf precision-patch.tgz src/fps/app.mjs src/fps/game.mjs src/fps/riposte-recoil.mjs src/fps/render-engine.mjs fps/index.html fps/style.css build-info.json
       - uses: actions/upload-artifact@v4
         with:
           name: precision-patch
@@ -86,7 +86,7 @@ jobs:
           rm precision-patch.tgz
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add src/fps/app.mjs src/fps/game.mjs src/fps/riposte-recoil.mjs src/fps/render-engine.mjs fps/index.html fps/style.css build-info.json .github/workflows/mobile-original-fps.yml
+          git add src/fps/app.mjs src/fps/game.mjs src/fps/riposte-recoil.mjs src/fps/render-engine.mjs fps/index.html fps/style.css build-info.json
           if ! git diff --cached --quiet; then
             git commit -m 'Cartridge Strike 0.14.0: tested precision aiming, mobile friction and auto reload'
             git push origin "HEAD:${GITHUB_REF_NAME}"
