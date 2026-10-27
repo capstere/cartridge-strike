@@ -1,0 +1,94 @@
+name: Furniture Studio V2 - CC0 Library and GLB Import
+
+on:
+  push:
+    branches: [work/furniture-library-v2-2026-10-27]
+    paths:
+      - 'furniture-editor/**'
+      - '.github/workflows/furniture-library-v2.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: furniture-library-v2-2026-10-27
+  cancel-in-progress: false
+
+jobs:
+  complete-library:
+    runs-on: ubuntu-latest
+    timeout-minutes: 28
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: work/furniture-library-v2-2026-10-27
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: FPS code and runtime byte integrity are UNCHANGED
+        run: |
+          set -euo pipefail
+          git diff --exit-code cc32d4f1a0bf6a1792ad389ee023bb9e0c3bc426 HEAD -- fps src assets vendor build-info.json index.html credits.html licenses frontline
+          python3 - <<'PY'
+          import subprocess
+          files=subprocess.check_output(['git','diff','--name-only','cc32d4f1a0bf6a1792ad389ee023bb9e0c3bc426','HEAD'],text=True).splitlines()
+          assert files and all(x.startswith('furniture-editor/') or x=='.github/workflows/furniture-library-v2.yml' for x in files),files
+          print('PASS: editor-only source modifications; unchanged original runtime')
+          PY
+      - name: License-pinned, finite Kenney CC0 model + thumbnail import
+        run: python3 furniture-editor/library/import_cc0.py
+      - name: Pure edit, migration, asset, GLB and ZIP tests
+        run: |
+          node --check furniture-editor/core.mjs
+          node --check furniture-editor/main.mjs
+          node --check furniture-editor/editor-browser.mjs
+          node --check furniture-editor/library/models.mjs
+          node --check furniture-editor/library/catalog.mjs
+          node --check furniture-editor/library/zip.mjs
+          node --check furniture-editor/library/glb-utils.mjs
+          node --test furniture-editor/editor.test.mjs furniture-editor/library/library.test.mjs
+          node tools/verify-owner-runtime.mjs
+      - name: Install pinned Playwright and Chromium
+        run: |
+          npm ci --prefix frontline/source/tools/dev --ignore-scripts --no-audit --no-fund
+          node frontline/source/tools/dev/node_modules/playwright-core/cli.js install chromium
+      - name: Install software WebGL system dependencies
+        run: sudo timeout 90s apt-get -o Acquire::Retries=1 -o Acquire::http::Timeout=20 install -y libgl1-mesa-dri libglx-mesa0 libegl-mesa0 xvfb
+      - name: Browser verifies catalog, model placement, user GLB and ZIP export / import
+        run: |
+          set -euo pipefail
+          python3 -m http.server 8765 --bind 127.0.0.1 >/tmp/furniture-library-server.log 2>&1 &
+          PID=$!
+          trap 'kill "$PID" || true' EXIT
+          for i in $(seq 1 30); do
+            if curl -fsS http://127.0.0.1:8765/furniture-editor/ >/dev/null; then break; fi
+            sleep 1
+          done
+          timeout 240s xvfb-run -a node furniture-editor/editor-browser.mjs
+      - name: Preserve real screenshots and provenance for independent review
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: furniture-library-v2-real-browser-and-licenses
+          path: |
+            test-results/furniture-editor/
+            furniture-editor/library/import-manifest.json
+          retention-days: 14
+          if-no-files-found: warn
+      - name: Commit ONLY screened models and thumbnails with branch-head lease
+        run: |
+          set -euo pipefail
+          BRANCH=work/furniture-library-v2-2026-10-27
+          EXPECTED="$(git rev-parse HEAD)"
+          CURRENT="$(git ls-remote origin "refs/heads/$BRANCH" | cut -f1)"
+          test "$CURRENT" = "$EXPECTED"
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add furniture-editor/library/models furniture-editor/library/thumbs \
+              furniture-editor/library/import-manifest.json furniture-editor/library/KENNEY_CC0_LICENSE.txt
+          if ! git diff --cached --quiet; then
+            git commit -m 'Import 72 pinned Kenney CC0 GLB and 72 thumbnails, all tested [skip ci]'
+            git push origin "HEAD:$BRANCH"
+          fi
