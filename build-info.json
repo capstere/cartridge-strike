@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "gameVersion": "0.14.1",
+  "gameVersion": "0.15.0",
   "entrypoint": "fps/index.html",
   "release": {
     "mode": "public-release",

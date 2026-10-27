@@ -1,0 +1,112 @@
+name: Cartridge Strike focus HUD
+on:
+  push:
+    branches: [main, feature/focus-hud-20261027]
+    paths:
+      - src/fps/**
+      - fps/**
+      - tools/*smoke.cjs
+      - tools/apply-focus-hud.py
+      - .github/workflows/focus-hud.yml
+  pull_request:
+    paths:
+      - src/fps/**
+      - fps/**
+      - tools/*smoke.cjs
+      - .github/workflows/focus-hud.yml
+  workflow_dispatch:
+
+concurrency:
+  group: focus-hud-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: HUD regression ${{ matrix.suite }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        suite: [focus-hud, mobile, precision, grenade]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Apply guarded presentation integration
+        run: python3 tools/apply-focus-hud.py
+      - name: Check syntax and existing gameplay invariants
+        run: |
+          set -euo pipefail
+          node --check src/fps/focus-hud.mjs
+          node --check src/fps/app.mjs
+          node --check tools/focus-hud-smoke.cjs
+          mkdir -p node_modules/three
+          printf '%s\n' '{"name":"three","type":"module","exports":"./three.module.js"}' > node_modules/three/package.json
+          ln -s ../../vendor/three/three.module.js node_modules/three/three.module.js
+          node --test tools/recoil-autofire.test.mjs tools/precision.test.mjs tools/grenade.test.mjs
+      - name: Install pinned browser test runtime
+        run: |
+          npm ci --prefix frontline/source/tools/dev --ignore-scripts
+          node frontline/source/tools/dev/node_modules/playwright-core/cli.js install chromium
+      - name: Exercise real game and HUD
+        env:
+          SUITE: ${{ matrix.suite }}
+        run: |
+          set -euo pipefail
+          python3 -m http.server 8765 --bind 127.0.0.1 >/tmp/focus-http.log 2>&1 &
+          SERVER_PID=$!
+          trap 'kill "$SERVER_PID" || true' EXIT
+          node "tools/${SUITE}-smoke.cjs"
+      - name: Package tested integration
+        if: matrix.suite == 'focus-hud'
+        run: tar -czf focus-runtime.tgz src/fps/app.mjs fps/index.html build-info.json
+      - uses: actions/upload-artifact@v4
+        if: matrix.suite == 'focus-hud'
+        with:
+          name: focus-tested-runtime
+          path: focus-runtime.tgz
+          retention-days: 2
+          if-no-files-found: error
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: focus-review-${{ matrix.suite }}
+          path: test-results/
+          if-no-files-found: ignore
+          retention-days: 7
+
+  commit:
+    name: Publish validated presentation files
+    if: github.event_name == 'push' && github.ref == 'refs/heads/feature/focus-hud-20261027'
+    needs: test
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+      - uses: actions/download-artifact@v4
+        with:
+          name: focus-tested-runtime
+      - name: Commit only reviewed runtime paths
+        env:
+          EXPECTED_SHA: ${{ github.sha }}
+          BRANCH: ${{ github.ref_name }}
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$EXPECTED_SHA"
+          tar -xzf focus-runtime.tgz src/fps/app.mjs fps/index.html build-info.json
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add src/fps/app.mjs fps/index.html build-info.json
+          if ! git diff --cached --quiet; then
+            git commit -m 'Cartridge Strike 0.15.0: tested clean HUD and contextual mobile controls'
+            git push origin "HEAD:$BRANCH"
+          fi
