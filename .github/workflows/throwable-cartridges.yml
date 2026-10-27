@@ -1,0 +1,112 @@
+name: Cartridge Strike throwable Cartridges
+on:
+  push:
+    branches: [main, feature/throwable-cartridges-20261027]
+    paths:
+      - src/fps/**
+      - fps/**
+      - tools/throwable-cartridge*
+      - tools/apply-throwable-cartridges.py
+      - .github/workflows/throwable-cartridges.yml
+  pull_request:
+    paths:
+      - src/fps/throwable-cartridge.mjs
+      - src/fps/model-primitives.mjs
+      - src/fps/render-engine.mjs
+      - tools/throwable-cartridge*
+      - .github/workflows/throwable-cartridges.yml
+  workflow_dispatch:
+
+concurrency:
+  group: throwable-cartridges-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: Cartridge regression ${{ matrix.suite }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        suite: [throwable-cartridge, grenade, focus-hud, mobile, precision]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Apply guarded Cartridge visual integration
+        run: python3 tools/apply-throwable-cartridges.py
+      - name: Syntax, model budgets, disposal and gameplay invariants
+        run: |
+          set -euo pipefail
+          for f in src/fps/{throwable-cartridge,model-primitives,render-engine}.mjs; do node --check "$f"; done
+          node --check tools/throwable-cartridge-smoke.cjs
+          mkdir -p node_modules/three
+          printf '%s\n' '{"name":"three","type":"module","exports":"./three.module.js"}' > node_modules/three/package.json
+          ln -s ../../vendor/three/three.module.js node_modules/three/three.module.js
+          node --test tools/recoil-autofire.test.mjs tools/precision.test.mjs tools/grenade.test.mjs tools/throwable-cartridge.test.mjs
+      - name: Install pinned browser runtime
+        run: |
+          npm ci --prefix frontline/source/tools/dev --ignore-scripts
+          node frontline/source/tools/dev/node_modules/playwright-core/cli.js install chromium
+      - name: Verify actual gameplay and visual models
+        env:
+          SUITE: ${{ matrix.suite }}
+        run: |
+          set -euo pipefail
+          python3 -m http.server 8765 --bind 127.0.0.1 >/tmp/cartridge-http.log 2>&1 &
+          SERVER_PID=$!
+          trap 'kill "$SERVER_PID" || true' EXIT
+          node "tools/${SUITE}-smoke.cjs"
+      - name: Package validated runtime changes
+        if: matrix.suite == 'throwable-cartridge'
+        run: tar -czf cartridge-runtime.tgz src/fps/model-primitives.mjs src/fps/render-engine.mjs fps/index.html build-info.json
+      - uses: actions/upload-artifact@v4
+        if: matrix.suite == 'throwable-cartridge'
+        with:
+          name: cartridge-tested-runtime
+          path: cartridge-runtime.tgz
+          if-no-files-found: error
+          retention-days: 2
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: cartridge-review-${{ matrix.suite }}
+          path: test-results/
+          if-no-files-found: ignore
+          retention-days: 7
+
+  commit:
+    name: Publish validated Cartridge integration
+    if: github.event_name == 'push' && github.ref == 'refs/heads/feature/throwable-cartridges-20261027'
+    needs: test
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+      - uses: actions/download-artifact@v4
+        with:
+          name: cartridge-tested-runtime
+      - name: Commit only tested runtime paths
+        env:
+          EXPECTED_SHA: ${{ github.sha }}
+          BRANCH: ${{ github.ref_name }}
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$EXPECTED_SHA"
+          tar -xzf cartridge-runtime.tgz src/fps/model-primitives.mjs src/fps/render-engine.mjs fps/index.html build-info.json
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add src/fps/model-primitives.mjs src/fps/render-engine.mjs fps/index.html build-info.json
+          if ! git diff --cached --quiet; then
+            git commit -m 'Cartridge Strike 0.15.1: tested throwable Cartridge models and independent flight animation'
+            git push origin "HEAD:$BRANCH"
+          fi
