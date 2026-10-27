@@ -43,6 +43,11 @@ jobs:
           node --check src/fps/render-engine.mjs
           node --check tools/mobile-smoke.cjs
           node --check tools/recoil-autofire.test.mjs
+      - name: Expose vendored Three.js to Node ESM unit tests
+        run: |
+          mkdir -p node_modules/three
+          printf '%s\n' '{"name":"three","version":"0.180.0","type":"module","exports":"./three.module.js"}' > node_modules/three/package.json
+          ln -s ../../vendor/three/three.module.js node_modules/three/three.module.js
       - name: Test deterministic targeting and recoil
         run: node --test tools/recoil-autofire.test.mjs
       - name: Install browser test runtime
