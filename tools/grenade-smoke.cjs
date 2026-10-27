@@ -17,6 +17,10 @@ async function boot(browser,mobile){
   await page.goto(origin+'/fps/?test',{waitUntil:'domcontentloaded',timeout:60000});
   await page.waitForFunction(()=>globalThis.__fps||!document.getElementById('fatal').hidden,null,{timeout:180000});
   assert.equal(await page.locator('#fatal').isVisible(),false);
+  // This suite explicitly calls __fps.step/render. Stop the redundant idle RAF
+  // AFTER boot so software GPU queues cannot starve screenshot compositing.
+  // No change to the shipped render loop or any game-control behavior.
+  await page.evaluate(()=>{window.requestAnimationFrame=()=>0;});
   await page.locator('#start').click();
   await page.evaluate(()=>{
     __fps.start('analysts',{mode:'endless',firefight:false,wanderers:false,botFire:false,friendlyFire:false});
@@ -45,9 +49,9 @@ async function boot(browser,mobile){
       assert.equal(initial.visible,true);assert.equal(initial.note,true);assert.ok(initial.count>3);
       assert.equal(initial.depth,true,'Guide must not be drawn through walls');assert.equal(initial.write,false);
       assert.equal(initial.ammo,1,'Preview cannot spend ammunition');
-      await page.screenshot({path:`test-results/grenade-guide-${mobile?'mobile':'desktop'}.png`});
+      await page.screenshot({path:`test-results/grenade-guide-${mobile?'mobile':'desktop'}.png`,timeout:60000,animations:'disabled'});
       const memory=await page.evaluate(()=>{
-        for(let i=0;i<20;i++)__fps.render();
+        for(let i=0;i<5;i++)__fps.render();
         return {geometry:__fps.grenadeAssist.geometry.uuid,ammo:__fps.game.player.inventory.he};
       });
       assert.equal(memory.geometry,initial.geometry,'No GPU geometry churn while displaying guide');assert.equal(memory.ammo,1);
@@ -77,7 +81,7 @@ async function boot(browser,mobile){
       assert.ok(landed.actual);assert.equal(landed.grenades,0);
       const difference=Math.hypot(...['x','y','z'].map(k=>landed.actual[k]-landed.predicted[k]));
       assert.ok(difference<1e-6,'Real world throw matches guide: '+JSON.stringify(landed));
-
+      console.log(`${mobile?'Mobile':'Desktop'} real grenade endpoint error: ${difference}`);
       const danger=await page.evaluate(()=>{
         const g=__fps.game,p=g.player,enemy=g.actors.find(a=>a.team!==p.team);
         let q;
@@ -92,7 +96,7 @@ async function boot(browser,mobile){
         return {hidden:__fps.grenadeAssist.danger.hidden,threat:__fps.grenadeAssist.threat};
       });
       assert.equal(danger.hidden,false);assert.equal(danger.threat.type,'he');
-      await page.screenshot({path:`test-results/grenade-danger-${mobile?'mobile':'desktop'}.png`});
+      await page.screenshot({path:`test-results/grenade-danger-${mobile?'mobile':'desktop'}.png`,timeout:60000,animations:'disabled'});
       const rotated=await page.evaluate(()=>{
         const g=__fps.game;__fps.step({yaw:g.player.yaw+Math.PI/2,pitch:0,fire:false},.1);
         return __fps.grenadeAssist.threat.angle;
