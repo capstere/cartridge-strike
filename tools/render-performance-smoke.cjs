@@ -17,7 +17,6 @@ async function boot(browser,mobile){
  await page.goto(origin+'/fps/?test',{waitUntil:'domcontentloaded',timeout:60000});
  await page.waitForFunction(()=>globalThis.__fps||!document.getElementById('fatal').hidden,null,{timeout:180000});
  assert.equal(await page.locator('#fatal').isVisible(),false);
- // Check the actual app loop, not just the pure cadence policy.
  const before=await page.evaluate(()=>__fps.renderBudget.stats.idle);
  await page.waitForTimeout(650);
  const idle=await page.evaluate(()=>__fps.renderBudget.stats.idle);
@@ -42,13 +41,22 @@ async function boot(browser,mobile){
     const {MinimapCache}=await import(origin+'/src/fps/minimap-cache.mjs');
     const {legacyMinimap}=await import(origin+'/tools/fixtures/minimap-0.15.1.mjs');
     const a=document.createElement('canvas'),b=document.createElement('canvas');
-    const map=new MinimapCache(b);let maxDifference=0,differentChannels=0;
+    const map=new MinimapCache(b);let maxDifference=0,differentChannels=0,rawMaxDifference=0;const mapShots=[];
     for(const expanded of [false,true]){
      a.width=b.width=expanded?448:224;a.height=b.height=expanded?316:158;
      legacyMinimap(a,f.world,g,expanded);map.draw(f.world,g,expanded);
-     const expected=a.getContext('2d').getImageData(0,0,a.width,a.height).data;
-     const actual=b.getContext('2d').getImageData(0,0,b.width,b.height).data;
+     // Compare the displayed image, not undefined RGB in nearly transparent
+     // edge pixels after a GPU/CPU alpha round-trip. Both use the same backdrop.
+     const rawA=a.getContext('2d').getImageData(0,0,a.width,a.height).data;
+     const rawB=b.getContext('2d').getImageData(0,0,b.width,b.height).data;
+     for(let i=0;i<rawA.length;i++)rawMaxDifference=Math.max(rawMaxDifference,Math.abs(rawA[i]-rawB[i]));
+     const displayed=source=>{const c=document.createElement('canvas');c.width=source.width;c.height=source.height;
+      const x=c.getContext('2d',{willReadFrequently:true});x.fillStyle='#13212b';x.fillRect(0,0,c.width,c.height);x.drawImage(source,0,0);return c;};
+     const expectedCanvas=displayed(a),actualCanvas=displayed(b);
+     const expected=expectedCanvas.getContext('2d').getImageData(0,0,a.width,a.height).data;
+     const actual=actualCanvas.getContext('2d').getImageData(0,0,b.width,b.height).data;
      for(let i=0;i<expected.length;i++){const diff=Math.abs(expected[i]-actual[i]);maxDifference=Math.max(diff,maxDifference);if(diff)differentChannels++;}
+     mapShots.push({expanded,expected:expectedCanvas.toDataURL(),actual:actualCanvas.toDataURL()});
     }
     a.width=b.width=224;a.height=b.height=158;
     const builds=map.stats.builds;
@@ -57,7 +65,6 @@ async function boot(browser,mobile){
     const hiddenBefore=f.minimapCache.stats.draws;
     f.render();f.render();
     const hiddenDraws=f.minimapCache.stats.draws-hiddenBefore;
-    // A real successful shot must still spend ammo and enter the tracer batch.
     p.weapon='smg';p.nextShot=g.state.time;p.reloadUntil=0;p.fireHeld=false;
     const ammo=g.item(p).ammo;
     f.step({fire:true,yaw:p.yaw,pitch:p.pitch},.02);
@@ -66,16 +73,18 @@ async function boot(browser,mobile){
     const geometry=f.renderer.tracerBatch.geometry;
     f.renderer.resetTransient();
     const reset=f.renderer.tracerBatch.count===0&&f.renderer.tracerBatch.geometry===geometry;
-    return {maxDifference,differentChannels,cacheBuilds,cacheEntries:map.layers.size,
+    return {maxDifference,rawMaxDifference,differentChannels,mapShots,cacheBuilds,cacheEntries:map.layers.size,
      hiddenDraws,wallCount:f.world.data.walls.length,shot,reset};
    },{origin,mobile});
-   assert.ok(result.maxDifference<=2,'Cached map should match reference pixels: '+JSON.stringify(result));
+   for(const image of result.mapShots)for(const kind of ['expected','actual'])
+    fs.writeFileSync(`test-results/map-${mobile?'mobile':'desktop'}-${image.expanded?'large':'small'}-${kind}.png`,Buffer.from(image[kind].split(',')[1],'base64'));
+   delete result.mapShots;
+   assert.ok(result.maxDifference<=2,'Cached map should match displayed reference pixels: '+JSON.stringify(result));
    assert.equal(result.cacheBuilds,0,'Compact/expanded layers should both be reused');
    assert.equal(result.cacheEntries,2);assert.equal(result.shot.spent,1);assert.ok(result.shot.count>0);
    assert.equal(result.shot.legacyObjects,0);assert.ok(result.reset);
    if(mobile)assert.equal(result.hiddenDraws,0,'Hidden mobile map must draw nothing');
    else assert.ok(result.hiddenDraws>0);
-   // Open the actual map via existing controls, including the touch MER drawer.
    if(mobile){await page.locator('#mobile-more').tap();await page.locator('[data-utility=karta]').tap();}
    else await page.keyboard.press('m');
    const opened=await page.evaluate(()=>({draws:__fps.minimapCache.stats.draws,width:document.getElementById('minimap').width,
@@ -85,7 +94,6 @@ async function boot(browser,mobile){
    assert.deepEqual(errors,[]);assert.equal(await page.locator('#fatal').isVisible(),false);
    report[mobile?'mobile':'desktop']={...result,idleFrames};
    if(!mobile){
-    // A live WebGL comparison, isolated from the expensive full scene.
     report.tracers=await page.evaluate(async base=>{
      const T=await import(base+'/vendor/three/three.module.js');const {TracerBatch}=await import(base+'/src/fps/tracer-batch.mjs');
      const r=new T.WebGLRenderer({antialias:false});r.setSize(256,128);
