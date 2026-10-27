@@ -1,0 +1,114 @@
+name: Cartridge Strike grenade awareness
+on:
+  push:
+    branches: [main, feature/grenade-awareness-20261027]
+    paths:
+      - src/fps/**
+      - fps/**
+      - tools/grenade*
+      - tools/apply-grenade-pack.py
+      - .github/workflows/grenade-awareness.yml
+  pull_request:
+    paths:
+      - src/fps/**
+      - fps/**
+      - tools/grenade*
+      - .github/workflows/grenade-awareness.yml
+  workflow_dispatch:
+
+concurrency:
+  group: grenade-awareness-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: Test ${{ matrix.suite }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        suite: [mobile, precision, grenade]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Apply one-time integration on the feature branch
+        run: |
+          if ! grep -q "from './grenade-physics.mjs'" src/fps/game.mjs; then
+            python3 tools/apply-grenade-pack.py
+          fi
+      - name: Syntax and deterministic gameplay regression tests
+        run: |
+          set -euo pipefail
+          for f in src/fps/{app,game,grenade-physics,grenade-assist}.mjs; do node --check "$f"; done
+          node --check tools/grenade-smoke.cjs
+          mkdir -p node_modules/three
+          printf '%s\n' '{"name":"three","type":"module","exports":"./three.module.js"}' > node_modules/three/package.json
+          ln -s ../../vendor/three/three.module.js node_modules/three/three.module.js
+          node --test tools/recoil-autofire.test.mjs tools/precision.test.mjs tools/grenade.test.mjs
+      - name: Install pinned browser test runtime
+        run: |
+          npm ci --prefix frontline/source/tools/dev --ignore-scripts
+          node frontline/source/tools/dev/node_modules/playwright-core/cli.js install chromium
+      - name: Play the actual game
+        env:
+          SUITE: ${{ matrix.suite }}
+        run: |
+          set -euo pipefail
+          python3 -m http.server 8765 --bind 127.0.0.1 >/tmp/grenade-http.log 2>&1 &
+          SERVER_PID=$!
+          trap 'kill "$SERVER_PID" || true' EXIT
+          node "tools/${SUITE}-smoke.cjs"
+      - name: Package tested integration files
+        if: matrix.suite == 'grenade'
+        run: tar -czf grenade-runtime.tgz src/fps/game.mjs src/fps/app.mjs fps/style.css fps/index.html build-info.json
+      - uses: actions/upload-artifact@v4
+        if: matrix.suite == 'grenade'
+        with:
+          name: grenade-tested-runtime
+          path: grenade-runtime.tgz
+          if-no-files-found: error
+          retention-days: 2
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: grenade-review-${{ matrix.suite }}
+          path: test-results/
+          if-no-files-found: ignore
+          retention-days: 7
+
+  commit:
+    name: Publish tested runtime to feature branch
+    if: github.event_name == 'push' && github.ref == 'refs/heads/feature/grenade-awareness-20261027'
+    needs: test
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+      - uses: actions/download-artifact@v4
+        with:
+          name: grenade-tested-runtime
+      - name: Commit only validated integration files
+        env:
+          EXPECTED_SHA: ${{ github.sha }}
+          BRANCH: ${{ github.ref_name }}
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$EXPECTED_SHA"
+          tar -xzf grenade-runtime.tgz src/fps/game.mjs src/fps/app.mjs fps/style.css fps/index.html build-info.json
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add src/fps/game.mjs src/fps/app.mjs fps/style.css fps/index.html build-info.json
+          if ! git diff --cached --quiet; then
+            git commit -m 'Cartridge Strike 0.14.1: tested grenade trajectory and cover-aware danger HUD'
+            git push origin "HEAD:$BRANCH"
+          fi
