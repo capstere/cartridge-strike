@@ -13,6 +13,9 @@ async function boot(browser,mobile){
  page.on('pageerror',e=>errors.push(String(e)));
  await page.addInitScript(()=>{
    localStorage.setItem('cartridge-settings',JSON.stringify({graphics:'low'}));
+   // Layout emulation must remain windowed: Chromium cannot resize its OS
+   // window while fullscreen. Shipping fullscreen behavior is not modified.
+   HTMLElement.prototype.requestFullscreen=undefined;
    HTMLCanvasElement.prototype.requestPointerLock=function(){Object.defineProperty(document,'pointerLockElement',{configurable:true,get:()=>this});return Promise.resolve();};
    document.exitPointerLock=()=>Object.defineProperty(document,'pointerLockElement',{configurable:true,get:()=>null});
  });
