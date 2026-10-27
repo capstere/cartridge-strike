@@ -11,7 +11,6 @@ async function boot(browser, mobile) {
   const page = await context.newPage(), errors=[];
   page.on('pageerror',e=>errors.push(String(e)));
   await page.addInitScript(() => {
-    // Fixed low graphics for test runtime; desktop defaults tested separately.
     localStorage.setItem('cartridge-settings',JSON.stringify({graphics:'low'}));
     HTMLCanvasElement.prototype.requestPointerLock=function(){
       Object.defineProperty(document,'pointerLockElement',{configurable:true,get:()=>this});
@@ -59,14 +58,27 @@ const equip = (page,id) => page.evaluate(id=>{
     assert.ok(await page.evaluate(()=>__fps.renderer.camera.fov>75));
     assert.equal(await page.locator('#precision-scope').isVisible(),false);
 
-    // Real touch double tap, rather than calling the handler directly.
+    // Send real touch events with explicit timestamps: a slow software GPU must
+    // not turn a 180ms user gesture into several seconds of test transport time.
     const cdp=await context.newCDPSession(page);
+    const hit=await page.evaluate(()=>{
+      window.__tapTrace=[];
+      const z=document.querySelector('[data-mobile-look]');
+      for(const type of ['pointerdown','pointerup','pointercancel','lostpointercapture'])z.addEventListener(type,e=>{
+        window.__tapTrace.push({type:e.type,id:e.pointerId,at:e.timeStamp,wanted:__fps.tactical.wanted});
+      });
+      return document.elementFromPoint(505,90)?.className;
+    });
+    assert.equal(hit,'mobile-look-zone','Double-tap test targets the look surface');
+    const at=Date.now()/1000;
     for(let i=0;i<2;i++){
-      await cdp.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[{x:505,y:90,id:50+i}]});
-      await cdp.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});
+      await cdp.send('Input.dispatchTouchEvent',{type:'touchStart',timestamp:at+i*.14,touchPoints:[{x:505,y:90,id:50+i}]});
+      await cdp.send('Input.dispatchTouchEvent',{type:'touchEnd',timestamp:at+i*.14+.04,touchPoints:[]});
     }
     await advance(page);
-    assert.equal(await page.evaluate(()=>__fps.tactical.wanted),true,'Double tap enters aim');
+    const doubleTap=await page.evaluate(()=>({wanted:__fps.tactical.wanted,trace:window.__tapTrace}));
+    console.log('DOUBLE TAP TRACE',JSON.stringify(doubleTap));
+    assert.equal(doubleTap.wanted,true,'Double tap enters aim: '+JSON.stringify(doubleTap));
     await page.locator('[data-mobile-action=pause]').tap();
     assert.equal(await page.locator('#precision-scope').isVisible(),false,'Pause removes scope');
     await page.locator('#resume').tap();
@@ -89,7 +101,6 @@ const equip = (page,id) => page.evaluate(id=>{
     });
     assert.equal(off,0,'User can disable automatic reload');
 
-    // Previously auto-fire hid the only control able to throw a grenade.
     await equip(page,'he');await advance(page,3);
     const trigger=page.locator('[data-mobile-action=fire]');
     assert.equal(await trigger.isVisible(),true,'Grenade has manual trigger in auto-fire mode');
