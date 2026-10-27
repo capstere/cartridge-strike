@@ -7,6 +7,7 @@ on:
       - 'furniture-editor/*.html'
       - 'furniture-editor/*.css'
       - 'furniture-editor/*.md'
+      - 'furniture-editor/build/**'
       - 'furniture-editor/hissrum/**'
       - 'furniture-editor/library/*.mjs'
       - 'furniture-editor/wall-placement.test.mjs'
