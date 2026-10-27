@@ -5,6 +5,7 @@ import {createRequire} from 'node:module';
 import {mkdir,readFile,writeFile} from 'node:fs/promises';
 import {resolve} from 'node:path';
 import assert from 'node:assert/strict';
+import {readZip} from './library/zip.mjs';
 const require=createRequire(import.meta.url);
 const {chromium}=require('../frontline/source/tools/dev/node_modules/playwright-core');
 const origin=process.env.FURNITURE_TEST_ORIGIN||'http://127.0.0.1:8765';
@@ -52,6 +53,37 @@ try{
  await page.locator('#importFile').setInputFiles({name:filename,mimeType:'application/json',buffer:Buffer.from(JSON.stringify(patch))});
  await page.waitForFunction(()=>__furnitureEditor.getState().changed>=1);
  check('saved JSON can be imported and edited again',await page.evaluate(()=>__furnitureEditor.getState().changed>=1));
+ // New V2 model library: real Kenney thumbnail + GLB must be served locally.
+ check('catalog contains 76 licensed, audited models',await page.evaluate(()=>__furnitureEditor.catalogCount===76));
+ await page.locator('#openLibrary').click();
+ check('library opens without loading FPS runtime',await page.locator('#libraryDialog').evaluate(e=>e.open));
+ await page.locator('#librarySearch').fill('Liten växt');
+ check('search finds correct Kenney plant',await page.locator('.library-tile').count()===1);
+ await page.locator('.library-tile').first().click();
+ await page.waitForFunction(()=>__furnitureEditor.getPatch().added.some(p=>p.assetId==='kenney:furniture-kit:plantsmall1'));
+ check('CC0 Kenney GLB can be placed in a legal room',await page.evaluate(()=>__furnitureEditor.getPatch().added.some(x=>x.assetId==='kenney:furniture-kit:plantsmall1')));
+ await page.locator('#threeView').click();
+ await page.waitForTimeout(900);
+ await page.screenshot({path:resolve(out,'03-library-placed.png'),fullPage:true});report.shots.push('03-library-placed.png');
+ // Local GLB bytes are packed in ZIP; verify the full roundtrip, not metadata only.
+ await page.locator('#room').selectOption('I20');
+ await page.locator('#openLibrary').click();
+ const customGLB=await readFile(resolve('assets/fps/models/chairDesk.glb'));
+ await page.locator('#customGLB').setInputFiles({name:'my-custom-chair.glb',mimeType:'model/gltf-binary',buffer:customGLB});
+ await page.waitForFunction(()=>__furnitureEditor.getPatch().added.some(p=>p.assetId?.startsWith('local:')),{timeout:25000});
+ check('user-owned GLB parsed and placed without fetching external URLs',await page.evaluate(()=>__furnitureEditor.getPatch().added.some(p=>p.assetId?.startsWith('local:'))));
+ const [zipDownload]=await Promise.all([page.waitForEvent('download'),page.locator('#downloadTop').click()]);
+ const zipBuffer=await readFile(await zipDownload.path()),files=readZip(zipBuffer);
+ const exported=JSON.parse(new TextDecoder().decode(files.get('projekt.json')));
+ check('ZIP contains JSON and original binary GLB',zipDownload.suggestedFilename().endsWith('.zip')&&files.size===2&&exported.added.some(p=>p.assetId?.startsWith('local:'))&&[...files.keys()].some(x=>x.endsWith('.glb')));
+ await page.screenshot({path:resolve(out,'04-imported-glb.png'),fullPage:true});report.shots.push('04-imported-glb.png');
+ await page.reload({waitUntil:'networkidle'});await page.waitForFunction(()=>__furnitureEditor.getState()?.chairs>=50);
+ check('autosave restores both Kenney and imported GLB placement',await page.evaluate(()=>__furnitureEditor.getPatch().added.length===2));
+ const dialog2=page.waitForEvent('dialog').then(d=>d.accept());await page.locator('#reset').click();await dialog2;
+ check('reset clears both new objects',await page.evaluate(()=>__furnitureEditor.getPatch().added.length===0));
+ await page.locator('#importFile').setInputFiles({name:'MyFurniture.zip',mimeType:'application/zip',buffer:zipBuffer});
+ await page.waitForFunction(()=>__furnitureEditor.getPatch().added.length===2);
+ check('ZIP project restores original user GLB and CC0 placements',await page.evaluate(()=>__furnitureEditor.getPatch().added.length===2));
  check('no external requests, runtime boot, script/shader or HTTP errors',!report.externalRequests.length&&!report.httpFailures.length&&!report.errors.length&&await page.evaluate(()=>!window.__fps));
  report.status='PASS';
 }catch(err){report.status='FAIL';report.errors.push(err.stack||String(err));console.error(err);}
