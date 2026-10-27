@@ -1,0 +1,93 @@
+name: Cartridge Strike precision pack
+on:
+  push:
+    branches: [feature/riposte-precision-pack-20261027]
+    paths:
+      - tools/apply-precision-pack.py
+      - tools/precision.test.mjs
+      - tools/precision-smoke.cjs
+      - src/fps/tactical-*.mjs
+      - .github/workflows/precision-pack.yml
+  workflow_dispatch:
+concurrency:
+  group: precision-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Apply guarded integration patch
+        run: python3 tools/apply-precision-pack.py
+      - name: Syntax and deterministic regression tests
+        run: |
+          set -euo pipefail
+          for f in src/fps/{app,game,tactical-rules,tactical-controls,riposte-recoil,render-engine}.mjs; do node --check "$f"; done
+          node --check tools/precision-smoke.cjs
+          mkdir -p node_modules/three
+          printf '%s\n' '{"name":"three","version":"0.180.0","type":"module","exports":"./three.module.js"}' > node_modules/three/package.json
+          ln -s ../../vendor/three/three.module.js node_modules/three/three.module.js
+          node --test tools/recoil-autofire.test.mjs tools/precision.test.mjs
+      - name: Install pinned browser-test dependencies
+        run: |
+          npm ci --prefix frontline/source/tools/dev --ignore-scripts
+          node frontline/source/tools/dev/node_modules/playwright-core/cli.js install chromium
+      - name: Test actual game controls and rendered precision mode
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -m http.server 8765 --bind 127.0.0.1 >/tmp/precision-http.log 2>&1 &
+          SERVER_PID=$!
+          trap 'kill "$SERVER_PID" || true' EXIT
+          node tools/mobile-smoke.cjs
+          node tools/precision-smoke.cjs
+      - name: Archive tested integration files
+        run: |
+          tar -czf precision-patch.tgz src/fps/app.mjs src/fps/game.mjs src/fps/riposte-recoil.mjs src/fps/render-engine.mjs fps/index.html fps/style.css build-info.json .github/workflows/mobile-original-fps.yml
+      - uses: actions/upload-artifact@v4
+        with:
+          name: precision-patch
+          path: precision-patch.tgz
+          retention-days: 2
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: precision-test-screenshots
+          path: test-results/
+          if-no-files-found: ignore
+          retention-days: 7
+  commit:
+    needs: test
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+      - uses: actions/download-artifact@v4
+        with:
+          name: precision-patch
+      - name: Commit tested changes to the feature branch
+        env:
+          EXPECTED: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$EXPECTED"
+          tar -xzf precision-patch.tgz
+          rm precision-patch.tgz
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add src/fps/app.mjs src/fps/game.mjs src/fps/riposte-recoil.mjs src/fps/render-engine.mjs fps/index.html fps/style.css build-info.json .github/workflows/mobile-original-fps.yml
+          if ! git diff --cached --quiet; then
+            git commit -m 'Cartridge Strike 0.14.0: tested precision aiming, mobile friction and auto reload'
+            git push origin "HEAD:${GITHUB_REF_NAME}"
+          fi
