@@ -1,5 +1,6 @@
+import { TrajectoryCache } from './trajectory-cache.mjs';
 import * as THREE from '../../vendor/three/three.module.js';
-import { GRENADE_TYPES, predictGrenade, grenadeThreat } from './grenade-physics.mjs';
+import { GRENADE_TYPES, grenadeThreat } from './grenade-physics.mjs';
 
 const COLORS = {he:0xffb16e, flash:0xffe6a0, smoke:0x87e5cc};
 const NAMES = {he:'HE', flash:'FLASH', smoke:'RÖK'};
@@ -15,7 +16,7 @@ export function grenadeSettingsMarkup(settings) {
  */
 export class GrenadeAssist {
   constructor(renderer, settings) {
-    this.renderer=renderer;this.settings=settings;this.game=null;this.weapon=null;
+    this.renderer=renderer;this.settings=settings;this.predictionCache=new TrajectoryCache();this.game=null;this.weapon=null;
     this.preview=null;this.threat=null;this.pathAt=-Infinity;this.warningAt=-Infinity;
     this.positions=new Float32Array(MAX_POINTS*3);this.distances=new Float32Array(MAX_POINTS);
     this.geometry=new THREE.BufferGeometry();
@@ -36,9 +37,12 @@ export class GrenadeAssist {
     document.body.append(this.hud);
     this.note=this.hud.querySelector('#grenade-preview-note');this.danger=this.hud.querySelector('#grenade-danger');
     this.arrow=this.danger.querySelector('i');
+    this.noteTitle=this.note.querySelector('strong');this.noteDetail=this.note.querySelector('span');
+    this.dangerTitle=this.danger.querySelector('strong');this.dangerDetail=this.danger.querySelector('span');
   }
 
   reset() {
+    this.predictionCache.clear();
     this.group.visible=false;this.note.hidden=true;this.danger.hidden=true;
     this.preview=null;this.threat=null;this.weapon=null;this.pathAt=this.warningAt=-Infinity;
   }
@@ -50,13 +54,15 @@ export class GrenadeAssist {
     const time=game.state.time;
     const previewOn=this.settings.grenadeGuide!==false && GRENADE_TYPES.includes(p.weapon) && p.inventory[p.weapon]>0 && !p.action && p.flash<.8;
     if (!previewOn) {
-      this.group.visible=false;this.note.hidden=true;this.preview=null;this.weapon=null;
+      this.group.visible=false;this.note.hidden=true;this.preview=null;this.weapon=null;this.predictionCache.clear();
     } else {
       // At most 12.5 predictions/s. A weapon change is shown immediately.
       if (!this.preview || this.weapon!==p.weapon || time<this.pathAt || time-this.pathAt>=.08) {
+        if(time<this.pathAt)this.predictionCache.clear();
         this.pathAt=time;this.weapon=p.weapon;
-        this.preview=predictGrenade(p,game.config,game.world);
-        if (this.preview) this.drawPreview(p);
+        const previous=this.preview;
+        this.preview=this.predictionCache.read(p,game.config,game.world);
+        if (this.preview && this.preview!==previous) this.drawPreview(p);
       }
       this.group.visible=!!this.preview;this.note.hidden=!this.preview;
       if (this.preview) this.marker.lookAt(p.x,p.y+p.height-.12,p.z);
@@ -72,8 +78,8 @@ export class GrenadeAssist {
         this.danger.dataset.kind=this.threat.type;
         this.danger.classList.toggle('urgent',left<.6);
         this.arrow.style.transform=`rotate(${this.threat.angle}rad)`;
-        this.text(this.danger.querySelector('strong'),this.threat.type==='he'?'GRANAT NÄRA':'FLASH NÄRA');
-        this.text(this.danger.querySelector('span'),`${this.threat.distance.toFixed(1)} m · ${left.toFixed(1)} s`);
+        this.text(this.dangerTitle,this.threat.type==='he'?'GRANAT NÄRA':'FLASH NÄRA');
+        this.text(this.dangerDetail,`${this.threat.distance.toFixed(1)} m · ${left.toFixed(1)} s`);
       }
     }
   }
@@ -84,20 +90,21 @@ export class GrenadeAssist {
     for(let i=0;i<count;i++){
       const q=result.points[i],prev=result.points[i-1];
       if(prev)distance+=Math.hypot(q.x-prev.x,q.y-prev.y,q.z-prev.z);
-      this.positions.set([q.x,q.y,q.z],i*3);this.distances[i]=distance;
+      const offset=i*3;this.positions[offset]=q.x;this.positions[offset+1]=q.y;this.positions[offset+2]=q.z;this.distances[i]=distance;
     }
     this.geometry.attributes.position.needsUpdate=true;this.geometry.attributes.lineDistance.needsUpdate=true;
     this.geometry.setDrawRange(0,count);
     this.material.color.setHex(COLORS[p.weapon]);this.markerMaterial.color.setHex(COLORS[p.weapon]);
     this.marker.position.set(result.endpoint.x,result.endpoint.y,result.endpoint.z);
     const range=Math.hypot(result.endpoint.x-p.x,result.endpoint.z-p.z);
-    this.text(this.note.querySelector('strong'),`KASTBANA · ${NAMES[p.weapon]} · ${range.toFixed(1)} m`);
-    this.text(this.note.querySelector('span'),'Ringen visar beräknad detonation');
+    this.text(this.noteTitle,`KASTBANA · ${NAMES[p.weapon]} · ${range.toFixed(1)} m`);
+    this.text(this.noteDetail,'Ringen visar beräknad detonation');
   }
 
   text(node,value){if(node.textContent!==value)node.textContent=value;}
 
   dispose() {
+    this.predictionCache.clear();
     this.renderer.scene.remove(this.group);this.geometry.dispose();this.material.dispose();
     this.markerGeometry.dispose();this.markerMaterial.dispose();this.hud.remove();
   }
