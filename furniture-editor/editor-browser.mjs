@@ -54,7 +54,7 @@ try{
  await page.waitForFunction(()=>__furnitureEditor.getState().changed>=1);
  check('saved JSON can be imported and edited again',await page.evaluate(()=>__furnitureEditor.getState().changed>=1));
  // New V2 model library: real Kenney thumbnail + GLB must be served locally.
- check('catalog contains 76 licensed, audited models',await page.evaluate(()=>__furnitureEditor.catalogCount===76));
+ check('catalog contains 104 audited models including 28 Hissrum12 assets',await page.evaluate(()=>__furnitureEditor.catalogCount===104));
  await page.locator('#openLibrary').click();
  check('library opens without loading FPS runtime',await page.locator('#libraryDialog').evaluate(e=>e.open));
  await page.locator('#librarySearch').fill('Liten växt');
@@ -65,6 +65,15 @@ try{
  await page.locator('#threeView').click();
  await page.waitForTimeout(900);
  await page.screenshot({path:resolve(out,'03-library-placed.png'),fullPage:true});report.shots.push('03-library-placed.png');
+ // Real user-made Hissrum12 CREFORM model is served from the local vetted catalog.
+ await page.locator('#room').selectOption('I20');
+ await page.locator('#openLibrary').click();
+ await page.locator('#libraryCategory').selectOption('hissrum12');
+ await page.locator('#librarySearch').fill('IPT CREFORM');
+ check('Hissrum12 CREFORM models searchable',await page.locator('.library-tile').count()>=1);
+ await page.locator('.library-tile').first().click();
+ await page.waitForFunction(()=>__furnitureEditor.getPatch().added.some(p=>p.assetId==='hissrum12:creformIptCart'));
+ check('Hissrum12 GLB loads and places in independent WebGL editor',await page.evaluate(()=>__furnitureEditor.getPatch().added.some(p=>p.assetId==='hissrum12:creformIptCart')));
  // Local GLB bytes are packed in ZIP; verify the full roundtrip, not metadata only.
  await page.locator('#room').selectOption('I20');
  await page.locator('#openLibrary').click();
@@ -78,12 +87,12 @@ try{
  check('ZIP contains JSON and original binary GLB',zipDownload.suggestedFilename().endsWith('.zip')&&files.size===2&&exported.added.some(p=>p.assetId?.startsWith('local:'))&&[...files.keys()].some(x=>x.endsWith('.glb')));
  await page.screenshot({path:resolve(out,'04-imported-glb.png'),fullPage:true});report.shots.push('04-imported-glb.png');
  await page.reload({waitUntil:'networkidle'});await page.waitForFunction(()=>__furnitureEditor.getState()?.chairs>=50);
- check('autosave restores both Kenney and imported GLB placement',await page.evaluate(()=>__furnitureEditor.getPatch().added.length===2));
+ check('autosave restores both Kenney and imported GLB placement',await page.evaluate(()=>__furnitureEditor.getPatch().added.length===3));
  const dialog2=page.waitForEvent('dialog').then(d=>d.accept());await page.locator('#reset').click();await dialog2;
  check('reset clears both new objects',await page.evaluate(()=>__furnitureEditor.getPatch().added.length===0));
  await page.locator('#importFile').setInputFiles({name:'MyFurniture.zip',mimeType:'application/zip',buffer:zipBuffer});
- await page.waitForFunction(()=>__furnitureEditor.getPatch().added.length===2);
- check('ZIP project restores original user GLB and CC0 placements',await page.evaluate(()=>__furnitureEditor.getPatch().added.length===2));
+ await page.waitForFunction(()=>__furnitureEditor.getPatch().added.length===3);
+ check('ZIP project restores original user GLB and CC0 placements',await page.evaluate(()=>__furnitureEditor.getPatch().added.length===3));
  check('no external requests, runtime boot, script/shader or HTTP errors',!report.externalRequests.length&&!report.httpFailures.length&&!report.errors.length&&await page.evaluate(()=>!window.__fps));
  report.status='PASS';
 }catch(err){report.status='FAIL';report.errors.push(err.stack||String(err));console.error(err);}

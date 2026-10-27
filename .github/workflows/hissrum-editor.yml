@@ -1,0 +1,137 @@
+name: Design Studio Hissrum12 asset library and usability
+on:
+  push:
+    branches: [work/design-studio-hissrum12-v4]
+    paths:
+      - 'furniture-editor/*.mjs'
+      - 'furniture-editor/*.html'
+      - 'furniture-editor/*.css'
+      - 'furniture-editor/*.md'
+      - 'furniture-editor/build/**'
+      - 'furniture-editor/hissrum/**'
+      - 'furniture-editor/library/*.mjs'
+      - 'furniture-editor/wall-placement.test.mjs'
+      - '.github/workflows/hissrum-editor.yml'
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: cs-designstudio-hissrum-v4
+  cancel-in-progress: true
+jobs:
+  library-editor:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - name: Checkout public game and isolated editor
+        uses: actions/checkout@v4
+      - name: Checkout pinned open Hissrum12 geometry code
+        uses: actions/checkout@v4
+        with:
+          repository: capstere/jedi
+          ref: 0ed0c4defed19578c42e660f4c2fbae2dfc1e686
+          path: __hissrum_source
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Verify no original game files, gameplay or build manifest changed
+        run: |
+          set -euo pipefail
+          git fetch --no-tags --depth=1 origin 7ba1a8838e9c7c95f57f374c26adb4245dc20441
+          git diff --exit-code 7ba1a8838e9c7c95f57f374c26adb4245dc20441 HEAD -- fps src assets vendor frontline build-info.json index.html credits.html licenses
+          python3 - <<'PY'
+          import subprocess
+          files=subprocess.check_output(['git','diff','--name-only','7ba1a8838e9c7c95f57f374c26adb4245dc20441','HEAD'],text=True).splitlines()
+          assert files and all(p.startswith('furniture-editor/') or p=='.github/workflows/hissrum-editor.yml' for p in files),files
+          print('PASS: ALL original game files unchanged')
+          PY
+          node tools/verify-owner-runtime.mjs
+      - name: Pin Hissrum12 source revision and its exact two source hashes
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import hashlib
+          root=Path('__hissrum_source')
+          hashes={
+            'planner-core.js':'05fe611468787deadb99dd4b2fd37ec9a22c90b56d87150b7a2a06af72dd98c3',
+            'object-library.js':'1e0f9f473782bf2e40d858d67f4e12bc927e883569cc34457117d0a9e6b3ab5e'
+          }
+          for name,expected in hashes.items():
+            actual=hashlib.sha256((root/name).read_bytes()).hexdigest()
+            assert actual==expected,(name,actual)
+          print('PASS: source snapshots byte-for-byte pinned')
+          PY
+      - name: Generate 28 user-authored indexed low-poly GLBs
+        run: node furniture-editor/hissrum/build-hissrum.cjs __hissrum_source furniture-editor/library/models/hissrum12
+      - name: Install offline thumbnail renderer
+        run: python -m pip install --disable-pip-version-check --no-input numpy==2.3.5 Pillow==12.3.0 trimesh==4.11.1
+      - name: Render 28 thumbnail images without external services
+        run: python furniture-editor/hissrum/make-thumbs.py furniture-editor/library/models/hissrum12 furniture-editor/library/thumbs/hissrum12
+      - name: Verify every GLB and copyright exclusion
+        run: |
+          python3 - <<'PY'
+          import json,hashlib
+          from pathlib import Path
+          root=Path('furniture-editor/library/models/hissrum12')
+          img=Path('furniture-editor/library/thumbs/hissrum12')
+          d=json.loads((root/'asset-manifest.json').read_text())
+          assert len(d['models'])==28
+          assert {e['type'] for e in d['excluded']}=={'sampleBag'}
+          total=0
+          for model in d['models']:
+            assert 0<model['triangles']<=6500
+            name=model['sourceType'];p=root/(name+'.glb');thumb=img/(name+'.webp')
+            b=p.read_bytes();assert b[:4]==b'glTF' and len(b)<230000
+            assert hashlib.sha256(b).hexdigest()==model['sha256']
+            assert thumb.read_bytes()[:4]==b'RIFF'
+            total+=len(b)
+          assert total<1900000,total
+          assert not (root/'sampleBag.glb').exists()
+          print({'status':'PASS','GLBs':28,'previews':28,'bytes':total,'publicExcluded':['sampleBag']})
+          PY
+      - name: Validate editor, wall contact, architecture and JSON backwards compatibility
+        run: |
+          set -euo pipefail
+          for path in furniture-editor/main.mjs furniture-editor/core.mjs furniture-editor/build/build-mode.mjs furniture-editor/hissrum/build-hissrum.cjs; do node --check "$path"; done
+          node --test furniture-editor/editor.test.mjs furniture-editor/library/library.test.mjs furniture-editor/build/architecture.test.mjs furniture-editor/wall-placement.test.mjs
+      - name: Install existing locked Chromium for actual WebGL checks
+        run: |
+          npm ci --prefix frontline/source/tools/dev --ignore-scripts --no-audit --no-fund
+          node frontline/source/tools/dev/node_modules/playwright-core/cli.js install chromium
+      - name: Install software GL libraries and virtual display
+        run: sudo timeout 80s apt-get -o Acquire::Retries=1 -o Acquire::http::Timeout=20 install -y libgl1-mesa-dri libglx-mesa0 libegl-mesa0 xvfb
+      - name: Real Chromium/WebGL regression, Hissrum12, custom import, build editor and ZIP
+        run: |
+          set -euo pipefail
+          python3 -m http.server 8765 --bind 127.0.0.1 >/tmp/cs-editor-webserver.log 2>&1 &
+          PID=$!
+          trap 'kill "$PID" || true' EXIT
+          for i in $(seq 1 30); do if curl -fsS http://127.0.0.1:8765/furniture-editor/ >/dev/null; then break; fi; sleep 1; done
+          timeout 220s xvfb-run -a node furniture-editor/editor-browser.mjs
+          timeout 220s xvfb-run -a node furniture-editor/build/build-browser.mjs
+      - name: Preserve real browser photos and model manifest
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: designstudio-hissrum-v4-webgl-and-copyright
+          path: |
+            test-results/furniture-editor/
+            test-results/build-studio/
+            furniture-editor/library/models/hissrum12/asset-manifest.json
+          retention-days: 14
+          if-no-files-found: warn
+      - name: Commit only 28 approved model binaries, thumbs and manifest
+        if: success()
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add furniture-editor/library/models/hissrum12/ furniture-editor/library/thumbs/hissrum12/
+          if git diff --cached --quiet; then echo 'Hissrum12 files already pinned'; else
+            git commit -m 'Attach 28 copyright-screened Hissrum12 GLBs and thumbnails [skip ci]'
+            git push origin HEAD:work/design-studio-hissrum12-v4
+          fi

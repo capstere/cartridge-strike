@@ -108,6 +108,21 @@ export function getNextId(entries,floors,kind){const prefix=kind==='floor'?'BYGG
 }
 export function makeEntry(id,kind,a,b){return {id,source:false,sourceKind:'new',kind,a:[...a],b:[...b],
  height:isDoor(kind)?2.4:2.85,thickness:isDoor(kind)?.09:.11,sill:.9};}
+/** Place a correctly aligned default door in a selected straight wall.
+ * This is a sketch aperture only; runtime door mechanics stay unchanged.
+ */
+export function doorOnWallSegment(wall,id,{kind='door',width=.9,fraction=.5}={}){
+ if(!isWall(wall.kind))throw Error('Välj först en vägg eller glasvägg.');
+ const length=entryLength(wall),minEnds=.12;
+ if(length<.80)throw Error('Den valda väggen är för kort för en dörr.');
+ const useWidth=Math.min(width,length-2*minEnds);
+ if(useWidth<.55)throw Error('Väggen är för kort för en säker dörröppning.');
+ const along=Math.max(useWidth/2+minEnds,Math.min(length-useWidth/2-minEnds,length*fraction));
+ const dx=(wall.b[0]-wall.a[0])/length,dz=(wall.b[1]-wall.a[1])/length;
+ const point=t=>[roundPosition(wall.a[0]+t*dx),roundPosition(wall.a[1]+t*dz)];
+ const door=makeEntry(id,kind,point(along-useWidth/2),point(along+useWidth/2));
+ door.height=Math.min(2.4,wall.height);validateEntry(door,{isNew:true});return door;
+}
 export function floorRect(id,a,b){return {id,x0:Math.min(a[0],b[0]),z0:Math.min(a[1],b[1]),x1:Math.max(a[0],b[0]),z1:Math.max(a[1],b[1]),name:'Egen golvyta'};}
 /**
  * Split wall-like segments at collinear door / passage spans to display real

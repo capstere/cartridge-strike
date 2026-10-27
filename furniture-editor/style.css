@@ -43,3 +43,18 @@
 
 #buildLegend{display:flex;align-items:center;gap:6px;color:#244e49}#buildLegend .arch-swatch{display:inline-block;margin-left:6px;height:12px;width:12px;border-radius:2px}
 #buildLegend .arch-wall{background:#c31421}#buildLegend .arch-glass{background:#22b14c}#buildLegend .arch-window{background:#00a2e8}#buildLegend .arch-door{background:#99d9ea}
+
+.wall-snap{white-space:nowrap}body.build-mode .wall-snap{display:none}
+
+/* Beginner-friendly architectural edit shortcuts: visible, actionable, accessible. */
+.simple-flow{background:#e6f4ef;border-left:4px solid #1b887c;padding:11px 12px;border-radius:5px;display:grid;gap:5px;color:#17443e;font-size:12px}
+.simple-flow b{font-weight:900;letter-spacing:.6px;font-size:11px}
+.build-quick-actions{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin:9px 0 14px}
+.build-quick-actions button{cursor:pointer;background:#fff;color:#20434a;border:1px solid #adc8c2;border-radius:5px;padding:11px 7px;font-size:11px;font-weight:850;text-align:center;letter-spacing:.4px;min-height:40px}
+.build-quick-actions button:hover:not(:disabled){background:#d6eee8;border-color:#288578}
+.build-quick-actions button:disabled{opacity:.38;cursor:not-allowed;background:#edf1ef}
+.build-quick-actions [data-quick-kind="window"]{border-left:5px solid #00a2e8}
+.build-quick-actions [data-quick-kind="glazed"]{border-left:5px solid #22b14c}
+.build-quick-actions [data-quick-kind="wall"]{border-left:5px solid #c31421}
+.build-quick-actions #buildDoorInWall{border-left:5px solid #99d9ea}
+#buildSimpleHelp{margin:11px 0 4px;font-size:12px}

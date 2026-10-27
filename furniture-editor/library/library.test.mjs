@@ -10,17 +10,19 @@ import {inspectGLB,safeFilename} from './glb-utils.mjs';
 import {exportPatch,parsePatch,BASE_COMMIT} from '../core.mjs';
 const dir=dirname(fileURLToPath(import.meta.url)),root=resolve(dir,'../..');
 
-test('76 license-audited, isolated models and supported model types',()=>{
- assert.equal(LIBRARY.length,76);assert.equal(LIBRARY_MAP.size,76);
+test('104 rights-audited, isolated models and supported model types',()=>{
+ assert.equal(LIBRARY.length,104);assert.equal(LIBRARY_MAP.size,104);
  assert.equal(LIBRARY_SOURCE.commit,'37f5baddf99899547ae661668880809c42b450f0');
- assert.equal(LIBRARY.filter(o=>o.pack!=='built-in').length,72);
+ assert.equal(LIBRARY.filter(o=>o.pack==='furniture-kit'||o.id.startsWith('kenney:')).length,72);
  for(const o of LIBRARY){
-  assert.match(o.name,/\S/);assert.match(o.id,/^(kenney|nord01):/);
+  assert.match(o.name,/\S/);assert.match(o.id,/^(kenney|nord01|hissrum12):/);
   assert(o.width>.05&&o.depth>.05&&o.height>.05);
-  assert(['stolar','bord','kontor','kok','badrum','labb','industri','dekor'].includes(o.category));
-  assert(o.license==='CC0-1.0 · Kenney'||o.license==='Original (NORD-01)');
+  assert(['stolar','bord','kontor','kok','badrum','labb','industri','dekor','hissrum12'].includes(o.category));
+  assert(o.license==='CC0-1.0 · Kenney'||o.license==='Original (NORD-01)'||o.license.startsWith('Original · Hissrum12'));
   assert(!o.url.startsWith('http:')&&!o.url.startsWith('https:'));
  }
+ assert.equal(LIBRARY.filter(o=>o.pack==='hissrum12').length,28);
+ assert(!LIBRARY_MAP.has('hissrum12:sampleBag'));
  for(const id of ['kenney:furniture-kit:toilet','kenney:furniture-kit:kitchenfridge','kenney:space-kit:machine-generator','nord01:built-in:nord01-supply_crate-lod0'])assert(LIBRARY_MAP.has(id));
 });
 
