@@ -10,7 +10,7 @@ export function createFurnishings(data, inherited, {inside,distanceSegment}) {
   const roomMap=new Map(data.rooms.map(r=>[r.id,r]));
   const allBlocked=[...data.excludedRooms,...data.rooms.filter(r=>r.status==='uncertain'),...data.obstacles];
   function safe(roomId,x,z,w,d) {
-    const room=roomMap.get(roomId); if(!room||room.status!=='included')return false;
+    const room=roomMap.get(roomId); if(!room||room.status!=='included'||data.layoutPresentation?.suppressedAutoFurnitureRooms?.includes(roomId))return false;
     const radius=Math.hypot(w,d)/2;
     // A protected envelope around every accepted walking line also preserves door approaches.
     if(routes.some(([a,b])=>distanceSegment(x,z,a,b)<radius+.48))return false;
@@ -118,5 +118,5 @@ export function createFurnishings(data, inherited, {inside,distanceSegment}) {
   }
   // Reused inherited furniture is recorded with its actual source footprint and photo caveats.
   const inheritedManifest=data.obstacles.map(o=>({id:o.id,roomId:o.roomId||'I26',prefab:/desk/.test(o.kind)?'desk-bank':o.kind,asset:'src/world.js procedural furniture',transform:{sourcePolygon:o.id},collision:{type:'visible-box-and-surface-parts',sourcePolygon:o.polygon},source:o.roomId==='I01'?'P28–P32, preliminary GX photo mapping':o.roomId==='I02'?'P23–P27, preliminary PQC photo mapping':o.roomId==='I04'?'standard lab furnishing; NEG has no confirmed photo':'P21/P22/P33 and reviewed furniture footprint'}));
-  return {version:FURNISHING_VERSION,instances:[...inheritedManifest,...instances],boxes,labels,assumptions:['No photo-derived change to walls or doors.','D42 pantry/STÄD filename conflict remains unresolved.','PQC/GX photo attribution is preliminary; exact positions are design assumptions.']};
+  return {version:FURNISHING_VERSION,instances:[...inheritedManifest,...instances],boxes,labels,assumptions:['No photo-derived change to walls or doors.',data.metadata.reviewRevision>=3?'D42 is confirmed as an ordinary door by owner v1; historical photo naming does not override it.':'D42 pantry/STÄD filename conflict remains unresolved.','PQC/GX photo attribution is preliminary; exact positions are design assumptions.']};
 }

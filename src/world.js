@@ -34,11 +34,22 @@
   }
   for(const w of D.walls){
    const height=w.height||H,thickness=w.thickness||.11;
-   if(PHOTO_GLAZING.has(w.id)){glazed(w.id,w.a,w.b,height);
+   if(w.surfaceType==='glazed'){
+    glazed(w.id,w.a,w.b,height);
+   }else if(w.surfaceType==='window'){
+    const a=w.a,b=w.b,dx=b[0]-a[0],dz=b[1]-a[1],length=Math.hypot(dx,dz);
+    segmentBox(w.id+'-sill-wall',a,b,.42,.84,thickness,'wall');
+    segmentBox(w.id+'-header',a,b,2.70,.30,thickness,'wall');
+    segmentBox(w.id+'-glass',a,b,1.695,1.71,.035,[.72,.81,.81],'glass');
+    segmentBox(w.id+'-sill',a,b,.85,.045,.18,'white','metal');
+    segmentBox(w.id+'-top',a,b,2.55,.055,.10,'white','metal');
+    const n=Math.max(1,Math.ceil(length/1.55));
+    for(let i=0;i<=n;i++)box(w.id+'-mullion'+i,a[0]+dx*i/n,1.70,a[1]+dz*i/n,.045,1.74,.045,'white','metal');
+   }else if(!w.surfaceType&&PHOTO_GLAZING.has(w.id)){glazed(w.id,w.a,w.b,height);
     const length=Math.hypot(w.b[0]-w.a[0],w.b[1]-w.a[1]),n=Math.max(1,Math.round(length/1.12));
     for(let i=0;i<n;i++)box(w.id+'-curtain'+i,w.a[0]+length*(i+.1)/n,1.43,w.a[1]+.16,.23,2.65,.045,[.79,.81,.77],'fabric');
    }
-   else if(w.id==='WALL-324'){
+   else if(!w.surfaceType&&w.id==='WALL-324'){
     // P21/P22/P33: office facade windows. The unphotographed southern facade stays solid.
     const end=D.pdfToWorld([738.76,391.8]);
     segmentBox(w.id+'-south',end,w.b,height/2,height,thickness,'wall');
@@ -71,6 +82,37 @@
    scene.blockedPolygons.push({id:o.id,polygon:o.polygon});
    const [x0,z0,x1,z1]=bounds(o.polygon),cx=(x0+x1)/2,cz=(z0+z1)/2,w=x1-x0,d=z1-z0;
    if(o.kind==='uncertain-area'){box(o.id,cx,.95,cz,w,1.9,d,'blocked');continue;}
+   if(o.kind==='authored-dining-table'){
+    box(o.id+'-top',cx,.755,cz,w,.055,d,'white','table');
+    for(const x of [x0+.065,x1-.065])for(const z of [z0+.12,z1-.12])box(o.id+'-leg'+x+z,x,.36,z,.045,.72,.045,'metal','metal');
+    continue;
+   }
+   if(o.kind==='authored-chair'){
+    const a=o.yaw||0,s=Math.sin(a),c=Math.cos(a);
+    box(o.id+'-seat',cx,.46,cz,w,.075,d,'blue','fabric');
+    box(o.id+'-back',cx+s*.15,.73,cz+c*.15,w,.48,.06,'blue','fabric',a);
+    for(const x of [-w*.32,w*.32])for(const z of [-d*.32,d*.32])box(o.id+'-leg'+x+z,cx+x,.225,cz+z,.026,.45,.026,'metal','metal');
+    continue;
+   }
+   if(o.kind==='authored-sofa'){
+    const a=o.yaw||0,c=Math.cos(a),s=Math.sin(a),vertical=Math.abs(s)>.5,ww=vertical?d:w,dd=vertical?w:d;
+    const local=(id,u,y,v,pw,ph,pd,col='blue')=>box(o.id+'-'+id,cx+c*u+s*v,y,cz-s*u+c*v,pw,ph,pd,col,'fabric',a);
+    local('base',0,.32,0,ww,.32,dd);local('back',0,.73,dd/2-.07,ww,.52,.14);
+    for(const side of [-1,1])local('arm'+side,side*(ww/2-.065),.57,0,.13,.22,dd);
+    for(const side of [-1,1])local('cushion'+side,side*ww*.235,.51,-.02,ww*.44,.10,dd*.7);
+    continue;
+   }
+   if(o.kind==='authored-coffee-table'){
+    box(o.id+'-top',cx,.46,cz,w,.04,d,'wood','table');box(o.id+'-leg',cx,.22,cz,.045,.44,.045,'metal','metal');
+    box(o.id+'-foot',cx,.025,cz,w*.65,.05,d*.65,'metal','metal');continue;
+   }
+   if(o.kind==='authored-counter'){
+    box(o.id+'-body',cx,.43,cz,w,.86,d,'white');
+    box(o.id+'-top',cx,.885,cz,w+.025,.05,d+.025,'wood','table');
+    const n=Math.max(1,Math.ceil(w/.8));
+    for(let i=1;i<n;i++)box(o.id+'-seam'+i,x0+w*i/n,.44,z0-.007,.012,.76,.012,'metal','metal');
+    continue;
+   }
    const desk=/desk|office/i.test(o.kind||o.id),h=desk?.75:.88;
    const halfDepth=desk?Math.min(d/2,.63):d/2,topPoly=desk?[[x0,cz-halfDepth],[x1,cz-halfDepth],[x1,cz+halfDepth],[x0,cz+halfDepth]]:o.polygon;
    // Thin tops, open legroom: all fittings stay inside the pre-existing occupied footprint.
@@ -116,14 +158,26 @@
   }
   const named={D06:'VÅNING 5',D08:'LABBOMRÅDE',D13:'PQC / GX LAB 5',D14:'GX LAB 5  ↔  PQC',D16:'NEG LAB PQC',D56:'FÖRRÅD 2',D07:'KONTOR · QA/QC/PQC'};
   for(const d of D.doors){
+   if(d.removed)continue;
    const [a,b]=[d.a,d.b],width=d.width||Math.hypot(b[0]-a[0],b[1]-a[1]),dx=(b[0]-a[0])/width,dz=(b[1]-a[1])/width,n=[-dz,dx],c=d.center;
-   const pass=d.kind==='open-passage',closed=d.blocked||(d.accessCardConfirmed&&!s.doors[d.id]);
+   const pass=d.kind.startsWith('open-passage'),closed=d.blocked||d.lockedUntilImplemented||(d.accessCardConfirmed&&!s.doors[d.id]);
    const col=d.blocked?'blocked':'teal';
+   if(d.lockedUntilImplemented)scene.colliders.push({id:d.id,a,b,thickness:.08,kind:d.doorType});
    if(!pass){
     segmentBox(d.id+'-threshold',a,b,.012,.024,.13,[.62,.52,.33],'metal');
     for(const [i,p] of [a,b].entries())box(d.id+'-jamb'+i,p[0],1.15,p[1],.065,2.3,.065,'trim');
     segmentBox(d.id+'-lintel',a,b,2.57,.56,.12,'wall');
-    if(closed){
+    if(d.doorType==='elevator'){
+     segmentBox(d.id+'-sealed-leaf',a,b,1.14,2.28,.08,'metal','metal');
+     // Two brushed-metal sliding panels; no imaginary open shaft or floor travel.
+     const yaw=-Math.atan2(b[1]-a[1],b[0]-a[0]);
+     box(d.id+'-seam',c[0]+n[0]*.048,1.14,c[1]+n[1]*.048,.016,2.24,.012,'dark','metal',yaw);
+     box(d.id+'-display',c[0]+n[0]*.09,2.43,c[1]+n[1]*.09,.22,.13,.024,'dark','metal',yaw);
+     box(d.id+'-floor-number',c[0]+n[0]*.108,2.43,c[1]+n[1]*.108,.035,.065,.01,[.2,.65,.6],'emissive',yaw);
+    }else if(d.doorType==='terrace'){
+     glazed(d.id+'-terrace',a,b,2.28);
+     segmentBox(d.id+'-pushbar',a,b,1.02,.035,.13,'metal','metal');
+    }else if(closed){
      segmentBox(d.id+'-leaf',a,b,1.085,2.17,.08,col,'metal');
      scene.colliders.push({id:d.id,a,b,thickness:.08,kind:'door'});
      // Inset glass and push strip are visual fittings only; door span remains source-derived.

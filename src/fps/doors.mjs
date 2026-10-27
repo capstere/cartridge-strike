@@ -7,14 +7,15 @@ export const DOOR_HOLD_SECONDS=2.5;
 export function createDoors(data,physics){
  const skipped=[],doors=[],boxes=[];
  for(const source of data.doors){
-  const reason=source.blocked?'blocked':source.kind!=='door-aperture'||source.passageOpenConfirmed?'open-passage':source.id==='D42'?'unresolved-D42':null;
+  const reason=source.removed?'removed-by-owner':source.lockedUntilImplemented?'fixed-'+source.doorType:source.blocked?'blocked':source.kind!=='door-aperture'||source.passageOpenConfirmed?'open-passage':null;
   if(reason){skipped.push({id:source.id,reason});continue;}
   const dx=source.b[0]-source.a[0],dz=source.b[1]-source.a[1],width=Math.hypot(dx,dz),ux=dx/width,uz=dz/width;
-  const door={id:source.id,x:source.center[0],z:source.center[1],width,ux,uz,nx:-uz,nz:ux,angle:0,target:0,sign:1,holdUntil:0,leaves:[],accessCard:source.accessCardConfirmed};
-  const count=width>1.3?2:1,w=(width-.10)/count;
+  const door={id:source.id,x:source.center[0],z:source.center[1],width,ux,uz,nx:-uz,nz:ux,angle:0,target:0,sign:1,holdUntil:0,leaves:[],accessCard:source.accessCardConfirmed,type:source.doorType||'ordinary'};
+  // Pivot inside the jamb, not 5cm inside the clear aperture: narrow WC doors remain passable.
+  const count=width>1.3?2:1,w=(width-.025)/count;
   for(let i=0;i<count;i++){
    const side=i===0?1:-1,p=side===1?source.a:source.b;
-   const leaf={door,side,x:p[0]+ux*.05*side,z:p[1]+uz*.05*side,w,base:-Math.atan2(dz,dx)+(i?Math.PI:0)};
+   const leaf={door,side,x:p[0]+ux*.0125*side,z:p[1]+uz*.0125*side,w,base:-Math.atan2(dz,dx)+(i?Math.PI:0)};
    leaf.box={id:source.id+'-moving-leaf-'+i,doorId:source.id,x:0,y:1.15,z:0,w,h:2.23,d:.08,material:'metal',angle:0,cos:1,sin:0};
    leaf.box.broadphaseBounds={minX:leaf.x-w-.08,maxX:leaf.x+w+.08,minZ:leaf.z-w-.08,maxZ:leaf.z+w+.08};
    door.leaves.push(leaf);boxes.push(leaf.box);

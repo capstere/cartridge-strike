@@ -1,326 +1,24 @@
 {
   "schemaVersion": 1,
-  "gameVersion": "0.15.3",
+  "gameVersion": "0.16.0",
   "entrypoint": "fps/index.html",
   "release": {
-    "mode": "public-release",
+    "mode": "owner-approved-layout-v1",
     "publicReleaseEligible": true,
-    "policySha256": "5dab16d82ec68989fe81c651cc088791ac0abb4cab58eceee3efbf8aacad939f",
-    "derivatives": [
-      {
-        "id": "cartridge-v11.3",
-        "source": {
-          "repository": "capstere/the",
-          "commit": "890d9e62e133390d74e2415cd02eb920f47c4fad",
-          "path": "cartridge-qc/app/Generisk_Cartridge_QC_v11.3.html",
-          "sha256": "8d471a3cca3c2626820c4a9001d7d52c8a61fea831348b06ab41aafd21384f24"
-        },
-        "runtimeFiles": [
-          {
-            "path": "src/fps/cartridge-props.mjs",
-            "sha256": "11c5227e48c858dc35c75285d98bd47f5bc11434a61ee962c8f88c0fcf60ca4e"
-          },
-          {
-            "path": "src/fps/cartridge-v11.mjs",
-            "sha256": "ef3a05f033d81afc50a4829aa9bfd97768c797a0b698bb2772373151d6814172"
-          }
-        ],
-        "runtimeDigest": "693cc4139eed938985286796d59acfe39167531a9ff2794033b177961822f58d",
-        "distributionApproved": true
-      },
-      {
-        "id": "nord01-facility",
-        "source": {
-          "repository": "capstere/onboard",
-          "commit": "566ae1fadabb1f45d644e04cdbeebefb0b81a197",
-          "path": "asset-portfolio/nord-01/source/build_assets.py",
-          "sha256": "14de641905d6fe2a70c377d74132a8d0fe1b28b890a3019168993e3ff25adde4"
-        },
-        "runtimeFiles": [
-          {
-            "path": "assets/fps/models/nord01-access_terminal-lod0.glb",
-            "sha256": "8fcd1685b7908e27e98daae25fae0fa75da13c3b88f3aa966db6694839ba538c"
-          },
-          {
-            "path": "assets/fps/models/nord01-access_terminal-lod2.glb",
-            "sha256": "6af1b9a3f74a827cb66024e7b44140e7427dee006a6ad3302d1f008d6f54fdfe"
-          },
-          {
-            "path": "assets/fps/models/nord01-medical_case-lod0.glb",
-            "sha256": "c7579a593d944d0f32f3554b8ca0b0254de65ae0658d2de0204ef695b6a52b10"
-          },
-          {
-            "path": "assets/fps/models/nord01-security_locker-lod0.glb",
-            "sha256": "4368ceb4cd3a26d1c8a3ead0413f71cd5204274410b46b031c423b5d1388b277"
-          },
-          {
-            "path": "assets/fps/models/nord01-security_locker-lod2.glb",
-            "sha256": "a08cb42c5a564981f520c2c38aaed6f82e448926a501cf7fe6b0dd14a56a5028"
-          },
-          {
-            "path": "assets/fps/models/nord01-strip_light-lod0.glb",
-            "sha256": "11785a1708dfae00d37628e3f06dee5cf95175ce49b0fc5bd867f0bd83b96f53"
-          },
-          {
-            "path": "assets/fps/models/nord01-supply_crate-lod0.glb",
-            "sha256": "a021e8b54ee354f0a41e4ceaa37b994e68e444b8d715033d47d6f3d4bed3a67d"
-          },
-          {
-            "path": "assets/fps/models/nord01-wall_vent-lod0.glb",
-            "sha256": "25482d2abec3a01920b9f213bf5df6223ac5df4df3a578a53da7c095e2c97757"
-          },
-          {
-            "path": "assets/fps/models/nord01-wall_vent-lod2.glb",
-            "sha256": "5b0b934e822c8275bfee08812a3dbd1940fda3d8174f6247b336824748e8ef99"
-          }
-        ],
-        "runtimeDigest": "8a7ce0c88e66352a739f9ac0deaabfa0d88a8b78bd073f8fc99d67deee3dad6f",
-        "distributionApproved": true
-      },
-      {
-        "id": "responsiveness-riposte-2026-10-26",
-        "source": {
-          "repository": "BenDBSS/Riposte-Frontline-Source",
-          "commit": "31ca050d8ce59f4885c01a3237f68cdf186c9b60",
-          "path": "LICENSE",
-          "sha256": "31116c5cebfdadacd80f9c236c72b623b5d9cdc696786814717f2221a8081a5a"
-        },
-        "runtimeFiles": [
-          {
-            "path": "assets/fps/audio/riposte-f_draw-1.mp3",
-            "sha256": "055b67b634c6ffa4c31d2978e2d2ad66ef5903db57a783073f6bdd21507a36df"
-          },
-          {
-            "path": "assets/fps/audio/riposte-f_dry-1.mp3",
-            "sha256": "ac4071825b15d6c612791ccbf1d6588e89384e83706b5214137a2d01ec0f4be8"
-          },
-          {
-            "path": "assets/fps/audio/riposte-f_knife_hit-1.mp3",
-            "sha256": "23262da97855db49c7b447ef452a1831f52c493c38099809ae61921e26a4d536"
-          },
-          {
-            "path": "assets/fps/audio/riposte-f_knife-1.mp3",
-            "sha256": "0619b408af2f73a7d88920c677f27e4926aa23fbe10ae3bb01a71606cc542ac7"
-          },
-          {
-            "path": "assets/fps/audio/riposte-f_pickup-1.mp3",
-            "sha256": "740798c14fa1031b9bc961a990ef4b51d3e75b10c50fc4a4296434d61da03b6f"
-          },
-          {
-            "path": "assets/fps/audio/riposte-f_throw-1.mp3",
-            "sha256": "c66d3cb60e956769618f3e51a722403938558baba3ff40b4c26f6a30334c38bd"
-          },
-          {
-            "path": "assets/fps/audio/riposte-g_ak_near-1.mp3",
-            "sha256": "83903cae0a6ff3fc38d15335c756dececdca3b438bd4543194d159f0f24416bd"
-          },
-          {
-            "path": "assets/fps/audio/riposte-g_ak_pov-1.mp3",
-            "sha256": "ad71df1ab06a9f861b1b21e0e4ac8d21b67555a276b440c4c9973a941c3cd8a2"
-          },
-          {
-            "path": "assets/fps/audio/riposte-g_glock_near-1.mp3",
-            "sha256": "4b464f68eafe8fe7d973ef8e718735740a1d47dcba814bd31061fcc8bfa40d70"
-          },
-          {
-            "path": "assets/fps/audio/riposte-g_glock_pov-1.mp3",
-            "sha256": "e23a810637a60a827e1b4cca2787dbaa53435bfcdedacf07776208c8e8766938"
-          },
-          {
-            "path": "assets/fps/audio/riposte-g_pistol_near-1.mp3",
-            "sha256": "1a64cb02ecde5c7303682dd3b13db828a9653d142d80bf77c984cc5efea04c73"
-          },
-          {
-            "path": "assets/fps/audio/riposte-g_pistol_pov-1.mp3",
-            "sha256": "1a06b8dfdb7f988d374b4cc7ade8d5e2668d372495acc183f372a4c18812f76d"
-          },
-          {
-            "path": "assets/fps/audio/riposte-g_rifle_near-1.mp3",
-            "sha256": "018f9e05f8d3cce83cbf6c198b519ac96657c195916302554a8a6c4a7c6dd19b"
-          },
-          {
-            "path": "assets/fps/audio/riposte-g_rifle_pov-1.mp3",
-            "sha256": "9664c864ccb245a197b5e6648c07e19a24a1570a1b96eb06c3d03759172037c8"
-          },
-          {
-            "path": "assets/fps/audio/riposte-g_shotgun_near-1.mp3",
-            "sha256": "052485d780558975e085b1a161ecb2f39111a83565108ba21485ae92023937b5"
-          },
-          {
-            "path": "assets/fps/audio/riposte-g_shotgun_pov-1.mp3",
-            "sha256": "189606cada57b5146a6a710cf3e07b59374b7d84f467c32d82316858e45390d3"
-          },
-          {
-            "path": "assets/fps/audio/riposte-g_smg_near-1.mp3",
-            "sha256": "853e5dee2cc35ba7e0e8cdc2d8c23a55d47eeb5a8188992e58fdd7ccf23bf60f"
-          },
-          {
-            "path": "assets/fps/audio/riposte-g_smg_pov-1.mp3",
-            "sha256": "61c52c3d4d99106598f9cd0fdae87651976b3e0b62b7b86a27881d104ddf3a6e"
-          },
-          {
-            "path": "assets/fps/audio/riposte-g_sniper_near-1.mp3",
-            "sha256": "f5e878aab4a37750ba67073e8cee11cdb3ed8b7de3250d74602a4374281ea153"
-          },
-          {
-            "path": "assets/fps/audio/riposte-g_sniper_pov-1.mp3",
-            "sha256": "708dcaffda71978780ced2480b8a5c8df7e8261b15352f288fde90ac52a035f6"
-          },
-          {
-            "path": "assets/fps/audio/riposte-i_concrete-1.mp3",
-            "sha256": "ab7b1356c9d71e1ee30bf5733269a6bf4b060e37e76344de386d9fc88a027ce0"
-          },
-          {
-            "path": "assets/fps/audio/riposte-i_flesh-1.mp3",
-            "sha256": "0889917beb655427bb17c945a09cc5f5a1fac82a0aba03190e3b44610acbc3e6"
-          },
-          {
-            "path": "assets/fps/audio/riposte-i_glass-1.mp3",
-            "sha256": "6b9d4df93ae96d9c6342a69593813172d81a83360b50d414f0ab637ba7d333cd"
-          },
-          {
-            "path": "assets/fps/audio/riposte-i_metal-1.mp3",
-            "sha256": "683dbec0592ae7013c9615e6d351270a62ce807dac884c25ff541fd6dcbdfcbb"
-          },
-          {
-            "path": "assets/fps/audio/riposte-i_wood-1.mp3",
-            "sha256": "a22b4299deb3f5df74a925c4d116f1fe48aed0af63e757303ee74fe9559da553"
-          },
-          {
-            "path": "assets/fps/materials/riposte/paintwood/map.webp",
-            "sha256": "fde5a948c16580f30fc4a603854cd333c75f7297e2b57eecf58ebecc3eeec496"
-          },
-          {
-            "path": "assets/fps/materials/riposte/paintwood/normal.webp",
-            "sha256": "7bad73fe9efd75a2b1ebdb2132a58d642499d4fe546314671482bd9d481bd618"
-          },
-          {
-            "path": "assets/fps/materials/riposte/paintwood/rough.webp",
-            "sha256": "256eaa44465647923a507a638c380bb3b42975202df87aa8760c11399e292127"
-          },
-          {
-            "path": "assets/fps/materials/riposte/steel/map.webp",
-            "sha256": "477dde2780633ea3b69ace1b355c77b97665c178d8ab7a536c52bf9a4b709c5c"
-          },
-          {
-            "path": "assets/fps/materials/riposte/steel/normal.webp",
-            "sha256": "cf533f66c5203be667635877b7bbc1a76655e9d621d5eb296a9d810f214aabec"
-          },
-          {
-            "path": "assets/fps/materials/riposte/steel/rough.webp",
-            "sha256": "820c4d627c2163b2ca0827d875e027dce73cafc0ebbcb7bc1ee853eaf6815606"
-          },
-          {
-            "path": "assets/fps/materials/riposte/timber/map.webp",
-            "sha256": "f6d466a7c87119251b42da7daba599c55623faf9cd58b66706392b11e43a48d6"
-          },
-          {
-            "path": "assets/fps/materials/riposte/timber/normal.webp",
-            "sha256": "438b1eeb7d09847f1297b7df979010d469930c2145cb55d9362a5ea3139a0c5d"
-          },
-          {
-            "path": "assets/fps/materials/riposte/timber/rough.webp",
-            "sha256": "c39dac1088336d7f94af5c06e233d0efd7a377eebf9096e0893a02f023b4f312"
-          },
-          {
-            "path": "licenses/riposte-MIT.txt",
-            "sha256": "31116c5cebfdadacd80f9c236c72b623b5d9cdc696786814717f2221a8081a5a"
-          },
-          {
-            "path": "licenses/riposte-NOTICE.md",
-            "sha256": "620679a042ed3df2acd4cc5e42cf678c70d5bb1cc2513e0ad4876414f9381891"
-          },
-          {
-            "path": "licenses/riposte-sfx-credits.json",
-            "sha256": "6a07ac64a552960c532900bba81af285f372a83fc46b3790e82ce37908f08dcf"
-          },
-          {
-            "path": "src/fps/action-rules.mjs",
-            "sha256": "bd86fe48ee6627d062848cf32e02bf4eb88f67ef6d530dbb543ef71ff5a39f2c"
-          },
-          {
-            "path": "src/fps/action-visuals.mjs",
-            "sha256": "98ec9acbb1d8b64c57e93f96715986b0d63e8fc2b4921ee2adcc6b020c4f6359"
-          },
-          {
-            "path": "src/fps/app.mjs",
-            "sha256": "d9235e915bfd7d9bc333c5c1b835b8cdf31ee4fe38c1c8a9605843b60577b410"
-          },
-          {
-            "path": "src/fps/bots.mjs",
-            "sha256": "09cbda3b567d985fe1b257e185663e8531e3c0c5d52ec557fd1e6526b483c6c4"
-          },
-          {
-            "path": "src/fps/door-visuals.mjs",
-            "sha256": "2813e0e0b02434493266ae4ef232d2688bd52429e4966f65dae99a2cb7b2d8a4"
-          },
-          {
-            "path": "src/fps/doors.mjs",
-            "sha256": "1331fc0715131667dae19b15724c09ae80ef3164fe4922cd48c90975c4acb6de"
-          },
-          {
-            "path": "src/fps/effects.mjs",
-            "sha256": "ab2e836a9470113ce16e6db31cedb4aee0700efc3638c8523d9a1306d21d3324"
-          },
-          {
-            "path": "src/fps/facility-scene.mjs",
-            "sha256": "72d0e3bd0cb73082cb07e542af1d24d7f8820d712841dee6653dd35d7961a35d"
-          },
-          {
-            "path": "src/fps/game.mjs",
-            "sha256": "9bf4425b76db853a6f5bdddcc19e7798647f86238d65c8726311f75becc0d6f7"
-          },
-          {
-            "path": "src/fps/living-floor-scene.mjs",
-            "sha256": "f1a62e50916c701dbe644df3ebe3aedd3d3f0740a9fa160c88a30e86007f5264"
-          },
-          {
-            "path": "src/fps/physics.mjs",
-            "sha256": "60a6874ad4e6072248df25b8ccef5d3b5400a2e123dc82cf63a439082797b08b"
-          },
-          {
-            "path": "src/fps/presentation-lightfield.mjs",
-            "sha256": "4449c3740608563db285b03bae5d3dea8db88b5cf3c1c2a771db937200c8bd90"
-          },
-          {
-            "path": "src/fps/render.mjs",
-            "sha256": "f64611c394f9a125e7db9ebafad9be967b9fcad9467d30d52382ac002687b75e"
-          },
-          {
-            "path": "src/fps/riposte-audio.mjs",
-            "sha256": "3569cc2b5641979b99fa67a106846f1e2c589cff5fee6ebe320a235720436c9d"
-          },
-          {
-            "path": "src/fps/riposte-fps-math.mjs",
-            "sha256": "6ab19915fca0fcbd175caa0c8a79f3e0b996a494462e01de49378f4d26732cc3"
-          },
-          {
-            "path": "src/fps/riposte-fx-pool.mjs",
-            "sha256": "eea8b5a0a319705de7bfb6a538c16fe637dd02975fac4b5b68b1fdb7811f34a2"
-          },
-          {
-            "path": "src/fps/riposte-pbr-materials.mjs",
-            "sha256": "74419ceca80e1bb8bdf2d805a105f9ae3aa6a9f43e7ecab1bc4e31618f87828e"
-          },
-          {
-            "path": "src/fps/riposte-procedural-props.mjs",
-            "sha256": "b39ea37dcc0dcdb24491ea14e1ebd83f91bd97804cf1c57b96f4228c75154b4f"
-          },
-          {
-            "path": "src/fps/riposte-props.mjs",
-            "sha256": "d2586825ffd488a3f766929443a8224cd22bf6483dc83eaec0ac19c85764558f"
-          },
-          {
-            "path": "src/fps/world.mjs",
-            "sha256": "2e692c370f226245144a3bc732ecdd2bbe6345ee836f7432c92348be1226377e"
-          }
-        ],
-        "runtimeDigest": "6c2847ef170c14dc6335cb711c8ec480a0f907b6a42b1847c1e1ad4b1cdb324f",
-        "distributionApproved": true
-      }
-    ]
+    "approvedOn": "2026-10-27",
+    "baseRepository": "capstere/cartridge-strike",
+    "baseCommit": "e9994b15994104488edd1b20a938c0567c125e03",
+    "layoutSourceRepository": "capstere/onboard",
+    "layoutSourceBranch": "work/owner-layout-v1-0.14.0",
+    "scope": "Owner v1 geometry, window/glass surfaces, doors, furniture and navigation over unchanged 0.15.3 mobile/combat/render runtime",
+    "privateOriginalsIncluded": false
   },
   "files": [
+    {
+      "path": ".nojekyll",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
     {
       "path": "assets/fps/audio/action-backup.ogg",
       "bytes": 8228,
@@ -767,14 +465,29 @@
       "sha256": "780a0473bc7202fae47647986918dede4598286c3e2ec95ac03710aa8d00405c"
     },
     {
+      "path": "credits.html",
+      "bytes": 12834,
+      "sha256": "086e54a2ff4bdc22379d9eb5d1ac581525297850d94be2de5df96ad57af841d0"
+    },
+    {
+      "path": "fps/focus-hud.css",
+      "bytes": 12618,
+      "sha256": "35bce0dfeef5d4719823974cffb569806fc3ee936fc245d797ef5df9ba95b93d"
+    },
+    {
       "path": "fps/index.html",
-      "bytes": 8092,
-      "sha256": "fcda3541660643e03a8b5e6c822ca47686d5f889ecf08ba1d6b050f3a31e3182"
+      "bytes": 10356,
+      "sha256": "acced533fc6b03a8fccb6d07c4b44612938a3187923f0d1f394d73d7c6b0f7ae"
     },
     {
       "path": "fps/style.css",
-      "bytes": 20525,
-      "sha256": "1e6fa08f6d395d0677933e25d14fe07500bbe0e2cffad8ac4eac3831d573637a"
+      "bytes": 29584,
+      "sha256": "b257d3585567e1367a7d69b2e815e32535d0ae3e62d71431de99ec50df575cc5"
+    },
+    {
+      "path": "index.html",
+      "bytes": 619,
+      "sha256": "851822b26e7424b066fc99d2f2ccca16ea4a5bba09b963d152a0cd714c268dda"
     },
     {
       "path": "licenses/action-audio.txt",
@@ -847,9 +560,14 @@
       "sha256": "5053117e2e3ef2326460d86f6073271c9d7ef56ebda09e2983538003293d593e"
     },
     {
+      "path": "robots.txt",
+      "bytes": 26,
+      "sha256": "331ea9090db0c9f6f597bd9840fd5b171830f6e0b3ba1cb24dfa91f0c95aedc1"
+    },
+    {
       "path": "src/floor5-data.js",
-      "bytes": 237068,
-      "sha256": "ea25a302b5d8f8db5d4d0e545244009bbd4ee1f0c616d56091067cae9d2b182a"
+      "bytes": 279976,
+      "sha256": "5f1e306072124f997ef4049b72b86c9097dc731cce7dfdf1c5635ebff5ff3487"
     },
     {
       "path": "src/fps/action-audio.mjs",
@@ -873,8 +591,8 @@
     },
     {
       "path": "src/fps/app.mjs",
-      "bytes": 23937,
-      "sha256": "d9235e915bfd7d9bc333c5c1b835b8cdf31ee4fe38c1c8a9605843b60577b410"
+      "bytes": 27949,
+      "sha256": "c79fabf1c4359fdb4dec94f7c12f490010ed085e1b8dd086e12870b646ebc4e8"
     },
     {
       "path": "src/fps/audio.mjs",
@@ -953,8 +671,8 @@
     },
     {
       "path": "src/fps/doors.mjs",
-      "bytes": 4275,
-      "sha256": "1331fc0715131667dae19b15724c09ae80ef3164fe4922cd48c90975c4acb6de"
+      "bytes": 4463,
+      "sha256": "452e4d3f78c34afdfd5eb8589dabb81e6abcb9b4d8af19ad620dab2c52b6c46b"
     },
     {
       "path": "src/fps/effects.mjs",
@@ -972,14 +690,34 @@
       "sha256": "72d0e3bd0cb73082cb07e542af1d24d7f8820d712841dee6653dd35d7961a35d"
     },
     {
+      "path": "src/fps/focus-hud.mjs",
+      "bytes": 7912,
+      "sha256": "730661f3b12e914897f49ed7c16525f9f9a0bcdb92441f0d1c466101b2eb95b3"
+    },
+    {
+      "path": "src/fps/frame-time-window.mjs",
+      "bytes": 977,
+      "sha256": "377b5de0db846c28a7c1e3d718a090158ee5d60b08150599e614374d5d44439b"
+    },
+    {
       "path": "src/fps/furnishings.mjs",
-      "bytes": 9249,
-      "sha256": "3076ab459cdbd5df0c5b5e449834c03f7cea3eb2103db20eae5aeafc05f69b91"
+      "bytes": 9452,
+      "sha256": "6e66d4814ee2952197e65a9331383bc6281f346fb3993d651482b7b308ef743e"
     },
     {
       "path": "src/fps/game.mjs",
-      "bytes": 39001,
-      "sha256": "9bf4425b76db853a6f5bdddcc19e7798647f86238d65c8726311f75becc0d6f7"
+      "bytes": 39468,
+      "sha256": "da88bd4fbd22be8eff1223b699b44e2172d79921696b7b284e15ea7bfa8ef74c"
+    },
+    {
+      "path": "src/fps/grenade-assist.mjs",
+      "bytes": 6626,
+      "sha256": "086a86e227b8afdd52021a9557d5c2081a4d29b22d5251d7866a23878237a3a8"
+    },
+    {
+      "path": "src/fps/grenade-physics.mjs",
+      "bytes": 5098,
+      "sha256": "d18ff71ce6a9a6f326203377ccf17a9c6c7e35b1b5162407594097b271b89610"
     },
     {
       "path": "src/fps/hand-materials.mjs",
@@ -993,8 +731,8 @@
     },
     {
       "path": "src/fps/living-floor-plan.mjs",
-      "bytes": 11231,
-      "sha256": "c4f7a1da6c2c139b52a9b9b89d1ab1337ac918e32ca665a08b4513b03c823af8"
+      "bytes": 11841,
+      "sha256": "cee35cfaf26547244acd35ffa7a6f1006634fd288dae5446763a925583c52038"
     },
     {
       "path": "src/fps/living-floor-scene.mjs",
@@ -1007,9 +745,19 @@
       "sha256": "cc3ad89fbc426c861b119b13f1873c240b7be43d84074ab858b162fcbaffc28f"
     },
     {
+      "path": "src/fps/minimap-cache.mjs",
+      "bytes": 4026,
+      "sha256": "361dec3c9c566833e98395e6e0975593e8f75d2750e7aed1d6461eab913e0c3d"
+    },
+    {
+      "path": "src/fps/mobile-controls.mjs",
+      "bytes": 7097,
+      "sha256": "c1d5dcc375f1ffc8088d0045b9ffe179c495aa721b61cfe3ec4ee261d11a32d1"
+    },
+    {
       "path": "src/fps/model-primitives.mjs",
-      "bytes": 51171,
-      "sha256": "6297a42d0ef386ec250d86c928471a6c3593ff74bdaac9c5c9c09747a71686e6"
+      "bytes": 51447,
+      "sha256": "f0cc93f399843585fb4fc16815cfe55f7c7eb4a340cf11c3c5ec9ae04ba4ba15"
     },
     {
       "path": "src/fps/models.mjs",
@@ -1042,14 +790,19 @@
       "sha256": "e3034fc59b5ee28df71e0e1e51ccb43ad1c90dcdb9fcaa7949b25d4245342e2e"
     },
     {
+      "path": "src/fps/render-budget.mjs",
+      "bytes": 1064,
+      "sha256": "81bbbdd55d26b2b152f71dba77aa898ac4d2682290983d360da2df7041a0c383"
+    },
+    {
       "path": "src/fps/render-engine.mjs",
-      "bytes": 29422,
-      "sha256": "2ca8e19a715c6c9bf16c5008a7ef5ebb160bb9e918d40f156200d3cc97428b35"
+      "bytes": 29654,
+      "sha256": "c99a28bcbfb65e0fd6227d19a7a3ddcee0e71a6fcb25292dde5745ce6ff6817c"
     },
     {
       "path": "src/fps/render.mjs",
-      "bytes": 13439,
-      "sha256": "f64611c394f9a125e7db9ebafad9be967b9fcad9467d30d52382ac002687b75e"
+      "bytes": 13681,
+      "sha256": "69139190ef0bc7d53c60041481b7ec640f0403e05679e30de42606d094808086"
     },
     {
       "path": "src/fps/riposte-audio.mjs",
@@ -1080,6 +833,11 @@
       "path": "src/fps/riposte-props.mjs",
       "bytes": 1582,
       "sha256": "d2586825ffd488a3f766929443a8224cd22bf6483dc83eaec0ac19c85764558f"
+    },
+    {
+      "path": "src/fps/riposte-recoil.mjs",
+      "bytes": 4002,
+      "sha256": "fc2e91819c98ee6eff00d661e89e2fb8657e47a6ea323388edba762c8af568f6"
     },
     {
       "path": "src/fps/room-visuals.mjs",
@@ -1117,9 +875,34 @@
       "sha256": "4df24f89b1c2d919a1e35b361d1a57bef3d89c40686790a326f454727fc3ad40"
     },
     {
+      "path": "src/fps/tactical-controls.mjs",
+      "bytes": 8123,
+      "sha256": "4350bd909b249541ffa48311286a36a0a50983ba1479485d424f6caee65f963b"
+    },
+    {
       "path": "src/fps/tactical-map.mjs",
       "bytes": 3557,
       "sha256": "c3fefb08b9bef35ab5d238ea537cc8ca1cf07f715b62c4f6e162247ff23bbb75"
+    },
+    {
+      "path": "src/fps/tactical-rules.mjs",
+      "bytes": 4471,
+      "sha256": "ab4e45008906338dc8b74c933179731d4a8891d9e1cdb8db22b23cc5e77f322d"
+    },
+    {
+      "path": "src/fps/throwable-cartridge.mjs",
+      "bytes": 9936,
+      "sha256": "4e1ae695145b153337f3a7e3bc4955cb9397ca8577b0eddd6cefac80abdeb5d0"
+    },
+    {
+      "path": "src/fps/tracer-batch.mjs",
+      "bytes": 3292,
+      "sha256": "afe868a57697e6b115e70f0ce9c0706d7a5a940985b42eef879d010b093c3a4f"
+    },
+    {
+      "path": "src/fps/trajectory-cache.mjs",
+      "bytes": 3226,
+      "sha256": "e35dabffa0280be84365b8a277e94d86f2bc028b8bbe67371e173cb15ffa57c8"
     },
     {
       "path": "src/fps/view-surface.mjs",
@@ -1133,13 +916,13 @@
     },
     {
       "path": "src/fps/world.mjs",
-      "bytes": 4506,
-      "sha256": "2e692c370f226245144a3bc732ecdd2bbe6345ee836f7432c92348be1226377e"
+      "bytes": 5401,
+      "sha256": "7e0a67e4bc65db8defc8b2dea802fc42f6adc196570738a3f5d3d86a6798fe81"
     },
     {
       "path": "src/world.js",
-      "bytes": 14570,
-      "sha256": "7db3a98578f29fe2f96a9bdd1917e6621a13341d46717e752702ecbc28f40671"
+      "bytes": 17783,
+      "sha256": "a6bfcfcd35c426808bc67c8de705801c8ee3ee96930c38737fa046ebcdfbc676"
     },
     {
       "path": "vendor/package.json",
@@ -1185,26 +968,6 @@
       "path": "vendor/yuka/yuka.module.js",
       "bytes": 442887,
       "sha256": "9b0c24534a47f2e1c9549a63a5e00a850577e22fe8d18dbc7a532008a027cb89"
-    },
-    {
-      "path": "credits.html",
-      "bytes": 12834,
-      "sha256": "086e54a2ff4bdc22379d9eb5d1ac581525297850d94be2de5df96ad57af841d0"
-    },
-    {
-      "path": "index.html",
-      "bytes": 619,
-      "sha256": "851822b26e7424b066fc99d2f2ccca16ea4a5bba09b963d152a0cd714c268dda"
-    },
-    {
-      "path": ".nojekyll",
-      "bytes": 0,
-      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
-    },
-    {
-      "path": "robots.txt",
-      "bytes": 26,
-      "sha256": "331ea9090db0c9f6f597bd9840fd5b171830f6e0b3ba1cb24dfa91f0c95aedc1"
     }
   ],
   "bytes": 19954717,
@@ -1222,5 +985,353 @@
     "version": "0.14.0",
     "sourceReference": "BenDBSS/Riposte-Frontline-Source@31ca050d",
     "note": "Prior release provenance remains historical; see docs/precision-pack.md for this patch."
+  },
+  "priorReleaseProvenance": {
+    "gameVersion": "0.15.3",
+    "release": {
+      "mode": "public-release",
+      "publicReleaseEligible": true,
+      "policySha256": "5dab16d82ec68989fe81c651cc088791ac0abb4cab58eceee3efbf8aacad939f",
+      "derivatives": [
+        {
+          "id": "cartridge-v11.3",
+          "source": {
+            "repository": "capstere/the",
+            "commit": "890d9e62e133390d74e2415cd02eb920f47c4fad",
+            "path": "cartridge-qc/app/Generisk_Cartridge_QC_v11.3.html",
+            "sha256": "8d471a3cca3c2626820c4a9001d7d52c8a61fea831348b06ab41aafd21384f24"
+          },
+          "runtimeFiles": [
+            {
+              "path": "src/fps/cartridge-props.mjs",
+              "sha256": "11c5227e48c858dc35c75285d98bd47f5bc11434a61ee962c8f88c0fcf60ca4e"
+            },
+            {
+              "path": "src/fps/cartridge-v11.mjs",
+              "sha256": "ef3a05f033d81afc50a4829aa9bfd97768c797a0b698bb2772373151d6814172"
+            }
+          ],
+          "runtimeDigest": "693cc4139eed938985286796d59acfe39167531a9ff2794033b177961822f58d",
+          "distributionApproved": true
+        },
+        {
+          "id": "nord01-facility",
+          "source": {
+            "repository": "capstere/onboard",
+            "commit": "566ae1fadabb1f45d644e04cdbeebefb0b81a197",
+            "path": "asset-portfolio/nord-01/source/build_assets.py",
+            "sha256": "14de641905d6fe2a70c377d74132a8d0fe1b28b890a3019168993e3ff25adde4"
+          },
+          "runtimeFiles": [
+            {
+              "path": "assets/fps/models/nord01-access_terminal-lod0.glb",
+              "sha256": "8fcd1685b7908e27e98daae25fae0fa75da13c3b88f3aa966db6694839ba538c"
+            },
+            {
+              "path": "assets/fps/models/nord01-access_terminal-lod2.glb",
+              "sha256": "6af1b9a3f74a827cb66024e7b44140e7427dee006a6ad3302d1f008d6f54fdfe"
+            },
+            {
+              "path": "assets/fps/models/nord01-medical_case-lod0.glb",
+              "sha256": "c7579a593d944d0f32f3554b8ca0b0254de65ae0658d2de0204ef695b6a52b10"
+            },
+            {
+              "path": "assets/fps/models/nord01-security_locker-lod0.glb",
+              "sha256": "4368ceb4cd3a26d1c8a3ead0413f71cd5204274410b46b031c423b5d1388b277"
+            },
+            {
+              "path": "assets/fps/models/nord01-security_locker-lod2.glb",
+              "sha256": "a08cb42c5a564981f520c2c38aaed6f82e448926a501cf7fe6b0dd14a56a5028"
+            },
+            {
+              "path": "assets/fps/models/nord01-strip_light-lod0.glb",
+              "sha256": "11785a1708dfae00d37628e3f06dee5cf95175ce49b0fc5bd867f0bd83b96f53"
+            },
+            {
+              "path": "assets/fps/models/nord01-supply_crate-lod0.glb",
+              "sha256": "a021e8b54ee354f0a41e4ceaa37b994e68e444b8d715033d47d6f3d4bed3a67d"
+            },
+            {
+              "path": "assets/fps/models/nord01-wall_vent-lod0.glb",
+              "sha256": "25482d2abec3a01920b9f213bf5df6223ac5df4df3a578a53da7c095e2c97757"
+            },
+            {
+              "path": "assets/fps/models/nord01-wall_vent-lod2.glb",
+              "sha256": "5b0b934e822c8275bfee08812a3dbd1940fda3d8174f6247b336824748e8ef99"
+            }
+          ],
+          "runtimeDigest": "8a7ce0c88e66352a739f9ac0deaabfa0d88a8b78bd073f8fc99d67deee3dad6f",
+          "distributionApproved": true
+        },
+        {
+          "id": "responsiveness-riposte-2026-10-26",
+          "source": {
+            "repository": "BenDBSS/Riposte-Frontline-Source",
+            "commit": "31ca050d8ce59f4885c01a3237f68cdf186c9b60",
+            "path": "LICENSE",
+            "sha256": "31116c5cebfdadacd80f9c236c72b623b5d9cdc696786814717f2221a8081a5a"
+          },
+          "runtimeFiles": [
+            {
+              "path": "assets/fps/audio/riposte-f_draw-1.mp3",
+              "sha256": "055b67b634c6ffa4c31d2978e2d2ad66ef5903db57a783073f6bdd21507a36df"
+            },
+            {
+              "path": "assets/fps/audio/riposte-f_dry-1.mp3",
+              "sha256": "ac4071825b15d6c612791ccbf1d6588e89384e83706b5214137a2d01ec0f4be8"
+            },
+            {
+              "path": "assets/fps/audio/riposte-f_knife_hit-1.mp3",
+              "sha256": "23262da97855db49c7b447ef452a1831f52c493c38099809ae61921e26a4d536"
+            },
+            {
+              "path": "assets/fps/audio/riposte-f_knife-1.mp3",
+              "sha256": "0619b408af2f73a7d88920c677f27e4926aa23fbe10ae3bb01a71606cc542ac7"
+            },
+            {
+              "path": "assets/fps/audio/riposte-f_pickup-1.mp3",
+              "sha256": "740798c14fa1031b9bc961a990ef4b51d3e75b10c50fc4a4296434d61da03b6f"
+            },
+            {
+              "path": "assets/fps/audio/riposte-f_throw-1.mp3",
+              "sha256": "c66d3cb60e956769618f3e51a722403938558baba3ff40b4c26f6a30334c38bd"
+            },
+            {
+              "path": "assets/fps/audio/riposte-g_ak_near-1.mp3",
+              "sha256": "83903cae0a6ff3fc38d15335c756dececdca3b438bd4543194d159f0f24416bd"
+            },
+            {
+              "path": "assets/fps/audio/riposte-g_ak_pov-1.mp3",
+              "sha256": "ad71df1ab06a9f861b1b21e0e4ac8d21b67555a276b440c4c9973a941c3cd8a2"
+            },
+            {
+              "path": "assets/fps/audio/riposte-g_glock_near-1.mp3",
+              "sha256": "4b464f68eafe8fe7d973ef8e718735740a1d47dcba814bd31061fcc8bfa40d70"
+            },
+            {
+              "path": "assets/fps/audio/riposte-g_glock_pov-1.mp3",
+              "sha256": "e23a810637a60a827e1b4cca2787dbaa53435bfcdedacf07776208c8e8766938"
+            },
+            {
+              "path": "assets/fps/audio/riposte-g_pistol_near-1.mp3",
+              "sha256": "1a64cb02ecde5c7303682dd3b13db828a9653d142d80bf77c984cc5efea04c73"
+            },
+            {
+              "path": "assets/fps/audio/riposte-g_pistol_pov-1.mp3",
+              "sha256": "1a06b8dfdb7f988d374b4cc7ade8d5e2668d372495acc183f372a4c18812f76d"
+            },
+            {
+              "path": "assets/fps/audio/riposte-g_rifle_near-1.mp3",
+              "sha256": "018f9e05f8d3cce83cbf6c198b519ac96657c195916302554a8a6c4a7c6dd19b"
+            },
+            {
+              "path": "assets/fps/audio/riposte-g_rifle_pov-1.mp3",
+              "sha256": "9664c864ccb245a197b5e6648c07e19a24a1570a1b96eb06c3d03759172037c8"
+            },
+            {
+              "path": "assets/fps/audio/riposte-g_shotgun_near-1.mp3",
+              "sha256": "052485d780558975e085b1a161ecb2f39111a83565108ba21485ae92023937b5"
+            },
+            {
+              "path": "assets/fps/audio/riposte-g_shotgun_pov-1.mp3",
+              "sha256": "189606cada57b5146a6a710cf3e07b59374b7d84f467c32d82316858e45390d3"
+            },
+            {
+              "path": "assets/fps/audio/riposte-g_smg_near-1.mp3",
+              "sha256": "853e5dee2cc35ba7e0e8cdc2d8c23a55d47eeb5a8188992e58fdd7ccf23bf60f"
+            },
+            {
+              "path": "assets/fps/audio/riposte-g_smg_pov-1.mp3",
+              "sha256": "61c52c3d4d99106598f9cd0fdae87651976b3e0b62b7b86a27881d104ddf3a6e"
+            },
+            {
+              "path": "assets/fps/audio/riposte-g_sniper_near-1.mp3",
+              "sha256": "f5e878aab4a37750ba67073e8cee11cdb3ed8b7de3250d74602a4374281ea153"
+            },
+            {
+              "path": "assets/fps/audio/riposte-g_sniper_pov-1.mp3",
+              "sha256": "708dcaffda71978780ced2480b8a5c8df7e8261b15352f288fde90ac52a035f6"
+            },
+            {
+              "path": "assets/fps/audio/riposte-i_concrete-1.mp3",
+              "sha256": "ab7b1356c9d71e1ee30bf5733269a6bf4b060e37e76344de386d9fc88a027ce0"
+            },
+            {
+              "path": "assets/fps/audio/riposte-i_flesh-1.mp3",
+              "sha256": "0889917beb655427bb17c945a09cc5f5a1fac82a0aba03190e3b44610acbc3e6"
+            },
+            {
+              "path": "assets/fps/audio/riposte-i_glass-1.mp3",
+              "sha256": "6b9d4df93ae96d9c6342a69593813172d81a83360b50d414f0ab637ba7d333cd"
+            },
+            {
+              "path": "assets/fps/audio/riposte-i_metal-1.mp3",
+              "sha256": "683dbec0592ae7013c9615e6d351270a62ce807dac884c25ff541fd6dcbdfcbb"
+            },
+            {
+              "path": "assets/fps/audio/riposte-i_wood-1.mp3",
+              "sha256": "a22b4299deb3f5df74a925c4d116f1fe48aed0af63e757303ee74fe9559da553"
+            },
+            {
+              "path": "assets/fps/materials/riposte/paintwood/map.webp",
+              "sha256": "fde5a948c16580f30fc4a603854cd333c75f7297e2b57eecf58ebecc3eeec496"
+            },
+            {
+              "path": "assets/fps/materials/riposte/paintwood/normal.webp",
+              "sha256": "7bad73fe9efd75a2b1ebdb2132a58d642499d4fe546314671482bd9d481bd618"
+            },
+            {
+              "path": "assets/fps/materials/riposte/paintwood/rough.webp",
+              "sha256": "256eaa44465647923a507a638c380bb3b42975202df87aa8760c11399e292127"
+            },
+            {
+              "path": "assets/fps/materials/riposte/steel/map.webp",
+              "sha256": "477dde2780633ea3b69ace1b355c77b97665c178d8ab7a536c52bf9a4b709c5c"
+            },
+            {
+              "path": "assets/fps/materials/riposte/steel/normal.webp",
+              "sha256": "cf533f66c5203be667635877b7bbc1a76655e9d621d5eb296a9d810f214aabec"
+            },
+            {
+              "path": "assets/fps/materials/riposte/steel/rough.webp",
+              "sha256": "820c4d627c2163b2ca0827d875e027dce73cafc0ebbcb7bc1ee853eaf6815606"
+            },
+            {
+              "path": "assets/fps/materials/riposte/timber/map.webp",
+              "sha256": "f6d466a7c87119251b42da7daba599c55623faf9cd58b66706392b11e43a48d6"
+            },
+            {
+              "path": "assets/fps/materials/riposte/timber/normal.webp",
+              "sha256": "438b1eeb7d09847f1297b7df979010d469930c2145cb55d9362a5ea3139a0c5d"
+            },
+            {
+              "path": "assets/fps/materials/riposte/timber/rough.webp",
+              "sha256": "c39dac1088336d7f94af5c06e233d0efd7a377eebf9096e0893a02f023b4f312"
+            },
+            {
+              "path": "licenses/riposte-MIT.txt",
+              "sha256": "31116c5cebfdadacd80f9c236c72b623b5d9cdc696786814717f2221a8081a5a"
+            },
+            {
+              "path": "licenses/riposte-NOTICE.md",
+              "sha256": "620679a042ed3df2acd4cc5e42cf678c70d5bb1cc2513e0ad4876414f9381891"
+            },
+            {
+              "path": "licenses/riposte-sfx-credits.json",
+              "sha256": "6a07ac64a552960c532900bba81af285f372a83fc46b3790e82ce37908f08dcf"
+            },
+            {
+              "path": "src/fps/action-rules.mjs",
+              "sha256": "bd86fe48ee6627d062848cf32e02bf4eb88f67ef6d530dbb543ef71ff5a39f2c"
+            },
+            {
+              "path": "src/fps/action-visuals.mjs",
+              "sha256": "98ec9acbb1d8b64c57e93f96715986b0d63e8fc2b4921ee2adcc6b020c4f6359"
+            },
+            {
+              "path": "src/fps/app.mjs",
+              "sha256": "d9235e915bfd7d9bc333c5c1b835b8cdf31ee4fe38c1c8a9605843b60577b410"
+            },
+            {
+              "path": "src/fps/bots.mjs",
+              "sha256": "09cbda3b567d985fe1b257e185663e8531e3c0c5d52ec557fd1e6526b483c6c4"
+            },
+            {
+              "path": "src/fps/door-visuals.mjs",
+              "sha256": "2813e0e0b02434493266ae4ef232d2688bd52429e4966f65dae99a2cb7b2d8a4"
+            },
+            {
+              "path": "src/fps/doors.mjs",
+              "sha256": "1331fc0715131667dae19b15724c09ae80ef3164fe4922cd48c90975c4acb6de"
+            },
+            {
+              "path": "src/fps/effects.mjs",
+              "sha256": "ab2e836a9470113ce16e6db31cedb4aee0700efc3638c8523d9a1306d21d3324"
+            },
+            {
+              "path": "src/fps/facility-scene.mjs",
+              "sha256": "72d0e3bd0cb73082cb07e542af1d24d7f8820d712841dee6653dd35d7961a35d"
+            },
+            {
+              "path": "src/fps/game.mjs",
+              "sha256": "9bf4425b76db853a6f5bdddcc19e7798647f86238d65c8726311f75becc0d6f7"
+            },
+            {
+              "path": "src/fps/living-floor-scene.mjs",
+              "sha256": "f1a62e50916c701dbe644df3ebe3aedd3d3f0740a9fa160c88a30e86007f5264"
+            },
+            {
+              "path": "src/fps/physics.mjs",
+              "sha256": "60a6874ad4e6072248df25b8ccef5d3b5400a2e123dc82cf63a439082797b08b"
+            },
+            {
+              "path": "src/fps/presentation-lightfield.mjs",
+              "sha256": "4449c3740608563db285b03bae5d3dea8db88b5cf3c1c2a771db937200c8bd90"
+            },
+            {
+              "path": "src/fps/render.mjs",
+              "sha256": "f64611c394f9a125e7db9ebafad9be967b9fcad9467d30d52382ac002687b75e"
+            },
+            {
+              "path": "src/fps/riposte-audio.mjs",
+              "sha256": "3569cc2b5641979b99fa67a106846f1e2c589cff5fee6ebe320a235720436c9d"
+            },
+            {
+              "path": "src/fps/riposte-fps-math.mjs",
+              "sha256": "6ab19915fca0fcbd175caa0c8a79f3e0b996a494462e01de49378f4d26732cc3"
+            },
+            {
+              "path": "src/fps/riposte-fx-pool.mjs",
+              "sha256": "eea8b5a0a319705de7bfb6a538c16fe637dd02975fac4b5b68b1fdb7811f34a2"
+            },
+            {
+              "path": "src/fps/riposte-pbr-materials.mjs",
+              "sha256": "74419ceca80e1bb8bdf2d805a105f9ae3aa6a9f43e7ecab1bc4e31618f87828e"
+            },
+            {
+              "path": "src/fps/riposte-procedural-props.mjs",
+              "sha256": "b39ea37dcc0dcdb24491ea14e1ebd83f91bd97804cf1c57b96f4228c75154b4f"
+            },
+            {
+              "path": "src/fps/riposte-props.mjs",
+              "sha256": "d2586825ffd488a3f766929443a8224cd22bf6483dc83eaec0ac19c85764558f"
+            },
+            {
+              "path": "src/fps/world.mjs",
+              "sha256": "2e692c370f226245144a3bc732ecdd2bbe6345ee836f7432c92348be1226377e"
+            }
+          ],
+          "runtimeDigest": "6c2847ef170c14dc6335cb711c8ec480a0f907b6a42b1847c1e1ad4b1cdb324f",
+          "distributionApproved": true
+        }
+      ]
+    }
+  },
+  "ownerLayout": {
+    "revision": 1,
+    "wallSpans": 339,
+    "glazedSpans": 16,
+    "windowSpans": 16,
+    "doors": 51,
+    "doorLeaves": 65,
+    "navAndCollisionShareSource": true,
+    "sealedFutureTerrace": "D01T",
+    "sourceRuntimeHashes": {
+      "src/floor5-data.js": "5f1e306072124f997ef4049b72b86c9097dc731cce7dfdf1c5635ebff5ff3487",
+      "src/world.js": "a6bfcfcd35c426808bc67c8de705801c8ee3ee96930c38737fa046ebcdfbc676",
+      "src/fps/world.mjs": "7e0a67e4bc65db8defc8b2dea802fc42f6adc196570738a3f5d3d86a6798fe81",
+      "src/fps/doors.mjs": "452e4d3f78c34afdfd5eb8589dabb81e6abcb9b4d8af19ad620dab2c52b6c46b",
+      "src/fps/furnishings.mjs": "6e66d4814ee2952197e65a9331383bc6281f346fb3993d651482b7b308ef743e",
+      "src/fps/living-floor-plan.mjs": "cee35cfaf26547244acd35ffa7a6f1006634fd288dae5446763a925583c52038"
+    },
+    "priorManifestStalePaths": [
+      "fps/index.html",
+      "fps/style.css",
+      "src/fps/app.mjs",
+      "src/fps/game.mjs",
+      "src/fps/model-primitives.mjs",
+      "src/fps/render-engine.mjs",
+      "src/fps/render.mjs"
+    ]
   }
 }

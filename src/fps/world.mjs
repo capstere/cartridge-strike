@@ -1,6 +1,6 @@
 import '../floor5-data.js';
 import '../world.js';
-import { createPhysics, ACTOR_RADIUS, insidePolygon, distanceSegment } from './physics.mjs';
+import { createPhysics, ACTOR_RADIUS, insidePolygon, distanceSegment, SpatialIndex, circleHitsBox } from './physics.mjs';
 import { createDoors } from './doors.mjs';
 import { createNavigation } from './navigation.mjs';
 import { createFurnishings } from './furnishings.mjs';
@@ -13,7 +13,7 @@ const flatPoint=p=>({x:p[0],y:0,z:p[1]});
 export function createWorld({fresh=false}={}){
   if(sharedWorld&&!fresh)return sharedWorld;
   const source=globalThis.SpelWorld,data=source.data;
-  const inherited=source.build({doors:{D06:true,D08:true}});
+  const inherited=source.build({doors:Object.fromEntries(data.doors.filter(d=>d.accessCardConfirmed).map(d=>[d.id,true]))});
   const furnishings=createFurnishings(data,inherited,{inside:insidePolygon,distanceSegment});
   const description={...inherited,boxes:[...inherited.boxes,...furnishings.boxes],surfaces:[...inherited.surfaces],labels:[...inherited.labels.map(l=>({...l,text:l.text.replace(' · PASSERKORT',' · OPEN')})),...furnishings.labels],furnishings:furnishings.instances};
   // I12 is a freight staging room in the supplied reference, not a lounge.
@@ -22,7 +22,20 @@ export function createWorld({fresh=false}={}){
   const living=createLivingPlan(data,description);
   description.boxes.push(...living.boxes);
   const physics=createPhysics(description,data);
-  const navigation=createNavigation(data,{...physics,canOccupy:physics.staticCanOccupy});
+  const doors=createDoors(data,physics);
+  // Plan around both possible fully-open leaf poses. These are navigation-only
+  // clearances, not extra physical walls. A route must clear the hinge/leaf
+  // before turning; otherwise diagonal smoothing can trap an actor on a leaf.
+  const doorClearance=new SpatialIndex(),doorScratch=[];
+  for(const d of doors.doors)for(const sign of [-1,1]){
+    doors.pose(d,Math.PI/2,sign);
+    for(const leaf of d.leaves){const b={...leaf.box},hx=(Math.abs(b.cos)*b.w+Math.abs(b.sin)*b.d)/2,hz=(Math.abs(b.sin)*b.w+Math.abs(b.cos)*b.d)/2;
+      doorClearance.insert(b,{minX:b.x-hx,maxX:b.x+hx,minZ:b.z-hz,maxZ:b.z+hz});}
+  }
+  doors.reset();
+  const navigationOccupy=(x,z,r=ACTOR_RADIUS,h=1.7,y=0)=>physics.staticCanOccupy(x,z,r,h,y)&&
+    !doorClearance.query(x,z,r,doorScratch).some(b=>circleHitsBox(x,z,r,b));
+  const navigation=createNavigation(data,{...physics,canOccupy:navigationOccupy});
   const roomAt=(x,z)=>data.rooms.find(r=>r.status!=='uncertain'&&insidePolygon(x,z,r.polygon))||data.corridors.find(r=>insidePolygon(x,z,r.polygon))||null;
   function freeGroup(target,count,{roomId=null,range=4,separation=.95,yaw=0}={}){
     const room=roomId?data.rooms.find(r=>r.id===roomId):null,candidates=[];
@@ -51,7 +64,7 @@ export function createWorld({fresh=false}={}){
     {text:'D06 · RESCUE / BUY',x:rescue.x,y:.025,z:rescue.z,yaw:0,width:2,height:.48,color:'#92e8e4',accent:'#164b53',floor:true}
   );
   const materialAt=(x,z)=>{const r=roomAt(x,z);return r&&(['I01','I02','I03','I04','I29'].includes(r.id)||/RESTROOM|STÄD|PENTRY/.test(r.name))?'vinyl':'carpet';};
-  const doors=createDoors(data,physics);physics.setDynamicBoxes(doors.boxes);
+  physics.setDynamicBoxes(doors.boxes);
   const world={doors,description,data,anchors,tactical,furnishings,living,roomAt,materialAt,...physics,findPath:navigation.findPath,navigation,statistics:{...physics.statistics,navigation:navigation.statistics,furnishings:furnishings.instances.length}};
   if(!fresh)sharedWorld=world;
   return world;
