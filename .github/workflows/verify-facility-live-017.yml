@@ -1,0 +1,58 @@
+name: Verify live facility release 0.17
+on:
+  push:
+    branches: [verify/facility-live-017]
+    paths: ['.github/workflows/verify-facility-live-017.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  live-integrity:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: 7b99da56c9cc7f7e5bdbc626a174c8db9a9e33bc
+          persist-credentials: false
+      - name: Check exact live manifest and all 195 runtime files
+        run: |
+          python3 - <<'PY'
+          import pathlib,json,hashlib,time,urllib.request,urllib.parse,concurrent.futures,datetime
+          local=pathlib.Path('build-info.json').read_bytes();info=json.loads(local)
+          assert info['gameVersion']=='0.17.0' and len(info['files'])==195
+          base='https://capstere.github.io/cartridge-strike/'
+          def fetch(path):
+              url=base+urllib.parse.quote(path,safe='/')+'?verify=facility017-'+str(time.time_ns())
+              with urllib.request.urlopen(urllib.request.Request(url,headers={'Cache-Control':'no-cache'}),timeout=35) as r:
+                  assert r.status==200
+                  return r.read()
+          ready=False;last=''
+          for attempt in range(12):
+              try:
+                  live=fetch('build-info.json')
+                  if live==local:ready=True;break
+                  last='Deployed manifest does not match pinned release bytes'
+              except Exception as e:last=str(e)
+              time.sleep(8)
+          assert ready,last
+          def verify(f):
+              errors=[]
+              for attempt in range(3):
+                  try:
+                      b=fetch(f['path'])
+                      assert len(b)==f['bytes'] and hashlib.sha256(b).hexdigest()==f['sha256']
+                      return {'path':f['path'],'status':'PASS','sha256':f['sha256'],'bytes':len(b)}
+                  except Exception as e:errors.append(str(e));time.sleep(2)
+              raise AssertionError(f['path']+': '+repr(errors))
+          with concurrent.futures.ThreadPoolExecutor(max_workers=8) as pool:files=list(pool.map(verify,info['files']))
+          result={'status':'PASS','version':info['gameVersion'],'sourceCommit':'7b99da56c9cc7f7e5bdbc626a174c8db9a9e33bc','liveManifestExact':True,'verifiedRuntimeFiles':len(files),'checkedAt':datetime.datetime.now(datetime.timezone.utc).isoformat(),'scope':'Live HTTP bytes and integrity, not a consumer-device FPS benchmark. Actual browser/input proof is in integration run 40518488051.','files':files}
+          pathlib.Path('live-facility-017.json').write_text(json.dumps(result,indent=2)+'\n')
+          print(json.dumps({k:v for k,v in result.items() if k!='files'},indent=2))
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: live-facility-017-integrity
+          path: live-facility-017.json
+          if-no-files-found: error
+          retention-days: 14
