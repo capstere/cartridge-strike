@@ -73,7 +73,9 @@ async function inspectButtons(page, center=true){
    await page.screenshot({path:'test-results/hud-mobile-utilities.png',timeout:60000});
    const original=await page.evaluate(()=>{window.__buyButton=document.querySelector('[data-mobile-action=buy]');return __fps.game.player.weapon;});
    await page.locator('[data-mobile-action=grenade]').tap();
-   await page.evaluate(()=>__fps.step(null,.02));
+   // Game.select has always imposed a 220ms weapon-switch cooldown. Advance
+   // simulation beyond it, without modifying the cooldown or firing contract.
+   await page.evaluate(()=>{for(let i=0;i<3;i++)__fps.step(null,.1);});
    const grenade=await page.evaluate(()=>__fps.game.player.weapon);
    assert.ok(['he','flash','smoke'].includes(grenade), 'Actual grenade selected from drawer');
    assert.notEqual(grenade,original);
