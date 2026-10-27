@@ -10,6 +10,8 @@ on:
       - fps/**
       - tools/mobile-smoke.cjs
       - tools/recoil-autofire.test.mjs
+      - tools/precision-smoke.cjs
+      - tools/precision.test.mjs
       - .github/workflows/mobile-original-fps.yml
   pull_request:
     paths:
@@ -17,6 +19,8 @@ on:
       - fps/**
       - tools/mobile-smoke.cjs
       - tools/recoil-autofire.test.mjs
+      - tools/precision-smoke.cjs
+      - tools/precision.test.mjs
       - .github/workflows/mobile-original-fps.yml
   workflow_dispatch:
 
@@ -39,17 +43,21 @@ jobs:
           node --check src/fps/mobile-controls.mjs
           node --check src/fps/riposte-recoil.mjs
           node --check src/fps/game.mjs
+          node --check src/fps/tactical-rules.mjs
+          node --check src/fps/tactical-controls.mjs
           node --check src/fps/render.mjs
           node --check src/fps/render-engine.mjs
           node --check tools/mobile-smoke.cjs
+          node --check tools/precision-smoke.cjs
           node --check tools/recoil-autofire.test.mjs
+          node --check tools/precision.test.mjs
       - name: Expose vendored Three.js to Node ESM unit tests
         run: |
           mkdir -p node_modules/three
           printf '%s\n' '{"name":"three","version":"0.180.0","type":"module","exports":"./three.module.js"}' > node_modules/three/package.json
           ln -s ../../vendor/three/three.module.js node_modules/three/three.module.js
-      - name: Test deterministic targeting and recoil
-        run: node --test tools/recoil-autofire.test.mjs
+      - name: Test deterministic targeting, recoil and precision
+        run: node --test tools/recoil-autofire.test.mjs tools/precision.test.mjs
       - name: Install browser test runtime
         run: |
           npm ci --prefix frontline/source/tools/dev --ignore-scripts
@@ -62,3 +70,4 @@ jobs:
           SERVER_PID=$!
           trap 'kill "$SERVER_PID" || true' EXIT
           node tools/mobile-smoke.cjs
+          node tools/precision-smoke.cjs
