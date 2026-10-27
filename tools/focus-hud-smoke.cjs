@@ -5,7 +5,9 @@ const path=require('node:path');
 const {chromium}=require(path.join(__dirname,'../frontline/source/tools/dev/node_modules/playwright-core'));
 const origin=process.env.FPS_TEST_ORIGIN||'http://127.0.0.1:8765';
 const args=['--no-sandbox','--use-gl=angle','--use-angle=swiftshader','--enable-unsafe-swiftshader','--ignore-gpu-blocklist'];
-const draw=p=>p.evaluate(()=>__fps.render());
+// The shipped animation loop synchronizes presentation before rendering every
+// frame. This explicit-frame suite must do the same after throws and resize.
+const draw=p=>p.evaluate(()=>{__fps.tactical.update(0);__fps.render();});
 async function mode(page,value){await page.evaluate(value=>{__fps.settings.hudMode=value;__fps.focusHud.applyMode();__fps.render();},value);}
 async function boot(browser,mobile){
  const context=await browser.newContext({viewport:mobile?{width:844,height:390}:{width:1280,height:720},isMobile:mobile,hasTouch:mobile,deviceScaleFactor:1});
@@ -92,6 +94,7 @@ async function inspectButtons(page, center=true){
    await cdp.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});
    assert.equal(await page.evaluate(id=>__fps.game.player.inventory[id],grenade),before-1,'One real grenade thrown');
    await draw(page);
+   assert.equal(await page.locator('[data-mobile-action=fire]').isVisible(),false,'Auto-fire returns after throwing and re-equipping the firearm');
 
    await page.locator('#mobile-more').tap();
    await page.locator('[data-utility=karta]').tap();await draw(page);
@@ -120,7 +123,11 @@ async function inspectButtons(page, center=true){
    assert.equal(await page.locator('#mobile-utilities').isVisible(),false);
 
    for(const [w,h] of [[667,375],[390,844],[844,390]]){
-     await page.setViewportSize({width:w,height:h});await draw(page);
+     await page.setViewportSize({width:w,height:h});
+     // Resize events clear WebGL's drawing buffer. Wait for the production
+     // resize listener to settle, then explicitly paint the new viewport.
+     await page.waitForFunction(()=>Math.abs(__fps.renderer.camera.aspect-innerWidth/innerHeight)<.0001,null,{polling:50,timeout:10000});
+     await draw(page);
      await inspectButtons(page);
      for(const id of ['health','ammo'])assert.ok(await page.locator('#'+id).isVisible());
      await page.screenshot({path:`test-results/hud-mobile-${w}x${h}.png`,timeout:60000});
