@@ -1,4 +1,6 @@
 import {buildDoorVisuals} from './door-visuals.mjs';
+import {buildFacilityDetails} from './facility-details-view.mjs';
+import {GlassVisuals} from './glass-visuals.mjs';
 import {buildRiposteProps} from './riposte-props.mjs';
 import {makeWeapon} from './models.mjs';
 import {WEAPONS} from './config.mjs';
@@ -53,6 +55,8 @@ export class Renderer extends EngineRenderer {
   constructor(canvas,world,settings){
     const visualWorld={...world,description:{...world.description,boxes:world.description.boxes.filter(b=>!b.livingVisual)}};
     super(canvas,visualWorld,settings);
+    this.detailScene=buildFacilityDetails(world.details,this.registry);this.scene.add(this.detailScene.root);freezeStaticTransforms(this.detailScene.root);
+    this.glassVisuals=new GlassVisuals(this.scene,world.glass,this.registry);
     this.visualDepth=new VisualDepth(this.renderer);this.inspectAt=-Infinity;this.inspectActor=null;
     this.onInspectKey=e=>{if(e.code==='KeyV'&&!e.repeat&&document.pointerLockElement===canvas&&this.presentationGame)this.requestInspect(this.presentationGame);};
     window.addEventListener('keydown',this.onInspectKey);
@@ -167,9 +171,9 @@ export class Renderer extends EngineRenderer {
   }
   render(game,viewActor,dt){
     // Door instance culling runs at the world-draw hook, after camera/lights update.
-    this.presentationGame=game;this.combatVisuals?.update(game);this.livingScene?.update(game.state.time);this.actionVisuals?.update(game,this.camera);super.render(game,viewActor,dt);
+    this.presentationGame=game;this.glassVisuals?.update(game.state.time);this.combatVisuals?.update(game);this.livingScene?.update(game.state.time);this.actionVisuals?.update(game,this.camera);super.render(game,viewActor,dt);
   }
-  events(events,game){this.combatVisuals?.events(events,game);super.events(events.filter(e=>e.type!=='hit'||(e.sourceId===game.player?.id&&game.actors.some(a=>a.id===e.actorId&&a.team!==game.player.team))),game);this.actionVisuals?.events(events,game);}
+  events(events,game){this.glassVisuals?.events(events,game);this.combatVisuals?.events(events,game);super.events(events.filter(e=>e.type!=='hit'||(e.sourceId===game.player?.id&&game.actors.some(a=>a.id===e.actorId&&a.team!==game.player.team))),game);this.actionVisuals?.events(events,game);}
   resetTransient(){
     super.resetTransient();this.inspectAt=-Infinity;this.combatVisuals?.clear();this.actionVisuals?.clear();
     // New rounds must not inherit recoil springs or footsteps from the previous life.
@@ -178,7 +182,7 @@ export class Renderer extends EngineRenderer {
   }
   dispose(){
     if(this.presentationDisposed)return;this.presentationDisposed=true;
-    this.doorVisuals?.dispose();this.riposteProps?.dispose();
+    this.glassVisuals?.dispose();this.detailScene?.dispose();this.doorVisuals?.dispose();this.riposteProps?.dispose();
     this.focusLighting?.dispose();this.facilityScene?.dispose();
     for(const restore of this.presentationRestores||[])restore();
     window.removeEventListener('keydown',this.onInspectKey);this.renderer.render=this.nativeRender;this.visualDepth?.dispose();this.combatVisuals?.dispose();this.actionVisuals?.dispose();disposeCharacterLibrary();this.presentationRestores=[];this.presentationField?.dispose();this.livingScene?.dispose();super.dispose();

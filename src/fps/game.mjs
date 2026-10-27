@@ -80,6 +80,7 @@ export class Game {
     this.beginRound(); return this;
   }
   beginRound() {
+    this.world.glass?.reset();
     const s = this.state;
     if (s.pendingDifficulty) { s.difficulty = s.pendingDifficulty; s.pendingDifficulty = null; }
     this.config.difficulty = s.difficulty;
@@ -362,7 +363,10 @@ export class Game {
         if (victim.team !== actor.team || this.config.friendlyFire) {
           this.pendingDamage.push({ target: victim, amount: w.damage, source: actor, kind: actor.weapon, point: hitPoint, direction: dir, sourcePosition: origin });
         }
-      } else if (wall) this.emit('impact', null, { ...hitPoint, sourceId: actor.id, surface: wall.material ?? 'wall', surfaceId: wall.id, normal: wall.normal, direction: dir });
+      } else if (wall) {
+        this.emit('impact', null, { ...hitPoint, sourceId: actor.id, surface: wall.material ?? 'wall', surfaceId: wall.id, normal: wall.normal, direction: dir });
+        const shattered=this.world.glass?.breakAt(wall);if(shattered)this.emit('glass-break',null,{...shattered,sourceId:actor.id});
+      }
       this.emit('tracer', actor, { from: origin, to: hitPoint, weapon: actor.weapon });
     }
     return true;

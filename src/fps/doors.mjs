@@ -56,7 +56,9 @@ export function createDoors(data,physics){
    const next=d.angle+Math.sign(d.target-d.angle)*Math.min(Math.abs(d.target-d.angle),dt*(d.target?4.8:1.55));
    if(next===d.angle)continue;
    pose(d,next);
-   const hit=actors.some(a=>living(a)&&(a.y||0)<2.27&&(a.y||0)+(a.height||1.7)>.035&&d.leaves.some(l=>circleHitsBox(a.x,a.z,(a.radius||.2)+.035,l.box)));
+   // Opening uses near-contact tolerance so narrow WC approaches do not deadlock.
+   // Closing keeps the larger safety margin; exact capsule collision remains unchanged.
+   const hit=actors.some(a=>living(a)&&(a.y||0)<2.27&&(a.y||0)+(a.height||1.7)>.035&&d.leaves.some(l=>circleHitsBox(a.x,a.z,(a.radius||.2)+(d.target>d.angle?.001:.035),l.box)));
    if(hit){pose(d);d.holdUntil=time+DOOR_HOLD_SECONDS;d.target=DOOR_OPEN_ANGLE;continue;}
    d.angle=next;changed=true;
   }return changed;
