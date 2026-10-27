@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-"""Apply only the checksum-bound owner layout delta over public 0.15.3.
-
-This transfer contains runtime geometry, tests and public release documentation,
-not private source originals. It fails closed on unexpected input or output.
+"""Apply checksum-bound owner geometry over public 0.15.3.
+No private originals. All runtime outputs are checked against fixed SHA-256s.
+The additional test-only fix restores native requestAnimationFrame after the
+controlled-input assertions so Chromium can take its compositor screenshot.
 """
 from pathlib import Path
 import base64, hashlib, json, lzma, re, subprocess
@@ -19,6 +19,16 @@ ALLOWED = {
 }
 def sha(data):
     return hashlib.sha256(data).hexdigest()
+def repair_test_capture():
+    path = ROOT/'tools/owner-layout-smoke.mjs'
+    old = path.read_text()
+    assert sha(old.encode()) == '1eccbaf81c06ce6af565569e0b0f111f4ba681662c5bd7170b6298485567bf89'
+    before = "await page.evaluate(()=>__fps.step(null,1/60));await page.screenshot({path:resolve(out,'09-trusted-input.png')});"
+    after = "await page.evaluate(()=>{__fps.step(null,1/60);window.requestAnimationFrame=window.__reviewRAF;});await page.screenshot({path:resolve(out,'09-trusted-input.png'),timeout:60000});"
+    assert old.count(before) == 1
+    fixed = old.replace(before,after)
+    assert sha(fixed.encode()) == 'd6f8784c8abb17a38e4d22b2aa095513c18731bf64eb0733bbd56ba9b1db0aff'
+    path.write_text(fixed)
 def main():
     if not TRANSPORT.exists():
         subprocess.run(['node', 'tools/verify-owner-runtime.mjs'], cwd=ROOT, check=True)
@@ -74,6 +84,7 @@ def main():
     for path, expected in payload['expectedResultHashes'].items():
         actual = sha((ROOT/path).read_bytes())
         assert actual == expected, f'Unexpected output bytes: {path}: {actual}'
-    print(json.dumps({'status':'PASS','version':payload['version'],'changedFiles':len(ALLOWED),'runtimeManifestFiles':len(files),'preservedBase':payload['baseCommit']},indent=2))
+    repair_test_capture()
+    print(json.dumps({'status':'PASS','version':payload['version'],'changedFiles':len(ALLOWED),'runtimeManifestFiles':len(files),'preservedBase':payload['baseCommit'],'testCapture':'native rAF restored after controlled-input assertions; no gameplay changes'},indent=2))
 if __name__ == '__main__':
     main()
