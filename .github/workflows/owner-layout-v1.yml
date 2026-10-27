@@ -1,0 +1,113 @@
+name: Owner layout 0.16 integration
+on:
+  push:
+    branches: [work/owner-layout-v1-0.16.0]
+    paths: ['tools/owner-layout-transfer/**','tools/apply-owner-layout-v1.py','.github/workflows/owner-layout-v1.yml','tools/owner-layout-smoke.mjs']
+  workflow_dispatch:
+concurrency:
+  group: owner-layout-public-integration
+  cancel-in-progress: true
+permissions:
+  contents: read
+jobs:
+  source:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: python3 tools/apply-owner-layout-v1.py
+      - name: Exact current vendor Three and deterministic tests
+        run: |
+          mkdir -p node_modules/three
+          printf '%s\n' '{"name":"three","type":"module","exports":"./three.module.js"}' > node_modules/three/package.json
+          ln -s ../../vendor/three/three.module.js node_modules/three/three.module.js
+          node --test tools/*.test.mjs
+          node tools/owner-door-traversal.mjs
+          node tools/verify-owner-runtime.mjs
+          for f in src/fps/{doors,world,furnishings,living-floor-plan}.mjs tools/owner-layout-smoke.mjs; do node --check "$f"; done
+      - name: Prior migrations cannot overwrite this release
+        run: |
+          sha256sum src/fps/grenade-assist.mjs src/fps/model-primitives.mjs src/fps/render-engine.mjs src/fps/game.mjs src/fps/app.mjs fps/index.html build-info.json > /tmp/preserved.sha256
+          python3 tools/apply-detail-efficiency.py
+          python3 tools/apply-throwable-cartridges.py
+          sha256sum --check /tmp/preserved.sha256
+  browser:
+    name: Browser ${{ matrix.suite }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    strategy:
+      max-parallel: 4
+      fail-fast: false
+      matrix:
+        suite: [owner-layout, detail-efficiency, render-performance, throwable-cartridge, focus-hud, mobile, precision, grenade]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: python3 tools/apply-owner-layout-v1.py
+      - name: Install pinned browser runtime
+        run: |
+          npm ci --prefix frontline/source/tools/dev --ignore-scripts --no-audit --no-fund
+          node frontline/source/tools/dev/node_modules/playwright-core/cli.js install chromium
+      - name: Actual WebGL and input regression
+        env:
+          SUITE: ${{ matrix.suite }}
+          EXPECTED_GAME_VERSION: '0.16.0'
+        run: |
+          set -euo pipefail
+          python3 -m http.server 8765 --bind 127.0.0.1 >/tmp/owner-http.log 2>&1 &
+          SERVER_PID=$!
+          trap 'kill "$SERVER_PID" || true' EXIT
+          if [ "$SUITE" = 'owner-layout' ]; then
+            node tools/owner-layout-smoke.mjs
+          else
+            node "tools/${SUITE}-smoke.cjs"
+          fi
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: owner-layout-review-${{ matrix.suite }}
+          path: test-results/
+          if-no-files-found: ignore
+          retention-days: 14
+  commit-tested:
+    name: Commit only tested owner layout on feature branch
+    needs: [source, browser]
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: python3 tools/apply-owner-layout-v1.py
+      - run: node tools/verify-owner-runtime.mjs
+      - name: Commit with head lease and never force main
+        env:
+          EXPECTED_SHA: ${{ github.sha }}
+          BRANCH: work/owner-layout-v1-0.16.0
+        run: |
+          set -euo pipefail
+          test "$(git ls-remote origin refs/heads/$BRANCH | cut -f1)" = "$EXPECTED_SHA"
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git rm -r --ignore-unmatch tools/owner-layout-transfer
+          git add fps/index.html src/floor5-data.js src/world.js src/fps/world.mjs src/fps/doors.mjs src/fps/furnishings.mjs src/fps/living-floor-plan.mjs build-info.json tools/detail-efficiency-smoke.cjs tools/owner-layout.test.mjs tools/owner-door-traversal.mjs tools/owner-layout-smoke.mjs tools/verify-owner-runtime.mjs OWNER_LAYOUT_RELEASE.md
+          if ! git diff --cached --quiet; then
+            git commit -m 'Cartridge Strike 0.16.0: validated owner layout with preserved mobile and combat features'
+            git push origin "HEAD:$BRANCH"
+          fi
