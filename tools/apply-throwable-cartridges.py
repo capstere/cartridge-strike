@@ -14,14 +14,24 @@ primitive_path = ROOT / 'src/fps/model-primitives.mjs'
 engine_path = ROOT / 'src/fps/render-engine.mjs'
 primitive = primitive_path.read_text(encoding='utf-8')
 engine = engine_path.read_text(encoding='utf-8')
+# Existing regression workflows still call this one-time migration. A later
+# integrated release must not be rejected or have its version downgraded.
+current = json.loads((ROOT / 'build-info.json').read_text(encoding='utf-8')).get('gameVersion', '')
+version = tuple(int(part) for part in current.split('.'))
+complete = all(marker in primitive for marker in (
+    "from './throwable-cartridge.mjs'", 'createThrowableCartridge(type, scale)',
+    'object.geometry.userData.sharedThrowableCartridge', 'disposeThrowableCartridges();'))
+complete = complete and all(marker in engine for marker in (
+    "from './throwable-cartridge.mjs'", 'createThrownCartridge(g,t)', 'updateThrownCartridge(model,g,t)'))
+if version >= (0, 15, 1) and complete and f'VERSION {current}' in (ROOT / 'fps/index.html').read_text(encoding='utf-8'):
+    print(f'Cartridge integration already complete at {current}; leaving every file unchanged.')
+    raise SystemExit(0)
 if "from './throwable-cartridge.mjs'" not in primitive:
     primitive = "import { createThrowableCartridge, disposeThrowableCartridges } from './throwable-cartridge.mjs';\n" + primitive
     primitive = replace(primitive,
         "export function cartridge(type = 'he', scale = 1) {",
         "export function cartridge(type = 'he', scale = 1) {\n  if (['he', 'flash', 'smoke'].includes(type)) return createThrowableCartridge(type, scale);",
         'throwable cartridge factory')
-    # Cartridge resources are owned by their independent cache. World weapons
-    # may reference them but must not dispose those resources a second time.
     primitive = replace(primitive,
         "for (const template of worldWeaponTemplates.values()) template.traverse(object => {\n    if (!object.isMesh) return;",
         "for (const template of worldWeaponTemplates.values()) template.traverse(object => {\n    if (!object.isMesh || object.geometry.userData.sharedThrowableCartridge) return;",
@@ -35,7 +45,6 @@ if "from './throwable-cartridge.mjs'" not in engine:
     old = "for(const g of s.grenades){let model=this.grenades.get(g.id);if(!model){model=cartridge(g.type||g.kind,1.1);this.grenades.set(g.id,model);this.scene.add(model);}model.position.set(g.x,g.y,g.z);model.rotation.set(t*4,t*3,0);}"
     new = "for(const g of s.grenades){let model=this.grenades.get(g.id);if(!model){model=createThrownCartridge(g,t);this.grenades.set(g.id,model);this.scene.add(model);}updateThrownCartridge(model,g,t);}"
     engine = replace(engine, old, new, 'independent cartridge tumble and floor rest')
-# Validate every edit before writing either runtime file.
 assert 'createThrowableCartridge(type, scale)' in primitive
 assert 'updateThrownCartridge(model,g,t)' in engine
 primitive_path.write_text(primitive, encoding='utf-8')
