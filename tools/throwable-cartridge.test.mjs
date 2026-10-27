@@ -51,14 +51,13 @@ test('world weapon and thrown shell use the same Cartridge family', () => {
   assert.equal(thrown.children[0].userData.visualModel, CARTRIDGE_VISUAL);
   assert.equal(thrown.children[0].userData.type, 'smoke');
 });
-test('new throws have distinct deterministic spin; no gameplay random calls or mutation', () => {
+test('new throws have distinct deterministic spin; animation consumes no randomness or gameplay state', () => {
   const g = projectile(), before = structuredClone(g), random = Math.random;
-  let a, b;
+  // Construct before guarding Math.random: Three.js legitimately uses entropy
+  // for object UUIDs. The animation itself must not use random state at all.
+  const a = createThrownCartridge(g, 0), b = createThrownCartridge(projectile('test2'), 0);
   try {
-    Math.random = () => { throw new Error('Gameplay randomness consumed'); };
-    // Templates already built above. Object3D UUID generation in Three.js uses
-    // its own entropy; visual motion below must never call Math.random.
-    a = createThrownCartridge(g, 0); b = createThrownCartridge(projectile('test2'), 0);
+    Math.random = () => { throw new Error('Randomness consumed by cosmetic animation'); };
     updateThrownCartridge(a, g, .05); updateThrownCartridge(b, g, .05);
   } finally { Math.random = random; }
   assert.deepEqual(g, before);
