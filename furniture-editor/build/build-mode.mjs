@@ -295,7 +295,7 @@ export function createBuildMode({data,scene,canvas,camera,getZoom,getView,rayAt,
  return {get active(){return active;},enable,getBaseline:()=>cloneAll(baseline),getEntries:()=>cloneAll(entries),getFloors:()=>copyFloors(floors),
   export:()=>exportArchitecture(entries,baseline,floors),load,reset:resetWithoutConfirm,hasSketch,
   setView:()=>render(),select,setTool,undo,redo,count,
-  getSelected:()=>selection,getTool:()=>mode,
+  getSelected:()=>selection,getTool:()=>mode,getDrawingState:()=>({mode,first:first?[...first]:null,selected:selection}),
   testCreate:(kind,a,b)=>{const before=capture();const e=makeEntry(getNextId(entries,floors,kind),kind,a,b);validateEntry(e);entries.push(e);selection=e.id;record(before);return e.id;},
   testChange:(id,delta)=>changeEntry(id,delta)};
 }

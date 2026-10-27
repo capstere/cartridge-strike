@@ -307,6 +307,7 @@ async function bootstrap(){makeGround();
  window.__furnitureEditor={getState:()=>({version:EDITOR_VERSION,sourceCommit:BASE_COMMIT,gameVersion:GAME_VERSION,objects:items.length,chairs:items.filter(o=>o.kind==='chair'&&!o.deleted).length,
    authored:originalCounts.chair||0,selected:chosen,changed:exportPatch(items,baseline).placements.length+exportPatch(items,baseline).added.length+exportPatch(items,baseline).removed.length,view:cameraMode,gameModuleLoaded:!!globalThis.__fps}),
   select:id=>select(id,true),getPatch:projectPatch,getItem:id=>items.find(o=>o.id===id),build:building,
+  renderNow:()=>{resize();renderer.render(scene,camera);},
   screenWorldPoint:(x,z)=>{resize();const r=$canvas.getBoundingClientRect(),p=new T.Vector3(x,.15,z).project(camera);return {x:r.left+(p.x+1)*r.width/2,y:r.top+(1-p.y)*r.height/2};},
   catalogCount:LIBRARY.length,addPreset:async id=>addPreset(id),openLibrary:()=>$('#openLibrary').click(),
   screenPoint:id=>{const group=furnitureGroups.get(id);if(!group)return null;const r=$canvas.getBoundingClientRect();const p=group.position.clone().add(new T.Vector3(0,.5,0)).project(camera);return {x:r.left+(p.x+1)*r.width/2,y:r.top+(1-p.y)*r.height/2};},

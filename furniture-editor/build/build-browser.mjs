@@ -17,9 +17,24 @@ const check=(name,cond)=>{report.checks.push({name,pass:!!cond});console.log(nam
 page.on('pageerror',e=>report.errors.push(e.message));page.on('console',m=>{if(m.type()==='error')report.errors.push('console:'+m.text());});
 page.on('response',r=>{if(r.status()>=400)report.httpFailures.push({code:r.status(),url:r.url()});});
 await page.route('**/*',route=>{const url=route.request().url();if(url.startsWith(origin+'/')||url.startsWith('data:')||url.startsWith('blob:'))return route.continue();report.external.push(url);return route.abort();});
-async function shot(name){await page.screenshot({path:resolve(out,name+'.png'),fullPage:true});report.screenshots.push(name+'.png');}
-async function clickWorld(x,z){const at=await page.evaluate(v=>__furnitureEditor.screenWorldPoint(v.x,v.z),{x,z});
- assert(Number.isFinite(at.x)&&Number.isFinite(at.y));await page.mouse.click(at.x,at.y);}
+async function shot(name){
+ // Software WebGL often clears canvas buffers during full-page capture: explicitly
+ // render a frame before taking the screenshot, and keep the viewport proof.
+ await page.evaluate(()=>__furnitureEditor.renderNow());
+ await page.waitForTimeout(80);
+ await page.evaluate(()=>__furnitureEditor.renderNow());
+ await page.screenshot({path:resolve(out,name+'.png'),fullPage:true,animations:'disabled'});
+ report.screenshots.push(name+'.png');
+}
+async function clickWorld(x,z){
+ await page.locator('#viewport').scrollIntoViewIfNeeded();
+ const at=await page.evaluate(v=>__furnitureEditor.screenWorldPoint(v.x,v.z),{x,z});
+ const rect=await page.locator('#viewport').boundingBox();
+ assert(Number.isFinite(at.x)&&Number.isFinite(at.y) && !!rect &&
+   at.x>rect.x && at.x<rect.x+rect.width && at.y>rect.y && at.y<rect.y+rect.height,
+   'Target must lie inside the visible actual editor canvas '+JSON.stringify({at,rect}));
+ await page.mouse.click(at.x,at.y);
+}
 try{
  await page.goto(origin+'/furniture-editor/',{waitUntil:'networkidle',timeout:45000});
  await page.waitForFunction(()=>window.__furnitureEditor?.build?.getEntries()?.length>380,{timeout:45000});
@@ -47,13 +62,16 @@ try{
  await page.locator('#buildTool').selectOption('glazed');
  await clickWorld(8.2,12.4);await clickWorld(10.4,12.4);
  check('actual two pointer clicks draw new full-height glazed wall',await page.evaluate(()=>__furnitureEditor.getPatch().architecture.added.some(e=>e.kind==='glazed')));
- await shot('01-draw-glass-wall');
  await page.locator('#buildTool').selectOption('door');
- await clickWorld(9.1,12.4);await clickWorld(10.0,12.4);
+ check('door draw mode selected',await page.evaluate(()=>__furnitureEditor.build.getDrawingState().mode==='door'));
+ await clickWorld(9.1,12.4);
+ check('actual door first endpoint registered',await page.evaluate(()=>__furnitureEditor.build.getDrawingState().first!==null));
+ await clickWorld(10.0,12.4);
  check('door tool produces separate door object',await page.evaluate(()=>__furnitureEditor.getPatch().architecture.added.some(e=>e.kind==='door')));
  await page.locator('#buildTool').selectOption('floor');
  await clickWorld(7.1,10.1);await clickWorld(8.2,11.2);
  check('rectangle floor painter persists a new floor region',await page.evaluate(()=>__furnitureEditor.getPatch().architecture.floors.length===1));
+ await shot('01-draw-glass-wall');
  check('save project button stays available in both modes',await page.locator('#downloadTop').isVisible());
  await page.locator('#threeView').click();
  await page.waitForTimeout(180);
