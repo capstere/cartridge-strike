@@ -4,16 +4,19 @@ on:
   push:
     branches:
       - feature/mobile-original-fps-20261026
+      - feature/riposte-mobile-autofire-recoil-20261027
     paths:
       - src/fps/**
       - fps/**
       - tools/mobile-smoke.cjs
+      - tools/recoil-autofire.test.mjs
       - .github/workflows/mobile-original-fps.yml
   pull_request:
     paths:
       - src/fps/**
       - fps/**
       - tools/mobile-smoke.cjs
+      - tools/recoil-autofire.test.mjs
       - .github/workflows/mobile-original-fps.yml
   workflow_dispatch:
 
@@ -34,9 +37,14 @@ jobs:
           set -euo pipefail
           node --check src/fps/app.mjs
           node --check src/fps/mobile-controls.mjs
+          node --check src/fps/riposte-recoil.mjs
+          node --check src/fps/game.mjs
           node --check src/fps/render.mjs
           node --check src/fps/render-engine.mjs
           node --check tools/mobile-smoke.cjs
+          node --check tools/recoil-autofire.test.mjs
+      - name: Test deterministic targeting and recoil
+        run: node --test tools/recoil-autofire.test.mjs
       - name: Install browser test runtime
         run: |
           npm ci --prefix frontline/source/tools/dev --ignore-scripts
