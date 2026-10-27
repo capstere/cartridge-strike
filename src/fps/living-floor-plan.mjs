@@ -43,6 +43,7 @@ export function createLivingPlan(data,description){
   return !props.some(p=>Math.abs(x-p.x)<(w+p.w)/2+.18&&Math.abs(z-p.z)<(d+p.d)/2+.18);
  }
  function put(roomId,type,w,d,h,near=[.5,.5],variant=0){
+  if(data.layoutPresentation?.suppressedLivingTypes?.[roomId]?.includes(type))return false;
   const room=roomMap.get(roomId);if(!room)return false;
   const [x0,z0,x1,z1]=bounds(room.polygon),tx=x0+(x1-x0)*near[0],tz=z0+(z1-z0)*near[1],candidates=[];
   for(let x=x0+w/2+.18;x<x1-w/2-.17;x+=.32)for(let z=z0+d/2+.18;z<z1-d/2-.17;z+=.32)candidates.push({x,z,cost:Math.hypot(x-tx,z-tz)});
@@ -77,6 +78,8 @@ export function createLivingPlan(data,description){
   }else if(type==='sofa'){
    part('base',0,.31,0,w,.42,d,'teal');part('back',0,.76,d/2-.09,w,.52,.18,'teal');
    for(const side of[-1,1])part('arm'+side,side*(w/2-.08),.59,0,.16,.23,d,'teal');
+  }else if(type==='coffee-table'){
+   part('top',0,.46,0,w,.045,d,'wood');part('stem',0,.22,0,.05,.44,.05,'steel');part('base',0,.025,0,w*.60,.05,d*.60,'steel');
   }else if(type==='bench'){
    part('seat',0,.46,0,w,.08,d,'wood');for(const s of[-1,1])part('leg'+s,s*(w/2-.13),.22,0,.05,.44,d*.75,'steel');
   }else{
@@ -94,7 +97,7 @@ export function createLivingPlan(data,description){
  put('I12','pallet',1.20,.80,.68,[.32,.50]);
  put('I12','locker',1.4,.38,1.82,[.22,.92]);
  for(const r of rooms){
-  if(r.id==='I12')continue;
+  if(r.id==='I12'||data.layoutPresentation?.suppressedAutoFurnitureRooms?.includes(r.id))continue;
   const cat=category(r.id);
   if(cat==='pantry'){put(r.id,'kitchen',1.6,.58,.87,[.25,.15]);put(r.id,'fridge',.67,.63,1.87,[.82,.18]);}
   if(cat==='meeting'){put(r.id,'credenza',1.2,.40,.74,[.72,.16]);if(['I17','I24'].includes(r.id))put(r.id,'planter',.42,.42,1.50,[.84,.82]);}
@@ -108,6 +111,13 @@ export function createLivingPlan(data,description){
    }
    if(r.id==='I18'||r.id==='I27')put(r.id,'shelf',1.1,.42,1.75,[.72,.75]);
   }
+ }
+ if(data.layoutPresentation?.lobbyRoomId==='I33'){
+  put('I33','planter',.48,.48,1.65,[.83,.17]);
+  put('I33','planter',.48,.48,1.65,[.83,.81]);
+  put('I33','sofa',.84,.76,.96,[.57,.23]);
+  put('I33','sofa',.84,.76,.96,[.57,.78]);
+  put('I33','coffee-table',1.0,.62,.46,[.67,.50]);
  }
  // Mounts use actual opaque WALL records. Their local normal must face the named room.
  const walls=description.boxes.filter(b=>/^WALL-\d+$/.test(b.id)&&b.material==='wall'&&b.h>2);
