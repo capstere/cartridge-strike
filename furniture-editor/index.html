@@ -3,16 +3,17 @@
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex,nofollow"><meta name="color-scheme" content="light">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data: blob:; connect-src 'none'; object-src 'none'; base-uri 'self'; form-action 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-FY02driTN7AVYmlwG2dfomF5ZapD4+/O6I7GPKhcXLk='; style-src 'self'; img-src 'self' data: blob:; connect-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'none'">
+<script type="importmap">{"imports":{"three":"../vendor/three/three.module.js"}}</script>
 <title>Möbelstudion · Cartridge Strike</title>
 <link rel="icon" href="data:,"><link rel="stylesheet" href="./style.css">
 </head>
 <body>
 <header class="header">
-  <div class="brand"><span class="brand-square">CS</span><span><strong>CARTRIDGE STRIKE</strong><small>MÖBELSTUDION <b>1.0</b></small></span></div>
+  <div class="brand"><span class="brand-square">CS</span><span><strong>CARTRIDGE STRIKE</strong><small>MÖBELSTUDION <b>2.0</b></small></span></div>
   <div class="header-right"><span class="independent">SEPARAT REDIGERARE · SPELET ÄNDRAS INTE</span><a href="../fps/" target="_blank" rel="noopener">Öppna spelet ↗</a></div>
 </header>
-<div class="steps" aria-label="Så här gör du"><strong>SÅ HÄR ENKELT ÄR DET</strong><span><b>1</b> Välj rum</span><span><b>2</b> Klicka på en möbel</span><span><b>3</b> Dra eller vrid</span><span><b>4</b> Spara JSON-filen</span></div>
+<div class="steps" aria-label="Så här gör du"><strong>SÅ HÄR ENKELT ÄR DET</strong><span><b>1</b> Välj rum</span><span><b>2</b> Klicka på en möbel</span><span><b>3</b> Dra eller vrid</span><span><b>4</b> Spara projektet</span></div>
 <main class="layout">
   <aside class="sidebar">
     <div class="section-heading"><span>01 / HITTA MÖBEL</span><small>Våning 5</small></div>
@@ -20,6 +21,7 @@
     <label for="search">Hitta en stol eller möbel</label><input id="search" type="search" placeholder="Sök t.ex. stol, I09 ..." autocomplete="off">
     <div class="filter"><label for="chairsOnly"><input type="checkbox" id="chairsOnly" checked> Bara stolar</label><span id="listCount">—</span></div>
     <div id="furnitureList" class="furniture-list" role="listbox" aria-label="Välj möbel"></div>
+    <button id="openLibrary" type="button" class="library-entry" aria-label="Öppna objektbibliotek och lägg till möbel">+ LÄGG TILL OBJEKT <span>76 3D-modeller</span></button>
     <div class="divider"></div>
     <div class="section-heading"><span>02 / FLYTTA & VRID</span><small id="selectionTag">Ingen vald</small></div>
     <div id="emptySelection" class="empty-selection">Klicka på en <strong>orange stol</strong> i 3D-vyn eller välj en stol i listan.</div>
@@ -34,15 +36,15 @@
     <div id="validation" class="validation" hidden role="status"></div>
     <div class="divider"></div>
     <div class="section-heading"><span>03 / SPARA</span><small id="changeCount">0 ändringar</small></div>
-    <button id="download" type="button" class="save-button">SPARA MIN MÖBLERING <span>↓ JSON</span></button>
-    <p class="save-hint">Filen laddas ned till din dator. <strong>Skicka JSON-filen till mig i ChatGPT</strong> så kan vi lägga in ändringarna i spelet efter kontroll.</p>
+    <button id="download" type="button" class="save-button">SPARA MITT PROJEKT <span>↓ JSON / ZIP</span></button>
+    <p class="save-hint">JSON sparas normalt; egna GLB-modeller följer med i en ZIP-fil. <strong>Skicka JSON-filen till mig i ChatGPT</strong> så kan vi lägga in ändringarna i spelet efter kontroll.</p>
     <div class="undo-row"><button id="undo" type="button">↶ Ångra</button><button id="redo" type="button">↷ Gör om</button></div>
-    <div class="bottom-actions"><label class="import-button" for="importFile">↑ Fortsätt med sparad fil</label><input id="importFile" type="file" accept=".json,application/json" hidden><button id="reset" type="button">Återställ allt</button></div>
+    <div class="bottom-actions"><label class="import-button" for="importFile">↑ Fortsätt med sparad fil</label><input id="importFile" type="file" accept=".json,.zip,application/json,application/zip" hidden><button id="reset" type="button">Återställ allt</button></div>
     <p class="autosave" id="autosave">Dina steg sparas också lokalt i den här webbläsaren.</p>
   </aside>
   <section class="workspace" aria-label="3D-möblering">
-    <div class="toolbar"><div class="view-buttons"><button id="topView" type="button" class="active" aria-pressed="true">PLANVY</button><button id="threeView" type="button" aria-pressed="false">3D-VY</button></div><div class="view-buttons"><button id="focus" type="button">⌖ VISA RUM</button><button id="whole" type="button">HELA VÅNINGEN</button></div><button id="downloadTop" type="button" class="quick-save">↓ SPARA JSON</button><label class="snap"><input id="snap" type="checkbox" checked> Fäst på rutnät (10 cm)</label></div>
-    <div class="stage"><canvas id="viewport" aria-label="Redigerbar planvy av möbler och rum" tabindex="0"></canvas>
+    <div class="toolbar"><div class="view-buttons"><button id="topView" type="button" class="active" aria-pressed="true">PLANVY</button><button id="threeView" type="button" aria-pressed="false">3D-VY</button></div><div class="view-buttons"><button id="focus" type="button">⌖ VISA RUM</button><button id="whole" type="button">HELA VÅNINGEN</button></div><button id="downloadTop" type="button" class="quick-save">↓ SPARA PROJEKT</button><label class="snap"><input id="snap" type="checkbox" checked> Fäst på rutnät (10 cm)</label></div>
+    <div class="stage" id="dropZone"><canvas id="viewport" aria-label="Redigerbar planvy av möbler och rum" tabindex="0"></canvas>
       <div class="scene-guide"><span class="legend-square chair"></span> Valbar möbel <span class="legend-square selection"></span> Markerad <span class="legend-square fixed"></span> Fast inredning</div>
       <div class="scene-instruction">Dra möbel för att flytta · Scrolla för att zooma · Dra tom yta för att navigera</div>
       <div class="orient"><strong>N</strong><span>↑</span></div>
@@ -52,6 +54,15 @@
     <div id="notice" class="notice" role="status" aria-live="polite" hidden></div>
   </section>
 </main>
+
+<dialog id="libraryDialog" class="library-dialog" aria-label="3D-objektbibliotek">
+  <div class="library-head"><div><small>CARTRIDGE STRIKE / MÖBELSTUDION</small><h2>Välj något att lägga till</h2><p>Riktiga CC0-modeller från Kenney samt tidigare godkända spelmodeller.</p></div><button id="closeLibrary" type="button" class="library-close" aria-label="Stäng biblioteket">×</button></div>
+  <div class="library-controls"><label>Sök objekt<input id="librarySearch" type="search" placeholder="stol, kyl, handfat, instrument …" autocomplete="off"></label><label>Kategori<select id="libraryCategory" aria-label="Objektkategori"><option value="alla">Alla kategorier</option><option value="stolar">Stolar & soffor</option><option value="bord">Bord</option><option value="kontor">Kontor</option><option value="kok">Kök</option><option value="badrum">Badrum</option><option value="labb">Labbutrustning</option><option value="industri">Industri & lager</option><option value="dekor">Dekoration</option><option value="egna">Mina GLB-modeller</option></select></label></div>
+  <div class="library-toolbar"><strong id="libraryCount">Biblioteket läses in…</strong><label class="import-glb" for="customGLB">↑ IMPORTERA EGEN .GLB</label><input id="customGLB" type="file" accept=".glb,model/gltf-binary" hidden></div>
+  <div id="libraryTiles" class="library-tiles" aria-label="Tillgängliga 3D-modeller"></div>
+  <p class="library-notes">Välj ett objekt så placeras det i valt rum. Dra och rotera som vanligt. Importerade GLB sparas lokalt och exporteras tillsammans med projektet som ZIP. <strong>Inget ändras i spelet.</strong></p>
+</dialog>
+
 <script src="../src/floor5-data.js"></script>
 <script src="../src/world.js"></script>
 <script type="module" src="./main.mjs"></script>

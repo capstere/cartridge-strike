@@ -7,13 +7,18 @@ import {createFurnishings} from '../src/fps/furnishings.mjs';
 import {EDITOR_VERSION,GAME_VERSION,BASE_COMMIT,DEFAULT_ROOMS,ROOM_LABELS,
   EDITABLE_KINDS,bounds,centroid,inside,distanceSegment,catalog,normalizeAngle,
   round,validate,exportPatch,parsePatch,isChanged} from './core.mjs';
+import {LIBRARY,LIBRARY_MAP,LIBRARY_CATEGORIES} from './library/catalog.mjs';
+import {addModelToGroup,importLocalGLB,localLibrary,getLocalFile} from './library/models.mjs';
+import {makeZip,readZip} from './library/zip.mjs';
+import {assetHash} from './library/glb-utils.mjs';
 const $=s=>document.querySelector(s),data=globalThis.SpelFloor5,worldSource=globalThis.SpelWorld;
 if(!data||!worldSource||!T.WebGLRenderer)throw new Error('Spelplanen eller Three.js saknas.');
 const baseScene=worldSource.build({doors:Object.fromEntries(data.doors.filter(d=>d.accessCardConfirmed).map(d=>[d.id,true]))});
 const furnishings=createFurnishings(data,baseScene,{inside,distanceSegment});
 const baseline=catalog(data,furnishings),baseMap=new Map(baseline.map(o=>[o.id,o]));
 const STORAGE='cartridge-furniture-studio-0.17.0-v1';
-const labels={chair:'Stol',table:'Bord',sofa:'Soffa','coffee-table':'Soffbord',desk:'Skrivbord',cabinet:'Skåp'};
+const labels={chair:'Stol',table:'Bord',sofa:'Soffa','coffee-table':'Soffbord',desk:'Skrivbord',cabinet:'Skåp',prop:'3D-objekt'};
+let localEntries=[];
 const originalCounts={...baseline.reduce((r,o)=>(r[o.kind]=(r[o.kind]||0)+1,r),{})};
 let items=baseline.map(o=>({...o,original:{...o}})),chosen=null,undoStack=[],redoStack=[],gesture=null,room='I09',cameraMode='top',zoom=16,azimuth=-.65,polar=.80,noticeTimer=null;
 const $canvas=$('#viewport'),scene=new T.Scene();scene.background=new T.Color(0xdfe9e5);
@@ -22,8 +27,9 @@ renderer.outputColorSpace=T.SRGBColorSpace;renderer.setPixelRatio(Math.min(windo
 const target=new T.Vector3(7.5,0,11.8),raycaster=new T.Raycaster(),floorPlane=new T.Plane(new T.Vector3(0,1,0),0);
 const boxGeometry=new T.BoxGeometry(1,1,1),pickMeshes=[],furnitureGroups=new Map(),originMaterials=[];
 const mat=(color,rough=.8,metal=0,opts={})=>new T.MeshStandardMaterial({color,roughness:rough,metalness:metal,...opts});
+const pickMaterial=new T.MeshBasicMaterial({transparent:true,opacity:0,depthWrite:false,colorWrite:false});
 const m={floor:mat(0xf5f8f3),rooms:mat(0xebf0ee),dark:mat(0x324b50),metal:mat(0x819b9b,.45,.6),white:mat(0xeceee9),wood:mat(0xc1a582),orange:mat(0xdf753c),blue:mat(0x629ca3),teal:mat(0x3b9291),selected:mat(0x17a7a2,.4),fixed:mat(0x9faeac,.85,0,{transparent:true,opacity:.77}),wall:mat(0xa9b7b5,.95,0,{transparent:true,opacity:.63}),glass:mat(0x8ec8cd,.26,.1,{transparent:true,opacity:.34,depthWrite:false}),door:mat(0xd2a36b)};
-originMaterials.push(...Object.values(m));
+originMaterials.push(...Object.values(m),pickMaterial);
 const dynamicGroup=new T.Group();dynamicGroup.name='editable-furnishings';scene.add(dynamicGroup);
 function addBox(parent,x,y,z,w,h,d,material,clickable=false){const o=new T.Mesh(boxGeometry,material);o.position.set(x,y,z);o.scale.set(Math.max(.005,w),Math.max(.005,h),Math.max(.005,d));parent.add(o);if(clickable)pickMeshes.push(o);return o;}
 function polygonMesh(polygon,material,y){const s=new T.Shape();polygon.forEach(([x,z],i)=>i?s.lineTo(x,z):s.moveTo(x,z));s.closePath();const g=new T.ShapeGeometry(s);const o=new T.Mesh(g,material);o.rotation.x=Math.PI/2;o.position.y=y;o.material.side=T.DoubleSide;return o;}
@@ -63,7 +69,12 @@ function makeModel(item){
  const group=new T.Group();group.name='möbel-'+item.id;group.userData.editId=item.id;
  const put=(x,y,z,w,h,d,material)=>addBox(group,x,y,z,w,h,d,material,true);
  const w=item.w,d=item.d,chairOrange=['I09','I10','I19'].includes(item.roomId);const cloth=chairOrange?m.orange:m.blue;
- if(item.kind==='chair'){
+ if(item.assetId){
+  const proxy=put(0,item.height/2,0,w,item.height,d,pickMaterial);proxy.userData.editId=item.id;
+  const fallback=put(0,item.height/2,0,w*.96,item.height*.96,d*.96,m.teal);fallback.userData.editorFallback=true;
+  addModelToGroup(item,group,()=>{if(group.userData.realModel){fallback.visible=false;fallback.material=pickMaterial;}
+    if(chosen===item.id)updateHighlight();scheduleRender();});
+ }else if(item.kind==='chair'){
   const seatH=.47;put(0,seatH,0,w*.91,.11,d*.86,cloth);
   put(0,.74,d*.39,w*.91,.46,.072,cloth);
   for(const x of [-w*.34,w*.34])for(const z of[-d*.30,d*.30])put(x,.22,z,.025,.43,.025,m.metal);
@@ -121,10 +132,10 @@ function checkpoint(before){const a=JSON.stringify(before),b=JSON.stringify(item
  undoStack.push(before);if(undoStack.length>60)undoStack.shift();redoStack=[];store();renderProperties();renderList();return true;
 }
 function restore(snap){items=snap.map(o=>({...o,original:o.original?{...o.original}:undefined}));if(!items.some(o=>o.id===chosen&&!o.deleted))chosen=null;syncModels();renderList();renderProperties();}
-function store(){try{const doc=exportPatch(items,baseline);localStorage.setItem(STORAGE,JSON.stringify(doc));$('#autosave').textContent='Ändringar sparade lokalt. Ladda ned JSON för att kunna skicka dem.';}catch{$('#autosave').textContent='Lokal lagring fungerar inte — ladda ned JSON-filen direkt.';}}
+function store(){try{const doc=exportPatch(items,baseline);localStorage.setItem(STORAGE,JSON.stringify(doc));$('#autosave').textContent='Ändringar sparade lokalt. Ladda ned projektfilen för att kunna fortsätta på en annan dator.';}catch{$('#autosave').textContent='Lokal lagring fungerar inte — ladda ned JSON-filen direkt.';}}
 function notify(message){$('#notice').textContent=message;$('#notice').hidden=false;clearTimeout(noticeTimer);noticeTimer=setTimeout(()=>{$('#notice').hidden=true;},4600);}
-function nameFor(o){return labels[o.kind]||'Möbel';}
-function renderRooms(){const rooms=[...new Set(items.map(o=>o.roomId))].sort((a,b)=>DEFAULT_ROOMS.indexOf(a)===-1?1:DEFAULT_ROOMS.indexOf(b)===-1?-1:DEFAULT_ROOMS.indexOf(a)-DEFAULT_ROOMS.indexOf(b));const el=$('#room');el.replaceChildren();for(const id of rooms){const r=data.rooms.find(r=>r.id===id),opt=document.createElement('option');opt.value=id;opt.textContent=(ROOM_LABELS[id]||r?.name||id)+' · '+id;el.append(opt);}if(!rooms.includes(room))room=rooms[0];el.value=room;}
+function nameFor(o){return o.assetName||LIBRARY_MAP.get(o.assetId)?.name||labels[o.kind]||'Möbel';}
+function renderRooms(){const rooms=[...new Set(data.rooms.filter(r=>r.status==='included').map(r=>r.id))].sort((a,b)=>DEFAULT_ROOMS.indexOf(a)===-1?1:DEFAULT_ROOMS.indexOf(b)===-1?-1:DEFAULT_ROOMS.indexOf(a)-DEFAULT_ROOMS.indexOf(b));const el=$('#room');el.replaceChildren();for(const id of rooms){const r=data.rooms.find(r=>r.id===id),opt=document.createElement('option');opt.value=id;opt.textContent=(ROOM_LABELS[id]||r?.name||id)+' · '+id;el.append(opt);}if(!rooms.includes(room))room=rooms[0];el.value=room;}
 function renderList(){const el=$('#furnitureList');el.replaceChildren();const search=$('#search').value.trim().toLowerCase(),chairsOnly=$('#chairsOnly').checked;
  const visible=items.filter(o=>!o.deleted&&o.roomId===room&&(!chairsOnly||o.kind==='chair')&&(o.id.toLowerCase().includes(search)||nameFor(o).toLowerCase().includes(search)||o.roomId.toLowerCase().includes(search)));
  $('#listCount').textContent=visible.length+' objekt';
@@ -138,7 +149,7 @@ function renderList(){const el=$('#furnitureList');el.replaceChildren();const se
 function renderProperties(){const o=items.find(x=>x.id===chosen&&!x.deleted);$('#emptySelection').hidden=!!o;$('#selectionPanel').hidden=!o;$('#selectionTag').textContent=o?o.roomId:'Ingen vald';
  if(!o)return;
  $('#selectedName').textContent=nameFor(o)+' · '+o.roomId;$('#selectedId').textContent=o.id;$('#x').value=round(o.x,2);$('#z').value=round(o.z,2);
- $('#degrees').textContent=Math.round(normalizeAngle(o.yaw)*180/Math.PI)+'°';$('#duplicate').disabled=!['chair','table','sofa'].includes(o.kind);
+ $('#degrees').textContent=Math.round(normalizeAngle(o.yaw)*180/Math.PI)+'°';$('#duplicate').disabled=!['chair','table','sofa','prop'].includes(o.kind);
 }
 function positionIssue(candidate){const list=items.filter(o=>!o.deleted);return validate(candidate,list,data,baseMap.get(candidate.id));}
 function changePose(id,delta,{quiet=false}={}){const o=items.find(o=>o.id===id&&!o.deleted);if(!o)return false;const next={...o,...delta};next.yaw=normalizeAngle(next.yaw);
@@ -147,7 +158,7 @@ function changePose(id,delta,{quiet=false}={}){const o=items.find(o=>o.id===id&&
 }
 function mutate(id,delta){const prev=snapshot();const ok=changePose(id,delta);if(ok)checkpoint(prev);return ok;}
 function createDuplicate(){const source=items.find(x=>x.id===chosen&&!x.deleted);if(!source)return;
- const tag=source.kind==='chair'?'STOL':source.kind==='sofa'?'SOFFA':'BORD';let i=1,id;
+ const tag=source.assetId?'OBJ':source.kind==='chair'?'STOL':source.kind==='sofa'?'SOFFA':'BORD';let i=1,id;
  do{id=`NY-${tag}-${String(i++).padStart(3,'0')}`;}while(items.some(o=>o.id===id));
  const offsets=[[.7,0],[-.7,0],[0,.7],[0,-.7],[1.2,0],[-1.2,0],[0,1.2],[0,-1.2]];
  for(const [dx,dz]of offsets){const candidate={...source,id,source:'added',x:round(source.x+dx),z:round(source.z+dz),original:undefined};
@@ -158,10 +169,33 @@ function createDuplicate(){const source=items.find(x=>x.id===chosen&&!x.deleted)
 function removeSelection(){const o=items.find(x=>x.id===chosen&&!x.deleted);if(!o)return;const before=snapshot();o.deleted=true;chosen=null;checkpoint(before);syncModels();renderList();renderProperties();notify('Möbeln är borttagen i redigeraren. Spelet är orört.');}
 function undo(){if(!undoStack.length)return;redoStack.push(snapshot());restore(undoStack.pop());store();notify('Ångrat.');}
 function redo(){if(!redoStack.length)return;undoStack.push(snapshot());restore(redoStack.pop());store();notify('Gjort om.');}
-function download(){const patch=exportPatch(items,baseline),blob=new Blob([JSON.stringify(patch,null,2)+'\n'],{type:'application/json'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='CartridgeStrike-moblering-0.17.json';document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),5000);
- notify('Sparat! Skicka den nedladdade JSON-filen till mig här i chatten. Spelet har inte ändrats.');}
-async function importFile(file){if(!file)return;if(file.size>300000)throw Error('JSON-filen är för stor.');const text=await file.text(),doc=JSON.parse(text),parsed=parsePatch(doc,baseline);
- const before=snapshot();items=parsed;chosen=null;checkpoint(before);syncModels();renderRooms();renderList();renderProperties();goToRoom(room);notify('Filen inläst. Du kan fortsätta möblera eller spara en ny JSON.');}
+function downloadBlob(blob,name){const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=name;document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),5000);}
+function activeLocalIds(objects){return [...new Set(objects.filter(o=>!o.deleted&&o.assetId?.startsWith('local:')).map(o=>o.assetId))].sort();}
+async function download(){try{
+ const patch=exportPatch(items,baseline),text=JSON.stringify(patch,null,2)+'\n',ids=activeLocalIds(items);
+ if(!ids.length){downloadBlob(new Blob([text],{type:'application/json'}),'CartridgeStrike-moblering-0.17.json');notify('JSON sparad! Skicka den hit när du vill föra in din möblering i spelet.');return;}
+ const files=[{name:'projekt.json',data:text}];
+ for(const id of ids){const asset=await getLocalFile(id);if(!asset?.data)throw Error('En importerad GLB saknas. Importera den igen innan du sparar.');
+  files.push({name:'models/'+id.slice(6)+'.glb',data:new Uint8Array(asset.data)});
+ }
+ const zip=makeZip(files);downloadBlob(new Blob([zip],{type:'application/zip'}),'CartridgeStrike-moblering-med-GLB.zip');notify('ZIP sparad med alla egna GLB-filer! Skicka ZIP-filen hit om du vill använda dem i spelet.');
+ }catch(e){notify('Kunde inte spara projekt: '+e.message);}}
+async function importFile(file){if(!file)return;if(file.size>24*1024*1024)throw Error('Projektfilen är för stor.');
+ let doc,stored=[];
+ if(/\.zip$/i.test(file.name)){
+  const contents=readZip(await file.arrayBuffer());doc=JSON.parse(new TextDecoder('utf-8').decode(contents.get('projekt.json')));
+  const expected=[...new Set((doc.added||[]).map(p=>p.assetId).filter(id=>typeof id==='string'&&id.startsWith('local:')))];
+  const packages=[...contents.keys()].filter(n=>n!=='projekt.json');
+  if(packages.length!==expected.length)throw Error('ZIP-filen saknar eller innehåller extra 3D-modeller.');
+  for(const id of expected){const name='models/'+id.slice(6)+'.glb',bytes=contents.get(name);if(!bytes||'local:'+await assetHash(bytes)!==id)throw Error('GLB-filen har ändrats efter sparningen.');stored.push({id,data:bytes});}
+ }else{if(file.size>350000)throw Error('JSON-filen är för stor.');doc=JSON.parse(await file.text());}
+ const parsed=parsePatch(doc,baseline);
+ if(stored.length){for(const f of stored){const name=doc.added.find(x=>x.assetId===f.id)?.assetName||'Egen-modell';
+   await importLocalGLB(new File([f.data],name+'.glb',{type:'model/gltf-binary'}));}
+  localEntries=await localLibrary();renderLibrary();
+ }else for(const id of activeLocalIds(parsed))if(!await getLocalFile(id))throw Error('Projektet använder en egen GLB-fil. Öppna den sparade ZIP-filen i stället.');
+ const before=snapshot();items=parsed;chosen=null;checkpoint(before);syncModels();renderRooms();renderList();renderProperties();goToRoom(room);notify('Projektet öppnat! Nu kan du fortsätta möblera och spara igen.');
+}
 function readAutosave(){try{const saved=localStorage.getItem(STORAGE);if(!saved)return;items=parsePatch(JSON.parse(saved),baseline);$('#autosave').textContent='Dina tidigare ändringar har återställts från den här webbläsaren.';}catch{localStorage.removeItem(STORAGE);}}
 function rayAt(event){const r=$canvas.getBoundingClientRect(),p=new T.Vector2((event.clientX-r.left)/r.width*2-1,-((event.clientY-r.top)/r.height*2-1));raycaster.setFromCamera(p,camera);return raycaster;}
 function planePoint(ev){const pt=new T.Vector3();return rayAt(ev).ray.intersectPlane(floorPlane,pt)?pt:null;}
@@ -169,6 +203,44 @@ function lookupHit(ev){const intersections=rayAt(ev).intersectObjects(pickMeshes
 function pan(dx,dy){const h=Math.max(1,$canvas.getBoundingClientRect().height),scale=zoom/h;if(cameraMode==='top'){target.x-=dx*scale;target.z-=dy*scale;}
  else{const right=new T.Vector3(1,0,0).applyQuaternion(camera.quaternion),up=new T.Vector3(0,1,0).applyQuaternion(camera.quaternion);target.x+=(-dx*right.x+dy*up.x)*scale;target.z+=(-dx*right.z+dy*up.z)*scale;}
  scheduleRender();}
+const LIBRARY_EMOJI={stolar:'◩',bord:'▰',kontor:'▥',kok:'▤',badrum:'◪',labb:'⬡',industri:'▦',dekor:'✦',egna:'★'};
+function renderLibrary(){const query=$('#librarySearch').value.trim().toLocaleLowerCase('sv'),cat=$('#libraryCategory').value;
+ const source=[...LIBRARY,...localEntries];const visible=source.filter(x=>(cat==='alla'||x.category===cat)&&(!query||(x.name+' '+x.category+' '+x.model).toLocaleLowerCase('sv').includes(query)));
+ $('#libraryCount').textContent=`${visible.length} av ${source.length} objekt`;
+ const list=$('#libraryTiles');list.replaceChildren();
+ for(const entry of visible){const card=document.createElement('button');card.type='button';card.className='library-tile';card.title=entry.license+' · '+entry.source;
+  const preview=document.createElement('div');preview.className='library-thumb';
+  if(entry.thumb){const img=document.createElement('img');img.src=entry.thumb;img.loading='lazy';img.alt='Förhandsbild av '+entry.name;img.decoding='async';img.onerror=()=>{img.remove();preview.textContent=LIBRARY_EMOJI[entry.category]||'◼';};preview.append(img);}else preview.textContent=LIBRARY_EMOJI[entry.category]||'◼';
+  const name=document.createElement('strong');name.textContent=entry.name;
+  const lic=document.createElement('small');lic.textContent=entry.category+' · '+entry.license;
+  const dim=document.createElement('span');dim.textContent=`${entry.width} × ${entry.depth} × ${entry.height} m`;
+  card.append(preview,name,lic,dim);card.onclick=()=>addPreset(entry.id);list.append(card);
+ }
+ if(!visible.length){const p=document.createElement('p');p.className='helper';p.textContent='Inga objekt hittades. Prova en annan sökning eller importera en GLB.';list.append(p);}
+}
+function findPlacement(entry){const r=data.rooms.find(r=>r.id===room&&r.status==='included');if(!r)return null;
+ const [x0,z0,x1,z1]=bounds(r.polygon),cx=(x0+x1)/2,cz=(z0+z1)/2,dist=Math.hypot(x1-x0,z1-z0),used=items.filter(o=>!o.deleted);
+ let tries=0;const check=(x,z)=>{const test={...entry,id:'temporary',roomId:room,x:round(x),z:round(z),yaw:0,w:entry.width,d:entry.depth,height:entry.height};tries++;return !validate(test,used,data)?{x:test.x,z:test.z}:null;};
+ for(let radius=0;radius<=dist;radius+=.36){const samples=radius<.1?1:Math.max(12,Math.ceil(radius*14));for(let i=0;i<samples;i++){
+  const angle=2*Math.PI*i/samples,x=cx+radius*Math.cos(angle),z=cz+radius*Math.sin(angle),found=check(x,z);if(found)return found;
+  if(tries>1200)break;
+ }if(tries>1200)break;}
+ return null;
+}
+async function addPreset(id){const entry=LIBRARY_MAP.get(id)||localEntries.find(e=>e.id===id);
+ if(!entry){notify('Okänt objekt.');return null;}
+ const pos=findPlacement(entry);if(!pos){notify('Hittade ingen ledig plats i det här rummet. Prova ett större rum eller flytta befintliga möbler.');return null;}
+ let serial=1,objectId;do{objectId='NY-OBJ-'+String(serial++).padStart(4,'0');}while(items.some(o=>o.id===objectId));
+ const before=snapshot(),item={id:objectId,roomId:room,kind:'prop',assetId:entry.id,assetName:entry.name,source:'added',
+  x:pos.x,z:pos.z,yaw:0,w:entry.width,d:entry.depth,height:entry.height};
+ items.push(item);checkpoint(before);$('#chairsOnly').checked=false;syncModels();renderRooms();select(objectId,true);$('#libraryDialog').close();notify(entry.name+' tillagd! Dra objektet dit du vill och spara projektet.');return objectId;
+}
+async function addCustom(file){if(!file)return;const entry=await importLocalGLB(file),existing=localEntries.findIndex(x=>x.id===entry.id);
+ if(existing<0)localEntries.push(entry);else localEntries[existing]=entry;
+ $('#libraryCategory').value='egna';$('#librarySearch').value='';renderLibrary();
+ const id=await addPreset(entry.id);if(!entry.persisted)notify('GLB inläst, men webbläsarlagringen är full. Spara ZIP innan du stänger sidan.');
+ return id;
+}
 function setUpEvents(){
  $('#room').onchange=e=>{room=e.target.value;renderList();goToRoom(room);select(null);};
  $('#search').oninput=renderList;$('#chairsOnly').onchange=renderList;
@@ -177,6 +249,12 @@ function setUpEvents(){
  $('#rotateRight').onclick=()=>{const o=items.find(x=>x.id===chosen);if(o)mutate(o.id,{yaw:o.yaw+Math.PI/12});};
  for(const k of ['x','z'])$('#'+k).onchange=e=>{const o=items.find(x=>x.id===chosen);if(!o)return;const value=Number(e.target.value);if(Number.isFinite(value))mutate(o.id,{[k]:value});renderProperties();};
  $('#duplicate').onclick=createDuplicate;$('#remove').onclick=removeSelection;$('#download').onclick=download;$('#downloadTop').onclick=download;$('#undo').onclick=undo;$('#redo').onclick=redo;
+ $('#openLibrary').onclick=()=>{$('#libraryDialog').showModal();renderLibrary();$('#librarySearch').focus();};
+ $('#closeLibrary').onclick=()=>$('#libraryDialog').close();
+ $('#librarySearch').oninput=renderLibrary;$('#libraryCategory').onchange=renderLibrary;
+ $('#customGLB').onchange=async e=>{try{await addCustom(e.target.files?.[0]);}catch(err){notify('GLB-import: '+err.message);}finally{e.target.value='';}};
+ const drop=$('#dropZone');drop.addEventListener('dragover',e=>{if([...e.dataTransfer.items].some(x=>x.kind==='file')){e.preventDefault();drop.classList.add('drag-glb');}});drop.addEventListener('dragleave',()=>drop.classList.remove('drag-glb'));
+ drop.addEventListener('drop',async e=>{e.preventDefault();drop.classList.remove('drag-glb');const file=[...e.dataTransfer.files].find(f=>/\.glb$/i.test(f.name));if(file)try{await addCustom(file);}catch(err){notify('GLB-import: '+err.message);}});
  $('#reset').onclick=()=>{if(!window.confirm('Återställa ALLA dina ändringar i Möbelstudion? Spelet påverkas inte.'))return;
  const before=snapshot();items=baseline.map(o=>({...o,original:{...o}}));chosen=null;checkpoint(before);syncModels();renderRooms();renderList();renderProperties();notify('Möbleringen återställd till ursprungsläget.');};
  $('#importFile').onchange=async e=>{try{await importFile(e.target.files?.[0]);}catch(err){notify('Kunde inte öppna filen: '+err.message);}finally{e.target.value='';}};
@@ -216,11 +294,12 @@ function setUpEvents(){
  });
  new ResizeObserver(scheduleRender).observe($canvas.parentElement);
 }
-function bootstrap(){makeGround();readAutosave();renderRooms();syncModels();setUpEvents();goToRoom('I09');view('top');renderList();renderProperties();$('#loading').hidden=true;
+async function bootstrap(){makeGround();readAutosave();localEntries=await localLibrary();renderRooms();syncModels();setUpEvents();goToRoom('I09');view('top');renderList();renderProperties();renderLibrary();$('#loading').hidden=true;
  window.__furnitureEditor={getState:()=>({version:EDITOR_VERSION,sourceCommit:BASE_COMMIT,gameVersion:GAME_VERSION,objects:items.length,chairs:items.filter(o=>o.kind==='chair'&&!o.deleted).length,
    authored:originalCounts.chair||0,selected:chosen,changed:exportPatch(items,baseline).placements.length+exportPatch(items,baseline).added.length+exportPatch(items,baseline).removed.length,view:cameraMode,gameModuleLoaded:!!globalThis.__fps}),
   select:id=>select(id,true),getPatch:()=>exportPatch(items,baseline),getItem:id=>items.find(o=>o.id===id),
+  catalogCount:LIBRARY.length,addPreset:async id=>addPreset(id),openLibrary:()=>$('#openLibrary').click(),
   screenPoint:id=>{const group=furnitureGroups.get(id);if(!group)return null;const r=$canvas.getBoundingClientRect();const p=group.position.clone().add(new T.Vector3(0,.5,0)).project(camera);return {x:r.left+(p.x+1)*r.width/2,y:r.top+(1-p.y)*r.height/2};},
   move:(id,x,z)=>mutate(id,{x,z}),rotate:(id,degrees)=>{const o=items.find(o=>o.id===id);return o&&mutate(id,{yaw:o.yaw+degrees*Math.PI/180});}};
 }
-try{bootstrap();}catch(e){console.error(e);$('#loading').textContent='Möbelstudion kunde inte starta: '+e.message;}
+bootstrap().catch(e=>{console.error(e);$('#loading').textContent='Möbelstudion kunde inte starta: '+e.message;});

@@ -54,7 +54,7 @@ test('unsafe or incompatible JSON imports are rejected, gameplay remains unmodif
  assert.throws(()=>parsePatch({...doc,added:[{id:'../evil',kind:'chair',roomId:'I09',x:1,z:1,yaw:0,w:1,d:1,height:1}]},base),/ny möbel/);
  assert.throws(()=>parsePatch({...doc,placements:Array(400).fill({})},base),/många/);
  const html=readFileSync(resolve(root,'furniture-editor/index.html'),'utf8');
- assert(html.includes('SPARA MIN MÖBLERING'));assert(!html.includes('src/fps/app.mjs'));
+ assert(html.includes('SPARA MITT PROJEKT'));assert(!html.includes('src/fps/app.mjs'));
  for(const path of ['furniture-editor/main.mjs','furniture-editor/core.mjs']){
   const s=readFileSync(resolve(root,path),'utf8');assert(!s.includes('fetch('));assert(!s.includes('localStorage.setItem(\'cartridge-settings'));
  }
