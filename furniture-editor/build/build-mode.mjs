@@ -4,7 +4,7 @@
 import * as THREE from '../../vendor/three/three.module.js';
 import {ARCHITECTURE_TYPES,ARCHITECTURE_NAMES,ARCHITECTURE_COLORS,readBaseline,
  cloneEntry,roundPosition,entryLength,validateEntry,validateFloorRect,pointToSegmentDistance,
- exportArchitecture,parseArchitecture,makeEntry,getNextId,floorRect,wallPieces,warningsForLayout,
+ exportArchitecture,parseArchitecture,makeEntry,getNextId,doorOnWallSegment,floorRect,wallPieces,warningsForLayout,
  isDoor,isWall} from './architecture.mjs';
 const $=id=>document.getElementById(id);
 const DIST=1e-5;
@@ -19,7 +19,7 @@ function near(a,b,r){return Math.hypot(a[0]-b[0],a[1]-b[1])<=r;}
 function minMax(p){return {minX:Math.min(p.a[0],p.b[0]),maxX:Math.max(p.a[0],p.b[0]),minZ:Math.min(p.a[1],p.b[1]),maxZ:Math.max(p.a[1],p.b[1])};}
 
 export function createBuildMode({data,scene,canvas,camera,getZoom,getView,rayAt,planePoint,onPan,onOrbit,
- scheduleRender,notify,onChange,onGoRoom,originalWalls}){
+ scheduleRender,notify,onChange,onGoRoom,onGoPoint,originalWalls}){
  const baseline=readBaseline(data);let entries=cloneAll(baseline),floors=[];
  let active=false,selection=null,mode='select',first=null,hover=null,drag=null;
  let history=[],future=[],dirty=false,strokeColor=0;
@@ -163,6 +163,10 @@ export function createBuildMode({data,scene,canvas,camera,getZoom,getView,rayAt,
    $('buildDelete').textContent=e.source?'Ta bort i skissen':'Ta bort byggdelen';
   }
   $('buildUndo').disabled=!history.length;$('buildRedo').disabled=!future.length;
+  const wallSelected=!!e&&'a' in e&&isWall(e.kind);
+  for(const btn of document.querySelectorAll('[data-quick-kind]'))btn.disabled=!wallSelected;
+  $('buildDoorInWall').disabled=!wallSelected;
+  $('buildSimpleHelp').textContent=e?('Markerad: '+(ARCHITECTURE_NAMES[e.kind]||'Golv')+' · '+e.id+' — välj en åtgärd nedan'):'Klicka först på en vägg på kartan. Välj sedan Fönster, Glasvägg eller Lägg till dörr.';
   reportWarnings();
  }
  function renderList(){const list=$('buildList');list.replaceChildren();const filter=$('buildSearch').value.trim().toLowerCase();
@@ -179,7 +183,7 @@ export function createBuildMode({data,scene,canvas,camera,getZoom,getView,rayAt,
    const button=document.createElement('button');button.type='button';button.className='build-list-item';button.classList.toggle('active',e.id===selection);
    const swatch=document.createElement('span');swatch.className='arch-swatch';swatch.style.background=ARCHITECTURE_COLORS[e.kind]||'#7ec7b4';
    const name=document.createElement('span');name.textContent=label;const id=document.createElement('small');id.textContent=e.id;
-   button.append(swatch,name,id);button.onclick=()=>{setTool('select');select(e.id);};list.append(button);seen++;
+   button.append(swatch,name,id);button.onclick=()=>{setTool('select');select(e.id);onGoPoint?.('a' in e?(e.a[0]+e.b[0])/2:(e.x0+e.x1)/2,'a' in e?(e.a[1]+e.b[1])/2:(e.z0+e.z1)/2);};list.append(button);seen++;
   }
   $('buildListCount').textContent=filter?`${found.length} träffar`: `Visar ${seen} närmaste av ${found.length} delar`;
   $('viewportStatus').textContent=`BYGGLÄGE · ${count()} ändringar i byggskissen · ${found.length} befintliga/nya byggdelar`;
@@ -189,6 +193,26 @@ export function createBuildMode({data,scene,canvas,camera,getZoom,getView,rayAt,
   const old=capture(),next={...e,...delta,a:[...(delta.a??e.a)],b:[...(delta.b??e.b)]};
   try{if('a' in e)validateEntry(next);else validateFloorRect(next);}catch(err){notify?.(err.message);return false;}
   Object.assign(e,next);record(old);return true;
+ }
+ function quickChange(kind){
+  const e=entryById(selection);
+  if(!e||!('a' in e)){notify?.('Välj först en vägg eller dörr på kartan.');return false;}
+  if(isDoor(e.kind)&&['wall','glazed','window'].includes(kind)){
+   notify?.('En dörr är vald. Välj en vägg om du vill ändra till fönster eller glasvägg.');return false;
+  }
+  if(changeEntry(e.id,{kind})){setTool('select');notify?.('Klart! Väggen är nu '+ARCHITECTURE_NAMES[kind].toLowerCase()+'. Ångra fungerar.');return true;}
+  return false;
+ }
+ function quickDoor(){
+  const e=entryById(selection);if(!e||!('a' in e)||!isWall(e.kind)){
+   notify?.('Välj först den vägg där dörren ska sitta.');return null;
+  }
+  let door;
+  try{door=doorOnWallSegment(e,getNextId(entries,floors,'door'));}
+  catch(error){notify?.(error.message);return null;}
+  const before=capture();entries.push(door);selection=door.id;setTool('select');record(before);
+  notify?.('En 90 cm dörr har satts mitt på väggen. Dra den längs väggen eller ändra måtten nedan.');
+  return door.id;
  }
  function removeSelected(){if(!selection)return;const before=capture();const e=entryById(selection);if(!e)return;
   if('a' in e){if(e.source)e.deleted=true;else entries=entries.filter(x=>x.id!==selection);}
@@ -256,6 +280,8 @@ export function createBuildMode({data,scene,canvas,camera,getZoom,getView,rayAt,
   picker.onchange=e=>{onGoRoom?.(e.target.value);renderList();};
   $('modeFurniture').onclick=()=>enable(false);$('modeBuild').onclick=()=>enable(true);
   $('buildTool').onchange=e=>setTool(e.target.value);
+  for(const btn of document.querySelectorAll('[data-quick-kind]'))btn.onclick=()=>quickChange(btn.dataset.quickKind);
+  $('buildDoorInWall').onclick=quickDoor;
   document.querySelectorAll('[data-build-tool]').forEach(button=>{button.onclick=()=>setTool(button.dataset.buildTool);});
   $('buildSearch').oninput=renderList;
   $('buildKind').onchange=e=>{const s=entryById(selection);if(s&&'a' in s)changeEntry(s.id,{kind:e.target.value});};
@@ -294,7 +320,7 @@ export function createBuildMode({data,scene,canvas,camera,getZoom,getView,rayAt,
  bind();render();showProperties();renderList();syncVisibility();
  return {get active(){return active;},enable,getBaseline:()=>cloneAll(baseline),getEntries:()=>cloneAll(entries),getFloors:()=>copyFloors(floors),
   export:()=>exportArchitecture(entries,baseline,floors),load,reset:resetWithoutConfirm,hasSketch,
-  setView:()=>render(),select,setTool,undo,redo,count,
+  setView:()=>render(),select,setTool,undo,redo,count,quickChange,quickDoor,
   getSelected:()=>selection,getTool:()=>mode,getDrawingState:()=>({mode,first:first?[...first]:null,selected:selection}),
   testCreate:(kind,a,b)=>{const before=capture();const e=makeEntry(getNextId(entries,floors,kind),kind,a,b);validateEntry(e);entries.push(e);selection=e.id;record(before);return e.id;},
   testChange:(id,delta)=>changeEntry(id,delta)};

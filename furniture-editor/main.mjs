@@ -6,7 +6,7 @@ import * as T from '../vendor/three/three.module.js';
 import {createFurnishings} from '../src/fps/furnishings.mjs';
 import {EDITOR_VERSION,GAME_VERSION,BASE_COMMIT,DEFAULT_ROOMS,ROOM_LABELS,
   EDITABLE_KINDS,bounds,centroid,inside,distanceSegment,catalog,normalizeAngle,
-  round,validate,exportPatch,parsePatch,isChanged} from './core.mjs';
+  round,validate,snapFurnitureToWall,exportPatch,parsePatch,isChanged} from './core.mjs';
 import {LIBRARY,LIBRARY_MAP,LIBRARY_CATEGORIES} from './library/catalog.mjs';
 import {addModelToGroup,importLocalGLB,localLibrary,getLocalFile} from './library/models.mjs';
 import {makeZip,readZip} from './library/zip.mjs';
@@ -156,7 +156,11 @@ function renderProperties(){const o=items.find(x=>x.id===chosen&&!x.deleted);$('
  $('#degrees').textContent=Math.round(normalizeAngle(o.yaw)*180/Math.PI)+'°';$('#duplicate').disabled=!['chair','table','sofa','prop'].includes(o.kind);
 }
 function positionIssue(candidate){const list=items.filter(o=>!o.deleted);return validate(candidate,list,data,baseMap.get(candidate.id));}
-function changePose(id,delta,{quiet=false}={}){const o=items.find(o=>o.id===id&&!o.deleted);if(!o)return false;const next={...o,...delta};next.yaw=normalizeAngle(next.yaw);
+function changePose(id,delta,{quiet=false}={}){const o=items.find(o=>o.id===id&&!o.deleted);if(!o)return false;let next={...o,...delta};next.yaw=normalizeAngle(next.yaw);
+ if(quiet&&$('#wallSnap')?.checked&&(delta.x!==undefined||delta.z!==undefined)){
+  const snapped=snapFurnitureToWall(next,data);
+  if(!positionIssue(snapped))next=snapped;
+ }
  const problem=positionIssue(next);if(problem){$('#validation').textContent=problem;$('#validation').hidden=false;if(!quiet)notify(problem);return false;}
  $('#validation').hidden=true;Object.assign(o,{x:next.x,z:next.z,yaw:next.yaw});updatePose(o);renderProperties();return true;
 }
@@ -207,7 +211,7 @@ function lookupHit(ev){const intersections=rayAt(ev).intersectObjects(pickMeshes
 function pan(dx,dy){const h=Math.max(1,$canvas.getBoundingClientRect().height),scale=zoom/h;if(cameraMode==='top'){target.x-=dx*scale;target.z-=dy*scale;}
  else{const right=new T.Vector3(1,0,0).applyQuaternion(camera.quaternion),up=new T.Vector3(0,1,0).applyQuaternion(camera.quaternion);target.x+=(-dx*right.x+dy*up.x)*scale;target.z+=(-dx*right.z+dy*up.z)*scale;}
  scheduleRender();}
-const LIBRARY_EMOJI={stolar:'◩',bord:'▰',kontor:'▥',kok:'▤',badrum:'◪',labb:'⬡',industri:'▦',dekor:'✦',egna:'★'};
+const LIBRARY_EMOJI={hissrum12:'▧',stolar:'◩',bord:'▰',kontor:'▥',kok:'▤',badrum:'◪',labb:'⬡',industri:'▦',dekor:'✦',egna:'★'};
 function renderLibrary(){const query=$('#librarySearch').value.trim().toLocaleLowerCase('sv'),cat=$('#libraryCategory').value;
  const source=[...LIBRARY,...localEntries];const visible=source.filter(x=>(cat==='alla'||x.category===cat)&&(!query||(x.name+' '+x.category+' '+x.model).toLocaleLowerCase('sv').includes(query)));
  $('#libraryCount').textContent=`${visible.length} av ${source.length} objekt`;
@@ -239,11 +243,22 @@ async function addPreset(id){const entry=LIBRARY_MAP.get(id)||localEntries.find(
   x:pos.x,z:pos.z,yaw:0,w:entry.width,d:entry.depth,height:entry.height};
  items.push(item);checkpoint(before);$('#chairsOnly').checked=false;syncModels();renderRooms();select(objectId,true);$('#libraryDialog').close();notify(entry.name+' tillagd! Dra objektet dit du vill och spara projektet.');return objectId;
 }
-async function addCustom(file){if(!file)return;const entry=await importLocalGLB(file),existing=localEntries.findIndex(x=>x.id===entry.id);
+async function addCustom(file,{place=true}={}){if(!file)return;const entry=await importLocalGLB(file),existing=localEntries.findIndex(x=>x.id===entry.id);
  if(existing<0)localEntries.push(entry);else localEntries[existing]=entry;
  $('#libraryCategory').value='egna';$('#librarySearch').value='';renderLibrary();
- const id=await addPreset(entry.id);if(!entry.persisted)notify('GLB inläst, men webbläsarlagringen är full. Spara ZIP innan du stänger sidan.');
- return id;
+ if(!entry.persisted)notify('GLB inläst, men webbläsarlagringen är full. Spara ZIP innan du stänger sidan.');
+ // Multi-import adds assets to the personal catalog, never fills the room automatically.
+ return place?await addPreset(entry.id):entry.id;
+}
+async function importCustomBatch(files){
+ const list=[...files].filter(file=>/\.glb$/i.test(file.name)).slice(0,20);
+ if(!list.length)throw Error('Välj minst en .glb-fil.');
+ let ok=0,failed=[];
+ for(const file of list){try{await addCustom(file,{place:false});ok++;}catch(err){failed.push(file.name+': '+err.message);}}
+ $('#libraryCategory').value='egna';renderLibrary();
+ notify(ok+' modeller i Mina GLB-modeller. Klicka på en för att placera.'+(failed.length?' '+failed.length+' kunde inte importeras.':''));
+ if(failed.length)console.warn('Local GLB import rejected:',failed);
+ return {ok,failed};
 }
 function setUpEvents(){
  $('#room').onchange=e=>{room=e.target.value;renderList();goToRoom(room);select(null);};
@@ -256,7 +271,7 @@ function setUpEvents(){
  $('#openLibrary').onclick=()=>{$('#libraryDialog').showModal();renderLibrary();$('#librarySearch').focus();};
  $('#closeLibrary').onclick=()=>$('#libraryDialog').close();
  $('#librarySearch').oninput=renderLibrary;$('#libraryCategory').onchange=renderLibrary;
- $('#customGLB').onchange=async e=>{try{await addCustom(e.target.files?.[0]);}catch(err){notify('GLB-import: '+err.message);}finally{e.target.value='';}};
+ $('#customGLB').onchange=async e=>{try{const files=[...e.target.files];if(files.length===1)await addCustom(files[0]);else await importCustomBatch(files);}catch(err){notify('GLB-import: '+err.message);}finally{e.target.value='';}};
  const drop=$('#dropZone');drop.addEventListener('dragover',e=>{if([...e.dataTransfer.items].some(x=>x.kind==='file')){e.preventDefault();drop.classList.add('drag-glb');}});drop.addEventListener('dragleave',()=>drop.classList.remove('drag-glb'));
  drop.addEventListener('drop',async e=>{e.preventDefault();drop.classList.remove('drag-glb');const file=[...e.dataTransfer.files].find(f=>/\.glb$/i.test(f.name));if(file)try{await addCustom(file);}catch(err){notify('GLB-import: '+err.message);}});
  $('#reset').onclick=()=>{if(!window.confirm('Återställa ALLA dina ändringar i Möbelstudion? Spelet påverkas inte.'))return;
@@ -302,7 +317,8 @@ function setUpEvents(){
 async function bootstrap(){makeGround();
  building=createBuildMode({data,scene,canvas:$canvas,camera,getZoom:()=>zoom,getView:()=>cameraMode,
   rayAt,planePoint,onPan:pan,onOrbit:(dx,dy)=>{azimuth-=dx*.008;polar=Math.max(.23,Math.min(1.42,polar+dy*.006));scheduleRender();},
-  scheduleRender,notify,onChange:()=>{store();renderList();},onGoRoom:id=>{room=id;$('#room').value=id;goToRoom(id);},originalWalls:sourceWallMeshes});
+  scheduleRender,notify,onChange:()=>{store();renderList();},onGoRoom:id=>{room=id;$('#room').value=id;goToRoom(id);},
+  onGoPoint:(x,z)=>{target.set(x,0,z);zoom=Math.min(zoom,7);scheduleRender();},originalWalls:sourceWallMeshes});
  readAutosave();localEntries=await localLibrary();renderRooms();syncModels();setUpEvents();goToRoom('I09');view('top');renderList();renderProperties();renderLibrary();$('#loading').hidden=true;
  window.__furnitureEditor={getState:()=>({version:EDITOR_VERSION,sourceCommit:BASE_COMMIT,gameVersion:GAME_VERSION,objects:items.length,chairs:items.filter(o=>o.kind==='chair'&&!o.deleted).length,
    authored:originalCounts.chair||0,selected:chosen,changed:exportPatch(items,baseline).placements.length+exportPatch(items,baseline).added.length+exportPatch(items,baseline).removed.length,view:cameraMode,gameModuleLoaded:!!globalThis.__fps}),

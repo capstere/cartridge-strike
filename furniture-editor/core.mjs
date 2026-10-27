@@ -67,11 +67,17 @@ export function validate(item,objects,data,original=null){
  // arrangement already placed that chair close to a table or a wall.
  if(original&&item.kind==='chair'&&Math.abs(item.w-item.d)<.05&&
     Math.hypot(item.x-original.x,item.z-original.z)<1e-4)return null;
- const pts=corners(item,.025);
+ // Allow wall-adjacent furniture: the polygon is a room centreline, not an extra 2.5 cm safety exclusion.
+ const pts=corners(item);
  if(pts.some(p=>!inside(...p,room.polygon)))return 'Möbeln hamnar utanför rummet.';
  const blocked=[...data.excludedRooms,...data.rooms.filter(r=>r.status==='uncertain'),...data.obstacles.filter(o=>!EDITABLE_KINDS[o.kind])];
  if(blocked.some(b=>intersects(pts,b.polygon)))return 'Möbeln hamnar på en fast möbel eller spärrad yta.';
- for(const w of data.walls)if(segmentIntersectsRectangle(w.a,w.b,item,Math.max(.06,(w.thickness||.1)/2+.07)))return 'Möbeln krockar med en vägg eller glasvägg.';
+ for(const w of data.walls){
+  // Physical wall half-thickness only, with 7 mm of contact tolerance. The old
+  // 7 cm artificial margin falsely rejected chairs positioned flush to walls.
+  const half=Math.max(.012,(w.thickness||.10)/2-.007);
+  if(segmentIntersectsRectangle(w.a,w.b,item,half))return 'Möbeln överlappar själva väggen. Flytta ut den några millimeter.';
+ }
  for(const d of data.doors){if(d.blocked||d.kind?.startsWith('open-passage'))continue;
   if(segmentIntersectsRectangle(d.a,d.b,item,.35))return 'Möbeln blockerar en dörröppning.';
  }
@@ -83,6 +89,30 @@ export function validate(item,objects,data,original=null){
    !(original&&obj.original&&intersects(corners(original,.012),corners(obj.original,.012))))return 'Möbeln överlappar en annan möbel.';
  }
  return null;
+}
+/** Suggest a physical wall-contact position when furniture is dragged near a wall.
+ * Does not teleport across walls. Keeps a 12 mm gap from actual wall surface.
+ * Validation still governs solid collisions and door clearance.
+ */
+export function snapFurnitureToWall(item,data,{range=.16,gap=.012}={}){
+ if(!Array.isArray(data?.walls))return item;
+ const pts=corners(item),xmin=Math.min(...pts.map(p=>p[0])),xmax=Math.max(...pts.map(p=>p[0]));
+ const zmin=Math.min(...pts.map(p=>p[1])),zmax=Math.max(...pts.map(p=>p[1]));
+ let best=null,dist=range;
+ for(const w of data.walls){const a=w.a,b=w.b,half=(w.thickness||.10)/2+gap;
+  if(Math.abs(a[0]-b[0])<.0001){
+   const wallX=a[0],segLo=Math.min(a[1],b[1]),segHi=Math.max(a[1],b[1]);
+   if(segHi<zmin+.06||segLo>zmax-.06)continue;
+   const side=item.x>=wallX?1:-1,target=wallX+side*(Math.max(item.x-xmin,xmax-item.x)+half),delta=Math.abs(target-item.x);
+   if(delta<dist){dist=delta;best={x:round(target,4)};}
+  }else if(Math.abs(a[1]-b[1])<.0001){
+   const wallZ=a[1],segLo=Math.min(a[0],b[0]),segHi=Math.max(a[0],b[0]);
+   if(segHi<xmin+.06||segLo>xmax-.06)continue;
+   const side=item.z>=wallZ?1:-1,target=wallZ+side*(Math.max(item.z-zmin,zmax-item.z)+half),delta=Math.abs(target-item.z);
+   if(delta<dist){dist=delta;best={z:round(target,4)};}
+  }
+ }
+ return best?{...item,...best}:item;
 }
 export function exportPatch(objects,baseline,{createdAt=new Date().toISOString()}={}){
  const base=new Map(baseline.map(o=>[o.id,o]));const placements=[],added=[],removed=[];

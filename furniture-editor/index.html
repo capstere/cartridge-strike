@@ -22,7 +22,7 @@
     <label for="search">Hitta en stol eller möbel</label><input id="search" type="search" placeholder="Sök t.ex. stol, I09 ..." autocomplete="off">
     <div class="filter"><label for="chairsOnly"><input type="checkbox" id="chairsOnly" checked> Bara stolar</label><span id="listCount">—</span></div>
     <div id="furnitureList" class="furniture-list" role="listbox" aria-label="Välj möbel"></div>
-    <button id="openLibrary" type="button" class="library-entry" aria-label="Öppna objektbibliotek och lägg till möbel">+ LÄGG TILL OBJEKT <span>76 3D-modeller</span></button>
+    <button id="openLibrary" type="button" class="library-entry" aria-label="Öppna objektbibliotek och lägg till möbel">+ LÄGG TILL OBJEKT <span>104 3D-modeller</span></button>
     <div class="divider"></div>
     <div class="section-heading"><span>02 / FLYTTA & VRID</span><small id="selectionTag">Ingen vald</small></div>
     <div id="emptySelection" class="empty-selection">Klicka på en <strong>orange stol</strong> i 3D-vyn eller välj en stol i listan.</div>
@@ -31,16 +31,24 @@
       <div class="pos-grid"><label>Position X<input id="x" type="number" step="0.1" inputmode="decimal"></label><label>Position Z<input id="z" type="number" step="0.1" inputmode="decimal"></label></div>
       <label>Rotation <strong id="degrees">0°</strong></label>
       <div class="rotate-row"><button id="rotateLeft" type="button" aria-label="Rotera 15 grader åt vänster"><span>↶</span> Vrid vänster</button><button id="rotateRight" type="button" aria-label="Rotera 15 grader åt höger">Vrid höger <span>↷</span></button></div>
-      <p class="helper">Dra möbeln i bilden eller använd pilarna på tangentbordet. <kbd>Q</kbd>/<kbd>E</kbd> vrider 15°.</p>
+      <p class="helper">Dra möbeln ända fram till väggen. Den snäpper på plats med ca 1 cm luft, utan falska kollisionsvarningar. <kbd>Q</kbd>/<kbd>E</kbd> vrider 15°. Dörrar måste vara fria.</p>
       <div class="item-actions"><button id="duplicate" type="button" class="subtle">+ Duplicera</button><button id="remove" type="button" class="subtle danger">Ta bort</button></div>
     </div>
     <div id="validation" class="validation" hidden role="status"></div>
     </div>
     <div id="buildSidebar" class="build-sidebar" hidden>
       <div class="section-heading"><span>01 / SKAPA BANAN</span><small>Redigerbar skiss</small></div>
-      <p class="helper">Välj ett ritverktyg. <strong>Klicka två punkter</strong> i planvyn för att skapa en vägg, dörr, ett fönster eller ett golv. Du kan också välja och ändra originaldelar.</p>
+      <div class="simple-flow" role="note"><b>ENKLASTE SÄTTET</b><span>1. Välj rum &nbsp; 2. Klicka på väggen &nbsp; 3. Välj vad du vill göra</span></div>
+      <p class="helper" id="buildSimpleHelp" aria-live="polite">Klicka på en vägg och välj en snabbåtgärd.</p>
+      <div class="build-quick-actions" aria-label="Snabbändring av markerad vägg">
+        <button type="button" data-quick-kind="wall">VÄGG</button>
+        <button type="button" data-quick-kind="window" class="type-window">FÖNSTER</button>
+        <button type="button" data-quick-kind="glazed" class="type-glazed">GLASVÄGG</button>
+        <button type="button" id="buildDoorInWall" class="type-door">+ DÖRR I VÄGGEN</button>
+      </div>
+      <p class="helper">Klicka på en befintlig vägg och använd snabbknapparna ovan. För att rita helt nya delar väljer du ett ritverktyg och klickar två punkter i planvyn.</p>
       <label for="buildRoom">Hoppa till rum</label><select id="buildRoom" aria-label="Visa rum i byggläget"></select>
-      <label for="buildTool">Verktyg</label>
+      <label for="buildTool">RITA NYTT (två klick)</label>
       <select id="buildTool" aria-label="Ritverktyg">
         <option value="select">↖ Välj / flytta / ändra</option>
         <option value="wall">Vägg</option><option value="glazed">Fönstervägg (golv till tak)</option>
@@ -101,7 +109,7 @@
     <p class="autosave" id="autosave">Dina steg sparas också lokalt i den här webbläsaren.</p>
   </aside>
   <section class="workspace" aria-label="3D-möblering">
-    <div class="toolbar"><div class="view-buttons design-mode"><button id="modeFurniture" type="button" class="active" aria-pressed="true">MÖBLER</button><button id="modeBuild" type="button" aria-pressed="false">BYGG · VÄGGAR & DÖRRAR</button></div><div class="view-buttons"><button id="topView" type="button" class="active" aria-pressed="true">PLANVY</button><button id="threeView" type="button" aria-pressed="false">3D-VY</button></div><div class="view-buttons"><button id="focus" type="button">⌖ VISA RUM</button><button id="whole" type="button">HELA VÅNINGEN</button></div><button id="downloadTop" type="button" class="quick-save">↓ SPARA PROJEKT</button><label class="snap"><input id="snap" type="checkbox" checked> Fäst på rutnät (10 cm)</label></div>
+    <div class="toolbar"><div class="view-buttons design-mode"><button id="modeFurniture" type="button" class="active" aria-pressed="true">MÖBLER</button><button id="modeBuild" type="button" aria-pressed="false">BYGG · VÄGGAR & DÖRRAR</button></div><div class="view-buttons"><button id="topView" type="button" class="active" aria-pressed="true">PLANVY</button><button id="threeView" type="button" aria-pressed="false">3D-VY</button></div><div class="view-buttons"><button id="focus" type="button">⌖ VISA RUM</button><button id="whole" type="button">HELA VÅNINGEN</button></div><button id="downloadTop" type="button" class="quick-save">↓ SPARA PROJEKT</button><label class="snap"><input id="snap" type="checkbox" checked> Fäst på rutnät (10 cm)</label><label class="snap wall-snap"><input id="wallSnap" type="checkbox" checked> Fäst möbler mot vägg</label></div>
     <div id="buildToolbar" class="build-toolbar" hidden><strong>BYGGLÄGE</strong><span>Rött: vägg</span><span>Grönt: glasvägg</span><span>Blått: fönster</span><span>Ljusblått: dörr</span><small>Skiss — ingen riktig spelkollision ändras</small></div>
     <div class="stage" id="dropZone"><canvas id="viewport" aria-label="Redigerbar planvy av möbler och rum" tabindex="0"></canvas>
       <div class="scene-guide" id="furnitureLegend"><span class="legend-square chair"></span> Valbar möbel <span class="legend-square selection"></span> Markerad <span class="legend-square fixed"></span> Fast inredning</div>
@@ -117,8 +125,8 @@
 
 <dialog id="libraryDialog" class="library-dialog" aria-label="3D-objektbibliotek">
   <div class="library-head"><div><small>CARTRIDGE STRIKE / MÖBELSTUDION</small><h2>Välj något att lägga till</h2><p>Riktiga CC0-modeller från Kenney samt tidigare godkända spelmodeller.</p></div><button id="closeLibrary" type="button" class="library-close" aria-label="Stäng biblioteket">×</button></div>
-  <div class="library-controls"><label>Sök objekt<input id="librarySearch" type="search" placeholder="stol, kyl, handfat, instrument …" autocomplete="off"></label><label>Kategori<select id="libraryCategory" aria-label="Objektkategori"><option value="alla">Alla kategorier</option><option value="stolar">Stolar & soffor</option><option value="bord">Bord</option><option value="kontor">Kontor</option><option value="kok">Kök</option><option value="badrum">Badrum</option><option value="labb">Labbutrustning</option><option value="industri">Industri & lager</option><option value="dekor">Dekoration</option><option value="egna">Mina GLB-modeller</option></select></label></div>
-  <div class="library-toolbar"><strong id="libraryCount">Biblioteket läses in…</strong><label class="import-glb" for="customGLB">↑ IMPORTERA EGEN .GLB</label><input id="customGLB" type="file" accept=".glb,model/gltf-binary" hidden></div>
+  <div class="library-controls"><label>Sök objekt<input id="librarySearch" type="search" placeholder="stol, kyl, handfat, instrument …" autocomplete="off"></label><label>Kategori<select id="libraryCategory" aria-label="Objektkategori"><option value="alla">Alla kategorier</option><option value="stolar">Stolar & soffor</option><option value="bord">Bord</option><option value="kontor">Kontor</option><option value="kok">Kök</option><option value="badrum">Badrum</option><option value="labb">Labbutrustning</option><option value="industri">Industri & lager</option><option value="dekor">Dekoration</option><option value="hissrum12">Hissrum12 · utrustning</option><option value="egna">Mina GLB-modeller</option></select></label></div>
+  <div class="library-toolbar"><strong id="libraryCount">Biblioteket läses in…</strong><label class="import-glb" for="customGLB">↑ IMPORTERA EGNA .GLB (FLERA)</label><input id="customGLB" type="file" accept=".glb,model/gltf-binary" multiple hidden></div>
   <div id="libraryTiles" class="library-tiles" aria-label="Tillgängliga 3D-modeller"></div>
   <p class="library-notes">Välj ett objekt så placeras det i valt rum. Dra och rotera som vanligt. Importerade GLB sparas lokalt och exporteras tillsammans med projektet som ZIP. <strong>Inget ändras i spelet.</strong></p>
 </dialog>

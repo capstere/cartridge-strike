@@ -57,6 +57,12 @@ try{
  check('build undo restores earlier sill',await page.evaluate(()=>Math.abs(__furnitureEditor.build.getEntries().find(e=>e.id==='WALL-001').sill-.9)<.001));
  await page.locator('#buildRedo').click();
  check('build redo restores edited sill',await page.evaluate(()=>Math.abs(__furnitureEditor.build.getEntries().find(e=>e.id==='WALL-001').sill-1.12)<.001));
+ await page.locator('.build-list-item').first().click();
+ check('one-click door shortcut enabled on selected wall',await page.locator('#buildDoorInWall').isEnabled());
+ await page.locator('#buildDoorInWall').click();
+ check('quick door is aligned with wall',await page.evaluate(()=>__furnitureEditor.getPatch().architecture.added.some(e=>e.kind==='door'&&Math.abs(e.a[1]+33.7147944)<.1)));
+ await page.locator('#buildUndo').click();
+ check('quick door undo restores unchanged original wall',await page.evaluate(()=>__furnitureEditor.getPatch().architecture.added.length===0));
  await page.locator('#buildSearch').fill('');
  await page.locator('#buildRoom').selectOption('I09');await page.locator('#focus').click();
  await page.locator('#buildTool').selectOption('glazed');
