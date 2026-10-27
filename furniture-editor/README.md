@@ -1,53 +1,46 @@
-# Cartridge Strike Möbelstudion 2.0 — Objektbibliotek
+# Cartridge Strike Designstudion 3.0 — skapa en egen spelmiljö
 
-**[Öppna Möbelstudion](https://capstere.github.io/cartridge-strike/furniture-editor/)** — en separat 3D-redigerare. Det riktiga spelet och dess kollisionsmotor ändras inte när du inreder här.
+**[Öppna Designstudion](https://capstere.github.io/cartridge-strike/furniture-editor/)** (dator och mus rekommenderas).
 
-## Börja inreda (dator rekommenderas)
+Designstudion är ett **helt separat verktyg**. Du kan ändra möbler, väggar, fönster, glasväggar, dörrar och skissa nya golvytor. Dina ändringar är ett **förslag**, inte en ändring av live-spelet. Spelets befintliga kollision, botarnas navigation, gisslan, dörrar, spawns och regler ligger kvar exakt som i version 0.17.0.
 
-1. Öppna Möbelstudion och välj **rum** (t.ex. Stora lunchrummet).
-2. Klicka **+ LÄGG TILL OBJEKT**.
-3. Välj bland **76 riktiga GLB-modeller** från kategorierna stolar, bord, kontor, kök, badrum, labb, industri och dekoration. Sök t.ex. **kyl**, **handfat**, **soffa**, **instrument** eller **växt**.
-4. Klicka på en modell för att placera den i en ledig position i valt rum. Flytta genom att **dra** och vrid med **Q/E** eller **Vrid vänster/höger**. En grönblå markör visar riktningen.
-5. Klicka **SPARA PROJEKT**. Utan egna GLB-filer laddas en **JSON** ned. Om du importerat egna GLB-filer laddas en **ZIP** ned som innehåller både `projekt.json` och exakt de 3D-filer som projektet använder.
-6. För att fortsätta senare, tryck **Fortsätt med sparad fil** och välj JSON/ZIP. Projektet autosparas även i samma webbläsare (egna GLB lagras i IndexedDB om utrymme finns).
+## Så här använder du byggläget
 
-**Importera egen GLB:** Öppna **+ LÄGG TILL OBJEKT** och tryck **IMPORTERA EGEN .GLB**, eller dra en `.glb`-fil till den stora 3D-vyn. En giltig, fristående glTF 2.0-modell (max 8 MB) placeras i valt rum. Externa textur-/filreferenser eller externa JavaScript-resurser tillåts inte. Se till att du har rätt att använda filen.
+1. Öppna Designstudion och välj **BYGG · VÄGGAR & DÖRRAR** längst upp. Välj gärna ett rum i **Hoppa till rum**.
+2. Klicka **VÄGG**, **GLASVÄGG**, **FÖNSTER**, **DÖRR**, **ÖPPNING** eller **GOLVYTA**. Klicka sedan två punkter i **PLANVY** för att rita. Alla dessa verktyg finns också i listan **Verktyg**, där du även hittar passerkorts-, hiss- och terrassdörrar.
+3. Klicka på en **befintlig** eller ny del för att markera den. Dra en markerad ändpunkt för att förlänga eller förkorta delen. Dra mitten för att flytta hela delen. Du kan även ange exakta **X/Z-koordinater, höjd, tjocklek och fönsterbröstning** till vänster. Verktyget fäster normalt mot **10 cm-rutnät** och andra segmentändpunkter.
+4. Vill du ändra en befintlig vägg till glasvägg eller fönster? Välj väggen och byt **Typ**. Vill du ta bort en vägg/dörr? Markera den och tryck **Ta bort i skissen** eller Delete. **Ångra**, **Gör om** och **Återställ enbart byggskissen** finns i samma sidopanel.
+5. Klicka **3D-VY** för att granska höjd, glas och dörrar. Skapade dörrar och öppna passager skär visuellt ut en öppning i en *kollinear* vägg i förhandsvisningen. De här öppningarna är inte utvärderade speldörrar.
+6. Klicka **MÖBLER** igen om du vill möblera samtidigt. Möbler och byggdelar sparas **tillsammans** när du trycker **SPARA PROJEKT**.
+7. Ladda upp den nedladdade **JSON-filen** (eller ZIP om du importerat egna GLB-modeller) till ChatGPT när du vill ha kollisionskontroll, speltest och en riktig version för GitHub.
 
-Om det inte finns plats i ett rum visar redigeraren ett meddelande i stället för att skapa en kollision med dörr eller vägg. Välj ett större rum eller flytta möbler först. **Ångra/Gör om** fungerar som tidigare. Modeller kan **dupliceras** och **tas bort** i redigeraren utan att själva spelet påverkas.
+**Färgnyckel:** rött = vägg, grönt = glasvägg från golv till tak, blått = fönster med bröstning, ljusblått = dörr; gul markering visar den valda delen. Välj **Öppen passage** för att skissa en genomgång utan dörrblad.
 
-**Vill du faktiskt använda möbleringen i spelet?** Skicka JSON- eller ZIP-filen i ChatGPT och be om säker integration/testning i GitHub. Ingen JSON/ZIP ändrar live-spelet av sig själv.
+## Möbler och riktiga 3D-modeller
 
-## Vad som ingår i biblioteket
+Möbelstudion 2.0-funktionerna finns kvar: **76 riktiga GLB-modeller**, kategorier, sökning, möbeldragning, rotation, duplicering, ångra/gör om, egen självförsörjande `.glb`-import upp till **8 MB**, lokal autosparning och **ZIP-export med egna modeller**. Öppna en gammal JSON från Möbelstudion 1.0/2.0 genom **Fortsätt med sparad fil**; saknas en byggdelsskiss visas originalväggarna som vanligt.
 
-- **72 licensierade Kenney CC0 GLB-modeller**, med egna små WebP-förhandsbilder, utvalda från Furniture Kit, Space Kit och Food Kit. Varje fil laddas bara när ett objekt faktiskt placeras i 3D-vyn. Ingen extern CDN eller livehämtning från tredjepart görs av redigeraren.
-- **4 befintliga NORD-01-modeller** som redan ligger i publicerad Cartridge Strike (`assets/fps/models/`). De refereras via samma filer; inga nya kopior behövs.
-- Exempel: vanliga och moderna stolar, kontorsstol, fåtöljer, soffor, bokhyllor, bord, kylskåp, mikrovågsugn, diskho, kaffemaskin, toalett, handfat, växter, datorer, transportlådor, verktygsväska, elektroniska sci-fi-instrument och teknisk utrustning.
+Filerna är lokala för din webbläsare tills du laddar ned ett projekt; varken modellen eller redigeringarna skickas till GitHub automatiskt. Att ta bort/måla över en vägg i skissen tar **inte** bort byggnadens ursprungliga begränsningar, skapar inte tillåtna botvägar och öppnar inte otillgängliga labb i live-spelet.
 
-**Källor och licens:**
+## Vad byggläget faktiskt kan och inte kan
 
-- Kenney Furniture Kit: https://kenney.nl/assets/furniture-kit — CC0 1.0.
-- Kenney Space Kit: https://kenney.nl/assets/space-kit — CC0 1.0.
-- Kenney Food Kit: https://kenney.nl/assets/food-kit — CC0 1.0.
-- Reproducerbar, inbäddad GLB-mirror: https://github.com/Hidencod/tge-assets, låst till `37f5baddf99899547ae661668880809c42b450f0`; `library/import_cc0.py` hämtar endast vår godkända modelllista och verifierar att alla GLB-filer är självförsörjande och licenssidan innehåller Kenneys CC0-deklaration.
-- Publicerade NORD-01-modeller: befintlig licens och spårning under `licenses/nord01-original.txt`.
+- **Kan:** redigera och flytta befintliga vägg-/dörrsegment i förhandsvisningen; konvertera vägg till glas eller fönster; rita nya väggar, glasväggar, fönster, vanlig dörr, passerkortsdörr, hissdörr, terrassdörr och öppna passager; rita nya rektangulära golvytor; duplicera, ta bort och ångra; se ändringarna i 2D och 3D; spara och öppna projekt.
+- **Kan inte automatiskt:** skapa ett spelbart nytt rum, ändra det officiella Floor 5-underlaget, redigera frihandspolygonerna för originalgolvet, beräkna brand-/säkerhetskrav, simulera hiss-/dörrmekanik, uppdatera kollisioner och AI, eller publicera en ny spelversion. *Dessa är separata, manuellt testade implementationssteg.*
+- **Optimering:** färdig statisk skiss batchas som `InstancedMesh` med delade former och material. Om en ombyggnad ska in i spelet krävs ändå riktiga tester på mål-enheter, skott, dörrsvängningar, gisslan/botvägar, kollisionsyta, bildrutehastighet och minne.
+- **Ritningsunderlaget:** segmenten kommer från samma offentliga `src/floor5-data.js` som spelet redan använder. Kartans modellmått är preliminära, **inte uppmätt CAD-precision**. Inga nya privata filer eller företagsritningar ingår.
 
-Modellstorlekar i biblioteket är **preliminära inredningsmått** för förhandsvisningen, inte verkliga uppmätta dimensioner. Sci-fi-utrustning är endast fiktion. Eventuella importerade egna filer är **inte** verifierade som CC0 automatiskt.
+## Säkerhet och arkitektur
 
-## Säkerhet och prestanda
+Byggläget ligger endast under `furniture-editor/build/` och importeras aldrig av FPS-runtime. Sparformatet behåller det äldre schemat `cartridge-strike-furniture-studio` med ett valfritt fält `architecture` som bara innehåller ändrade/nya/borttagna byggdelar och egna golv. Den gamla JSON-strukturen för möbler fungerar fortfarande.
 
-Redigeraren finns enbart under `/furniture-editor/`. Den importerar inte spelets `app.mjs`, fysik, botar, RNG eller FPS-renderer och skriver aldrig över `src/floor5-data.js`, `src/world.js`, `assets/fps`, `fps/` eller `build-info.json`. Den befintliga spelversionen är fortfarande 0.17.0. All redigering är en granskad **projektfil**, inte en direkt spelpatch.
+Den ursprungliga `fps/`, `src/`, `assets/`, `vendor/`, `build-info.json`, `frontline/`, `index.html`, den aktiva Google/GitHub-konfigurationen, matcher, resurser och publiceringsmanifestet ska vara **byte-identiska** med version 0.17.0. Den här leveransen får inte lägga till ett runtime-bryggsystem som automatiskt läser och applicerar sparade väggar på spelet.
 
-Visuella placeringskontroller är konservativa approximativa kollisionsvarningar. Verkliga spawns, dörrsvängning, GLB-kolliderare, botnavigation och spelregler måste valideras innan JSON/ZIP implementeras i spelet. **Labbinredningen är generisk** och får inte representeras som bekräftade verkliga instrument eller arbetsprocedurer.
+## Testning
 
-Modellerna hämtas bara vid behov, med cache och återanvända källgeometrier. Preview-symboler används tills riktig GLB hunnit laddas. Import kan ha en temporär minnesbelastning. Den ursprungliga spelmotorn laddar **inte** biblioteket.
-
-## Tekniska tester
-
-Från repository-roten:
-
-```sh
-node --test furniture-editor/editor.test.mjs furniture-editor/library/library.test.mjs
+~~~sh
+node --test furniture-editor/editor.test.mjs furniture-editor/library/library.test.mjs furniture-editor/build/architecture.test.mjs
+node --check furniture-editor/build/build-mode.mjs
 node tools/verify-owner-runtime.mjs
-```
+~~~
 
-Ett separat GitHub Actions-jobb lägger in alla 72 tillåtna GLB+WebP via det immutabla Kenney-mirroret, skriver en SHA-256-förteckning och testar därefter riktig Chromium/WebGL, placering, äldre JSON-projekt, GLB-import, ZIP-export/-import och att `window.__fps` aldrig startas. CI jämför dessutom alla ursprungliga spel-filers byte mot 0.17.0-basen.
+GitHub Actions kör dessutom ett separat **Chromium/WebGL-UI-prov**: val av originalvägg, typbyte, drag, ny glasvägg/dörr/golv, 3D-vy, ångra/gör om, autosparning, JSON-import, återställning och att det riktiga spelet aldrig startas. Detta är förhandsvisnings- och funktionsprov, **inte** automatiskt godkännande av en omritad FPS-bana.

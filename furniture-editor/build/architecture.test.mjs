@@ -1,0 +1,81 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {readBaseline,parseArchitecture,exportArchitecture,makeEntry,wallPieces,
+ validateEntry,validateFloorRect,floorRect,getNextId,entryLength,warningsForLayout} from './architecture.mjs';
+const data={walls:[
+ {id:'WALL-001',a:[0,0],b:[10,0],height:2.85,thickness:.1},
+ {id:'WALL-002',a:[0,2],b:[6,2],surfaceType:'glazed'},
+ {id:'WALL-003',a:[0,4],b:[4,4],surfaceType:'window'}],
+ doors:[{id:'D01',a:[3,0],b:[4,0],doorType:'elevator'},
+ {id:'D08',a:[1,2],b:[2,2],accessCardConfirmed:true},
+ {id:'D05',a:[4,4],b:[5,4],kind:'open-passage-no-leaf'}],
+ floorPolygons:[[[0,-2],[12,-2],[12,8],[0,8]]]};
+const baseline=readBaseline(data);
+test('baseline is mapped into exact current source IDs and author colors/types, no original mutation',()=>{
+ assert.equal(baseline.length,6);
+ assert.equal(baseline.find(x=>x.id==='WALL-002').kind,'glazed');
+ assert.equal(baseline.find(x=>x.id==='WALL-003').kind,'window');
+ assert.equal(baseline.find(x=>x.id==='D08').kind,'card-door');
+ assert.equal(baseline.find(x=>x.id==='D01').kind,'elevator-door');
+ assert.equal(baseline.find(x=>x.id==='D05').kind,'opening');
+ baseline[0].a[0]=99;assert.equal(data.walls[0].a[0],0);baseline[0].a[0]=0;
+});
+test('walls render as two pieces when an aligned door is in the middle, not when crossing perpendicularly',()=>{
+ const floor=makeEntry('BYGG-V-0001','wall',[0,0],[10,0]);
+ const door=makeEntry('BYGG-D-0001','door',[3,0],[4,0]);
+ let pieces=wallPieces([floor,door]);assert.equal(pieces.length,2);
+ assert(pieces[0].b[0]<3 && pieces[1].a[0]>4);
+ pieces=wallPieces([floor,makeEntry('BYGG-D-0001','door',[5,-1],[5,1])]);
+ assert.equal(pieces.length,1);assert.equal(entryLength(pieces[0]),10);
+});
+test('multiple overlapping openings merge and do not draw invisible blocking center',()=>{
+ const wall=makeEntry('BYGG-V-0001','glazed',[0,0],[10,0]);
+ const doors=[makeEntry('BYGG-D-0001','door',[2,0],[4,0]),makeEntry('BYGG-D-0002','opening',[3,0],[7,0])];
+ const pieces=wallPieces([wall,...doors]);assert.equal(pieces.length,2);
+ assert(pieces[0].b[0]<2&&pieces[1].a[0]>7);
+});
+test('wall source edits, additions, removed sources and floor rectangles serialize deterministically and roundtrip',()=>{
+ const entries=readBaseline(data),f=entries.find(x=>x.id==='WALL-001');f.kind='window';f.sill=1.1;
+ entries.find(x=>x.id==='D05').deleted=true;
+ entries.push(makeEntry('BYGG-V-0001','glazed',[8,3],[10,3]));
+ entries.push(makeEntry('BYGG-D-0001','card-door',[9,3],[9.9,3]));
+ const floors=[floorRect('BYGG-G-0001',[1,5],[4,7])];
+ const patch=exportArchitecture(entries,baseline,floors);
+ assert.equal(patch.edits.length,1);assert.equal(patch.added.length,2);
+ assert.deepEqual(patch.removed,['D05']);assert.equal(patch.floors[0].x1,4);
+ const got=parseArchitecture(JSON.parse(JSON.stringify(patch)),baseline);
+ assert.deepEqual(exportArchitecture(got.entries,baseline,got.floors),patch);
+ assert.equal(baseline.find(x=>x.id==='WALL-001').kind,'wall');
+});
+test('old Furniture Studio JSON without architecture remains usable',()=>{
+ const p=parseArchitecture(undefined,baseline);
+ assert.equal(p.entries.length,baseline.length);assert.equal(p.floors.length,0);
+ assert.equal(exportArchitecture(p.entries,baseline,p.floors).added.length,0);
+});
+test('refuse unsafe IDs, oversize input and forged source edits on import',()=>{
+ const original=exportArchitecture(baseline,baseline);
+ for(const modified of [
+  {...original,added:[{...makeEntry('BYGG-V-0001','wall',[0,0],[2,0]),a:[Infinity,0]}]},
+  {...original,added:[{...makeEntry('BYGG-V-0001','wall',[0,0],[2,0]),kind:'javascript:alert(1)'}]},
+  {...original,edits:[{...makeEntry('WALL-999','wall',[0,0],[2,0])}]},
+  {...original,removed:['BYGG-V-0001']},
+  {...original,added:[{...makeEntry('BYGG-V-0001','wall',[0,0],[2,0]),height:500}]},
+  {...original,floors:[{...floorRect('BYGG-G-0001',[1,1],[1.2,1.4])}]},
+ ])assert.throws(()=>parseArchitecture(modified,baseline));
+});
+test('IDs are unique across new walls, doors and floors, and dimensions are bounded',()=>{
+ const entries=[makeEntry('BYGG-V-0001','wall',[0,0],[1,0]),makeEntry('BYGG-D-0001','door',[0,0],[1,0])];
+ const floors=[floorRect('BYGG-G-0001',[0,0],[1,1])];
+ assert.equal(getNextId(entries,floors,'wall'),'BYGG-V-0002');
+ assert.equal(getNextId(entries,floors,'door'),'BYGG-D-0002');
+ assert.equal(getNextId(entries,floors,'floor'),'BYGG-G-0002');
+ assert.equal(validateEntry(entries[0],{isNew:true}),true);
+ assert.equal(validateFloorRect(floors[0]),true);
+ assert.throws(()=>validateEntry(makeEntry('BYGG-V-0002','window',[0,0],[.1,0])));
+});
+test('editing may be free but warns about removed canonical walls, doors and out-of-floor proposals',()=>{
+ const entries=readBaseline(data);entries[0].deleted=true;entries.find(x=>x.id==='D01').deleted=true;
+ entries.push(makeEntry('BYGG-V-0001','wall',[-9,10],[-3,10]));
+ const warnings=warningsForLayout(entries,[],data);
+ assert(warnings.length>=3);assert(warnings.join(' ').includes('ursprungliga'));
+});

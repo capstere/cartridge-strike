@@ -10,12 +10,13 @@
 </head>
 <body>
 <header class="header">
-  <div class="brand"><span class="brand-square">CS</span><span><strong>CARTRIDGE STRIKE</strong><small>MÖBELSTUDION <b>2.0</b></small></span></div>
+  <div class="brand"><span class="brand-square">CS</span><span><strong>CARTRIDGE STRIKE</strong><small>DESIGNSTUDION <b>3.0</b></small></span></div>
   <div class="header-right"><span class="independent">SEPARAT REDIGERARE · SPELET ÄNDRAS INTE</span><a href="../fps/" target="_blank" rel="noopener">Öppna spelet ↗</a></div>
 </header>
-<div class="steps" aria-label="Så här gör du"><strong>SÅ HÄR ENKELT ÄR DET</strong><span><b>1</b> Välj rum</span><span><b>2</b> Klicka på en möbel</span><span><b>3</b> Dra eller vrid</span><span><b>4</b> Spara projektet</span></div>
+<div class="steps" aria-label="Så här gör du"><strong>SÅ HÄR ENKELT ÄR DET</strong><span><b>1</b> Välj MÖBLER eller BYGG</span><span><b>2</b> Välj eller rita</span><span><b>3</b> Flytta och ändra</span><span><b>4</b> Spara projektet</span></div>
 <main class="layout">
   <aside class="sidebar">
+    <div id="furnitureSidebar">
     <div class="section-heading"><span>01 / HITTA MÖBEL</span><small>Våning 5</small></div>
     <label for="room">Visa rum</label><select id="room" aria-label="Välj rum"></select>
     <label for="search">Hitta en stol eller möbel</label><input id="search" type="search" placeholder="Sök t.ex. stol, I09 ..." autocomplete="off">
@@ -34,19 +35,77 @@
       <div class="item-actions"><button id="duplicate" type="button" class="subtle">+ Duplicera</button><button id="remove" type="button" class="subtle danger">Ta bort</button></div>
     </div>
     <div id="validation" class="validation" hidden role="status"></div>
+    </div>
+    <div id="buildSidebar" class="build-sidebar" hidden>
+      <div class="section-heading"><span>01 / SKAPA BANAN</span><small>Redigerbar skiss</small></div>
+      <p class="helper">Välj ett ritverktyg. <strong>Klicka två punkter</strong> i planvyn för att skapa en vägg, dörr, ett fönster eller ett golv. Du kan också välja och ändra originaldelar.</p>
+      <label for="buildRoom">Hoppa till rum</label><select id="buildRoom" aria-label="Visa rum i byggläget"></select>
+      <label for="buildTool">Verktyg</label>
+      <select id="buildTool" aria-label="Ritverktyg">
+        <option value="select">↖ Välj / flytta / ändra</option>
+        <option value="wall">Vägg</option><option value="glazed">Fönstervägg (golv till tak)</option>
+        <option value="window">Fönster med bröstning</option><option value="door">Vanlig dörr</option>
+        <option value="card-door">Passerkortsdörr</option><option value="elevator-door">Hissdörr</option>
+        <option value="terrace-door">Terrassdörr</option><option value="opening">Öppen passage</option>
+        <option value="floor">Ny golvyta</option>
+      </select>
+      <div class="build-palette" aria-label="Byggverktyg">
+        <button data-build-tool="select" class="active" type="button">↖ VÄLJ</button>
+        <button data-build-tool="wall" class="type-wall" type="button">VÄGG</button>
+        <button data-build-tool="glazed" class="type-glazed" type="button">GLASVÄGG</button>
+        <button data-build-tool="window" class="type-window" type="button">FÖNSTER</button>
+        <button data-build-tool="door" class="type-door" type="button">DÖRR</button>
+        <button data-build-tool="opening" type="button">ÖPPNING</button>
+        <button data-build-tool="floor" type="button">GOLVYTA</button>
+      </div>
+      <p id="buildInstructions" class="build-hint">Klicka på en vägg för att välja den, eller använd ett ritverktyg.</p>
+      <label for="buildSearch">Sök byggdel (t.ex. WALL-010, D06)</label><input id="buildSearch" type="search" placeholder="Sök vägg eller dörr …">
+      <div id="buildListCount" class="build-list-count">—</div><div id="buildList" class="build-list" role="listbox" aria-label="Befintliga väggar och dörrar"></div>
+      <div class="divider"></div>
+      <div class="section-heading"><span>02 / VALD BYGGDEL</span><small id="buildSelectionId">Ingen vald</small></div>
+      <p id="buildNoSelection" class="helper">Välj en vägg eller dörr, eller rita något nytt med två klick.</p>
+      <div id="buildSelected" hidden>
+        <label for="buildKind">Typ</label><select id="buildKind" aria-label="Ändra byggdelens typ">
+          <option value="wall">Vägg</option><option value="glazed">Fönstervägg</option>
+          <option value="window">Fönster</option><option value="door">Vanlig dörr</option>
+          <option value="card-door">Passerkortsdörr</option><option value="elevator-door">Hissdörr</option>
+          <option value="terrace-door">Terrassdörr</option><option value="opening">Öppen passage</option>
+          <option value="floor">Egen golvyta</option>
+        </select>
+        <div id="buildEndpointFields">
+          <div class="build-coordinate-grid"><label>Start X<input id="buildA_X" type="number" step="0.1"></label><label>Start Z<input id="buildA_Z" type="number" step="0.1"></label>
+          <label>Slut X<input id="buildB_X" type="number" step="0.1"></label><label>Slut Z<input id="buildB_Z" type="number" step="0.1"></label></div>
+          <div class="build-coordinate-grid"><label>Höjd (m)<input id="buildHeight" type="number" min="0.45" max="6" step="0.1"></label>
+          <label>Tjocklek (m)<input id="buildThickness" type="number" min="0.025" max="0.7" step="0.01"></label></div>
+          <label id="buildSillField">Fönsterbröstning (m)<input id="buildSill" type="number" min="0" max="5" step="0.1"></label>
+        </div>
+        <div id="buildFloorFields" hidden><div class="build-coordinate-grid">
+          <label>X min<input id="buildFloorX0" type="number" step="0.1"></label><label>Z min<input id="buildFloorZ0" type="number" step="0.1"></label>
+          <label>X max<input id="buildFloorX1" type="number" step="0.1"></label><label>Z max<input id="buildFloorZ1" type="number" step="0.1"></label></div>
+          <label>Golvnamn<input id="buildFloorName" type="text" maxlength="60"></label>
+        </div>
+        <div class="item-actions"><button id="buildDuplicate" type="button" class="subtle">+ Duplicera</button><button id="buildDelete" type="button" class="subtle danger">Ta bort i skissen</button></div>
+      </div>
+      <div class="undo-row"><button id="buildUndo" type="button">↶ Ångra</button><button id="buildRedo" type="button">↷ Gör om</button></div>
+      <button id="buildReset" type="button" class="subtle">Återställ enbart byggskissen</button>
+      <div id="buildCount" class="build-count">0 byggändringar</div>
+      <p id="buildWarnings" class="build-warnings">Detta är en skiss, inte spelets riktiga kollision.</p>
+      <div class="build-caution">Viktigt: Dina väggar, dörrar, fönster och golv kan ritas fritt, men ändrar inte botnavigation, spelregler eller riktiga kollisioner förrän projektet granskas och implementeras separat.</div>
+    </div>
     <div class="divider"></div>
     <div class="section-heading"><span>03 / SPARA</span><small id="changeCount">0 ändringar</small></div>
     <button id="download" type="button" class="save-button">SPARA MITT PROJEKT <span>↓ JSON / ZIP</span></button>
-    <p class="save-hint">JSON sparas normalt; egna GLB-modeller följer med i en ZIP-fil. <strong>Skicka JSON-filen till mig i ChatGPT</strong> så kan vi lägga in ändringarna i spelet efter kontroll.</p>
+    <p class="save-hint">Både möbler och byggskissen följer med. JSON sparas normalt; egna GLB-modeller följer med i en ZIP-fil. <strong>Skicka JSON-filen till mig i ChatGPT</strong> så kan vi lägga in ändringarna i spelet efter kontroll.</p>
     <div class="undo-row"><button id="undo" type="button">↶ Ångra</button><button id="redo" type="button">↷ Gör om</button></div>
     <div class="bottom-actions"><label class="import-button" for="importFile">↑ Fortsätt med sparad fil</label><input id="importFile" type="file" accept=".json,.zip,application/json,application/zip" hidden><button id="reset" type="button">Återställ allt</button></div>
     <p class="autosave" id="autosave">Dina steg sparas också lokalt i den här webbläsaren.</p>
   </aside>
   <section class="workspace" aria-label="3D-möblering">
-    <div class="toolbar"><div class="view-buttons"><button id="topView" type="button" class="active" aria-pressed="true">PLANVY</button><button id="threeView" type="button" aria-pressed="false">3D-VY</button></div><div class="view-buttons"><button id="focus" type="button">⌖ VISA RUM</button><button id="whole" type="button">HELA VÅNINGEN</button></div><button id="downloadTop" type="button" class="quick-save">↓ SPARA PROJEKT</button><label class="snap"><input id="snap" type="checkbox" checked> Fäst på rutnät (10 cm)</label></div>
+    <div class="toolbar"><div class="view-buttons design-mode"><button id="modeFurniture" type="button" class="active" aria-pressed="true">MÖBLER</button><button id="modeBuild" type="button" aria-pressed="false">BYGG · VÄGGAR & DÖRRAR</button></div><div class="view-buttons"><button id="topView" type="button" class="active" aria-pressed="true">PLANVY</button><button id="threeView" type="button" aria-pressed="false">3D-VY</button></div><div class="view-buttons"><button id="focus" type="button">⌖ VISA RUM</button><button id="whole" type="button">HELA VÅNINGEN</button></div><button id="downloadTop" type="button" class="quick-save">↓ SPARA PROJEKT</button><label class="snap"><input id="snap" type="checkbox" checked> Fäst på rutnät (10 cm)</label></div>
+    <div id="buildToolbar" class="build-toolbar" hidden><strong>BYGGLÄGE</strong><span>Rött: vägg</span><span>Grönt: glasvägg</span><span>Blått: fönster</span><span>Ljusblått: dörr</span><small>Skiss — ingen riktig spelkollision ändras</small></div>
     <div class="stage" id="dropZone"><canvas id="viewport" aria-label="Redigerbar planvy av möbler och rum" tabindex="0"></canvas>
       <div class="scene-guide"><span class="legend-square chair"></span> Valbar möbel <span class="legend-square selection"></span> Markerad <span class="legend-square fixed"></span> Fast inredning</div>
-      <div class="scene-instruction">Dra möbel för att flytta · Scrolla för att zooma · Dra tom yta för att navigera</div>
+      <div class="scene-instruction">Välj Möbler eller Bygg · Rita med två klick · Dra ändpunkter · Scrolla för att zooma</div>
       <div class="orient"><strong>N</strong><span>↑</span></div>
       <div class="loading" id="loading" role="status">Läser aktuell spelplan …</div>
     </div>
