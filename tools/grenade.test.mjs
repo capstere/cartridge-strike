@@ -33,7 +33,7 @@ function legacy(g,world,dt){
 
 test('shared launch preserves eye origin, throwing angle, speed and fuse',()=>{
   const a=p(),g=grenadeLaunch(a,config,10);
-  assert.equal(g.y,1.7-.12);assert.equal(g.vx,0);
+  assert.equal(g.y,1.7-.12);assert.equal(Math.abs(g.vx),0);
   assert.equal(g.vy,Math.sin(.15)*config.grenadeSpeed+1.8);
   assert.equal(g.vz,-Math.cos(.15)*config.grenadeSpeed);
   assert.equal(g.deadline,10+config.grenadeFuse);assert.equal(g.radius,config.grenadeRadius);
