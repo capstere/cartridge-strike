@@ -1,0 +1,81 @@
+name: Furniture Studio (isolated, no gameplay changes)
+
+on:
+  push:
+    branches: [work/furniture-studio-0.17]
+    paths:
+      - 'furniture-editor/**'
+      - '.github/workflows/furniture-studio.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: furniture-studio-0.17
+  cancel-in-progress: true
+
+jobs:
+  source:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Assert gameplay sources and integrity manifest unchanged
+        run: |
+          git fetch --no-tags --depth=1 origin 7b99da56c9cc7f7e5bdbc626a174c8db9a9e33bc
+          git diff --exit-code 7b99da56c9cc7f7e5bdbc626a174c8db9a9e33bc HEAD -- fps src assets vendor build-info.json index.html credits.html licenses
+          python3 - <<'PY'
+          import subprocess
+          files=subprocess.check_output(['git','diff','--name-only','7b99da56c9cc7f7e5bdbc626a174c8db9a9e33bc','HEAD'],text=True).splitlines()
+          assert files and all(f.startswith('furniture-editor/') or f=='.github/workflows/furniture-studio.yml' for f in files), files
+          assert len([f for f in files if f.startswith('furniture-editor/')])==7,files
+          print('PASS: only isolated furniture-editor and its workflow changed:', files)
+          PY
+      - name: Pure unit tests, syntax and unchanged 195 game files
+        run: |
+          node --check furniture-editor/core.mjs
+          node --check furniture-editor/main.mjs
+          node --check furniture-editor/editor.test.mjs
+          node --check furniture-editor/editor-browser.mjs
+          node --test furniture-editor/editor.test.mjs
+          node tools/verify-owner-runtime.mjs
+
+  chromium:
+    needs: source
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install existing pinned Playwright runtime
+        run: |
+          npm ci --prefix frontline/source/tools/dev --ignore-scripts --no-audit --no-fund
+          node frontline/source/tools/dev/node_modules/playwright-core/cli.js install chromium
+      - name: Install software WebGL system dependencies
+        run: |
+          sudo timeout 75s apt-get -o Acquire::Retries=1 -o Acquire::http::Timeout=20 install -y libgl1-mesa-dri libglx-mesa0 libegl-mesa0 xvfb
+      - name: Real offline-editor WebGL and save/import smoke test
+        run: |
+          set -euo pipefail
+          python3 -m http.server 8765 --bind 127.0.0.1 >/tmp/furniture-studio-server.log 2>&1 &
+          PID=$!
+          trap 'kill "$PID" || true' EXIT
+          for i in $(seq 1 25); do
+            if curl -fsS http://127.0.0.1:8765/furniture-editor/ >/dev/null; then break; fi
+            sleep 1
+          done
+          timeout 240s node furniture-editor/editor-browser.mjs
+      - name: Preserve screenshots and test receipt for review
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: furniture-studio-actual-browser-proof
+          path: test-results/furniture-editor/
+          if-no-files-found: warn
+          retention-days: 14
