@@ -1,0 +1,74 @@
+name: Design Studio 3 - Separate Architecture Sketch Editor
+
+on:
+  push:
+    branches: [work/design-studio-v3-2026-10-27]
+    paths:
+      - 'furniture-editor/**'
+      - '.github/workflows/design-studio-v3.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: design-studio-3-freestanding
+  cancel-in-progress: true
+
+jobs:
+  safe-editor:
+    runs-on: ubuntu-latest
+    timeout-minutes: 28
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify that canonical FPS + release manifest are byte-identical
+        run: |
+          set -euo pipefail
+          BASE=003502075b2a31f7082ee96fa2fdcc023d633ae4
+          git diff --exit-code "$BASE" HEAD -- fps src assets vendor build-info.json index.html credits.html licenses frontline docs
+          python3 - <<'PY'
+          import subprocess
+          base='003502075b2a31f7082ee96fa2fdcc023d633ae4'
+          changed=subprocess.check_output(['git','diff','--name-only',base,'HEAD'],text=True).splitlines()
+          assert changed and all(x.startswith('furniture-editor/') or x=='.github/workflows/design-studio-v3.yml' for x in changed),changed
+          print('PASS: only stand-alone editor and CI changed; NO FPS runtime delta')
+          PY
+      - name: Run geometry/door-opening tests and previous furniture / import regressions
+        run: |
+          set -euo pipefail
+          for file in furniture-editor/main.mjs furniture-editor/core.mjs furniture-editor/build/architecture.mjs furniture-editor/build/build-mode.mjs furniture-editor/build/architecture.test.mjs furniture-editor/build/build-browser.mjs; do node --check "$file"; done
+          node --test furniture-editor/editor.test.mjs furniture-editor/library/library.test.mjs furniture-editor/build/architecture.test.mjs
+          node tools/verify-owner-runtime.mjs
+      - name: Install existing pinned Playwright Chromium
+        run: |
+          npm ci --prefix frontline/source/tools/dev --ignore-scripts --no-audit --no-fund
+          node frontline/source/tools/dev/node_modules/playwright-core/cli.js install chromium
+      - name: Install software WebGL libraries and X virtual display
+        run: sudo timeout 90s apt-get -o Acquire::Retries=1 -o Acquire::http::Timeout=20 install -y libgl1-mesa-dri libglx-mesa0 libegl-mesa0 xvfb
+      - name: Browser verify Furniture Studio 2.0 regression and new architecture drawing
+        run: |
+          set -euo pipefail
+          python3 -m http.server 8765 --bind 127.0.0.1 >/tmp/design-studio-http.log 2>&1 &
+          PID=$!
+          trap 'kill "$PID" || true' EXIT
+          for i in $(seq 1 30); do
+            if curl -fsS http://127.0.0.1:8765/furniture-editor/ >/dev/null; then break; fi
+            sleep 1
+          done
+          timeout 240s xvfb-run -a node furniture-editor/editor-browser.mjs
+          timeout 240s xvfb-run -a node furniture-editor/build/build-browser.mjs
+      - name: Preserve screenshot proof and browser results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: design-studio-v3-real-WebGL-and-safety-tests
+          path: |
+            test-results/build-studio/
+            test-results/furniture-editor/
+          retention-days: 14
+          if-no-files-found: warn

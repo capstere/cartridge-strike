@@ -11,6 +11,8 @@ import {LIBRARY,LIBRARY_MAP,LIBRARY_CATEGORIES} from './library/catalog.mjs';
 import {addModelToGroup,importLocalGLB,localLibrary,getLocalFile} from './library/models.mjs';
 import {makeZip,readZip} from './library/zip.mjs';
 import {assetHash} from './library/glb-utils.mjs';
+import {createBuildMode} from './build/build-mode.mjs';
+import {parseArchitecture} from './build/architecture.mjs';
 const $=s=>document.querySelector(s),data=globalThis.SpelFloor5,worldSource=globalThis.SpelWorld;
 if(!data||!worldSource||!T.WebGLRenderer)throw new Error('Spelplanen eller Three.js saknas.');
 const baseScene=worldSource.build({doors:Object.fromEntries(data.doors.filter(d=>d.accessCardConfirmed).map(d=>[d.id,true]))});
@@ -19,13 +21,15 @@ const baseline=catalog(data,furnishings),baseMap=new Map(baseline.map(o=>[o.id,o
 const STORAGE='cartridge-furniture-studio-0.17.0-v1';
 const labels={chair:'Stol',table:'Bord',sofa:'Soffa','coffee-table':'Soffbord',desk:'Skrivbord',cabinet:'Skåp',prop:'3D-objekt'};
 let localEntries=[];
+let building=null;
+const projectPatch=()=>({...exportPatch(items,baseline),architecture:building?.export()});
 const originalCounts={...baseline.reduce((r,o)=>(r[o.kind]=(r[o.kind]||0)+1,r),{})};
 let items=baseline.map(o=>({...o,original:{...o}})),chosen=null,undoStack=[],redoStack=[],gesture=null,room='I09',cameraMode='top',zoom=16,azimuth=-.65,polar=.80,noticeTimer=null;
 const $canvas=$('#viewport'),scene=new T.Scene();scene.background=new T.Color(0xdfe9e5);
 const camera=new T.OrthographicCamera(-10,10,10,-10,.05,300),renderer=new T.WebGLRenderer({canvas:$canvas,antialias:true,alpha:false,powerPreference:'low-power'});
 renderer.outputColorSpace=T.SRGBColorSpace;renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,1.65));
 const target=new T.Vector3(7.5,0,11.8),raycaster=new T.Raycaster(),floorPlane=new T.Plane(new T.Vector3(0,1,0),0);
-const boxGeometry=new T.BoxGeometry(1,1,1),pickMeshes=[],furnitureGroups=new Map(),originMaterials=[];
+const boxGeometry=new T.BoxGeometry(1,1,1),pickMeshes=[],furnitureGroups=new Map(),originMaterials=[],sourceWallMeshes=[];
 const mat=(color,rough=.8,metal=0,opts={})=>new T.MeshStandardMaterial({color,roughness:rough,metalness:metal,...opts});
 const pickMaterial=new T.MeshBasicMaterial({transparent:true,opacity:0,depthWrite:false,colorWrite:false});
 const m={floor:mat(0xf5f8f3),rooms:mat(0xebf0ee),dark:mat(0x324b50),metal:mat(0x819b9b,.45,.6),white:mat(0xeceee9),wood:mat(0xc1a582),orange:mat(0xdf753c),blue:mat(0x629ca3),teal:mat(0x3b9291),selected:mat(0x17a7a2,.4),fixed:mat(0x9faeac,.85,0,{transparent:true,opacity:.77}),wall:mat(0xa9b7b5,.95,0,{transparent:true,opacity:.63}),glass:mat(0x8ec8cd,.26,.1,{transparent:true,opacity:.34,depthWrite:false}),door:mat(0xd2a36b)};
@@ -48,7 +52,7 @@ function makeGround(){
   const dummy=new T.Object3D();source.forEach((w,i)=>{const dx=w.b[0]-w.a[0],dz=w.b[1]-w.a[1];
     dummy.position.set((w.a[0]+w.b[0])/2,.36,(w.a[1]+w.b[1])/2);
     dummy.rotation.set(0,-Math.atan2(dz,dx),0);dummy.scale.set(Math.hypot(dx,dz),.72,Math.max(.065,w.thickness||.09));dummy.updateMatrix();mesh.setMatrixAt(i,dummy.matrix);
-  });mesh.instanceMatrix.needsUpdate=true;mesh.name='static-'+type+'-outlines';scene.add(mesh);
+  });mesh.instanceMatrix.needsUpdate=true;mesh.name='static-'+type+'-outlines';scene.add(mesh);sourceWallMeshes.push(mesh);
  }
  // Door openings are visual markers only — no new physical barriers.
  const doorMat=new T.LineBasicMaterial({color:0x9a795e,transparent:true,opacity:.75});originMaterials.push(doorMat);
@@ -120,7 +124,7 @@ function updateCamera(){
  if(cameraMode==='top'){camera.position.set(target.x,dist,target.z);camera.up.set(0,0,-1);}else{camera.position.set(target.x+Math.sin(polar)*Math.sin(azimuth)*dist,Math.cos(polar)*dist,target.z+Math.sin(polar)*Math.cos(azimuth)*dist);camera.up.set(0,1,0);}
  camera.lookAt(target);camera.updateMatrixWorld();
 }
-function view(mode){cameraMode=mode;$('#topView').classList.toggle('active',mode==='top');$('#threeView').classList.toggle('active',mode==='3d');$('#topView').setAttribute('aria-pressed',mode==='top');$('#threeView').setAttribute('aria-pressed',mode==='3d');scheduleRender();}
+function view(mode){cameraMode=mode;$('#topView').classList.toggle('active',mode==='top');$('#threeView').classList.toggle('active',mode==='3d');$('#topView').setAttribute('aria-pressed',mode==='top');$('#threeView').setAttribute('aria-pressed',mode==='3d');building?.setView();scheduleRender();}
 function goToRoom(id=room){const r=data.rooms.find(r=>r.id===id);if(!r)return;const [x0,z0,x1,z1]=bounds(r.polygon);target.set((x0+x1)/2,0,(z0+z1)/2);zoom=Math.max(4,Math.min(42,Math.max(z1-z0+3,(x1-x0+3)*.80)));scheduleRender();}
 function whole(){const coords=data.floorPolygons.flat(),[x0,z0,x1,z1]=bounds(coords);target.set((x0+x1)/2,0,(z0+z1)/2);zoom=Math.max(z1-z0+7,(x1-x0+7)*.70);scheduleRender();}
 function select(id,focus=false){const item=items.find(o=>o.id===id&&!o.deleted);chosen=item?.id||null;
@@ -132,7 +136,7 @@ function checkpoint(before){const a=JSON.stringify(before),b=JSON.stringify(item
  undoStack.push(before);if(undoStack.length>60)undoStack.shift();redoStack=[];store();renderProperties();renderList();return true;
 }
 function restore(snap){items=snap.map(o=>({...o,original:o.original?{...o.original}:undefined}));if(!items.some(o=>o.id===chosen&&!o.deleted))chosen=null;syncModels();renderList();renderProperties();}
-function store(){try{const doc=exportPatch(items,baseline);localStorage.setItem(STORAGE,JSON.stringify(doc));$('#autosave').textContent='Ändringar sparade lokalt. Ladda ned projektfilen för att kunna fortsätta på en annan dator.';}catch{$('#autosave').textContent='Lokal lagring fungerar inte — ladda ned JSON-filen direkt.';}}
+function store(){try{const doc=projectPatch();localStorage.setItem(STORAGE,JSON.stringify(doc));$('#autosave').textContent='Ändringar sparade lokalt. Ladda ned projektfilen för att kunna fortsätta på en annan dator.';}catch{$('#autosave').textContent='Lokal lagring fungerar inte — ladda ned JSON-filen direkt.';}}
 function notify(message){$('#notice').textContent=message;$('#notice').hidden=false;clearTimeout(noticeTimer);noticeTimer=setTimeout(()=>{$('#notice').hidden=true;},4600);}
 function nameFor(o){return o.assetName||LIBRARY_MAP.get(o.assetId)?.name||labels[o.kind]||'Möbel';}
 function renderRooms(){const rooms=[...new Set(data.rooms.filter(r=>r.status==='included').map(r=>r.id))].sort((a,b)=>DEFAULT_ROOMS.indexOf(a)===-1?1:DEFAULT_ROOMS.indexOf(b)===-1?-1:DEFAULT_ROOMS.indexOf(a)-DEFAULT_ROOMS.indexOf(b));const el=$('#room');el.replaceChildren();for(const id of rooms){const r=data.rooms.find(r=>r.id===id),opt=document.createElement('option');opt.value=id;opt.textContent=(ROOM_LABELS[id]||r?.name||id)+' · '+id;el.append(opt);}if(!rooms.includes(room))room=rooms[0];el.value=room;}
@@ -143,8 +147,8 @@ function renderList(){const el=$('#furnitureList');el.replaceChildren();const se
  visible.forEach((o,i)=>{const b=document.createElement('button');b.type='button';b.setAttribute('role','option');b.setAttribute('aria-selected',o.id===chosen?'true':'false');b.classList.toggle('active',o.id===chosen);
   const n=document.createElement('span');n.textContent=nameFor(o)+' '+(i+1);const id=document.createElement('small');id.textContent=o.id.slice(-20);b.append(n,id);b.onclick=()=>select(o.id,true);el.append(b);
  });
- const patch=exportPatch(items,baseline),count=patch.placements.length+patch.added.length+patch.removed.length;$('#changeCount').textContent=count+' ändringar';$('#undo').disabled=!undoStack.length;$('#redo').disabled=!redoStack.length;
- $('#viewportStatus').textContent=(chosen?`Markerad: ${chosen} · `:'')+visible.length+' synliga objekt i listan · '+baseline.length+' redigerbara möbler totalt';
+ const patch=exportPatch(items,baseline),count=patch.placements.length+patch.added.length+patch.removed.length+(building?.count()||0);$('#changeCount').textContent=count+' ändringar';$('#undo').disabled=!undoStack.length;$('#redo').disabled=!redoStack.length;
+ if(!building?.active)$('#viewportStatus').textContent=(chosen?`Markerad: ${chosen} · `:'')+visible.length+' synliga objekt i listan · '+baseline.length+' redigerbara möbler totalt';
 }
 function renderProperties(){const o=items.find(x=>x.id===chosen&&!x.deleted);$('#emptySelection').hidden=!!o;$('#selectionPanel').hidden=!o;$('#selectionTag').textContent=o?o.roomId:'Ingen vald';
  if(!o)return;
@@ -172,13 +176,13 @@ function redo(){if(!redoStack.length)return;undoStack.push(snapshot());restore(r
 function downloadBlob(blob,name){const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=name;document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),5000);}
 function activeLocalIds(objects){return [...new Set(objects.filter(o=>!o.deleted&&o.assetId?.startsWith('local:')).map(o=>o.assetId))].sort();}
 async function download(){try{
- const patch=exportPatch(items,baseline),text=JSON.stringify(patch,null,2)+'\n',ids=activeLocalIds(items);
- if(!ids.length){downloadBlob(new Blob([text],{type:'application/json'}),'CartridgeStrike-moblering-0.17.json');notify('JSON sparad! Skicka den hit när du vill föra in din möblering i spelet.');return;}
+ const patch=projectPatch(),text=JSON.stringify(patch,null,2)+'\n',ids=activeLocalIds(items);
+ if(!ids.length){downloadBlob(new Blob([text],{type:'application/json'}),'CartridgeStrike-design-0.17.json');notify('JSON sparad! Skicka den hit när du vill föra in din möblering i spelet.');return;}
  const files=[{name:'projekt.json',data:text}];
  for(const id of ids){const asset=await getLocalFile(id);if(!asset?.data)throw Error('En importerad GLB saknas. Importera den igen innan du sparar.');
   files.push({name:'models/'+id.slice(6)+'.glb',data:new Uint8Array(asset.data)});
  }
- const zip=makeZip(files);downloadBlob(new Blob([zip],{type:'application/zip'}),'CartridgeStrike-moblering-med-GLB.zip');notify('ZIP sparad med alla egna GLB-filer! Skicka ZIP-filen hit om du vill använda dem i spelet.');
+ const zip=makeZip(files);downloadBlob(new Blob([zip],{type:'application/zip'}),'CartridgeStrike-design-med-GLB.zip');notify('ZIP sparad med alla egna GLB-filer! Skicka ZIP-filen hit om du vill använda dem i spelet.');
  }catch(e){notify('Kunde inte spara projekt: '+e.message);}}
 async function importFile(file){if(!file)return;if(file.size>24*1024*1024)throw Error('Projektfilen är för stor.');
  let doc,stored=[];
@@ -189,14 +193,14 @@ async function importFile(file){if(!file)return;if(file.size>24*1024*1024)throw 
   if(packages.length!==expected.length)throw Error('ZIP-filen saknar eller innehåller extra 3D-modeller.');
   for(const id of expected){const name='models/'+id.slice(6)+'.glb',bytes=contents.get(name);if(!bytes||'local:'+await assetHash(bytes)!==id)throw Error('GLB-filen har ändrats efter sparningen.');stored.push({id,data:bytes});}
  }else{if(file.size>350000)throw Error('JSON-filen är för stor.');doc=JSON.parse(await file.text());}
- const parsed=parsePatch(doc,baseline);
+ const parsed=parsePatch(doc,baseline);parseArchitecture(doc.architecture,building.getBaseline());
  if(stored.length){for(const f of stored){const name=doc.added.find(x=>x.assetId===f.id)?.assetName||'Egen-modell';
    await importLocalGLB(new File([f.data],name+'.glb',{type:'model/gltf-binary'}));}
   localEntries=await localLibrary();renderLibrary();
  }else for(const id of activeLocalIds(parsed))if(!await getLocalFile(id))throw Error('Projektet använder en egen GLB-fil. Öppna den sparade ZIP-filen i stället.');
- const before=snapshot();items=parsed;chosen=null;checkpoint(before);syncModels();renderRooms();renderList();renderProperties();goToRoom(room);notify('Projektet öppnat! Nu kan du fortsätta möblera och spara igen.');
+ const before=snapshot();items=parsed;chosen=null;building.load(doc.architecture);checkpoint(before);syncModels();renderRooms();renderList();renderProperties();goToRoom(room);store();notify('Projektet öppnat med möbler och byggdelar! Spara när du är nöjd.');
 }
-function readAutosave(){try{const saved=localStorage.getItem(STORAGE);if(!saved)return;items=parsePatch(JSON.parse(saved),baseline);$('#autosave').textContent='Dina tidigare ändringar har återställts från den här webbläsaren.';}catch{localStorage.removeItem(STORAGE);}}
+function readAutosave(){try{const saved=localStorage.getItem(STORAGE);if(!saved)return;const doc=JSON.parse(saved);items=parsePatch(doc,baseline);building.load(doc.architecture);$('#autosave').textContent='Dina tidigare ändringar har återställts från den här webbläsaren.';}catch{localStorage.removeItem(STORAGE);}}
 function rayAt(event){const r=$canvas.getBoundingClientRect(),p=new T.Vector2((event.clientX-r.left)/r.width*2-1,-((event.clientY-r.top)/r.height*2-1));raycaster.setFromCamera(p,camera);return raycaster;}
 function planePoint(ev){const pt=new T.Vector3();return rayAt(ev).ray.intersectPlane(floorPlane,pt)?pt:null;}
 function lookupHit(ev){const intersections=rayAt(ev).intersectObjects(pickMeshes,false);for(const i of intersections){const id=i.object.userData.editId;if(items.some(o=>o.id===id&&!o.deleted))return id;}return null;}
@@ -256,10 +260,11 @@ function setUpEvents(){
  const drop=$('#dropZone');drop.addEventListener('dragover',e=>{if([...e.dataTransfer.items].some(x=>x.kind==='file')){e.preventDefault();drop.classList.add('drag-glb');}});drop.addEventListener('dragleave',()=>drop.classList.remove('drag-glb'));
  drop.addEventListener('drop',async e=>{e.preventDefault();drop.classList.remove('drag-glb');const file=[...e.dataTransfer.files].find(f=>/\.glb$/i.test(f.name));if(file)try{await addCustom(file);}catch(err){notify('GLB-import: '+err.message);}});
  $('#reset').onclick=()=>{if(!window.confirm('Återställa ALLA dina ändringar i Möbelstudion? Spelet påverkas inte.'))return;
- const before=snapshot();items=baseline.map(o=>({...o,original:{...o}}));chosen=null;checkpoint(before);syncModels();renderRooms();renderList();renderProperties();notify('Möbleringen återställd till ursprungsläget.');};
+ const before=snapshot();items=baseline.map(o=>({...o,original:{...o}}));chosen=null;building.reset();checkpoint(before);store();syncModels();renderRooms();renderList();renderProperties();notify('Hela projektet återställt till ursprungsläget. Spelet påverkas inte.');};
  $('#importFile').onchange=async e=>{try{await importFile(e.target.files?.[0]);}catch(err){notify('Kunde inte öppna filen: '+err.message);}finally{e.target.value='';}};
  $canvas.oncontextmenu=e=>e.preventDefault();
  $canvas.addEventListener('pointerdown',e=>{
+  if(building?.active)return;
   if(!e.isPrimary&&e.pointerType!=='mouse')return;$canvas.focus();const hit=e.button===0?lookupHit(e):null;
   $canvas.setPointerCapture(e.pointerId);
   if(hit){select(hit);const o=items.find(o=>o.id===hit),pt=planePoint(e);
@@ -267,7 +272,7 @@ function setUpEvents(){
   }else{gesture={type:e.button===2?'pan':cameraMode==='top'?'pan':'orbit',lastX:e.clientX,lastY:e.clientY};}
   e.preventDefault();
  });
- $canvas.addEventListener('pointermove',e=>{if(!gesture)return;const dx=e.clientX-gesture.lastX,dy=e.clientY-gesture.lastY;gesture.lastX=e.clientX;gesture.lastY=e.clientY;
+ $canvas.addEventListener('pointermove',e=>{if(building?.active||!gesture)return;const dx=e.clientX-gesture.lastX,dy=e.clientY-gesture.lastY;gesture.lastX=e.clientX;gesture.lastY=e.clientY;
   if(gesture.type==='drag'){
    const pt=planePoint(e);if(!pt)return;
    const snap=$('#snap').checked&&!e.altKey;const x=pt.x+gesture.offsetX,z=pt.z+gesture.offsetZ;
@@ -275,12 +280,12 @@ function setUpEvents(){
   }else if(gesture.type==='pan')pan(dx,dy);
   else{azimuth-=dx*.008;polar=Math.max(.23,Math.min(1.42,polar+dy*.006));scheduleRender();}
  });
- const end=e=>{if(!gesture)return;const g=gesture;gesture=null;
+ const end=e=>{if(building?.active||!gesture)return;const g=gesture;gesture=null;
   if(g.type==='drag'){checkpoint(g.before);}
  };
  $canvas.addEventListener('pointerup',end);$canvas.addEventListener('pointercancel',end);
  $canvas.addEventListener('wheel',e=>{e.preventDefault();zoom=Math.max(2.5,Math.min(124,zoom*Math.exp(e.deltaY*.0012)));scheduleRender();},{passive:false});
- document.addEventListener('keydown',e=>{if(e.target.closest('input,textarea,select'))return;
+ document.addEventListener('keydown',e=>{if(building?.active||e.target.closest('input,textarea,select'))return;
   if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='z'){e.preventDefault();if(e.shiftKey)redo();else undo();return;}
   if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='y'){e.preventDefault();redo();return;}
   const o=items.find(x=>x.id===chosen&&!x.deleted);if(!o)return;
@@ -294,10 +299,16 @@ function setUpEvents(){
  });
  new ResizeObserver(scheduleRender).observe($canvas.parentElement);
 }
-async function bootstrap(){makeGround();readAutosave();localEntries=await localLibrary();renderRooms();syncModels();setUpEvents();goToRoom('I09');view('top');renderList();renderProperties();renderLibrary();$('#loading').hidden=true;
+async function bootstrap(){makeGround();
+ building=createBuildMode({data,scene,canvas:$canvas,camera,getZoom:()=>zoom,getView:()=>cameraMode,
+  rayAt,planePoint,onPan:pan,onOrbit:(dx,dy)=>{azimuth-=dx*.008;polar=Math.max(.23,Math.min(1.42,polar+dy*.006));scheduleRender();},
+  scheduleRender,notify,onChange:()=>{store();renderList();},onGoRoom:id=>{room=id;$('#room').value=id;goToRoom(id);},originalWalls:sourceWallMeshes});
+ readAutosave();localEntries=await localLibrary();renderRooms();syncModels();setUpEvents();goToRoom('I09');view('top');renderList();renderProperties();renderLibrary();$('#loading').hidden=true;
  window.__furnitureEditor={getState:()=>({version:EDITOR_VERSION,sourceCommit:BASE_COMMIT,gameVersion:GAME_VERSION,objects:items.length,chairs:items.filter(o=>o.kind==='chair'&&!o.deleted).length,
    authored:originalCounts.chair||0,selected:chosen,changed:exportPatch(items,baseline).placements.length+exportPatch(items,baseline).added.length+exportPatch(items,baseline).removed.length,view:cameraMode,gameModuleLoaded:!!globalThis.__fps}),
-  select:id=>select(id,true),getPatch:()=>exportPatch(items,baseline),getItem:id=>items.find(o=>o.id===id),
+  select:id=>select(id,true),getPatch:projectPatch,getItem:id=>items.find(o=>o.id===id),build:building,
+  renderNow:()=>{resize();renderer.render(scene,camera);},
+  screenWorldPoint:(x,z)=>{resize();const r=$canvas.getBoundingClientRect(),p=new T.Vector3(x,.15,z).project(camera);return {x:r.left+(p.x+1)*r.width/2,y:r.top+(1-p.y)*r.height/2};},
   catalogCount:LIBRARY.length,addPreset:async id=>addPreset(id),openLibrary:()=>$('#openLibrary').click(),
   screenPoint:id=>{const group=furnitureGroups.get(id);if(!group)return null;const r=$canvas.getBoundingClientRect();const p=group.position.clone().add(new T.Vector3(0,.5,0)).project(camera);return {x:r.left+(p.x+1)*r.width/2,y:r.top+(1-p.y)*r.height/2};},
   move:(id,x,z)=>mutate(id,{x,z}),rotate:(id,degrees)=>{const o=items.find(o=>o.id===id);return o&&mutate(id,{yaw:o.yaw+degrees*Math.PI/180});}};
