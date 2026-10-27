@@ -68,7 +68,15 @@ async function openOriginal(browser, mobile) {
     assert.equal(state.graphics, 'low', 'Fresh mobile visits should start with low graphics');
     assert.ok(state.pixelRatio <= 0.8, 'Mobile should cap GPU pixel ratio');
     assert.equal(state.pointerLocks, 0, 'Touch start must never invoke pointer lock');
-    assert.ok(await page.locator('[data-mobile-action=fire]').isVisible());
+    assert.equal(await page.locator('[data-mobile-action=fire]').isVisible(), false,
+      'Riposte-style auto-trigger should hide the manual fire button by default');
+    await page.locator('[data-mobile-action=pause]').tap();
+    const autoSetting = page.locator('#pause [data-setting=mobileAutoFire]');
+    assert.equal(await autoSetting.isChecked(), true, 'Auto-fire setting defaults to enabled');
+    await autoSetting.uncheck();
+    await page.locator('#resume').tap();
+    assert.equal(await page.locator('[data-mobile-action=fire]').isVisible(), true,
+      'Manual fire button must return when mobile auto-fire is disabled');
     const cdp = await mobileCtx.newCDPSession(page);
 
     const zone = await page.locator('[data-mobile-stick-zone]').boundingBox();
@@ -129,6 +137,37 @@ async function openOriginal(browser, mobile) {
     assert.ok(Math.abs(newYaw - initialYaw) > .02, 'Dragging right thumb should aim freely');
     await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
 
+    // Re-enable auto-fire, verify actual semi-auto repeated shots from a
+    // visible target, and ensure empty sights release the trigger immediately.
+    await page.locator('[data-mobile-action=pause]').tap();
+    await autoSetting.check();
+    await page.locator('#resume').tap();
+    assert.equal(await page.locator('[data-mobile-action=fire]').isVisible(), false,
+      'Auto-fire setting should hide manual trigger again');
+    const autoOutcome = await page.evaluate(() => {
+      const g = __fps.game, p = g.player;
+      g.state.phase = 'active';
+      p.weapon = 'p9';
+      p.reloadUntil = 0;p.nextShot = g.state.time;p.fireHeld = false;
+      const other = g.actors.find(a => a.team !== p.team);
+      g.reticleTarget = () => other;
+      const aimed = __fps.input();
+      const before = g.item(p).ammo;
+      __fps.step(null,.25);
+      const after = g.item(p).ammo;
+      g.reticleTarget = () => null;
+      const empty = __fps.input();
+      __fps.step(null,.25);
+      return { aimed: aimed.autoFire && aimed.fire, count: before-after,
+        empty: empty.autoFire || empty.fire, held: p.fireHeld,
+        remaining: g.item(p).ammo, fatal: document.getElementById('fatal').hidden };
+    });
+    assert.equal(autoOutcome.aimed,true,'Visible enemy should auto-trigger without pressing ELD');
+    assert.ok(autoOutcome.count >= 2, 'Pistol should auto-fire repeatedly at its own cadence: '+JSON.stringify(autoOutcome));
+    assert.equal(autoOutcome.empty,false,'No target means no automatic trigger');
+    assert.equal(autoOutcome.held,false,'Trigger must release when target is lost');
+    assert.equal(autoOutcome.fatal,true,'No fatal error from auto-fire test');
+
     await page.locator('[data-mobile-action=pause]').tap();
     assert.equal(await page.locator('#pause').isVisible(), true, 'Pause should work on phones');
     assert.equal(await page.locator('#mobile-controls').isVisible(), false, 'Controls must hide behind modal');
@@ -137,7 +176,7 @@ async function openOriginal(browser, mobile) {
     assert.equal((await page.evaluate(() => window.__pointerLockAttempts)), 0,
       'Resume must not attempt unsupported pointer lock');
 
-    console.log('MOBILE PASS: touch detection, low GPU, no pointer lock, movement, strafe, simultaneous move/fire, aim, pause/resume', state);
+    console.log('MOBILE PASS: auto-fire default, aim target, repeated pistol shots, manual opt-out, recoil, dual-touch, pause/resume', state);
     await mobileCtx.close();
 
     const { context: desktopCtx, page: desktop, state: desktopState } = await openOriginal(browser, false);
