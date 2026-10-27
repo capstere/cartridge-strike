@@ -18,7 +18,7 @@ const floorPoint = new THREE.Vector3();
 const settlingQuaternion = new THREE.Quaternion().setFromEuler(new THREE.Euler(0, 0, Math.PI / 2));
 
 function ownShared(resource) {
-  resource.userData.sharedWeapon = true; // Existing transient cleanup must retain it.
+  resource.userData.sharedWeapon = true;
   resource.userData.sharedThrowableCartridge = true;
   return resource;
 }
@@ -36,7 +36,7 @@ function labelTexture(type) {
   c.font = 'bold 17px sans-serif'; c.fillText('STRIKE', 128, 84);
   c.font = `900 ${type === 'he' ? 78 : 50}px sans-serif`; c.fillText(style.label, 128, 159);
   c.fillStyle = '#ffffff'; c.font = 'bold 22px sans-serif'; c.fillText(style.subtitle, 128, 215);
-  // Deterministic decorative barcode; not a real diagnostic/product identifier.
+  // Deterministic decorative barcode, not a real product identifier.
   c.fillStyle = '#17323d';
   for (let i = 0, x = 28; i < 37; i++) { const w = i % 3 === 0 ? 4 : 2; c.fillRect(x, 251, w, 30); x += w + 2; }
   c.font = '14px monospace'; c.fillText('CS-05 / GAME PROP', 128, 305);
@@ -72,7 +72,6 @@ function buildTemplate(type) {
     g.applyQuaternion(new THREE.Quaternion().setFromUnitVectors(Y, delta.normalize()));
     g.translate(...start.add(end).multiplyScalar(.5).toArray()); add(g, mat);
   };
-  // A moulded tapered white body, rather than the old rectangular twin-port can.
   const body = new RoundedBoxGeometry(.118, .146, .087, 1, .006);
   const positions = body.attributes.position;
   for (let i = 0; i < positions.count; i++) {
@@ -82,26 +81,23 @@ function buildTemplate(type) {
   body.computeVertexNormals(); add(body, white, 0, .100, 0);
   box(blue, 0, .014, 0, .128, .028, .097, .004);
   box(blue, 0, .030, 0, .120, .006, .092, .002);
-  // Blue registration feet and moulding ribs make the base visible while tumbling.
   for (const x of [-.047, .047]) {
     box(blue, x, .004, 0, .014, .008, .086, .002);
     box(white, x, .099, -.041, .004, .122, .005);
   }
   for (const z of [-.032, -.013, .006, .025]) box(dark, 0, .005, z, .068, .002, .003);
-  // Closed lid, visible seam, rear hinge pair and front latch. No military pin.
+  // Closed lid, seam, rear hinges and front latch. No military pin.
   box(dark, 0, .174, 0, .120, .0025, .088, .001);
   box(white, 0, .184, 0, .130, .018, .098, .005);
   box(white, 0, .194, 0, .108, .004, .079, .002);
   for (const x of [-.039, .039]) add(new THREE.CylinderGeometry(.006, .006, .019, 10), blue, x, .182, -.051, 0, 0, Math.PI / 2);
   box(blue, 0, .173, .050, .027, .020, .007, .002);
   box(dark, 0, .176, .054, .015, .003, .002);
-  // Rear reaction-tube silhouette: thin frosted lozenge with an open centre.
-  // The stylised support is deliberately not a reproduction of measured tooling.
+  // Original stylised rear reaction tube, not measured commercial tooling.
   box(blue, 0, .059, -.049, .021, .037, .012, .002);
   const reaction = [[0, .040, -.051], [0, .040, -.071], [0, .064, -.092], [0, .088, -.071], [0, .088, -.051]];
   for (let i = 0; i < reaction.length; i++) bar(reaction[i], reaction[(i + 1) % reaction.length], .005, frost);
   bar([0, .064, -.051], [0, .064, -.083], .003, frost);
-  // Both faces carry a readable type label: hand, flight and pickups agree.
   add(new THREE.PlaneGeometry(.087, .112), paper, 0, .102, .044);
   add(new THREE.PlaneGeometry(.079, .075), paper, 0, .125, -.044, 0, Math.PI);
   for (const [mat, pieces] of buckets) {
@@ -120,7 +116,6 @@ export function createThrowableCartridge(type = 'he', scale = 1) {
   if (!Object.hasOwn(THROWABLE_CARTRIDGES, type)) throw new TypeError(`Not a throwable Cartridge: ${type}`);
   if (!Number.isFinite(scale) || scale <= 0) throw new RangeError('Cartridge scale must be positive');
   if (!templates.has(type)) templates.set(type, buildTemplate(type));
-  // Object3D cloning preserves the immutable GPU assets and copies transforms.
   const model = templates.get(type).clone(true); model.scale.setScalar(scale); return model;
 }
 function visualSeed(id) {
@@ -130,13 +125,12 @@ function visualSeed(id) {
 }
 export function createThrownCartridge(grenade, time) {
   const root = new THREE.Group(), shell = createThrowableCartridge(grenade.type || grenade.kind, 1.1);
-  // Centre the shell on the simulated projectile instead of spinning about its foot.
   shell.position.y = -.108; root.add(shell); root.name = `thrown-cartridge-${grenade.id}`;
   const bounds = new THREE.Box3().setFromObject(root), corners = [];
   for (const x of [bounds.min.x, bounds.max.x]) for (const y of [bounds.min.y, bounds.max.y]) for (const z of [bounds.min.z, bounds.max.z]) corners.push([x, y, z]);
   const seed = visualSeed(grenade.id);
   root.userData = {visualModel: CARTRIDGE_VISUAL, type: grenade.type || grenade.kind,
-    lastTime: time, seed, corners, cosmeticOnly: true};
+    lastTime: time, seed, corners, settled: 0, cosmeticOnly: true};
   root.rotation.set(seed * 2, seed * Math.PI * 2, -.2);
   updateThrownCartridge(root, grenade, time); return root;
 }
@@ -145,27 +139,35 @@ export function updateThrownCartridge(model, grenade, time) {
   const elapsed = Number.isFinite(time) ? Math.max(0, Math.min(.1, time - data.lastTime)) : 0;
   if (Number.isFinite(time)) data.lastTime = time;
   const horizontal = Math.hypot(grenade.vx || 0, grenade.vz || 0);
-  const grounded = grenade.y <= .081 && Math.abs(grenade.vy || 0) < .65 && horizontal < .65;
-  if (grounded) model.quaternion.slerp(settlingQuaternion, 1 - Math.exp(-elapsed * 12));
-  else {
+  const radius = Number.isFinite(grenade.radius) && grenade.radius > 0 ? grenade.radius : .10;
+  const nearFloor = grenade.y <= radius + .012;
+  const grounded = nearFloor && Math.abs(grenade.vy || 0) < .65 && horizontal < .65;
+  if (grounded) {
+    const amount = 1 - Math.exp(-elapsed * 12);
+    model.quaternion.slerp(settlingQuaternion, amount);
+    data.settled += (1 - data.settled) * amount;
+  } else {
+    data.settled = 0;
     const speed = .35 + Math.min(1, (horizontal + Math.abs(grenade.vy || 0)) / 8);
     model.rotation.x += elapsed * (4.5 + data.seed * 3) * speed;
     model.rotation.y += elapsed * (1.6 + data.seed) * speed;
     model.rotation.z += elapsed * (data.seed - .5) * 2 * speed;
   }
   model.position.set(grenade.x, grenade.y, grenade.z);
-  // Cosmetic floor fitting only; actual grenade coordinates/collisions stay exact.
-  if (grenade.y <= .081) {
+  // Use the actual spherical collision radius to detect floor contact. Smoothly
+  // lower the cosmetic side-resting body to the floor; never move the projectile.
+  if (nearFloor) {
     let bottom = Infinity;
     for (const corner of data.corners) {
       floorPoint.fromArray(corner).applyQuaternion(model.quaternion);
       bottom = Math.min(bottom, floorPoint.y);
     }
-    model.position.y = Math.max(grenade.y, .003 - bottom);
+    const floorY = .003 - bottom;
+    model.position.y = Math.max(floorY, grenade.y + (floorY - grenade.y) * data.settled);
   }
   return model;
 }
-/** Call once at final renderer teardown, never when a single grenade expires. */
+/** Final renderer teardown only: never dispose when a single grenade expires. */
 export function disposeThrowableCartridges() {
   const geometries = new Set(), materials = new Set(), textures = new Set();
   for (const root of templates.values()) root.traverse(o => {
