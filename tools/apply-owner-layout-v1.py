@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Apply checksum-bound owner geometry over public 0.15.3.
 No private originals. All runtime outputs are checked against fixed SHA-256s.
-The additional test-only fix restores native requestAnimationFrame after the
-controlled-input assertions so Chromium can take its compositor screenshot.
+The test-only capture correction saves the same actual WebGL canvas as the eight
+other fixtures. It does not claim a full-page/HUD screenshot or change assertions.
 """
 from pathlib import Path
 import base64, hashlib, json, lzma, re, subprocess
@@ -24,10 +24,10 @@ def repair_test_capture():
     old = path.read_text()
     assert sha(old.encode()) == '1eccbaf81c06ce6af565569e0b0f111f4ba681662c5bd7170b6298485567bf89'
     before = "await page.evaluate(()=>__fps.step(null,1/60));await page.screenshot({path:resolve(out,'09-trusted-input.png')});"
-    after = "await page.evaluate(()=>{__fps.step(null,1/60);window.requestAnimationFrame=window.__reviewRAF;});await page.screenshot({path:resolve(out,'09-trusted-input.png'),timeout:60000});"
+    after = "await page.evaluate(()=>__fps.step(null,1/60));await capture('09-trusted-input');"
     assert old.count(before) == 1
     fixed = old.replace(before,after)
-    assert sha(fixed.encode()) == 'd6f8784c8abb17a38e4d22b2aa095513c18731bf64eb0733bbd56ba9b1db0aff'
+    assert sha(fixed.encode()) == '1c6097e4350eb10a516834b20092fca786cd5937cfa3a79e18595e561a169826'
     path.write_text(fixed)
 def main():
     if not TRANSPORT.exists():
@@ -85,6 +85,6 @@ def main():
         actual = sha((ROOT/path).read_bytes())
         assert actual == expected, f'Unexpected output bytes: {path}: {actual}'
     repair_test_capture()
-    print(json.dumps({'status':'PASS','version':payload['version'],'changedFiles':len(ALLOWED),'runtimeManifestFiles':len(files),'preservedBase':payload['baseCommit'],'testCapture':'native rAF restored after controlled-input assertions; no gameplay changes'},indent=2))
+    print(json.dumps({'status':'PASS','version':payload['version'],'changedFiles':len(ALLOWED),'runtimeManifestFiles':len(files),'preservedBase':payload['baseCommit'],'testCapture':'actual WebGL canvas; all input assertions retained'},indent=2))
 if __name__ == '__main__':
     main()
