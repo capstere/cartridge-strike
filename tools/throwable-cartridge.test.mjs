@@ -30,7 +30,7 @@ test('same-type instances share immutable assets but not transforms', () => {
   const a = createThrowableCartridge('he'), b = createThrowableCartridge('he');
   assert.notEqual(a, b); assert.equal(a.children.length, b.children.length);
   a.position.x = 10; a.children[0].rotation.x = 1;
-  assert.equal(b.position.x, 0); assert.equal(b.children[0].rotation.x, 0);
+  assert.ok(b.position.x === 0); assert.ok(b.children[0].rotation.x === 0);
   for (let i = 0; i < a.children.length; i++) {
     assert.equal(a.children[i].geometry, b.children[i].geometry);
     assert.equal(a.children[i].material, b.children[i].material);
