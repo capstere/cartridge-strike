@@ -24,6 +24,7 @@ try{
  check('at least 50 chairs and separate editor without game boot',initial.chairs>=50&&!initial.gameModuleLoaded);
  check('pinned source version matches current public release',initial.sourceCommit==='7b99da56c9cc7f7e5bdbc626a174c8db9a9e33bc'&&initial.gameVersion==='0.17.0');
  check('plan view loaded with readable room controls',await page.locator('#loading').isHidden()&&await page.locator('#room option').count()>5);
+ const saveBox=await page.locator('#downloadTop').boundingBox();check('save button visible without scrolling sidebar',!!saveBox&&saveBox.y>=0&&saveBox.y+saveBox.height<850);
  check('real WebGL canvas initialized',await page.evaluate(()=>!!document.querySelector('#viewport').getContext('webgl2')));
  const chair=await page.evaluate(()=>{const id='V1-SEAT-1L1';__furnitureEditor.select(id);return {id,angle:__furnitureEditor.getItem(id)?.yaw};});
  check('select exact authored lunch chair',Number.isFinite(chair.angle));
@@ -40,7 +41,7 @@ try{
  await page.locator('#threeView').click();
  check('3D toggle works',await page.evaluate(()=>__furnitureEditor.getState().view==='3d'));
  await page.screenshot({path:resolve(out,'02-3d.png'),fullPage:true});report.shots.push('02-3d.png');
- const [download]=await Promise.all([page.waitForEvent('download'),page.locator('#download').click()]);
+ const [download]=await Promise.all([page.waitForEvent('download'),page.locator('#downloadTop').click()]);
  const filename=download.suggestedFilename(),path=await download.path(),patch=JSON.parse(await readFile(path,'utf8'));
  check('downloaded JSON contains editable source IDs and one edited chair',filename.endsWith('.json')&&patch.format==='cartridge-strike-furniture-studio'&&patch.placements.some(x=>x.id===chair.id));
  check('downloaded file contains no private reference data',!JSON.stringify(patch).includes('Cepheid'));

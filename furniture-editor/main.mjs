@@ -176,7 +176,7 @@ function setUpEvents(){
  $('#rotateLeft').onclick=()=>{const o=items.find(x=>x.id===chosen);if(o)mutate(o.id,{yaw:o.yaw-Math.PI/12});};
  $('#rotateRight').onclick=()=>{const o=items.find(x=>x.id===chosen);if(o)mutate(o.id,{yaw:o.yaw+Math.PI/12});};
  for(const k of ['x','z'])$('#'+k).onchange=e=>{const o=items.find(x=>x.id===chosen);if(!o)return;const value=Number(e.target.value);if(Number.isFinite(value))mutate(o.id,{[k]:value});renderProperties();};
- $('#duplicate').onclick=createDuplicate;$('#remove').onclick=removeSelection;$('#download').onclick=download;$('#undo').onclick=undo;$('#redo').onclick=redo;
+ $('#duplicate').onclick=createDuplicate;$('#remove').onclick=removeSelection;$('#download').onclick=download;$('#downloadTop').onclick=download;$('#undo').onclick=undo;$('#redo').onclick=redo;
  $('#reset').onclick=()=>{if(!window.confirm('Återställa ALLA dina ändringar i Möbelstudion? Spelet påverkas inte.'))return;
  const before=snapshot();items=baseline.map(o=>({...o,original:{...o}}));chosen=null;checkpoint(before);syncModels();renderRooms();renderList();renderProperties();notify('Möbleringen återställd till ursprungsläget.');};
  $('#importFile').onchange=async e=>{try{await importFile(e.target.files?.[0]);}catch(err){notify('Kunde inte öppna filen: '+err.message);}finally{e.target.value='';}};
