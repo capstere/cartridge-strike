@@ -42,3 +42,4 @@
 @media(max-width:600px){.build-palette{grid-template-columns:repeat(2,minmax(0,1fr))}.build-toolbar small{margin-left:0}}
 
 #buildLegend{display:flex;align-items:center;gap:6px;color:#244e49}#buildLegend .arch-swatch{display:inline-block;margin-left:6px;height:12px;width:12px;border-radius:2px}
+#buildLegend .arch-wall{background:#c31421}#buildLegend .arch-glass{background:#22b14c}#buildLegend .arch-window{background:#00a2e8}#buildLegend .arch-door{background:#99d9ea}
