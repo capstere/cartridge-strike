@@ -48,6 +48,7 @@ export function createBuildMode({data,scene,canvas,camera,getZoom,getView,rayAt,
  function syncVisibility(){const show=active||hasSketch();root.visible=show;
   for(const g of originalWalls)g.visible=!show;
   $('buildToolbar').hidden=!active;$('furnitureSidebar').hidden=active;$('buildSidebar').hidden=!active;
+  $('buildLegend').hidden=!active;$('furnitureLegend').hidden=active;
   $('modeFurniture').classList.toggle('active',!active);$('modeBuild').classList.toggle('active',active);
   $('modeFurniture').setAttribute('aria-pressed',String(!active));$('modeBuild').setAttribute('aria-pressed',String(active));
   $('chairsOnly').checked=active?false:$('chairsOnly').checked;
@@ -123,6 +124,10 @@ export function createBuildMode({data,scene,canvas,camera,getZoom,getView,rayAt,
   preview.renderOrder=7;root.add(preview);
  }
  function render(){clear3D();const queue=new Map(),full=getView()==='3d';
+  // True plan colours match the annotated map. In 3D, neutral structural walls
+  // let furniture and glazing remain readable instead of painting halls red.
+  mat('wall').color.setHex(full?0x97a8a8:0xc31421);mat('wall').opacity=full?.44:.48;
+  mat('glazed').opacity=full?.34:.65;mat('window').opacity=full?.40:.65;
   for(const w of wallPieces(entries))drawEntry(queue,w,full);
   for(const d of entries.filter(e=>!e.deleted&&isDoor(e.kind)))drawDoor(queue,d,full);
   for(const [name,list] of queue){const im=new THREE.InstancedMesh(geo,mat(name),list.length),tmp=new THREE.Object3D();
@@ -177,6 +182,7 @@ export function createBuildMode({data,scene,canvas,camera,getZoom,getView,rayAt,
    button.append(swatch,name,id);button.onclick=()=>{setTool('select');select(e.id);};list.append(button);seen++;
   }
   $('buildListCount').textContent=filter?`${found.length} träffar`: `Visar ${seen} närmaste av ${found.length} delar`;
+  $('viewportStatus').textContent=`BYGGLÄGE · ${count()} ändringar i byggskissen · ${found.length} befintliga/nya byggdelar`;
   $('buildUndo').disabled=!history.length;$('buildRedo').disabled=!future.length;
  }
  function changeEntry(id,delta){const e=entryById(id);if(!e)return false;

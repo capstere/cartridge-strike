@@ -148,7 +148,7 @@ function renderList(){const el=$('#furnitureList');el.replaceChildren();const se
   const n=document.createElement('span');n.textContent=nameFor(o)+' '+(i+1);const id=document.createElement('small');id.textContent=o.id.slice(-20);b.append(n,id);b.onclick=()=>select(o.id,true);el.append(b);
  });
  const patch=exportPatch(items,baseline),count=patch.placements.length+patch.added.length+patch.removed.length+(building?.count()||0);$('#changeCount').textContent=count+' ändringar';$('#undo').disabled=!undoStack.length;$('#redo').disabled=!redoStack.length;
- $('#viewportStatus').textContent=(chosen?`Markerad: ${chosen} · `:'')+visible.length+' synliga objekt i listan · '+baseline.length+' redigerbara möbler totalt';
+ if(!building?.active)$('#viewportStatus').textContent=(chosen?`Markerad: ${chosen} · `:'')+visible.length+' synliga objekt i listan · '+baseline.length+' redigerbara möbler totalt';
 }
 function renderProperties(){const o=items.find(x=>x.id===chosen&&!x.deleted);$('#emptySelection').hidden=!!o;$('#selectionPanel').hidden=!o;$('#selectionTag').textContent=o?o.roomId:'Ingen vald';
  if(!o)return;

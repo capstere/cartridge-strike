@@ -40,3 +40,5 @@
 .build-toolbar strong{letter-spacing:.5px;color:#0d685d}.build-toolbar small{margin-left:auto;color:#677d76;font-size:10px}
 @media(max-width:1100px){.toolbar{flex-wrap:wrap}.design-mode button{font-size:10px}}
 @media(max-width:600px){.build-palette{grid-template-columns:repeat(2,minmax(0,1fr))}.build-toolbar small{margin-left:0}}
+
+#buildLegend{display:flex;align-items:center;gap:6px;color:#244e49}#buildLegend .arch-swatch{display:inline-block;margin-left:6px;height:12px;width:12px;border-radius:2px}
