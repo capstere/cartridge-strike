@@ -1,3 +1,4 @@
+import { grenadeLaunch, advanceGrenade } from './grenade-physics.mjs';
 import { shotSpread } from './tactical-rules.mjs';
 import {initializeCombat,tickCombat,combatEvent} from './combat-flow.mjs';
 import { CONFIG, TEAMS, WEAPONS, PRIORITY, seededRandom, DIFFICULTIES, DEFAULT_DIFFICULTY, TEAMMATE_DIFFICULTY } from './config.mjs';
@@ -409,28 +410,16 @@ export class Game {
   throwGrenade(actor, type) {
     if (this.phase !== 'active' || !actor.alive || !actor.inventory[type]) return false;
     actor.inventory[type]--;
-    const origin = eye(actor), dir = direction(actor.yaw, actor.pitch + .15);
-    this.state.grenades.push({ ...origin, id: `grenade-${++this.eventSerial}`, type, ownerId: actor.id,
-      vx: dir.x * this.config.grenadeSpeed, vy: dir.y * this.config.grenadeSpeed + 1.8, vz: dir.z * this.config.grenadeSpeed,
-      radius: this.config.grenadeRadius, deadline: this.state.time + this.config.grenadeFuse, lastBounce: -Infinity });
+    this.state.grenades.push({ ...grenadeLaunch(actor, this.config, this.state.time, type), id: `grenade-${++this.eventSerial}` });
     this.emit('throw', actor, { grenade: type }); this.select(actor.inventory.primary?.id ?? actor.inventory.pistol?.id ?? 'knife', actor); return true;
   }
   updateGrenades(dt) {
     const remaining = [];
     for (const grenade of this.state.grenades) {
-      grenade.vy -= this.config.gravity * dt;
-      const displacement = { x: grenade.vx * dt, y: grenade.vy * dt, z: grenade.vz * dt };
-      const length = Math.hypot(displacement.x, displacement.y, displacement.z);
-      const dir = length ? { x: displacement.x / length, y: displacement.y / length, z: displacement.z / length } : { x: 0, y: -1, z: 0 };
-      const hit = this.world.raycast(grenade, dir, length + grenade.radius, { vision: false });
-      if (hit) {
-        const travel = Math.max(0, hit.distance - grenade.radius);
-        grenade.x += dir.x * travel; grenade.y += dir.y * travel; grenade.z += dir.z * travel;
-        const n = hit.normal ?? { x: 0, y: 1, z: 0 }, dot = grenade.vx * n.x + grenade.vy * n.y + grenade.vz * n.z;
-        grenade.vx = (grenade.vx - 1.6 * dot * n.x) * .72; grenade.vy = (grenade.vy - 1.6 * dot * n.y) * .72; grenade.vz = (grenade.vz - 1.6 * dot * n.z) * .72;
-        if (this.state.time - grenade.lastBounce > .12) { this.emit('bounce', null, { ...point(grenade), grenade: grenade.type }); grenade.lastBounce = this.state.time; }
-      } else { grenade.x += displacement.x; grenade.y += displacement.y; grenade.z += displacement.z; }
-      if (grenade.y < grenade.radius) { grenade.y = grenade.radius; grenade.vy = Math.abs(grenade.vy) * .35; grenade.vx *= .82; grenade.vz *= .82; }
+      const hit = advanceGrenade(grenade, this.world, this.config.gravity, dt);
+      if (hit && this.state.time - grenade.lastBounce > .12) {
+        this.emit('bounce', null, { ...point(grenade), grenade: grenade.type }); grenade.lastBounce = this.state.time;
+      }
       if (this.state.time + EPS >= grenade.deadline) this.detonateGrenade(grenade); else remaining.push(grenade);
     }
     this.state.grenades = remaining;

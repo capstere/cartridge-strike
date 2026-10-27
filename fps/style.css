@@ -125,3 +125,17 @@ body.fps-aiming:not(.fps-scoped) #crosshair{transform:scale(.7)}
 #mobile-controls .mobile-aim[hidden]{display:none!important}
 #mobile-controls .mobile-aim[aria-pressed=true]{border-color:#b5ffdd;background:#36806fe0}
 @media(orientation:portrait) and (pointer:coarse){#mobile-controls.mobile-auto-fire .mobile-aim{bottom:23%}}
+
+/* Grenade awareness 0.14.1: passive HUD, no touch interception or flashing. */
+#grenade-assist-hud{position:fixed;inset:0;z-index:7;pointer-events:none;font-family:inherit}
+#grenade-assist-hud [hidden]{display:none!important}
+#grenade-preview-note{position:absolute;left:50%;top:calc(50% + 40px);transform:translateX(-50%);text-align:center;padding:6px 10px;border-radius:5px;background:#0a202bdd;color:#b7eee2;max-width:240px}
+#grenade-preview-note strong{display:block;font-size:10px;letter-spacing:.08em}
+#grenade-preview-note span{display:block;font-size:9px;margin-top:3px;color:#bed0d4}
+#grenade-danger{position:absolute;left:50%;top:calc(50% - 92px);transform:translateX(-50%);display:flex;align-items:center;gap:8px;border:1px solid #edb67799;border-radius:7px;padding:6px 11px;background:#341c14ed;color:#ffe3bd;box-shadow:0 3px 12px #0006}
+#grenade-danger i{display:block;font-style:normal;font-weight:900;font-size:25px;line-height:1;width:27px;text-align:center}
+#grenade-danger strong{display:block;font-size:10px;letter-spacing:.09em}
+#grenade-danger span{display:block;font-size:10px;font-variant-numeric:tabular-nums;margin-top:2px}
+#grenade-danger[data-kind=flash]{border-color:#ede7ac;color:#fff6c5;background:#2e2b18ed}
+#grenade-danger.urgent{border-width:2px;box-shadow:0 0 0 2px #edb67733}
+@media(pointer:coarse){#grenade-preview-note{top:calc(50% + 30px);padding:4px 7px;max-width:180px}#grenade-preview-note strong{font-size:9px}#grenade-preview-note span{font-size:8px}#grenade-danger{top:calc(50% - 65px);padding:4px 8px}#grenade-danger i{font-size:22px}}
