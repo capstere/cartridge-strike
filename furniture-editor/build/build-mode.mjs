@@ -315,7 +315,10 @@ export function createBuildMode({data,scene,canvas,camera,getZoom,getView,rayAt,
   const old=capture(),next='a' in e?{...e,...delta,a:[...(delta.a??e.a)],b:[...(delta.b??e.b)]}:{...e,...delta};
   if('a' in e&&delta.kind&&delta.kind!==e.kind&&delta.finish===undefined)
    next.finish=architecturalFinish(delta.kind);
-  try{if('a' in e)validateEntry(next);else validateFloorRect(next);}catch(err){notify?.(err.message);return false;}
+  try{if('a' in e){validateEntry(next);
+    for(const p of posters.filter(p=>p.wallId===e.id))validatePoster(p,entries.map(w=>w.id===e.id?next:w));
+   }else validateFloorRect(next);
+  }catch(err){notify?.(err.message);return false;}
   Object.assign(e,next);record(old);return true;
  }
  function quickChange(kind){
@@ -356,7 +359,8 @@ export function createBuildMode({data,scene,canvas,camera,getZoom,getView,rayAt,
  }
  function removeSelected(){if(!selection)return;const before=capture();const e=entryById(selection);if(!e)return;
   if(e.wallId)posters=posters.filter(x=>x.id!==selection);
-  else if('a' in e){if(e.source)e.deleted=true;else entries=entries.filter(x=>x.id!==selection);}
+  else if('a' in e){if(e.source)e.deleted=true;else entries=entries.filter(x=>x.id!==selection);
+   posters=posters.filter(p=>p.wallId!==e.id);}
   else floors=floors.filter(x=>x.id!==selection);
   selection=null;record(before);notify?.('Byggdelen är borttagen ur skissen. Spelet ändras inte.');}
  function duplicate(){const e=entryById(selection);if(!e)return;const before=capture();
@@ -448,7 +452,10 @@ export function createBuildMode({data,scene,canvas,camera,getZoom,getView,rayAt,
   }
   else if(drag.type==='move'){next.a=[drag.orig.a[0]+off[0],drag.orig.a[1]+off[1]];next.b=[drag.orig.b[0]+off[0],drag.orig.b[1]+off[1]];}
   else if(drag.type==='moveFloor'){next.x0+=off[0];next.z0+=off[1];next.x1+=off[0];next.z1+=off[1];}
-  try{if('a' in e)validateEntry(next);else validateFloorRect(next);}catch{return;}
+  try{if('a' in e){validateEntry(next);
+    for(const poster of posters.filter(p=>p.wallId===e.id))validatePoster(poster,entries.map(w=>w.id===e.id?next:w));
+   }else validateFloorRect(next);
+  }catch{return;}
   Object.assign(e,next);render();showProperties();
  }
  function handlePointerEnd(){if(!active||!drag)return;const previous=drag.before;const was=drag.type;drag=null;
