@@ -3,10 +3,13 @@ import {BASE_COMMIT,GAME_VERSION,PATCH_FORMAT,PATCH_SCHEMA} from '../core.mjs';
 import {validateEntry,validateFloorRect} from './architecture.mjs';
 import {assetHash} from '../library/glb-utils.mjs';
 import {makeZip,readZip,PROJECT_ZIP_MAX_BYTES} from '../library/zip.mjs';
+import {floor5Baseline} from './project-scene.mjs';
+import {parseArchitecture} from './architecture.mjs';
+import {LIBRARY_MAP} from '../library/catalog.mjs';
 import {collisionExport,aiAgentBrief} from './ai-export.mjs';
 
 export const LEVEL_FORMAT='cartridge-strike-level-project',LEVEL_SCHEMA=2;
-export const LEVEL_GAME_VERSION='0.18.0',LEVEL_BASE_COMMIT='f5c63a22483feeeb29583853dab0c0911af5c09a',LEVEL_EDITOR_VERSION='3.1.0';
+export const LEVEL_GAME_VERSION='0.18.0',LEVEL_BASE_COMMIT='f5c63a22483feeeb29583853dab0c0911af5c09a',LEVEL_EDITOR_VERSION='3.2.0';
 const emptyArchitecture=()=>({schemaVersion:1,edits:[],added:[],removed:[],floors:[],posters:[],treatments:[]});
 const within=n=>typeof n==='number'&&Number.isFinite(n)&&Math.abs(n)<=100;
 const rect=r=>r&&[r.x0,r.z0,r.x1,r.z1].every(within)&&r.x1>r.x0&&r.z1>r.z0;
@@ -78,15 +81,29 @@ export function parseProject(input,{allowLegacy=true}={}){
   f.placements.length+f.added.length+f.removed.length>350)fail('möbler');
  if(input.mode==='new-level'&&(f.placements.length||f.removed.length))fail('ny bana får inte ärva möbler');
  for(const o of f.added){if(!/^NY-(OBJ|STOL|BORD|SOFFA)-\d{1,5}$/.test(o.id)||!
-  [o.x,o.z,o.yaw,o.w,o.d,o.height].every(Number.isFinite)||!within(o.x)||!within(o.z)||o.w<=0||o.d<=0||o.w>8||o.d>8)fail('möbel');
+  [o.x,o.z,o.yaw,o.w,o.d,o.height].every(Number.isFinite)||!within(o.x)||!within(o.z)||o.w<=0||o.d<=0||o.w>8||o.d>8||o.height<=0||o.height>8)fail('möbel');
+  if(o.assetId&&!LIBRARY_MAP.has(o.assetId)&&!/^local:[a-f0-9]{64}$/.test(o.assetId))fail('okänd möbelmodell');
   if(o.collision!==undefined&&!['solid','none'].includes(o.collision))fail('okänd möbelkollision');
   unique(o.id);if(input.mode==='new-level'&&!g.floors.some(r=>o.x>=r.x0&&o.x<=r.x1&&o.z>=r.z0&&o.z<=r.z1))fail('möbel utan golv');}
+ if(input.mode==='edit-floor5'){
+  const base=floor5Baseline(),byId=new Map(base.items.map(o=>[o.id,o]));parseArchitecture(a,base.entries);
+  for(const o of f.placements){if(!byId.has(o.id)||![o.x,o.z,o.yaw].every(Number.isFinite)||!within(o.x)||!within(o.z))fail('ändrad Floor 5-möbel');
+   for(const k of ['w','d','height'])if(o[k]!==undefined&&(!Number.isFinite(o[k])||o[k]<=0||o[k]>8))fail('möbelmått');unique(o.id);}
+  for(const id of f.removed){if(!byId.has(id))fail('borttagen Floor 5-möbel');unique(id);}
+ }
  const play=input.gameplay;if(play?.mode!=='classic'||!play.counts||!Array.isArray(play.spawns)||play.spawns.length>10||
   !play.objectives||!Array.isArray(play.objectives.hostages))fail('spelregler');
  for(const team of ['analysts','counterAnalysts'])if(!Number.isInteger(play.counts[team])||play.counts[team]<1||play.counts[team]>5)fail('lagstorlek');
  for(const p of play.spawns){if(!/^SP-[AC]-\d{2}$/.test(p.id)||!['analysts','counterAnalysts'].includes(p.team)||
   !Number.isInteger(p.index)||p.index<0||p.index>4||![p.x,p.z,p.yaw].every(Number.isFinite)||!within(p.x)||!within(p.z)||Math.abs(p.yaw)>Math.PI+.001)fail('spawn');unique(p.id);}
+ if(new Set(play.spawns.map(p=>p.team+':'+p.index)).size!==play.spawns.length)fail('dubbelt spawnindex');
+ if(play.objectives.hostages.length>2)fail('för många gisslan');
+ for(const p of [play.objectives.bomb,play.objectives.rescue,...play.objectives.hostages].filter(Boolean)){
+  if(typeof p.id!=='string'||p.id.length>100||!within(p.x)||!within(p.z)||(p.yaw!==undefined&&!Number.isFinite(p.yaw))||
+   (p.radius!==undefined&&(!Number.isFinite(p.radius)||p.radius<=0||p.radius>10)))fail('spelmål');unique(p.id);
+ }
  if(!Array.isArray(input.navHints)||input.navHints.length>250||typeof input.intent!=='object'||typeof input.validation!=='object'||typeof input.agentBrief!=='object')fail('metadata');
+ for(const hint of input.navHints)if(typeof hint.id!=='string'||hint.id.length>100||!Array.isArray(hint.points)||hint.points.length<2||hint.points.length>1000||hint.points.some(p=>!Array.isArray(p)||p.length!==2||!p.every(within)))fail('navigationspunkter');
  const assets=input.assets;if(!assets||!Array.isArray(assets.library)||!Array.isArray(assets.local)||!Array.isArray(assets.posters)||assets.local.length>49||assets.posters.length>100)fail('tillgångar');
  for(const row of assets.local){if(!/^local:[a-f0-9]{64}$/.test(row.assetId)||row.file!==`assets/models/${row.assetId.slice(6)}.glb`||
   !Number.isInteger(row.bytes)||row.bytes<0||row.bytes>20e6)fail('modellfil');}

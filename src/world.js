@@ -84,7 +84,7 @@
   for(const o of D.obstacles){
    if(o.collision!=='none')scene.blockedPolygons.push({id:o.id,polygon:o.polygon});
    const [x0,z0,x1,z1]=bounds(o.polygon),cx=(x0+x1)/2,cz=(z0+z1)/2,w=x1-x0,d=z1-z0;
-   if(D.__custom){box(o.id,cx,(o.height||.8)/2,cz,w,o.height||.8,d,'wood','furniture',o.yaw||0);continue;}
+   if(D.__custom){box(o.id,o.x??cx,(o.elevation||0)+(o.height||.8)/2,o.z??cz,o.w||w,o.height||.8,o.d||d,'wood','furniture',o.yaw||0);if(o.studioVisual)scene.boxes.at(-1).studioVisual=true;continue;}
    if(o.kind==='uncertain-area'){box(o.id,cx,.95,cz,w,1.9,d,'blocked');continue;}
    if(o.kind==='authored-dining-table'){
     box(o.id+'-top',cx,.755,cz,w,.055,d,'white','table');

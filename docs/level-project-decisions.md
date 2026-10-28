@@ -10,3 +10,14 @@
 - The public example must be synthetic. Private plan data and unverified local models are never added to a public level manifest.
 
 Baseline: `node tools/owner-door-traversal.mjs` passed 102 directional cases; `node tools/verify-owner-runtime.mjs` passed 195 SHA-256 entries. The broad Node suite requires a local `three` resolution shim for vendored addon imports; without it six files fail at module resolution before assertions run.
+
+## Shared building workflow (2026-10-28, baseline 47728ea)
+
+- Both `new.html` and `new.html?mode=edit-floor5` use the same plan/3D tools. The original editor remains available for compatibility.
+- `project-scene.mjs` resolves the authored scene for UI, collision handoff and FPS. Floor 5 retains source polygons, routes and a pinned baseline; source edits and removals are applied before physics is built. Default FPS without a level parameter still uses the original world path.
+- Room strokes create their floor and four walls; one click places a standard door/opening or a window/glass span on an existing wall, replacing that span. No separate collision drawing is required. Furniture models are shared with the FPS preview, and collider dimensions use local width/depth, rotation and elevation exactly once.
+- Floor 5 projects inherit the existing 5+5 anchors if no gameplay overrides exist. Engine validation checks the resolved scene. Original unmodified doors retain their width exemption.
+- Schema remains 2; these are additive behaviors within that contract. Editor version is 3.2.0, compatible game version remains 0.18.0; the historical furniture BASE_COMMIT is unchanged.
+- The export is deterministic geometry plus a derived collision map and an agent brief. It makes implementation reproducible; no promise of error-free autonomous changes replaces engine/browser verification.
+
+Shared-wall compilation also removes every underlying solid span when a window/glass part is fitted across overlapping room walls. A real shot-clearance regression confirms that no invisible opaque wall survives behind a broken window. Capsule traversal is simulated from both sides in the isolated level world; the original 102-case Floor 5 regression remains separate.
