@@ -5,7 +5,8 @@ import {createRequire} from 'node:module';
 import {mkdir,readFile,writeFile} from 'node:fs/promises';
 import {resolve} from 'node:path';
 import assert from 'node:assert/strict';
-import {readZip} from './library/zip.mjs';
+import {makeZip,readZip} from './library/zip.mjs';
+import {createHash} from 'node:crypto';
 const require=createRequire(import.meta.url);
 const {chromium}=require('../frontline/source/tools/dev/node_modules/playwright-core');
 const origin=process.env.FURNITURE_TEST_ORIGIN||'http://127.0.0.1:8765';
@@ -81,6 +82,17 @@ try{
  await page.locator('#customGLB').setInputFiles({name:'my-custom-chair.glb',mimeType:'model/gltf-binary',buffer:customGLB});
  await page.waitForFunction(()=>__furnitureEditor.getPatch().added.some(p=>p.assetId?.startsWith('local:')),{timeout:25000});
  check('user-owned GLB parsed and placed without fetching external URLs',await page.evaluate(()=>__furnitureEditor.getPatch().added.some(p=>p.assetId?.startsWith('local:'))));
+ // A private model archive is imported locally, without publishing or auto-placing its content.
+ const digest=createHash('sha256').update(customGLB).digest('hex');
+ const bundle=makeZip([{name:'projekt.json',data:'{}'},{name:'models/'+digest+'.glb',data:customGLB}]);
+ await page.locator('#openLibrary').click();
+ await page.locator('#customZip').setInputFiles({name:'private-models.zip',mimeType:'application/zip',buffer:Buffer.from(bundle)});
+ await page.waitForFunction(()=>document.querySelector('#libraryImportStatus')?.textContent.includes('1 av 1 GLB-modeller'));
+ check('private ZIP pack loads into local catalog without auto-placement',await page.evaluate(()=>
+  document.querySelector('#libraryImportStatus').textContent.includes('1 av 1')&&
+  __furnitureEditor.getPatch().added.filter(p=>p.assetId?.startsWith('local:')).length===1));
+ await page.locator('#closeLibrary').click();
+
  const [zipDownload]=await Promise.all([page.waitForEvent('download'),page.locator('#downloadTop').click()]);
  const zipBuffer=await readFile(await zipDownload.path()),files=readZip(zipBuffer);
  const exported=JSON.parse(new TextDecoder().decode(files.get('projekt.json')));
