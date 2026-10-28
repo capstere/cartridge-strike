@@ -123,8 +123,9 @@ try{
  await clickWorld(7.1,10.1);await clickWorld(9.3,12.3);
  const newRoom=await page.evaluate(()=>__furnitureEditor.getPatch().architecture);
  check('two clicks create four connected walls and one floor',newRoom.added.length===roomBefore.added.length+4&&newRoom.floors.length===roomBefore.floors.length+1);
- const edges=newRoom.added.slice(-4);
- check('room geometry has exact shared corners',edges.every((edge,i)=>JSON.stringify(edge.b)===JSON.stringify(edges[(i+1)%4].a)));
+ const priorRoomIds=new Set(roomBefore.added.map(x=>x.id));
+ const edges=newRoom.added.filter(x=>!priorRoomIds.has(x.id));
+ check('room geometry has exact shared corners',edges.length===4&&edges.every((edge,i)=>JSON.stringify(edge.b)===JSON.stringify(edges[(i+1)%4].a)));
  await page.locator('#buildUndo').click();
  check('single undo removes the entire room',await page.evaluate(n=>{const p=__furnitureEditor.getPatch().architecture;return p.added.length===n.added&&p.floors.length===n.floors;},roomBefore));
  await page.locator('#buildTool').selectOption('room-rect');
@@ -134,8 +135,9 @@ try{
  check('exact room button activates after choosing start corner',await page.locator('#buildRoomCreateExact').isEnabled());
  await page.locator('#buildRoomCreateExact').click();
  check('exact dimensions, height and floor name survive export',await page.evaluate(n=>{
-  const p=__furnitureEditor.getPatch().architecture,edges=p.added.slice(-4),f=p.floors.at(-1);
-  return p.added.length===n.added+4&&p.floors.length===n.floors+1&&
+  const p=__furnitureEditor.getPatch().architecture,ids=new Set(n.added.map(x=>x.id)),edges=p.added.filter(x=>!ids.has(x.id)),
+   oldFloors=new Set(n.floors.map(x=>x.id)),f=p.floors.find(x=>!oldFloors.has(x.id));
+  return p.added.length===n.added.length+4&&edges.length===4&&p.floors.length===n.floors.length+1&&
    edges.every(w=>w.height===3.2)&&f?.name==='Testlokal'&&
    Math.abs(f.x1-f.x0-2.4)<.002&&Math.abs(f.z1-f.z0-1.6)<.002;
  },roomBefore));
