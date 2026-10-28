@@ -3,7 +3,7 @@
  * and no storage or network side effects. The exported JSON is review-only.
  */
 import {LIBRARY_MAP} from './library/catalog.mjs';
-import {editableDimensions,isChair,chairRole,validateDimensions,CHAIR_ROLES} from './appearance.mjs';
+import {editableDimensions,isChair,chairRole,validateDimensions,CHAIR_ROLES,ASSET_ROLES} from './appearance.mjs';
 export const EDITOR_VERSION = '2.0.0';
 export const GAME_VERSION = '0.17.0';
 export const BASE_COMMIT = '7b99da56c9cc7f7e5bdbc626a174c8db9a9e33bc';
@@ -121,6 +121,7 @@ export function exportPatch(objects,baseline,{createdAt=new Date().toISOString()
   const payload={id:o.id,roomId:o.roomId,kind:o.kind,x:round(o.x),z:round(o.z),yaw:round(normalizeAngle(o.yaw),6)};
   if(!old)added.push({...payload,w:round(o.w),d:round(o.d),height:round(o.height),
    ...(isChair(o)?{chairRole:chairRole(o)}:{}),
+   ...(o.kind==='prop'&&o.assetRole&&o.assetRole!=='auto'?{assetRole:o.assetRole}:{}),
    ...(o.assetId?{assetId:o.assetId,assetName:String(o.assetName||'3D-objekt').slice(0,90)}:{})});
   else if(isChanged(o,old))placements.push({...payload,
    ...(editableDimensions(o)&& (Math.abs(o.w-old.w)>1e-4||Math.abs(o.d-old.d)>1e-4)?{w:round(o.w),d:round(o.d)}:{}),
@@ -154,6 +155,7 @@ export function parsePatch(document,baseline){
    if((!classic&&!curated)||![p.w,p.d,p.height].every(v=>typeof v==='number'&&Number.isFinite(v)&&v>.05&&v<=8))
      throw Error('Ogiltig ny möbel eller okänd 3D-modell.');
    const obj={...p,assetName:curated?String(p.assetName||LIBRARY_MAP.get(p.assetId)?.name||'Egen 3D-modell').slice(0,90):undefined,source:'added'};
+   if(p.assetRole!==undefined&&(!curated||!ASSET_ROLES.includes(p.assetRole)))throw Error('Ogiltig kategori för 3D-modellen.');
    if(p.chairRole!==undefined&&(!isChair(obj)||!CHAIR_ROLES.includes(p.chairRole)))throw Error('Ogiltig stolskategori.');
    if(isChair(obj))obj.chairRole=chairRole(obj);
    get.set(obj.id,obj);items.push(obj);
