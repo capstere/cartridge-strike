@@ -27,7 +27,7 @@ export function createRectangleRoom(entries,floors,start,opposite,{
  const corners=[[x0,z0],[x1,z0],[x1,z1],[x0,z1]],staged=[...entries],walls=[];
  for(let i=0;i<4;i++){
   const edge=makeEntry(getNextId(staged,floors,'wall'),'wall',corners[i],corners[(i+1)%4]);
-  edge.height=wallHeight;edge.thickness=wallThickness;
+  edge.height=wallHeight;edge.thickness=wallThickness;edge.sill=Math.min(.9,roundPosition(wallHeight-.15));
   validateEntry(edge,{isNew:true});walls.push(edge);staged.push(edge);
  }
  let floor=null;
