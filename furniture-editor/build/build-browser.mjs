@@ -230,6 +230,30 @@ try{
  check('changing from window to glass does not exit SMART RITA',
   await page.evaluate(()=>__furnitureEditor.build.getDrawingState().mode==='paint'&&
    __furnitureEditor.build.getDrawingState().paintType==='glazed'));
+ // Lightweight window treatments are independent decorative attachments.
+ const treatmentIds=await page.evaluate(()=>{
+  const c=__furnitureEditor.getCameraTarget();
+  const wall=__furnitureEditor.build.testCreate('window',[c.x+3,c.z+2],[c.x+5.5,c.z+2]);
+  const blind=__furnitureEditor.build.attachBlind(wall);
+  const curtain=__furnitureEditor.build.drawCurtain(wall,[c.x+3.4,c.z+2],[c.x+5.1,c.z+2]);
+  return {wall,blind,curtain};
+ });
+ check('click-to-window dark-gray blind becomes a saved wall attachment',
+  await page.evaluate(({wall,blind})=>__furnitureEditor.getPatch().architecture.treatments.some(t=>
+   t.id===blind&&t.wallId===wall&&t.type==='blind'),treatmentIds));
+ check('line-drawn translucent curtain attaches to same wall with exact width',
+  await page.evaluate(({wall,curtain})=>__furnitureEditor.getPatch().architecture.treatments.some(t=>
+   t.id===curtain&&t.wallId===wall&&t.type==='curtain'&&t.t1>t.t0),treatmentIds));
+ await page.locator('#buildTool').selectOption('curtain');
+ check('curtain drawing tool remains available as a single selectable action',
+  await page.evaluate(()=>__furnitureEditor.build.getTool()==='curtain'));
+ await page.locator('#buildTool').selectOption('blind');
+ check('blind tool remains independently selectable in build mode',
+  await page.evaluate(()=>__furnitureEditor.build.getTool()==='blind'));
+ const treatmentDoc=await page.evaluate(()=>__furnitureEditor.getPatch().architecture);
+ await page.evaluate(p=>__furnitureEditor.build.load(p),treatmentDoc);
+ check('decorations persist through architecture save/reload',
+  await page.evaluate(n=>__furnitureEditor.build.treatments().length===n,treatmentDoc.treatments.length));
  check('no FPS boot, JS/shader errors, external resources or HTTP failures',!report.errors.length&&!report.httpFailures.length&&!report.external.length&&await page.evaluate(()=>!window.__fps));
  report.status='PASS';
 }catch(e){report.status='FAIL';report.errors.push(e.stack||String(e));console.error(e);}

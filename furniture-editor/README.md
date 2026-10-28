@@ -5,6 +5,20 @@
 Designstudion är ett **helt separat verktyg**. Du kan ändra möbler, väggar, fönster, glasväggar, dörrar och skissa nya golvytor. Dina ändringar är ett **förslag**, inte en ändring av live-spelet. Spelets befintliga kollision, botarnas navigation, gisslan, dörrar, spawns och regler ligger kvar exakt som i version 0.17.0.
 
 
+## Designstudion: tomma ytor, smart inredning, gardiner och persienner (28 oktober 2026)
+
+**Töm ytorna:** I **MÖBLER**, klicka **TÖM ALLA YTOR** och bekräfta. De ursprungliga stolarna, borden och övriga valbara möbler tas bort från *designförslaget* och de låsta bakgrundsmodellerna för köksbänkar/skåp döljs. Fönster, väggar, dörrar och rummens golv finns kvar. Läget sparas som `emptyFixed: true` tillsammans med vanliga `removed`-poster. **Ctrl+Z** återställer i en ångeråtgärd och återställningsknappen tar tillbaka originalet. Befintligt FPS-spel påverkas inte.
+
+**Behåll gamla objekt:** Samtliga 104 kuraterade GLB-objekt, inklusive Hissrum12-modellerna, är fortfarande åtkomliga från biblioteket, med användarens tidigare importerade egna GLB-filer kvar i den lokala katalogen. 21 nya lättviktiga objekt (utan GLB-hämtning) finns i samma bibliotek: vita 120/160/180 cm skrivbord, långa smala köksbord på 120/180/240 cm, vita runda Ø80/110/140 cm bord med silverstativ, blåa 120/160 cm bordsskärmar, vita köks- och labbänkar, mikrovågsugn, kaffemaskin, labbinstrument, datorskärm, tangentbord, skrivare och skåp. Ursprungliga spelobjekt som **inte** är katalogförda som egna GLB-filer blir inte automatiskt fullständiga separata 3D-filer; de döljs i designens tomma arbetsläge i stället.
+
+**Smart placering:** Kryssrutan **SMART PLACERING** är förvald. Flytta kameran nära en köks-/labbänk eller ett skrivbord och välj t.ex. **Mikrovågsugn**. Vid fästning placeras apparaten på bänkens höjd och projektet sparar `mountId` samt `elevation`; motsvarande gäller blå bordsskärmar på skrivbordets bakre kant. När föremålet dras längs bänken följer det bänken, och lämnar du den får det vanlig golvplacering. Bänk- och fästgeometri kontrolleras. Ytorna i designskissen är 3D-förhandsvisning, inte ny FPS-fysik.
+
+**Gardiner:** Byt till **BYGG → VIT GARDIN · DRA LINJE**. Dra längs valfri befintlig vägg eller fönsterlinje i PLANVY, från gardinens början till slut. En tunn halvgenomskinlig vit, lågpolyveckad gardin skapas från takhöjd till nästan golv. Det går även med två klick. Ritverktyget stannar valt för nästa gardin.
+
+**Persienner:** Byt till **BYGG → MÖRKGRÅ PERSIENN · FÖNSTER** och klicka på en fönster- eller glasväggslinje. Persiennen dimensioneras automatiskt till den väggens fönsterbredd och visas som mörkgrå slats i 3D. Vanliga väggar och dörrar kan inte ta emot persienner. Markera objektet för att välja sida, ta bort, duplicera eller ångra.
+
+Båda tillbehören sparas i den gamla arkitekturschemaversionens valfria `treatments`-lista; äldre projekt utan fältet öppnas som tidigare. Ändrar man en vägg så att dess tillbehör inte längre passar avvisas ändringen. Delning av en vägg med gardin/persienn på kräver först att tillbehöret tas bort, så det inte hamnar på fel vägg efter uppdelningen. Detta är **endast Designstudion** och automatiskt inget nytt innehåll i FPS-spelet.
+
 ## SMART RITA: rita fönster direkt över befintlig vägg (28 oktober 2026)
 
 1. Välj **BYGG → ✎ SMART RITA PÅ VÄGG**. Välj **FÖNSTER**, **GLASVÄGG**, **DÖRR** eller **VÄGG** i den nya färgade panelen; grundvalet är FÖNSTER. **Du behöver inte byta verktyg** när du vill rita nästa del.

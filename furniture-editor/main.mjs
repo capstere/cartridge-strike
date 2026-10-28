@@ -7,7 +7,10 @@ import {createFurnishings} from '../src/fps/furnishings.mjs';
 import {EDITOR_VERSION,GAME_VERSION,BASE_COMMIT,DEFAULT_ROOMS,ROOM_LABELS,
   EDITABLE_KINDS,bounds,centroid,inside,distanceSegment,catalog,normalizeAngle,
   round,validate,snapFurnitureToWall,exportPatch,parsePatch,isChanged} from './core.mjs';
-import {LIBRARY,LIBRARY_MAP,LIBRARY_CATEGORIES} from './library/catalog.mjs';
+import {LIBRARY_ALL as LIBRARY,LIBRARY_MAP,LIBRARY_CATEGORIES} from './library/catalog.mjs';
+import {populateProcedural} from './library/procedural-mesh.mjs';
+import {proceduralOf,placementRole} from './library/procedural.mjs';
+import {proposeSmartPose,findSupport} from './smart-placement.mjs';
 import {addModelToGroup,importLocalGLB,localLibrary,getLocalFile} from './library/models.mjs';
 import {makeZip,readZip,PROJECT_ZIP_MAX_BYTES} from './library/zip.mjs';
 import {readModelBundleZip} from './library/model-bundle.mjs';
@@ -15,6 +18,7 @@ import {assetHash} from './library/glb-utils.mjs';
 import {createBuildMode} from './build/build-mode.mjs';
 import {parseArchitecture} from './build/architecture.mjs';
 import {parsePosters} from './build/posters.mjs';
+import {parseTreatments} from './build/treatments.mjs';
 import {findCameraPlacement} from './placement.mjs';
 import {isTable,isChair,chairRole,chairColors,validateDimensions,FINISH_COLORS,cameraPanVector} from './appearance.mjs';
 const $=s=>document.querySelector(s),data=globalThis.SpelFloor5,worldSource=globalThis.SpelWorld;
@@ -26,14 +30,14 @@ const STORAGE='cartridge-furniture-studio-0.17.0-v1';
 const labels={chair:'Stol',table:'Bord',sofa:'Soffa','coffee-table':'Soffbord',desk:'Skrivbord',cabinet:'Skåp',prop:'3D-objekt'};
 let localEntries=[];
 let building=null;
-const projectPatch=()=>({...exportPatch(items,baseline),architecture:building?.export()});
+const projectPatch=()=>({...exportPatch(items,baseline),emptyFixed,architecture:building?.export()});
 const originalCounts={...baseline.reduce((r,o)=>(r[o.kind]=(r[o.kind]||0)+1,r),{})};
-let items=baseline.map(o=>({...o,original:{...o}})),chosen=null,undoStack=[],redoStack=[],gesture=null,room='I09',cameraMode='top',zoom=16,azimuth=-.65,polar=.80,noticeTimer=null;
+let items=baseline.map(o=>({...o,original:{...o}})),emptyFixed=false,chosen=null,undoStack=[],redoStack=[],gesture=null,room='I09',cameraMode='top',zoom=16,azimuth=-.65,polar=.80,noticeTimer=null;
 const $canvas=$('#viewport'),scene=new T.Scene();scene.background=new T.Color(0xdfe9e5);
 const camera=new T.OrthographicCamera(-10,10,10,-10,.05,300),renderer=new T.WebGLRenderer({canvas:$canvas,antialias:true,alpha:false,powerPreference:'low-power'});
 renderer.outputColorSpace=T.SRGBColorSpace;renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,1.65));
 const target=new T.Vector3(7.5,0,11.8),raycaster=new T.Raycaster(),floorPlane=new T.Plane(new T.Vector3(0,1,0),0);
-const boxGeometry=new T.BoxGeometry(1,1,1),pickMeshes=[],furnitureGroups=new Map(),originMaterials=[],sourceWallMeshes=[];
+const boxGeometry=new T.BoxGeometry(1,1,1),pickMeshes=[],furnitureGroups=new Map(),originMaterials=[],sourceWallMeshes=[],fixedScenery=[];
 const mat=(color,rough=.8,metal=0,opts={})=>new T.MeshStandardMaterial({color,roughness:rough,metalness:metal,...opts});
 const pickMaterial=new T.MeshBasicMaterial({transparent:true,opacity:0,depthWrite:false,colorWrite:false});
 const m={floor:mat(0xf5f8f3),rooms:mat(0xebf0ee),dark:mat(0x324b50),metal:mat(0x819b9b,.45,.6),silver:mat(FINISH_COLORS.silver,.45,.65),white:mat(FINISH_COLORS.white),wood:mat(0xc1a582),orange:mat(0xdf753c),blue:mat(0x629ca3),conferenceBlue:mat(FINISH_COLORS.blue),black:mat(FINISH_COLORS.black),teal:mat(0x3b9291),selected:mat(0x17a7a2,.4),fixed:mat(0x9faeac,.85,0,{transparent:true,opacity:.77}),wall:mat(0xa9b7b5,.95,0,{transparent:true,opacity:.63}),glass:mat(0x8ec8cd,.26,.1,{transparent:true,opacity:.34,depthWrite:false}),door:mat(0xd2a36b)};
@@ -65,20 +69,25 @@ function makeGround(){
  // Fixed benches, kitchen counters and closets provide context and collision feedback.
  const staticObstacles=data.obstacles.filter(o=>!EDITABLE_KINDS[o.kind]&&o.kind!=='uncertain-area');
  const fixed=new T.InstancedMesh(boxGeometry,m.fixed,staticObstacles.length);const dummy=new T.Object3D();
- staticObstacles.forEach((o,i)=>{const [x0,z0,x1,z1]=bounds(o.polygon),h=Math.min(.96,Math.max(.13,o.height||.75));dummy.position.set((x0+x1)/2,h/2,(z0+z1)/2);dummy.rotation.set(0,0,0);dummy.scale.set(x1-x0,h,z1-z0);dummy.updateMatrix();fixed.setMatrixAt(i,dummy.matrix);});fixed.instanceMatrix.needsUpdate=true;fixed.name='existing-fixed-fixtures';scene.add(fixed);
+ staticObstacles.forEach((o,i)=>{const [x0,z0,x1,z1]=bounds(o.polygon),h=Math.min(.96,Math.max(.13,o.height||.75));dummy.position.set((x0+x1)/2,h/2,(z0+z1)/2);dummy.rotation.set(0,0,0);dummy.scale.set(x1-x0,h,z1-z0);dummy.updateMatrix();fixed.setMatrixAt(i,dummy.matrix);});fixed.instanceMatrix.needsUpdate=true;fixed.name='existing-fixed-fixtures';scene.add(fixed);fixedScenery.push(fixed);
  // Existing autogenerated non-editable items remain as pale scenery markers.
  const visibleGeneratedIds=new Set(baseline.filter(o=>o.source==='generated-group').map(o=>o.id));
  const extra=furnishings.boxes.filter(b=>b.asset!=='chairDesk'&&!visibleGeneratedIds.has(b.furnishingId)&&!b.id.startsWith('fps-I12-sofa-'));
  const generated=new T.InstancedMesh(boxGeometry,m.fixed,extra.length);
- extra.forEach((b,i)=>{dummy.position.set(b.x,b.y,b.z);dummy.rotation.set(0,b.angle||0,0);dummy.scale.set(b.w,b.h,b.d);dummy.updateMatrix();generated.setMatrixAt(i,dummy.matrix);});generated.instanceMatrix.needsUpdate=true;generated.name='non-editable-furniture';scene.add(generated);
+ extra.forEach((b,i)=>{dummy.position.set(b.x,b.y,b.z);dummy.rotation.set(0,b.angle||0,0);dummy.scale.set(b.w,b.h,b.d);dummy.updateMatrix();generated.setMatrixAt(i,dummy.matrix);});generated.instanceMatrix.needsUpdate=true;generated.name='non-editable-furniture';scene.add(generated);fixedScenery.push(generated);
  const light=new T.HemisphereLight(0xffffff,0x9cbbaf,2.4);scene.add(light);const fill=new T.DirectionalLight(0xffffff,1.5);fill.position.set(-6,28,12);scene.add(fill);
 }
+function setFixedVisibility(){for(const model of fixedScenery)model.visible=!emptyFixed;
+ $('#emptyFixedStatus').textContent=emptyFixed?'TOMMA YTOR · fasta inventarier dolda':'URSPRUNG · fasta inventarier visas';
+ $('#emptyFixed').disabled=emptyFixed;}
 function makeModel(item){
  const group=new T.Group();group.name='möbel-'+item.id;group.userData.editId=item.id;
  const put=(x,y,z,w,h,d,material)=>addBox(group,x,y,z,w,h,d,material,true);
  const w=item.w,d=item.d,role=chairRole(item),cloth=role==='kitchen'?m.orange:role==='conference'?m.conferenceBlue:m.black;
  const chairLegs=role==='conference'?m.black:role==='office'?m.black:m.metal;
- if(item.assetId){
+ if(proceduralOf(item)){
+  populateProcedural(item,group,put);
+ }else if(item.assetId){
   const proxy=put(0,item.height/2,0,w,item.height,d,pickMaterial);proxy.userData.editId=item.id;
   const fallback=put(0,item.height/2,0,w*.96,item.height*.96,d*.96,m.teal);fallback.userData.editorFallback=true;
   addModelToGroup(item,group,()=>{if(group.userData.realModel){fallback.visible=false;fallback.material=pickMaterial;}
@@ -101,7 +110,7 @@ function makeModel(item){
  }else{
   put(0,item.height/2,0,w,item.height,d,m.white);put(0,item.height-.06,d*.51,w*.83,.07,.018,m.dark);
  }
- group.position.set(item.x,0,item.z);group.rotation.y=item.yaw;
+ group.position.set(item.x,item.elevation||0,item.z);group.rotation.y=item.yaw;
  group.traverse(c=>{if(c.isMesh)c.userData.editId=item.id});
  return group;
 }
@@ -119,7 +128,7 @@ function updateHighlight(){
  selectionMarker=new T.Mesh(new T.RingGeometry(Math.max(item.w,item.d)*.64,Math.max(item.w,item.d)*.64+.045,32),new T.MeshBasicMaterial({color:0x0d9995,side:T.DoubleSide,depthTest:false}));
  selectionMarker.rotation.x=-Math.PI/2;selectionMarker.position.set(item.x,.036,item.z);selectionMarker.renderOrder=6;scene.add(selectionMarker);
 }
-function updatePose(item){const g=furnitureGroups.get(item.id);if(g){g.position.set(item.x,0,item.z);g.rotation.y=item.yaw;g.updateMatrixWorld(true);}if(boxHelper)boxHelper.update();if(selectionMarker&&chosen===item.id)selectionMarker.position.set(item.x,.036,item.z);scheduleRender();}
+function updatePose(item){const g=furnitureGroups.get(item.id);if(g){g.position.set(item.x,item.elevation||0,item.z);g.rotation.y=item.yaw;g.updateMatrixWorld(true);}if(boxHelper)boxHelper.update();if(selectionMarker&&chosen===item.id)selectionMarker.position.set(item.x,.036,item.z);scheduleRender();}
 let scheduled=false;
 function scheduleRender(){if(scheduled)return;scheduled=true;requestAnimationFrame(()=>{scheduled=false;resize();renderer.render(scene,camera);});}
 function resize(){const rect=$canvas.getBoundingClientRect();const w=Math.max(1,Math.floor(rect.width)),h=Math.max(1,Math.floor(rect.height));if(w!==renderer.domElement.width/renderer.getPixelRatio()||h!==renderer.domElement.height/renderer.getPixelRatio())renderer.setSize(w,h,false);
@@ -143,11 +152,13 @@ function select(id,focus=false){const item=items.find(o=>o.id===id&&!o.deleted);
  if(item){room=item.roomId;$('#room').value=room;if(focus){target.set(item.x,0,item.z);zoom=Math.min(zoom,6);}}
  renderList();renderProperties();updateHighlight();scheduleRender();
 }
-function snapshot(){return items.map(({original,...o})=>({...o,original:original?{...original}:undefined}));}
-function checkpoint(before){const a=JSON.stringify(before),b=JSON.stringify(items);if(a===b)return false;
+function snapshot(){return {objects:items.map(({original,...o})=>({...o,original:original?{...original}:undefined})),emptyFixed};}
+function checkpoint(before){const a=JSON.stringify(before),b=JSON.stringify(snapshot());if(a===b)return false;
  undoStack.push(before);if(undoStack.length>60)undoStack.shift();redoStack=[];store();renderProperties();renderList();return true;
 }
-function restore(snap){items=snap.map(o=>({...o,original:o.original?{...o.original}:undefined}));if(!items.some(o=>o.id===chosen&&!o.deleted))chosen=null;syncModels();renderList();renderProperties();}
+function restore(snap){const saved=Array.isArray(snap)?{objects:snap,emptyFixed:false}:snap;
+ items=saved.objects.map(o=>({...o,original:o.original?{...o.original}:undefined}));emptyFixed=!!saved.emptyFixed;setFixedVisibility();
+ if(!items.some(o=>o.id===chosen&&!o.deleted))chosen=null;syncModels();renderList();renderProperties();}
 function store(){try{const doc=projectPatch();localStorage.setItem(STORAGE,JSON.stringify(doc));$('#autosave').textContent='Ändringar sparade lokalt. Ladda ned projektfilen för att kunna fortsätta på en annan dator.';}catch{$('#autosave').textContent='Lokal lagring fungerar inte — ladda ned JSON-filen direkt.';}}
 function notify(message){$('#notice').textContent=message;$('#notice').hidden=false;clearTimeout(noticeTimer);noticeTimer=setTimeout(()=>{$('#notice').hidden=true;},4600);}
 function nameFor(o){return o.assetName||LIBRARY_MAP.get(o.assetId)?.name||labels[o.kind]||'Möbel';}
@@ -174,14 +185,18 @@ function renderProperties(){const o=items.find(x=>x.id===chosen&&!x.deleted);$('
  $('#degrees').textContent=Math.round(normalizeAngle(o.yaw)*180/Math.PI)+'°';
  $('#duplicate').disabled=!['chair','table','coffee-table','desk','sofa','prop'].includes(o.kind);
 }
-function positionIssue(candidate){const list=items.filter(o=>!o.deleted);return validate(candidate,list,data,baseMap.get(candidate.id));}
+function positionIssue(candidate){const list=items.filter(o=>!o.deleted);return validate(candidate,list,data,baseMap.get(candidate.id),{emptyFixed});}
 function changePose(id,delta,{quiet=false}={}){const o=items.find(o=>o.id===id&&!o.deleted);if(!o)return false;let next={...o,...delta};next.yaw=normalizeAngle(next.yaw);
  if(quiet&&$('#wallSnap')?.checked&&(delta.x!==undefined||delta.z!==undefined)){
   const snapped=snapFurnitureToWall(next,data);
   if(!positionIssue(snapped))next=snapped;
  }
+ if(delta.x!==undefined||delta.z!==undefined){
+  const smart=proposeSmartPose(next,{x:next.x,z:next.z},items,{enabled:$('#smartAttach').checked&&!quiet||$('#smartAttach').checked&&quiet});
+  next={...next,...smart};
+ }
  const problem=positionIssue(next);if(problem){$('#validation').textContent=problem;$('#validation').hidden=false;if(!quiet)notify(problem);return false;}
- $('#validation').hidden=true;Object.assign(o,{x:next.x,z:next.z,yaw:next.yaw});updatePose(o);renderProperties();return true;
+ $('#validation').hidden=true;Object.assign(o,{x:next.x,z:next.z,yaw:next.yaw,mountId:next.mountId||null,elevation:next.elevation||0});updatePose(o);renderProperties();return true;
 }
 function mutate(id,delta){const prev=snapshot();const ok=changePose(id,delta);if(ok)checkpoint(prev);return ok;}
 function changeDimensions(id,delta){
@@ -213,7 +228,7 @@ function createDuplicate(){const source=items.find(x=>x.id===chosen&&!x.deleted)
  }
  notify('Det finns ingen säker ledig plats intill möbeln.');
 }
-function removeSelection(){const o=items.find(x=>x.id===chosen&&!x.deleted);if(!o)return;const before=snapshot();o.deleted=true;chosen=null;checkpoint(before);syncModels();renderList();renderProperties();notify('Möbeln är borttagen i redigeraren. Spelet är orört.');}
+function removeSelection(){const o=items.find(x=>x.id===chosen&&!x.deleted);if(!o)return;const before=snapshot();o.deleted=true;for(const child of items.filter(x=>x.mountId===o.id&&!x.deleted)){child.mountId=null;child.elevation=0;}chosen=null;checkpoint(before);syncModels();renderList();renderProperties();notify('Möbeln är borttagen i redigeraren. Spelet är orört.');}
 function undo(){if(!undoStack.length)return;redoStack.push(snapshot());restore(undoStack.pop());store();notify('Ångrat.');}
 function redo(){if(!redoStack.length)return;undoStack.push(snapshot());restore(redoStack.pop());store();notify('Gjort om.');}
 function downloadBlob(blob,name){const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=name;document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),5000);}
@@ -238,13 +253,14 @@ async function importFile(file){if(!file)return;if(file.size>PROJECT_ZIP_MAX_BYT
  }else{if(file.size>5*1024*1024)throw Error('JSON-filen är för stor (max 5 MB).');doc=JSON.parse(await file.text());}
  const parsed=parsePatch(doc,baseline),arch=parseArchitecture(doc.architecture,building.getBaseline());
  parsePosters(doc.architecture?.posters,arch.entries);
+ parseTreatments(doc.architecture?.treatments,arch.entries);
  if(stored.length){for(const f of stored){const name=doc.added.find(x=>x.assetId===f.id)?.assetName||'Egen-modell';
    await importLocalGLB(new File([f.data],name+'.glb',{type:'model/gltf-binary'}));}
   localEntries=await localLibrary();renderLibrary();
  }else for(const id of activeLocalIds(parsed))if(!await getLocalFile(id))throw Error('Projektet använder en egen GLB-fil. Öppna den sparade ZIP-filen i stället.');
- const before=snapshot();items=parsed;chosen=null;building.load(doc.architecture);checkpoint(before);syncModels();renderRooms();renderList();renderProperties();goToRoom(room);store();notify('Projektet öppnat med möbler och byggdelar! Spara när du är nöjd.');
+ const before=snapshot();items=parsed;emptyFixed=doc.emptyFixed===true;setFixedVisibility();chosen=null;building.load(doc.architecture);checkpoint(before);syncModels();renderRooms();renderList();renderProperties();goToRoom(room);store();notify('Projektet öppnat med möbler och byggdelar! Spara när du är nöjd.');
 }
-function readAutosave(){try{const saved=localStorage.getItem(STORAGE);if(!saved)return;const doc=JSON.parse(saved);items=parsePatch(doc,baseline);building.load(doc.architecture);$('#autosave').textContent='Dina tidigare ändringar har återställts från den här webbläsaren.';}catch{localStorage.removeItem(STORAGE);}}
+function readAutosave(){try{const saved=localStorage.getItem(STORAGE);if(!saved)return;const doc=JSON.parse(saved);items=parsePatch(doc,baseline);emptyFixed=doc.emptyFixed===true;setFixedVisibility();building.load(doc.architecture);$('#autosave').textContent='Dina tidigare ändringar har återställts från den här webbläsaren.';}catch{localStorage.removeItem(STORAGE);}}
 function rayAt(event){const r=$canvas.getBoundingClientRect(),p=new T.Vector2((event.clientX-r.left)/r.width*2-1,-((event.clientY-r.top)/r.height*2-1));raycaster.setFromCamera(p,camera);return raycaster;}
 function planePoint(ev){const pt=new T.Vector3();return rayAt(ev).ray.intersectPlane(floorPlane,pt)?pt:null;}
 function lookupHit(ev){const intersections=rayAt(ev).intersectObjects(pickMeshes,false);for(const i of intersections){const id=i.object.userData.editId;if(items.some(o=>o.id===id&&!o.deleted))return id;}return null;}
@@ -270,15 +286,32 @@ function renderLibrary(){const query=$('#librarySearch').value.trim().toLocaleLo
 }
 /** Place at the camera's CURRENT location; never jump to the room dropdown's center. */
 function findPlacement(entry){
- return findCameraPlacement(entry,target,data.rooms,items.filter(o=>!o.deleted),data,{inside,round,validate});
+ return findCameraPlacement(entry,target,data.rooms,items.filter(o=>!o.deleted),data,{inside,round,
+  validate:(candidate,used,source)=>validate(candidate,used,source,null,{emptyFixed})});
 }
-async function addPreset(id){const entry=LIBRARY_MAP.get(id)||localEntries.find(e=>e.id===id);
+async function addPreset(id){
+ const entry=LIBRARY_MAP.get(id)||localEntries.find(e=>e.id===id);
  if(!entry){notify('Okänt objekt.');return null;}
- const pos=findPlacement(entry);if(!pos){notify('Här där kameran är finns ingen ledig möblerbar plats. Flytta vyn till en golvyta med ett rum och försök igen. Kameran flyttas inte.');return null;}
- let serial=1,objectId;do{objectId='NY-OBJ-'+String(serial++).padStart(4,'0');}while(items.some(o=>o.id===objectId));
- const before=snapshot(),item={id:objectId,roomId:pos.roomId,kind:'prop',assetId:entry.id,assetName:entry.name,source:'added',
-  x:pos.x,z:pos.z,yaw:0,w:entry.width,d:entry.depth,height:entry.height};
- items.push(item);checkpoint(before);$('#chairsOnly').checked=false;syncModels();renderRooms();select(objectId,false);$('#libraryDialog').close();notify(entry.name+' placerad där du tittar. Kameran stannar här!');return objectId;
+ const serial=()=>{let i=1,key;do{key='NY-OBJ-'+String(i++).padStart(4,'0');}while(items.some(o=>o.id===key));return key;};
+ const objectId=serial();
+ const draft={id:objectId,kind:'prop',assetId:entry.id,assetName:entry.name,source:'added',
+  x:round(target.x),z:round(target.z),yaw:0,w:entry.width,d:entry.depth,height:entry.height,
+  roomId:roomAt(target.x,target.z)?.id||room};
+ const support=$('#smartAttach').checked?findSupport(draft,{x:target.x,z:target.z},items,{radius:1.8}):null;
+ let item=null;
+ if(support){
+  const mounted={...draft,...support,roomId:roomAt(support.x,support.z)?.id||draft.roomId};
+  if(!positionIssue(mounted))item=mounted;
+ }
+ if(!item){
+  const pos=findPlacement(entry);
+  if(!pos){notify('Här där du befinner dig finns ingen ledig plats. Flytta vyn till ett rum och försök igen.');return null;}
+  item={...draft,x:pos.x,z:pos.z,roomId:pos.roomId};
+ }
+ const before=snapshot();items.push(item);checkpoint(before);$('#chairsOnly').checked=false;
+ syncModels();renderRooms();select(objectId,false);$('#libraryDialog').close();
+ notify(entry.name+(item.mountId?' fästes automatiskt på bord/bänk.':' placerad nära kameran.')+' Dra objektet för att finjustera.');
+ return objectId;
 }
 async function addCustom(file,{place=true}={}){if(!file)return;const entry=await importLocalGLB(file),existing=localEntries.findIndex(x=>x.id===entry.id);
  if(existing<0)localEntries.push(entry);else localEntries[existing]=entry;
@@ -324,6 +357,12 @@ function setUpEvents(){
  $('#assetRole').onchange=e=>{const o=items.find(x=>x.id===chosen&&!x.deleted);if(o)changeAssetRole(o.id,e.target.value);};
  $('#duplicate').onclick=createDuplicate;$('#remove').onclick=removeSelection;$('#download').onclick=download;$('#downloadTop').onclick=download;$('#undo').onclick=undo;$('#redo').onclick=redo;
  $('#openLibrary').onclick=()=>{$('#libraryDialog').showModal();renderLibrary();$('#librarySearch').focus();};
+ $('#emptyFixed').onclick=()=>{
+  if(!window.confirm('Töm hela inredningen i DESIGNSTUDION? Alla ursprungliga möbler tas bort ur skissen och fasta inventarier döljs. Ctrl+Z ångrar. Spelet påverkas inte.'))return;
+  const before=snapshot();items=items.map(o=>({...o,deleted:true}));emptyFixed=true;chosen=null;
+  setFixedVisibility();checkpoint(before);syncModels();renderList();renderProperties();
+  notify('Ytorna är tomma i Designstudion. Alla objekt finns kvar i biblioteket. Ctrl+Z återställer.');
+ };
  $('#openPosters').onclick=()=>{building.enable(true);building.setTool('poster');notify('Klicka på en vägg för att placera din affisch. Skriv text eller välj en lokal bild.');};
  $('#closeLibrary').onclick=()=>$('#libraryDialog').close();
  $('#librarySearch').oninput=renderLibrary;$('#libraryCategory').onchange=renderLibrary;
@@ -333,7 +372,7 @@ function setUpEvents(){
  drop.addEventListener('drop',async e=>{e.preventDefault();drop.classList.remove('drag-glb');const files=[...e.dataTransfer.files];const pack=files.find(f=>/\.zip$/i.test(f.name));const glbs=files.filter(f=>/\.glb$/i.test(f.name));
   try{if(pack)await importCustomZip(pack);else if(glbs.length>1)await importCustomBatch(glbs);else if(glbs.length===1)await addCustom(glbs[0]);}catch(err){$('#libraryImportStatus').textContent=err.message;notify('Modellimport: '+err.message);}});
  $('#reset').onclick=()=>{if(!window.confirm('Återställa ALLA dina ändringar i Möbelstudion? Spelet påverkas inte.'))return;
- const before=snapshot();items=baseline.map(o=>({...o,original:{...o}}));chosen=null;building.reset();checkpoint(before);store();syncModels();renderRooms();renderList();renderProperties();notify('Hela projektet återställt till ursprungsläget. Spelet påverkas inte.');};
+ const before=snapshot();items=baseline.map(o=>({...o,original:{...o}}));emptyFixed=false;setFixedVisibility();chosen=null;building.reset();checkpoint(before);store();syncModels();renderRooms();renderList();renderProperties();notify('Hela projektet återställt till ursprungsläget. Spelet påverkas inte.');};
  $('#importFile').onchange=async e=>{try{await importFile(e.target.files?.[0]);}catch(err){notify('Kunde inte öppna filen: '+err.message);}finally{e.target.value='';}};
  $canvas.oncontextmenu=e=>e.preventDefault();
  $canvas.addEventListener('pointerdown',e=>{
@@ -380,7 +419,7 @@ async function bootstrap(){makeGround();
   rayAt,planePoint,onPan:pan,onOrbit:(dx,dy)=>{azimuth-=dx*.008;polar=Math.max(.23,Math.min(1.42,polar+dy*.006));scheduleRender();},
   scheduleRender,notify,onChange:()=>{store();renderList();},onGoRoom:id=>{room=id;$('#room').value=id;goToRoom(id);},
   onGoPoint:(x,z)=>{target.set(x,0,z);zoom=Math.min(zoom,7);scheduleRender();},originalWalls:sourceWallMeshes});
- readAutosave();localEntries=await localLibrary();renderRooms();syncModels();setUpEvents();goToRoom('I09');view('top');renderList();renderProperties();renderLibrary();$('#loading').hidden=true;
+ readAutosave();localEntries=await localLibrary();renderRooms();setFixedVisibility();syncModels();setUpEvents();goToRoom('I09');view('top');renderList();renderProperties();renderLibrary();$('#loading').hidden=true;
  window.__furnitureEditor={getState:()=>({version:EDITOR_VERSION,sourceCommit:BASE_COMMIT,gameVersion:GAME_VERSION,objects:items.length,chairs:items.filter(o=>o.kind==='chair'&&!o.deleted).length,
    authored:originalCounts.chair||0,selected:chosen,changed:exportPatch(items,baseline).placements.length+exportPatch(items,baseline).added.length+exportPatch(items,baseline).removed.length,view:cameraMode,gameModuleLoaded:!!globalThis.__fps}),
   select:id=>select(id,true),getPatch:projectPatch,getItem:id=>items.find(o=>o.id===id),build:building,
@@ -388,6 +427,8 @@ async function bootstrap(){makeGround();
   screenWorldPoint:(x,z)=>{resize();const r=$canvas.getBoundingClientRect(),p=new T.Vector3(x,.15,z).project(camera);return {x:r.left+(p.x+1)*r.width/2,y:r.top+(1-p.y)*r.height/2};},
   catalogCount:LIBRARY.length,addPreset:async id=>addPreset(id),openLibrary:()=>$('#openLibrary').click(),
   roomAt:(x,z)=>roomAt(x,z)?.id||null,
+  emptyRooms:()=>{const before=snapshot();items=items.map(o=>({...o,deleted:true}));emptyFixed=true;setFixedVisibility();checkpoint(before);syncModels();return true;},
+  getEmptyFixed:()=>emptyFixed,
   screenPoint:id=>{const group=furnitureGroups.get(id);if(!group)return null;const r=$canvas.getBoundingClientRect();const p=group.position.clone().add(new T.Vector3(0,.5,0)).project(camera);return {x:r.left+(p.x+1)*r.width/2,y:r.top+(1-p.y)*r.height/2};},
   move:(id,x,z)=>mutate(id,{x,z}),resize:(id,w,d)=>changeDimensions(id,{w,d}),
   setChairRole:changeChairRole,setAssetRole:changeAssetRole,duplicate:createDuplicate,

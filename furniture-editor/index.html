@@ -24,7 +24,10 @@
     <label for="search">Hitta en stol eller möbel</label><input id="search" type="search" placeholder="Sök t.ex. stol, I09 ..." autocomplete="off">
     <div class="filter"><label for="chairsOnly"><input type="checkbox" id="chairsOnly" checked> Bara stolar</label><span id="listCount">—</span></div>
     <div id="furnitureList" class="furniture-list" role="listbox" aria-label="Välj möbel"></div>
-    <button id="openLibrary" type="button" class="library-entry" aria-label="Öppna objektbibliotek och lägg till möbel">+ LÄGG TILL OBJEKT <span>104 3D-modeller</span></button>
+    <button id="emptyFixed" type="button" class="clear-interior">TÖM ALLA YTOR <small>Återställbar tom inredningsskiss</small></button>
+    <div id="emptyFixedStatus" class="empty-layout-info" role="status">URSPRUNG · fasta inventarier visas</div>
+    <label for="smartAttach" class="smart-attach-toggle"><input id="smartAttach" type="checkbox" checked> SMART PLACERING · på bänkar och skrivbord</label>
+    <button id="openLibrary" type="button" class="library-entry" aria-label="Öppna objektbibliotek och lägg till möbel">+ LÄGG TILL OBJEKT <span>125 objekt och 3D-modeller</span></button>
     <button id="openPosters" type="button" class="poster-entry" aria-label="Sätt upp en värdeordsaffisch på väggen">+ SÄTT UPP AFFISCH <span>Värdeord · egen bild</span></button>
     <div class="divider"></div>
     <div class="section-heading"><span>02 / FLYTTA & VRID</span><small id="selectionTag">Ingen vald</small></div>
@@ -37,7 +40,7 @@
         <select id="assetRole"><option value="auto">Identifiera automatiskt</option>
           <option value="table">Bord / skrivbord</option><option value="chair">Stol</option>
           <option value="other">Annat föremål (behåll modellens färg)</option></select>
-        <small>För egen GLB: välj Bord eller Stol om modellen inte känns igen automatiskt.</small>
+        <small>För egen GLB: välj Bord eller Stol om modellen inte känns igen automatiskt. De nya borden och apparaterna har färdiga former.</small>
       </div>
       <div id="tableSizeFields" class="table-size-fields" hidden>
         <strong>BORDETS MÅTT (METER)</strong>
@@ -95,7 +98,7 @@
         <option value="window">Fönster med bröstning</option><option value="door">Vanlig dörr</option>
         <option value="card-door">Passerkortsdörr</option><option value="elevator-door">Hissdörr</option>
         <option value="terrace-door">Terrassdörr</option><option value="opening">Öppen passage</option>
-        <option value="floor">Ny golvyta</option><option value="room-rect">RUM – rektangel (4 väggar)</option><option value="poster">AFFISCH · placera på vägg</option>
+        <option value="floor">Ny golvyta</option><option value="room-rect">RUM – rektangel (4 väggar)</option><option value="poster">AFFISCH · placera på vägg</option><option value="curtain">GARDIN · rita längs vägg</option><option value="blind">PERSIENN · klicka på fönster</option>
       </select>
       <div class="build-palette" aria-label="Byggverktyg">
         <button data-build-tool="select" class="active" type="button">↖ VÄLJ</button>
@@ -108,6 +111,8 @@
         <button data-build-tool="floor" type="button">GOLVYTA</button>
         <button data-build-tool="room-rect" type="button" class="room-tool">▣ RUM · REKTANGEL</button>
         <button data-build-tool="poster" type="button" class="room-tool">▣ AFFISCH PÅ VÄGG</button>
+        <button data-build-tool="curtain" type="button" class="room-tool">▥ VIT GARDIN · DRA LINJE</button>
+        <button data-build-tool="blind" type="button" class="room-tool">▤ MÖRKGRÅ PERSIENN · FÖNSTER</button>
       </div>
       <div id="buildRoomSettings" class="build-room-settings" hidden>
         <strong>SKAPA REKTANGULÄRT RUM</strong>
@@ -142,6 +147,13 @@
           <option value="terrace-door">Terrassdörr</option><option value="opening">Öppen passage</option>
           <option value="floor">Egen golvyta</option>
         </select></div>
+        <div id="treatmentFields" class="treatment-fields" hidden>
+          <strong>FÖNSTERTILLBEHÖR</strong>
+          <p id="treatmentDescription">Följer väggen och sparas i projektet.</p>
+          <label for="treatmentSide">Vilken sida av fönstret/väggen?</label>
+          <select id="treatmentSide"><option value="1">Sida A</option><option value="-1">Sida B</option></select>
+          <small>Gardiner är vita och transparenta från tak till golv. Persienner är mörkgrå och sitter på fönstret. Ta bort eller duplicera med knapparna nedan.</small>
+        </div>
         <div id="posterFields" class="poster-properties" hidden>
           <strong>VÄRDEORDSAFFISCH</strong>
           <label for="posterText">Rubrik / värdeord</label>

@@ -12,12 +12,13 @@ import {FINISH_COLORS,architecturalFinish,WALL_FINISHES,DOOR_FINISHES} from '../
 import {makePoster,parsePosters,serializePosters,validatePoster,locatePoster,posterId,POSTER_MAX} from './posters.mjs';
 import {createPosterTexture,compressPosterImage} from './poster-art.mjs';
 import {PAINT_KINDS,wallAtPoint,projectToWall,planPaintOverWall} from './paint-over-wall.mjs';
+import {TREATMENTS_MAX,createCurtain,createBlind,parseTreatments,treatmentPosition,validateTreatment,nextTreatmentId} from './treatments.mjs';
 const $=id=>document.getElementById(id);
 const DIST=1e-5;
-const floorKind='floor',roomKind='room-rect',posterKind='poster',paintKind='paint';
+const floorKind='floor',roomKind='room-rect',posterKind='poster',paintKind='paint',curtainKind='curtain',blindKind='blind';
 const palette={wall:0xc31421,glazed:0x22b14c,window:0x00a2e8,
  door:0x99d9ea,'card-door':0x99d9ea,'elevator-door':0x99d9ea,'terrace-door':0x99d9ea,
- opening:0x899796,frame:0x72888c,selected:0xffd16a};
+ opening:0x899796,frame:0x72888c,curtain:0xf8fbfa,blind:0x41494c,selected:0xffd16a};
 const copyFloors=a=>a.map(x=>({...x}));
 const cloneAll=a=>a.map(cloneEntry);
 const clamp=(x,a,b)=>Math.max(a,Math.min(b,x));
@@ -26,30 +27,34 @@ function minMax(p){return {minX:Math.min(p.a[0],p.b[0]),maxX:Math.max(p.a[0],p.b
 
 export function createBuildMode({data,scene,canvas,camera,getZoom,getView,rayAt,planePoint,onPan,onOrbit,
  scheduleRender,notify,onChange,onGoRoom,onGoPoint,originalWalls}){
- const baseline=readBaseline(data);let entries=cloneAll(baseline),floors=[],posters=[];
+ const baseline=readBaseline(data);let entries=cloneAll(baseline),floors=[],posters=[],treatments=[];
  let active=false,selection=null,mode='select',first=null,hover=null,drag=null,paintType='window',overlayDraft=null;
- let history=[],future=[],dirty=false,strokeColor=0;
+ let history=[],future=[],dirty=false,strokeColor=0,curtainWallId=null;
  const root=new THREE.Group();root.name='architectural-sketch-not-physics';scene.add(root);
  const geo=new THREE.BoxGeometry(1,1,1),sphere=new THREE.SphereGeometry(.13,12,8),materials=new Map();
  const mat=(name)=>{if(materials.has(name))return materials.get(name);
   const [base,finish]=name.split(':');
   const color=finish&&getView()==='3d'&&FINISH_COLORS[finish]?FINISH_COLORS[finish]:(palette[base]??palette.wall);
   const material=new THREE.MeshBasicMaterial({color,transparent:true,opacity:name==='wall'?.48:name==='frame'?.60:.55,depthWrite:false,side:THREE.DoubleSide});
+  if(name==='curtain')material.opacity=.36;
+  if(name==='blind')material.opacity=.94;
   materials.set(name,material);return material;};
  const selectionMat=new THREE.MeshBasicMaterial({color:palette.selected,depthTest:false});
  const selectLineMat=new THREE.LineBasicMaterial({color:palette.selected,depthTest:false});
  const floorMat=new THREE.MeshBasicMaterial({color:0x79c8bd,transparent:true,opacity:.28,side:THREE.DoubleSide,depthWrite:false});
- const raycaster=new THREE.Raycaster();const points=[],boxInstances=[],posterPick=[],posterCache=new Map();
+ const raycaster=new THREE.Raycaster();const points=[],boxInstances=[],posterPick=[],posterCache=new Map(),treatmentPick=[];
+ const curtainMat=new THREE.MeshBasicMaterial({color:0xf8fbfa,transparent:true,opacity:.47,depthWrite:false,side:THREE.DoubleSide});
+ const blindMat=new THREE.MeshStandardMaterial({color:0x41494c,metalness:.26,roughness:.72,side:THREE.DoubleSide});
  const copyPosters=a=>a.map(x=>({...x}));
- function exportAll(){return {...exportArchitecture(entries,baseline,floors),posters:serializePosters(posters)};}
+ function exportAll(){return {...exportArchitecture(entries,baseline,floors),posters:serializePosters(posters),treatments:treatments.map(x=>({...x})).sort((a,b)=>a.id.localeCompare(b.id))};}
  function posterById(id){return posters.find(p=>p.id===id);}
  function resetPosterCache(){for(const row of posterCache.values()){row.material.map?.dispose();row.material.dispose();}posterCache.clear();}
- function entryById(id){return entries.find(e=>e.id===id)||floors.find(f=>f.id===id)||posterById(id);}
- function count(){const p=exportAll();return p.edits.length+p.added.length+p.removed.length+p.floors.length+p.posters.length;}
- function snapshots(){return {entries:cloneAll(entries),floors:copyFloors(floors),posters:copyPosters(posters)};}
+ function entryById(id){return entries.find(e=>e.id===id)||floors.find(f=>f.id===id)||posterById(id)||treatments.find(t=>t.id===id);}
+ function count(){const p=exportAll();return p.edits.length+p.added.length+p.removed.length+p.floors.length+p.posters.length+p.treatments.length;}
+ function snapshots(){return {entries:cloneAll(entries),floors:copyFloors(floors),posters:copyPosters(posters),treatments:treatments.map(t=>({...t}))};}
  function capture(){return JSON.stringify(snapshots());}
  function restore(snapshot){const data=typeof snapshot==='string'?JSON.parse(snapshot):snapshot;
-  entries=cloneAll(data.entries);floors=copyFloors(data.floors);posters=copyPosters(data.posters||[]);selection=entryById(selection)&&!entryById(selection).deleted?selection:null;
+  entries=cloneAll(data.entries);floors=copyFloors(data.floors);posters=copyPosters(data.posters||[]);treatments=(data.treatments||[]).map(t=>({...t}));selection=entryById(selection)&&!entryById(selection).deleted?selection:null;
   render();showProperties();renderList();}
  function record(before){if(before===capture())return false;history.push(before);if(history.length>60)history.shift();future=[];
   dirty=true;render();showProperties();renderList();onChange?.();return true;}
@@ -68,8 +73,8 @@ export function createBuildMode({data,scene,canvas,camera,getZoom,getView,rayAt,
   $('viewport').style.cursor=active?'crosshair':'auto';
   if(active){$('buildRoom').value=$('room').value;setTool('select');notify?.('Byggläge: välj en vägg eller välj ett ritverktyg. Två klick ritar en ny del.');}
   syncVisibility();render();showProperties();renderList();}
- function setTool(next){if(!['select',...ARCHITECTURE_TYPES,floorKind,roomKind,posterKind,paintKind].includes(next))return;
-  mode=next;first=null;hover=null;overlayDraft=null;
+ function setTool(next){if(!['select',...ARCHITECTURE_TYPES,floorKind,roomKind,posterKind,paintKind,curtainKind,blindKind].includes(next))return;
+  mode=next;first=null;hover=null;overlayDraft=null;curtainWallId=null;
   $('buildTool').value=next;
   $('buildRoomSettings').hidden=next!==roomKind;
   $('buildPaintSettings').hidden=next!==paintKind;
@@ -82,12 +87,14 @@ export function createBuildMode({data,scene,canvas,camera,getZoom,getView,rayAt,
    next===roomKind?'Klicka första och motsatta hörnet i planvyn. Fyra väggar och valfritt golv skapas tillsammans. Eller ange exakta mått efter första klicket.':
    next===posterKind?'Klicka på önskad vägg i PLANVY eller direkt på väggytan i 3D. Därefter kan du ändra text, mått och ladda upp din affischbild.':
    next===paintKind?'Dra direkt längs en befintlig vägg, eller klicka två punkter. Välj Fönster, Glasvägg eller Dörr i samma panel utan att byta verktyg.':
+   next===curtainKind?'Dra längs en vägglinje för vit genomskinlig gardin från tak till golv. Du kan också klicka två punkter.':
+   next===blindKind?'Klicka på fönsterlinjen. Persiennen får fönstrets bredd automatiskt.':
    `Klicka en startpunkt och därefter en slutpunkt: ${ARCHITECTURE_NAMES[next]}.`;
   render();}
  function smartEnabled(ev){return $('buildSmartSnap').checked&&!ev.altKey;}
  function point(ev,excludeId=null){
   const pt=planePoint(ev);if(!pt)return null;
-  const draft=first&&mode!=='select'&&mode!==floorKind&&mode!==roomKind&&mode!==posterKind&&mode!==paintKind?first:null;
+  const draft=first&&mode!=='select'&&mode!==floorKind&&mode!==roomKind&&mode!==posterKind&&mode!==paintKind&&mode!==curtainKind?first:null;
   const result=snapDraftPoint([pt.x,pt.z],entries,{start:draft,
    excludeId,grid:mode==='select'?0:(($('snap').checked&&!ev.altKey)?0.1:0),
    snapToGeometry:mode!=='select'&&smartEnabled(ev),
@@ -136,6 +143,7 @@ export function createBuildMode({data,scene,canvas,camera,getZoom,getView,rayAt,
   if(!overlayDraft)return false;
   const p=paintEndpoint(event);if(!p)return false;
   try{
+   if(treatments.some(t=>t.wallId===overlayDraft.wallId))throw Error('Ta bort gardin eller persienn innan du delar den här väggen.');
    const plan=planPaintOverWall(entries,overlayDraft.wallId,first,p,effectivePaintKind(),{posters});
    const before=capture();
    entries=plan.entries;posters=plan.posters;selection=plan.paintedId;
@@ -166,6 +174,34 @@ export function createBuildMode({data,scene,canvas,camera,getZoom,getView,rayAt,
    addSegmentBox(queue,'frame',id,seg,lintel,seg.height-lintel/2,.08);
   }
  }
+ function drawTreatments(queue,full){
+  for(const decor of treatments){
+   const place=treatmentPosition(decor,entries);if(!place)continue;
+   const {wall,width,center,angle}=place;
+   if(!full){
+    addBox(queue,decor.type,decor.id,center[0],.34,center[1],width,.22,.065,angle);
+    continue;
+   }
+   if(decor.type==='curtain'){
+    const count=Math.min(36,Math.max(4,Math.round(width/.115))),step=width/count;
+    // Semi-translucent vertical panels run from ceiling to just above the floor.
+    for(let i=0;i<count;i++){
+     const off=-width/2+(i+.5)*step;
+     addBox(queue,'curtain',decor.id,center[0]+Math.cos(-angle)*off,wall.height/2,center[1]+Math.sin(-angle)*off,
+      Math.min(.055,step*.72),wall.height-.04,.035,angle);
+    }
+    addBox(queue,'frame',decor.id,center[0],wall.height-.022,center[1],width,.038,.055,angle);
+   }else{
+    const top=wall.height-.10,bottom=wall.kind==='window'?wall.sill||.9:.15;
+    const n=Math.min(28,Math.max(5,Math.round((top-bottom)/.10)));
+    for(let i=0;i<n;i++){
+     const y=bottom+(i+.5)*(top-bottom)/n;
+     addBox(queue,'blind',decor.id,center[0],y,center[1],width*.985,.028,.045,angle);
+    }
+    addBox(queue,'frame',decor.id,center[0],top,center[1],width,.045,.058,angle);
+   }
+  }
+ }
  function drawDoor(queue,seg,full){const id=seg.id;
   if(!full){const m=seg.kind==='opening'?'opening':seg.kind;addSegmentBox(queue,m,id,seg,.30,.15,.10);return;}
   const L=entryLength(seg),dx=seg.b[0]-seg.a[0],dz=seg.b[1]-seg.a[1],ux=dx/L,uz=dz/L;
@@ -174,8 +210,8 @@ export function createBuildMode({data,scene,canvas,camera,getZoom,getView,rayAt,
   addSegmentBox(queue,'frame',id,seg,.10,seg.height-.05,.085);
   if(seg.kind!=='opening')addSegmentBox(queue,seg.kind+':'+architecturalFinish(seg.kind,seg.finish),id,seg,seg.height-.22,(seg.height-.22)/2,.035);
  }
- function clear3D(){boxInstances.length=0;points.length=0;posterPick.length=0;
-  for(const o of [...root.children]){root.remove(o);if(o.isInstancedMesh)o.dispose?.();if(o.geometry&&o.geometry!==geo&&o.geometry!==sphere)o.geometry.dispose();if(o.material&&!materialsHas(o.material)&&o.material!==selectionMat&&o.material!==selectLineMat&&o.material!==floorMat)o.material.dispose();}
+ function clear3D(){boxInstances.length=0;points.length=0;posterPick.length=0;treatmentPick.length=0;
+  for(const o of [...root.children]){root.remove(o);if(o.isInstancedMesh)o.dispose?.();if(o.geometry&&o.geometry!==geo&&o.geometry!==sphere)o.geometry.dispose();if(o.material&&!materialsHas(o.material)&&o.material!==selectionMat&&o.material!==selectLineMat&&o.material!==floorMat&&o.material!==curtainMat&&o.material!==blindMat)o.material.dispose();}
  }
  function materialsHas(mat){return [...materials.values()].includes(mat)||[...posterCache.values()].some(row=>row.material===mat);}
  function posterMaterial(p){
@@ -200,6 +236,29 @@ export function createBuildMode({data,scene,canvas,camera,getZoom,getView,rayAt,
     marker.userData.posterId=p.id;root.add(marker);posterPick.push(marker);
    }
   }
+ }
+ function createTreatmentAt(event){
+  const point=paintEndpoint(event);if(!point)return false;
+  if(mode===blindKind){
+   const hit=wallAtPoint(entries,point,{radius:.32});
+   try{const fresh=createBlind(entries,treatments,hit?.wall.id);
+    const before=capture();treatments.push(fresh);selection=fresh.id;record(before);
+    notify?.('Mörkgrå persienn monterad på fönstret. Rita/klicka nästa utan att byta verktyg.');return true;
+   }catch(error){notify?.(error.message);return false;}
+  }
+  if(mode!==curtainKind)return false;
+  if(!first){
+   const wall=wallAtPoint(entries,point,{radius:.3});
+   if(!wall){notify?.('Börja på en vägg- eller fönsterlinje.');return false;}
+   curtainWallId=wall.wall.id;first=wall.point;hover=wall.point;render();
+   notify?.('Startpunkt för gardin markerad. Dra eller klicka på slutpunkten längs samma vägg.');
+   return true;
+  }
+  try{
+   const fresh=createCurtain(entries,treatments,curtainWallId,first,point);
+   const before=capture();treatments.push(fresh);selection=fresh.id;first=null;hover=null;curtainWallId=null;
+   record(before);notify?.('Vit genomskinlig tak-till-golv-gardin klar! Fortsätt rita fler linjer.');return true;
+  }catch(error){notify?.(error.message);return false;}
  }
  function tryPosterOnWall(event){
   let wall=null,t=.5,side=1;
@@ -243,6 +302,12 @@ export function createBuildMode({data,scene,canvas,camera,getZoom,getView,rayAt,
  }
  function drawSelection(){if(!selection)return;
   const e=entryById(selection);if(!e||e.deleted)return;
+  if(e.type){
+   const at=treatmentPosition(e,entries);if(!at)return;
+   const marker=new THREE.Mesh(sphere,selectionMat);
+   marker.position.set(at.center[0],.55,at.center[1]);marker.scale.setScalar(.75);
+   marker.renderOrder=8;root.add(marker);return;
+  }
   if(posterById(selection)){
    const at=locatePoster(e,entries);if(!at)return;
    const marker=new THREE.Mesh(sphere,selectionMat);marker.position.set(at.x,.55,at.z);
@@ -276,6 +341,7 @@ export function createBuildMode({data,scene,canvas,camera,getZoom,getView,rayAt,
   }
   for(const w of wallPieces(entries))drawEntry(queue,w,full);
   for(const d of entries.filter(e=>!e.deleted&&isDoor(e.kind)))drawDoor(queue,d,full);
+  drawTreatments(queue,full);
   for(const [name,list] of queue){const im=new THREE.InstancedMesh(geo,mat(name),list.length),tmp=new THREE.Object3D();
    for(let i=0;i<list.length;i++){const b=list[i];tmp.position.set(b.x,b.y,b.z);tmp.rotation.set(0,b.ang,0);
     tmp.scale.set(b.w,b.h,b.d);tmp.updateMatrix();im.setMatrixAt(i,tmp.matrix);}
@@ -289,6 +355,11 @@ export function createBuildMode({data,scene,canvas,camera,getZoom,getView,rayAt,
   renderPosters(full);drawSelection();drawFirst();syncVisibility();scheduleRender();
  }
  function nearSegment(point,includeFloors=false){const cutoff=clamp(getZoom()/Math.max(200,canvas.clientHeight)*14,.12,.85);let selectedId=null,least=cutoff;
+  for(const t of treatments){const at=treatmentPosition(t,entries);
+   if(at&&pointToSegmentDistance(point,at.wall.a,at.wall.b)<least&&Math.hypot(at.center[0]-point[0],at.center[1]-point[1])<at.width/2+.12){
+    least=pointToSegmentDistance(point,at.wall.a,at.wall.b);selectedId=t.id;
+   }
+  }
   for(const poster of posters){const at=locatePoster(poster,entries);
    if(at&&Math.hypot(at.x-point[0],at.z-point[1])<least){least=Math.hypot(at.x-point[0],at.z-point[1]);selectedId=poster.id;}}
   for(const e of entries){if(e.deleted)continue;const d=pointToSegmentDistance(point,e.a,e.b);
@@ -301,8 +372,17 @@ export function createBuildMode({data,scene,canvas,camera,getZoom,getView,rayAt,
   $('buildCount').textContent=count()+' byggändringar';}
  function showProperties(){const e=entryById(selection);$('buildNoSelection').hidden=!!e;$('buildSelected').hidden=!e;
   $('buildSelectionId').textContent=e?.id||'Ingen vald';
-  const poster=!!e?.wallId;
-  $('posterFields').hidden=!poster;$('buildKindFields').hidden=poster;
+  const treatment=!!e?.type&&['curtain','blind'].includes(e.type);
+  const poster=!!e?.wallId&&!treatment;
+  $('posterFields').hidden=!poster;$('treatmentFields').hidden=!treatment;$('buildKindFields').hidden=poster||treatment;
+  if(treatment){
+   $('buildEndpointFields').hidden=true;$('buildFloorFields').hidden=true;$('buildFinishFields').hidden=true;
+   $('treatmentSide').value=String(e.side);
+   const place=treatmentPosition(e,entries);
+   $('treatmentDescription').textContent=(e.type==='curtain'?'Vit, halvgenomskinlig tak-till-golv-gardin':'Mörkgrå persienn')+
+     (place?' · '+place.width.toFixed(2)+' meter bred':'');
+   $('buildDelete').textContent='Ta bort tillbehör';
+  }else
   if(poster){
    $('buildEndpointFields').hidden=true;$('buildFloorFields').hidden=true;$('buildFinishFields').hidden=true;
    $('posterText').value=e.text;$('posterSubtitle').value=e.subtitle;$('posterColor').value=e.color;
@@ -340,18 +420,20 @@ export function createBuildMode({data,scene,canvas,camera,getZoom,getView,rayAt,
   const center=roomSelect?[(roomSelect.polygon.reduce((s,p)=>s+p[0],0)/roomSelect.polygon.length),
    (roomSelect.polygon.reduce((s,p)=>s+p[1],0)/roomSelect.polygon.length)]:[0,0];
   let seen=0;const found=[];
-  for(const e of [...entries.filter(e=>!e.deleted),...floors,...posters]){const id=e.id,label=e.wallId?'Värdeordsaffisch':ARCHITECTURE_NAMES[e.kind]||'Ny golvyta';
+  for(const e of [...entries.filter(e=>!e.deleted),...floors,...posters,...treatments]){const id=e.id,label=e.type?(e.type==='curtain'?'Vit gardin':'Mörkgrå persienn'):e.wallId?'Värdeordsaffisch':ARCHITECTURE_NAMES[e.kind]||'Ny golvyta';
    if(filter&&!(id+' '+label).toLowerCase().includes(filter))continue;
-   const at=e.wallId?locatePoster(e,entries):null;
-   const x=at?.x??('a' in e?(e.a[0]+e.b[0])/2:(e.x0+e.x1)/2),z=at?.z??('a' in e?(e.a[1]+e.b[1])/2:(e.z0+e.z1)/2);
+   const tr=e.type?treatmentPosition(e,entries):null;
+   const at=e.wallId&&!e.type?locatePoster(e,entries):null;
+   const x=tr?.center[0]??at?.x??('a' in e?(e.a[0]+e.b[0])/2:(e.x0+e.x1)/2),z=tr?.center[1]??at?.z??('a' in e?(e.a[1]+e.b[1])/2:(e.z0+e.z1)/2);
    found.push({e,label,dist:Math.hypot(x-center[0],z-center[1])});}
   found.sort((a,b)=>(a.e.id===selection?-1:b.e.id===selection?1:0)||a.dist-b.dist||a.e.id.localeCompare(b.e.id));
   for(const {e,label} of found.slice(0,75)){
    const button=document.createElement('button');button.type='button';button.className='build-list-item';button.classList.toggle('active',e.id===selection);
    const swatch=document.createElement('span');swatch.className='arch-swatch';swatch.style.background=ARCHITECTURE_COLORS[e.kind]||'#7ec7b4';
    const name=document.createElement('span');name.textContent=label;const id=document.createElement('small');id.textContent=e.id;
-   button.append(swatch,name,id);button.onclick=()=>{setTool('select');select(e.id);const at=e.wallId?locatePoster(e,entries):null;
-    onGoPoint?.(at?.x??('a' in e?(e.a[0]+e.b[0])/2:(e.x0+e.x1)/2),at?.z??('a' in e?(e.a[1]+e.b[1])/2:(e.z0+e.z1)/2));};list.append(button);seen++;
+   button.append(swatch,name,id);button.onclick=()=>{setTool('select');select(e.id);const at=e.wallId&&!e.type?locatePoster(e,entries):null;
+    const tr=e.type?treatmentPosition(e,entries):null;
+    onGoPoint?.(tr?.center[0]??at?.x??('a' in e?(e.a[0]+e.b[0])/2:(e.x0+e.x1)/2),tr?.center[1]??at?.z??('a' in e?(e.a[1]+e.b[1])/2:(e.z0+e.z1)/2));};list.append(button);seen++;
   }
   $('buildListCount').textContent=filter?`${found.length} träffar`: `Visar ${seen} närmaste av ${found.length} delar`;
   $('viewportStatus').textContent=`BYGGLÄGE · ${count()} ändringar i byggskissen · ${found.length} befintliga/nya byggdelar`;
@@ -363,6 +445,7 @@ export function createBuildMode({data,scene,canvas,camera,getZoom,getView,rayAt,
    next.finish=architecturalFinish(delta.kind);
   try{if('a' in e){validateEntry(next);
     for(const p of posters.filter(p=>p.wallId===e.id))validatePoster(p,entries.map(w=>w.id===e.id?next:w));
+    for(const t of treatments.filter(t=>t.wallId===e.id))validateTreatment(t,entries.map(w=>w.id===e.id?next:w));
    }else validateFloorRect(next);
   }catch(err){notify?.(err.message);return false;}
   Object.assign(e,next);record(old);return true;
@@ -404,13 +487,19 @@ export function createBuildMode({data,scene,canvas,camera,getZoom,getView,rayAt,
   if(changeEntry(e.id,{a:fixed.a,b:fixed.b}))notify?.(action==='straight'?'Byggdelen är nu helt vågrät eller lodrät i planvyn.':'Ändpunkterna har kopplats till närliggande väggar.');
  }
  function removeSelected(){if(!selection)return;const before=capture();const e=entryById(selection);if(!e)return;
-  if(e.wallId)posters=posters.filter(x=>x.id!==selection);
+  if(e.type)treatments=treatments.filter(x=>x.id!==selection);
+  else if(e.wallId)posters=posters.filter(x=>x.id!==selection);
   else if('a' in e){if(e.source)e.deleted=true;else entries=entries.filter(x=>x.id!==selection);
-   posters=posters.filter(p=>p.wallId!==e.id);}
+   posters=posters.filter(p=>p.wallId!==e.id);treatments=treatments.filter(p=>p.wallId!==e.id);}
   else floors=floors.filter(x=>x.id!==selection);
   selection=null;record(before);notify?.('Byggdelen är borttagen ur skissen. Spelet ändras inte.');}
  function duplicate(){const e=entryById(selection);if(!e)return;const before=capture();
-  if(e.wallId){
+  if(e.type){
+   if(treatments.length>=TREATMENTS_MAX){notify?.('Max 120 gardiner/persienner.');return;}
+   const next={...e,id:nextTreatmentId(treatments),side:e.side===1?-1:1};
+   try{validateTreatment(next,entries);}catch(error){notify?.(error.message);return;}
+   treatments.push(next);selection=next.id;
+  }else if(e.wallId){
    if(posters.length>=POSTER_MAX){notify?.('Max 40 affischer.');return;}
    const at=locatePoster(e,entries);if(!at)return;
    const next={...e,id:posterId(posters),t:roundPosition(clamp(e.t+e.width/at.length+.03,0,1))};
@@ -441,6 +530,7 @@ export function createBuildMode({data,scene,canvas,camera,getZoom,getView,rayAt,
   }catch(error){notify?.(error.message);render();return false;}
  }
  function choosePoint(ev){
+  if(mode===curtainKind||mode===blindKind){createTreatmentAt(ev);return;}
   if(overlayDraft){completeOverlay(ev);return;}
   if(mode===paintKind){beginOverlay(ev,true);return;}
   if(PAINT_KINDS.includes(mode)&&beginOverlay(ev))return;
@@ -465,9 +555,15 @@ export function createBuildMode({data,scene,canvas,camera,getZoom,getView,rayAt,
   }
   const p=point(ev);
   if(mode===posterKind){tryPosterOnWall(ev);ev.preventDefault();return;}
+  if(mode===blindKind){createTreatmentAt(ev);ev.preventDefault();return;}
   if(mode!=='select'){if(getView()==='3d'){notify?.('Rita nya väggar och öppningar i PLANVY. Byt till 3D-VY för att granska.');return;}
    const startingStroke=mode===paintKind&&!first;
+   const startingCurtain=mode===curtainKind&&!first;
    choosePoint(ev);
+   if(startingCurtain&&curtainWallId&&first){
+    drag={type:'treatment-stroke',mx:ev.clientX,my:ev.clientY,originX:ev.clientX,originY:ev.clientY,moved:false};
+    canvas.setPointerCapture(ev.pointerId);
+   }
    if(startingStroke&&overlayDraft&&first){
     drag={type:'paint-stroke',mx:ev.clientX,my:ev.clientY,originX:ev.clientX,originY:ev.clientY,moved:false};
     canvas.setPointerCapture(ev.pointerId);
@@ -501,9 +597,16 @@ export function createBuildMode({data,scene,canvas,camera,getZoom,getView,rayAt,
      $('buildSnapFeedback').textContent='ÖVER VÄGG · '+(ARCHITECTURE_NAMES[effectivePaintKind()]||'Fönster')+' · '+Math.hypot(hover[0]-first[0],hover[1]-first[1]).toFixed(2)+' m · klicka eller släpp här';
      render();
     }
+   }else if(mode===curtainKind&&curtainWallId){
+    const p=paintEndpoint(ev),wall=entries.find(x=>x.id===curtainWallId&&!x.deleted);
+    if(p&&wall){hover=projectToWall(p,wall)?.point||first;render();}
    }else{const p=point(ev);if(p){hover=p;render();}}
   }
   if(!drag)return;const dx=ev.clientX-drag.mx,dy=ev.clientY-drag.my;drag.mx=ev.clientX;drag.my=ev.clientY;
+  if(drag.type==='treatment-stroke'){
+   if(Math.hypot(ev.clientX-drag.originX,ev.clientY-drag.originY)>9)drag.moved=true;
+   return;
+  }
   if(drag.type==='paint-stroke'){
    if(Math.hypot(ev.clientX-drag.originX,ev.clientY-drag.originY)>9)drag.moved=true;
    return;
@@ -523,12 +626,14 @@ export function createBuildMode({data,scene,canvas,camera,getZoom,getView,rayAt,
   else if(drag.type==='moveFloor'){next.x0+=off[0];next.z0+=off[1];next.x1+=off[0];next.z1+=off[1];}
   try{if('a' in e){validateEntry(next);
     for(const poster of posters.filter(p=>p.wallId===e.id))validatePoster(poster,entries.map(w=>w.id===e.id?next:w));
+    for(const t of treatments.filter(t=>t.wallId===e.id))validateTreatment(t,entries.map(w=>w.id===e.id?next:w));
    }else validateFloorRect(next);
   }catch{return;}
   Object.assign(e,next);render();showProperties();
  }
- function handlePointerEnd(ev){if(!active||!drag)return;const previous=drag.before;const was=drag.type;const painted=drag.type==='paint-stroke'&&drag.moved;drag=null;
+ function handlePointerEnd(ev){if(!active||!drag)return;const previous=drag.before;const was=drag.type;const painted=drag.type==='paint-stroke'&&drag.moved,curtained=drag.type==='treatment-stroke'&&drag.moved;drag=null;
   if(painted)completeOverlay(ev);
+  if(curtained)createTreatmentAt(ev);
   if(['a','b','move','moveFloor'].includes(was))record(previous);
  }
  function bind(){
@@ -580,6 +685,8 @@ export function createBuildMode({data,scene,canvas,camera,getZoom,getView,rayAt,
    }catch(err){notify?.('Bildimport: '+err.message);}
   };
   $('posterRemoveImage').onclick=()=>{if(changePoster({image:''}))notify?.('Textaffischen visas igen.');};
+  $('treatmentSide').onchange=e=>{const current=treatments.find(t=>t.id===selection);
+   if(!current)return;const before=capture();current.side=Number(e.target.value);record(before);};
   const kmap={buildA_X:['a',0],buildA_Z:['a',1],buildB_X:['b',0],buildB_Z:['b',1]};
   for(const [id,[end,index]] of Object.entries(kmap))$(id).onchange=e=>{const s=entryById(selection);if(!s||!('a' in s))return;
    const value=Number(e.target.value),p=[...s[end]];p[index]=value;if(!Number.isFinite(value))return;
@@ -593,7 +700,7 @@ export function createBuildMode({data,scene,canvas,camera,getZoom,getView,rayAt,
   $('buildDelete').onclick=removeSelected;$('buildDuplicate').onclick=duplicate;
   $('buildUndo').onclick=undo;$('buildRedo').onclick=redo;
   $('buildReset').onclick=()=>{if(!confirm('Återställa alla vägg-/dörr-/golv-/affischändringar i skissen? Möblerna påverkas inte.'))return;
-   const before=capture();entries=cloneAll(baseline);floors=[];posters=[];resetPosterCache();selection=null;record(before);notify?.('Byggskissen återställd. Originalspelet har aldrig ändrats.');};
+   const before=capture();entries=cloneAll(baseline);floors=[];posters=[];treatments=[];resetPosterCache();selection=null;record(before);notify?.('Byggskissen återställd. Originalspelet har aldrig ändrats.');};
   canvas.addEventListener('pointerdown',handlePointerDown);
   canvas.addEventListener('pointermove',handlePointerMove);
   canvas.addEventListener('pointerup',handlePointerEnd);canvas.addEventListener('pointercancel',handlePointerEnd);
@@ -601,26 +708,29 @@ export function createBuildMode({data,scene,canvas,camera,getZoom,getView,rayAt,
    if((ev.ctrlKey||ev.metaKey)&&(ev.key.toLowerCase()==='z'||ev.key.toLowerCase()==='y')){
     ev.preventDefault();if(ev.key.toLowerCase()==='y'||ev.shiftKey)redo();else undo();return;}
    if((ev.ctrlKey||ev.metaKey)&&ev.key.toLowerCase()==='d'){ev.preventDefault();duplicate();return;}
-   if(ev.key==='Escape'){if(first){first=null;hover=null;overlayDraft=null;render();notify?.('Ritningen avbruten.');}else select(null);return;}
+   if(ev.key==='Escape'){if(first){first=null;hover=null;overlayDraft=null;curtainWallId=null;render();notify?.('Ritningen avbruten.');}else select(null);return;}
    if(ev.key==='Delete'||ev.key==='Backspace'){ev.preventDefault();removeSelected();return;}
    const e=entryById(selection);if(!e)return;
    const step=ev.shiftKey?.5:.1;const pos=ev.key==='ArrowLeft'?[-step,0]:ev.key==='ArrowRight'?[step,0]:
     ev.key==='ArrowUp'?[0,-step]:ev.key==='ArrowDown'?[0,step]:null;
-   if(pos){ev.preventDefault();if('a' in e)changeEntry(e.id,{a:[e.a[0]+pos[0],e.a[1]+pos[1]],b:[e.b[0]+pos[0],e.b[1]+pos[1]]});
+   if(pos){if(e.type||e.wallId)return;ev.preventDefault();if('a' in e)changeEntry(e.id,{a:[e.a[0]+pos[0],e.a[1]+pos[1]],b:[e.b[0]+pos[0],e.b[1]+pos[1]]});
     else changeEntry(e.id,{x0:e.x0+pos[0],x1:e.x1+pos[0],z0:e.z0+pos[1],z1:e.z1+pos[1]});}
   });
  }
- function load(patch){const read=parseArchitecture(patch,baseline),loadedPosters=parsePosters(patch?.posters,read.entries);
-  entries=read.entries;floors=read.floors;posters=loadedPosters;resetPosterCache();history=[];future=[];
-  selection=null;first=null;hover=null;overlayDraft=null;dirty=hasSketch();render();showProperties();renderList();}
- function resetWithoutConfirm(){entries=cloneAll(baseline);floors=[];posters=[];resetPosterCache();history=[];future=[];selection=null;render();showProperties();renderList();}
+ function load(patch){const read=parseArchitecture(patch,baseline),loadedPosters=parsePosters(patch?.posters,read.entries),loadedTreatments=parseTreatments(patch?.treatments,read.entries);
+  entries=read.entries;floors=read.floors;posters=loadedPosters;treatments=loadedTreatments;resetPosterCache();history=[];future=[];
+  selection=null;first=null;hover=null;overlayDraft=null;curtainWallId=null;dirty=hasSketch();render();showProperties();renderList();}
+ function resetWithoutConfirm(){entries=cloneAll(baseline);floors=[];posters=[];treatments=[];resetPosterCache();history=[];future=[];selection=null;render();showProperties();renderList();}
  bind();render();showProperties();renderList();syncVisibility();
  return {get active(){return active;},enable,getBaseline:()=>cloneAll(baseline),getEntries:()=>cloneAll(entries),getFloors:()=>copyFloors(floors),
-  export:exportAll,load,reset:resetWithoutConfirm,hasSketch,posters:()=>copyPosters(posters),
+  export:exportAll,load,reset:resetWithoutConfirm,hasSketch,posters:()=>copyPosters(posters),treatments:()=>treatments.map(t=>({...t})),
+  drawCurtain:(wallId,start,end)=>{const created=createCurtain(entries,treatments,wallId,start,end);const before=capture();treatments.push(created);selection=created.id;record(before);return created.id;},
+  attachBlind:(wallId)=>{const created=createBlind(entries,treatments,wallId);const before=capture();treatments.push(created);selection=created.id;record(before);return created.id;},
   addPoster:(wallId,options)=>{const wall=entries.find(e=>e.id===wallId);const poster=makePoster(wall,posters,.5,1,options);const before=capture();posters.push(poster);selection=poster.id;record(before);return poster.id;},
   updatePoster:(id,delta)=>{selection=id;return changePoster(delta);},
   setView:()=>render(),select,setTool,setPaintType:updatePaintType,
-  paintWall:(wallId,start,end,kind=paintType)=>{const plan=planPaintOverWall(entries,wallId,start,end,kind,{posters});const before=capture();
+  paintWall:(wallId,start,end,kind=paintType)=>{if(treatments.some(t=>t.wallId===wallId))throw Error('Ta bort tillbehöret innan du delar väggen.');
+   const plan=planPaintOverWall(entries,wallId,start,end,kind,{posters});const before=capture();
    entries=plan.entries;posters=plan.posters;selection=plan.paintedId;record(before);return plan;},
   undo,redo,count,quickChange,quickDoor,
   createRectangle:(a,b,options)=>{
