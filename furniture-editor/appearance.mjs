@@ -8,8 +8,8 @@ export const DOOR_FINISHES=Object.freeze(['white','gray','red','elevator']);
 export const CHAIR_ROLES=Object.freeze(['kitchen','office','conference']);
 export const ASSET_ROLES=Object.freeze(['auto','table','chair','other']);
 const TABLE_KINDS=new Set(['table','desk','coffee-table']);
-const TABLE_ASSETS=/\b(table|desk|bord|skrivbord|sidetable)\b/i;
-const CHAIR_ASSETS=/\b(chair|stol|arbeitsstuhl)\b/i;
+const TABLE_ASSETS=/table|desk|bord|skrivbord|sidetable/i;
+const CHAIR_ASSETS=/chair|stol|arbeitsstuhl/i;
 export function isTable(item){
  if(!item||['chair','other'].includes(item.assetRole))return false;
  if(item.assetRole==='table')return true;
