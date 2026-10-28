@@ -1,7 +1,7 @@
 import {parseProject} from './level-project.mjs';
 import {levelProjectToWorldData} from '../../src/fps/level-adapter.mjs';
 import {createWorld,inheritFloor5Gameplay} from '../../src/fps/world.mjs';
-import {resolveProjectScene} from './project-scene.mjs';
+import {resolveProjectScene,projectWallPieces} from './project-scene.mjs';
 import {corners,inside,intersects,segmentIntersectsRectangle} from '../core.mjs';
 import {wallPieces} from './architecture.mjs';
 import {testDoorTraversal} from './door-traversal.mjs';
@@ -40,7 +40,7 @@ export function validateLevel(input,{engine=false}={}){
   add('V01','fail','Bomb, rescue och två gisslan krävs för klassiskt spel.',null,'Placera målen i SPEL.');return report(true,results);
  }
  let world;try{world=createWorld({levelProject:p,fresh:true});}catch(e){add('V01','fail','Motorn kunde inte bygga banan: '+e.message,null,'Kontrollera geometri och spawns.');return report(true,results);}
- const walls=wallPieces(entries),furniture=scene.items;
+ const walls=projectWallPieces(entries),furniture=scene.items;
  for(const o of furniture){
   if(o.collision==='none'||(p.mode==='edit-floor5'&&o.original&&!p.furniture.placements.some(v=>v.id===o.id)))continue;
   const footprint=corners(o);

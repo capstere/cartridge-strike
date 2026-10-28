@@ -2,7 +2,7 @@
 import {parseProject} from '../../furniture-editor/build/level-project.mjs';
 import {wallPieces} from '../../furniture-editor/build/architecture.mjs';
 import {corners} from '../../furniture-editor/core.mjs';
-import {resolveProjectScene,floor5Baseline} from '../../furniture-editor/build/project-scene.mjs';
+import {resolveProjectScene,floor5Baseline,projectWallPieces} from '../../furniture-editor/build/project-scene.mjs';
 
 const polygon=r=>[[r.x0,r.z0],[r.x1,r.z0],[r.x1,r.z1],[r.x0,r.z1]];
 const point=p=>({x:p.x,y:0,z:p.z,yaw:p.yaw||0});
@@ -20,7 +20,7 @@ export function levelProjectToWorldData(input){
   removed:false,lockedUntilImplemented:['elevator-door','terrace-door'].includes(e.kind)
  }));
  const wallIds=new Map();
- const walls=wallPieces(entries.map(e=>({...e,source:false}))).map(e=>({id:`${e.id}-${wallIds.set(e.id,(wallIds.get(e.id)||0)+1).get(e.id)}`,a:e.a,b:e.b,height:e.height,thickness:e.thickness,sill:e.sill,
+ const walls=projectWallPieces(entries.map(e=>({...e,source:false}))).map(e=>({id:`${e.id}-${wallIds.set(e.id,(wallIds.get(e.id)||0)+1).get(e.id)}`,a:e.a,b:e.b,height:e.height,thickness:e.thickness,sill:e.sill,
   surfaceType:e.kind==='glazed'||e.kind==='window'?e.kind:'opaque'}));
  const obstacles=[...scene.fixed,...scene.items.map(o=>({id:o.id,name:o.assetName||o.kind,
   polygon:corners(o),x:o.x,z:o.z,w:o.w,d:o.d,elevation:o.elevation||0,height:o.height,kind:o.kind,roomId:o.roomId,yaw:o.yaw,collision:o.collision||'solid',studioVisual:true}))];

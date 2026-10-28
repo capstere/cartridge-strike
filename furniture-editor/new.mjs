@@ -1,7 +1,7 @@
 import {makePoster,locatePoster} from './build/posters.mjs';
 import {createCurtain,createBlind,treatmentPosition} from './build/treatments.mjs';
 import {buildProjectDecorations} from './build/project-visuals.mjs';
-import {resolveProjectScene,writeProjectScene,floor5Baseline} from './build/project-scene.mjs';
+import {resolveProjectScene,writeProjectScene,floor5Baseline,projectWallPieces} from './build/project-scene.mjs';
 import {inheritFloor5Gameplay} from '../src/fps/world.mjs';
 import {wallAtPoint,planPaintOverWall} from './build/paint-over-wall.mjs';
 import * as T from '../vendor/three/three.module.js';
@@ -21,7 +21,7 @@ const mode=new URLSearchParams(location.search).get('mode')==='edit-floor5'?'edi
 const STORAGE=mode==='edit-floor5'?'cartridge-floor5-level-v2':'cartridge-new-level-v2';let project,selected=null,tab='build',first=null,hover=null,drag=null,view='plan',zoom=1,offset={x:0,z:0},orbit=.65,history=[],future=[],localCatalog=[];
 try{project=parseProject(localStorage.getItem(STORAGE)||'');if(project.mode!==mode)throw Error('mode');project=inheritFloor5Gameplay(project);}catch{project=inheritFloor5Gameplay(exportProject({mode,name:mode==='edit-floor5'?'Floor 5 – min version':'Min bana',projectId:'lvl-'+crypto.randomUUID().slice(0,12)}));if(mode==='edit-floor5'){try{const old=localStorage.getItem('cartridge-furniture-studio-0.17.0-v1');if(old)project=inheritFloor5Gameplay(parseProject(old));}catch{}}}
 if(project.mode==='edit-floor5')project.ground.bounds={x0:-48,z0:-33,x1:52,z1:40};
-let pendingFurniture=null,pendingTemplate=null,pendingYaw=0,drawGesture=null;
+let pendingFurniture=null,pendingTemplate=null,pendingYaw=0,drawGesture=null,planPan=null,spaceHeld=false,view3dZoom=1;
 let sceneModel,sceneProject;function model(){if(sceneProject!==project){sceneProject=project;sceneModel=resolveProjectScene(project);}return sceneModel;}
 const p=()=>project,arch=()=>model().entries,floors=()=>p().mode==='new-level'?p().ground.floors:model().floors,objects=()=>model().items,markers=()=>[...p().gameplay.spawns,...[p().gameplay.objectives.bomb,p().gameplay.objectives.rescue,...p().gameplay.objectives.hostages].filter(Boolean)];
 const snap=n=>Math.round(n*10)/10,clamp=(n,a,b)=>Math.max(a,Math.min(b,n));
@@ -54,7 +54,7 @@ function makeSegment(kind,a,b){
  const id=nextId(['wall','window','glazed'].includes(kind)?'BYGG-V-':'BYGG-D-'),entry={id,kind,...span,height:isDoor(kind)?2.4:2.85,thickness:.11,sill:Number($('sill').value)||.9,finish:'white'};
  arch().push(entry);return entry;}
 function occupyData(){const zones=floors().map(f=>({id:f.id,status:'included',polygon:f.polygon||[[f.x0,f.z0],[f.x1,f.z0],[f.x1,f.z1],[f.x0,f.z1]]}));
- return {rooms:zones,excludedRooms:[],obstacles:model().fixed,walls:wallPieces(arch()),doors:arch().filter(a=>['door','card-door','opening'].includes(a.kind)).map(a=>({...a,blocked:false}))};}
+ return {rooms:zones,excludedRooms:[],obstacles:model().fixed,walls:projectWallPieces(arch()),doors:arch().filter(a=>['door','card-door','opening'].includes(a.kind)).map(a=>({...a,blocked:false}))};}
 function addFurniture(entry,x,z){const floor=floorAt(x,z);if(!floor)throw Error('Välj en punkt inuti en golvyta.');const id=nextId('NY-OBJ-');
  let item={...(pendingTemplate||{}),id,roomId:floor.id,kind:pendingTemplate?.kind||'prop',assetId:entry.id==='clone'?undefined:entry.id,assetName:entry.name,x,z,yaw:pendingYaw,w:entry.width,d:entry.depth,height:entry.height};
  item={...item,...proposeSmartPose(item,{x,z},objects())};
@@ -91,7 +91,7 @@ function moveObject(o,x,z){if(arch().includes(o)){const dx=snap(x-o.a[0]),dz=sna
  }
  if(markers().includes(o)){o.x=x;o.z=z;if(o.roomId)o.roomId=floor.id;return true;}
  return false;}
-canvas.addEventListener('pointerdown',e=>{if(view!=='plan'||e.button!==0)return;canvas.setPointerCapture(e.pointerId);const q=point(e),tool=tab==='build'?$('tool').value:tab==='play'?$('gameTool').value:'furnish';
+canvas.addEventListener('pointerdown',e=>{if(view!=='plan')return;if(e.button===1||(e.button===0&&spaceHeld)){e.preventDefault();canvas.setPointerCapture(e.pointerId);planPan={x:e.clientX,y:e.clientY};return;}if(e.button!==0)return;canvas.setPointerCapture(e.pointerId);const q=point(e),tool=tab==='build'?$('tool').value:tab==='play'?$('gameTool').value:'furnish';
  if(pendingFurniture){try{const before=JSON.stringify(p());addFurniture(pendingFurniture,q.x,q.z);commit(before);}catch(err){status(err.message);}return;}
  if(tool==='select'||tool==='furnish'){const hit=find(q.x,q.z);if(hit){selected=hit.id;drag={before:JSON.stringify(p()),start:q,hit,dx:q.x-(hit.x??hit.a?.[0]??q.x),dz:q.z-(hit.z??hit.a?.[1]??q.z)};redraw();return;}if(tool==='furnish'){status('Välj ett objekt i listan och klicka PLACERA.');return;}selected=null;redraw();return;}
  try{if(['poster','curtain','blind'].includes(tool)){const hit=wallAtPoint(arch(),[q.x,q.z],{radius:.4});if(!hit)throw Error('Klicka på en vägg eller ett fönster för att fästa tillbehöret.');const before=JSON.stringify(p());p().architecture.posters||=[];p().architecture.treatments||=[];let fresh;if(tool==='poster'){fresh=makePoster(hit.wall,p().architecture.posters,hit.t);p().architecture.posters.push(fresh);}else if(tool==='blind'){fresh=createBlind(arch(),p().architecture.treatments,hit.wall.id);p().architecture.treatments.push(fresh);}else{const w=hit.wall,L=hit.length,half=Math.min(.45,3/L),t=clamp(hit.t,half,1-half),pt=v=>w.a.map((n,i)=>n+(w.b[i]-n)*v);fresh=createCurtain(arch(),p().architecture.treatments,w.id,pt(t-half),pt(t+half));p().architecture.treatments.push(fresh);}selected=fresh.id;commit(before);return;}if(tab==='play'){const found=markers().find(m=>dist(m,q)<.35);if(found){selected=found.id;drag={before:JSON.stringify(p()),start:q,hit:found,dx:q.x-found.x,dz:q.z-found.z};redraw();return;}const before=JSON.stringify(p());placeMarker(tool,q.x,q.z);commit(before);return;}
@@ -101,18 +101,18 @@ canvas.addEventListener('pointerdown',e=>{if(view!=='plan'||e.button!==0)return;
   selected=tool==='room'||tool==='corridor'?makeFloor(a,q,tool).id:makeSegment(tool,[a.x,a.z],[q.x,q.z]).id;
   commit(before);status('Ritad. Välj nästa del eller byt verktyg.');
  }catch(err){first=null;status(err.message);redraw();}});
-canvas.addEventListener('pointermove',e=>{if(view!=='plan')return;const q=point(e);$('coordinates').textContent=`X ${q.x.toFixed(1)} · Z ${q.z.toFixed(1)}`;
+canvas.addEventListener('pointermove',e=>{if(view!=='plan')return;if(planPan){const r=canvas.getBoundingClientRect(),b=p().ground.bounds,scale=Math.min(canvas.width/(b.x1-b.x0),canvas.height/(b.z1-b.z0))*zoom;offset.x+=(e.clientX-planPan.x)*canvas.width/r.width/scale;offset.z+=(e.clientY-planPan.y)*canvas.height/r.height/scale;planPan={x:e.clientX,y:e.clientY};redraw();return;}const q=point(e);$('coordinates').textContent=`X ${q.x.toFixed(1)} · Z ${q.z.toFixed(1)}`;
  if(drag){if(moveObject(drag.hit,snap(q.x-drag.dx),snap(q.z-drag.dz)))redraw();return;}hover=q;if(first||pendingFurniture)redraw();});
-canvas.addEventListener('pointerup',e=>{if(drawGesture&&first&&Math.hypot(e.clientX-drawGesture.x,e.clientY-drawGesture.y)>6){const q=point(e),a=first,before=JSON.stringify(p());try{selected=['room','corridor'].includes(drawGesture.tool)?makeFloor(a,q,drawGesture.tool).id:makeSegment(drawGesture.tool,[a.x,a.z],[q.x,q.z]).id;first=null;commit(before);}catch(err){status(err.message);}}drawGesture=null;if(drag){commit(drag.before);drag=null;}});
+canvas.addEventListener('pointerup',e=>{if(planPan){planPan=null;return;}if(drawGesture&&first&&Math.hypot(e.clientX-drawGesture.x,e.clientY-drawGesture.y)>6){const q=point(e),a=first,before=JSON.stringify(p());try{selected=['room','corridor'].includes(drawGesture.tool)?makeFloor(a,q,drawGesture.tool).id:makeSegment(drawGesture.tool,[a.x,a.z],[q.x,q.z]).id;first=null;commit(before);}catch(err){status(err.message);}}drawGesture=null;if(drag){commit(drag.before);drag=null;}});
 canvas.addEventListener('contextmenu',e=>{e.preventDefault();const o=lookup();if(o?.yaw!==undefined){const before=JSON.stringify(p());rotateWithChildren(o,Math.PI/12);commit(before);}});
 function drawPlan(){const r=canvas.getBoundingClientRect(),dpr=Math.min(devicePixelRatio||1,2);canvas.width=Math.round(r.width*dpr);canvas.height=Math.round(r.height*dpr);ctx.clearRect(0,0,canvas.width,canvas.height);ctx.fillStyle='#e6efea';ctx.fillRect(0,0,canvas.width,canvas.height);
  const b=p().ground.bounds;ctx.strokeStyle='#bfd1ca';ctx.lineWidth=1;for(let x=b.x0;x<=b.x1;x++)for(let z=b.z0;z<=b.z1;z++){const [sx,sz]=screen(x,z);if(sx>=0&&sx<canvas.width&&sz>=0&&sz<canvas.height)ctx.fillRect(sx,sz,1,1);}
  for(const f of floors()){const poly=(f.polygon||[[f.x0,f.z0],[f.x1,f.z0],[f.x1,f.z1],[f.x0,f.z1]]).map(v=>screen(...v));ctx.beginPath();poly.forEach((v,i)=>i?ctx.lineTo(...v):ctx.moveTo(...v));ctx.closePath();ctx.fillStyle=f.surface==='vinyl'?'#d3e8e3':'#f3e4d0';ctx.fill();ctx.strokeStyle=selected===f.id?'#ed993a':'#adc3b8';ctx.lineWidth=selected===f.id?3:1;ctx.stroke();if(zoom>1||!f.source){ctx.fillStyle='#426367';ctx.font=`${12*dpr}px system-ui`;const [x,z]=screen(f.x0,f.z0);ctx.fillText(f.name,x+8,z+17*dpr);}}
- for(const e of [...wallPieces(arch()),...arch().filter(e=>isDoor(e.kind))]){const marker=isDoor(e.kind)?standardDoorMarkerSpan(e):e;const a=screen(...marker.a),b=screen(...marker.b);ctx.beginPath();ctx.moveTo(...a);ctx.lineTo(...b);ctx.lineWidth=selected===e.id?7:Math.max(3,5*dpr);ctx.strokeStyle=selected===e.id?'#f2a03e':({wall:'#bc5961',glazed:'#35aa8a',window:'#46a0c0',door:'#dc9b4f','card-door':'#dc9b4f',opening:'#fff'}[e.kind]);ctx.stroke();}
+ for(const e of [...projectWallPieces(arch()),...arch().filter(e=>isDoor(e.kind))]){const marker=isDoor(e.kind)?standardDoorMarkerSpan(e):e;const a=screen(...marker.a),b=screen(...marker.b);ctx.beginPath();ctx.moveTo(...a);ctx.lineTo(...b);ctx.lineWidth=selected===e.id?7:Math.max(3,5*dpr);ctx.strokeStyle=selected===e.id?'#f2a03e':({wall:'#bc5961',glazed:'#35aa8a',window:'#46a0c0',door:'#dc9b4f','card-door':'#dc9b4f',opening:'#fff'}[e.kind]);ctx.stroke();}
  for(const o of objects()){const pts=corners(o).map(v=>screen(...v));ctx.beginPath();pts.forEach((v,i)=>i?ctx.lineTo(...v):ctx.moveTo(...v));ctx.closePath();ctx.fillStyle=selected===o.id?'#ffc874':'#5a7e88';ctx.fill();ctx.strokeStyle='#233e4a';ctx.stroke();}
  for(const m of markers()){const [x,z]=screen(m.x,m.z);ctx.beginPath();ctx.arc(x,z,selected===m.id?12*dpr:9*dpr,0,Math.PI*2);ctx.fillStyle=m.team==='analysts'?'#298bb7':m.team==='counterAnalysts'?'#d5684d':m.id.includes('BOMB')?'#dfb03e':m.id.includes('RESCUE')?'#41b89a':'#bf78b5';ctx.fill();ctx.strokeStyle='#fff';ctx.lineWidth=2;ctx.stroke();ctx.fillStyle='#16343b';ctx.font=`bold ${10*dpr}px system-ui`;ctx.fillText(m.team?String(m.index+1):m.id.includes('H')?'H':m.id.includes('BOMB')?'B':'R',x+11*dpr,z);}
  for(const d of decorations()){const at=decorationAt(d);if(!at)continue;const [x,z]=screen(at.x,at.z);ctx.fillStyle=selected===d.id?'#f0ae4a':d.type?'#7987a9':'#bb78a2';ctx.fillRect(x-5*dpr,z-5*dpr,10*dpr,10*dpr);}
- if($('showPhysics').checked){ctx.save();ctx.strokeStyle='#d42f52';ctx.lineWidth=3*dpr;ctx.setLineDash([5,3]);for(const w of wallPieces(arch())){ctx.beginPath();ctx.moveTo(...screen(...w.a));ctx.lineTo(...screen(...w.b));ctx.stroke();}for(const o of objects().filter(o=>o.collision!=='none')){const pts=corners(o).map(v=>screen(...v));ctx.beginPath();pts.forEach((v,i)=>i?ctx.lineTo(...v):ctx.moveTo(...v));ctx.closePath();ctx.stroke();}ctx.restore();}
+ if($('showPhysics').checked){ctx.save();ctx.strokeStyle='#d42f52';ctx.lineWidth=3*dpr;ctx.setLineDash([5,3]);for(const w of projectWallPieces(arch())){ctx.beginPath();ctx.moveTo(...screen(...w.a));ctx.lineTo(...screen(...w.b));ctx.stroke();}for(const o of objects().filter(o=>o.collision!=='none')){const pts=corners(o).map(v=>screen(...v));ctx.beginPath();pts.forEach((v,i)=>i?ctx.lineTo(...v):ctx.moveTo(...v));ctx.closePath();ctx.stroke();}ctx.restore();}
  if(pendingFurniture&&hover){let ghost={id:'ghost',kind:'prop',assetId:pendingFurniture.id,x:hover.x,z:hover.z,yaw:pendingYaw,w:pendingFurniture.width,d:pendingFurniture.depth,height:pendingFurniture.height,roomId:floorAt(hover.x,hover.z)?.id};ghost={...ghost,...proposeSmartPose(ghost,hover,objects())};const issue=validate(ghost,objects(),occupyData(),null,{emptyFixed:p().mode==='new-level'||p().legacyPatch?.emptyFixed===true}),pts=corners(ghost).map(v=>screen(...v));ctx.beginPath();pts.forEach((v,i)=>i?ctx.lineTo(...v):ctx.moveTo(...v));ctx.closePath();ctx.fillStyle=issue?'#db526677':'#36b98b88';ctx.fill();ctx.strokeStyle=issue?'#bd3048':'#14785b';ctx.lineWidth=2*dpr;ctx.stroke();}
  if(first&&hover){const a=screen(first.x,first.z),b=screen(hover.x,hover.z);ctx.beginPath();if(['room','corridor'].includes($('tool').value))ctx.rect(a[0],a[1],b[0]-a[0],b[1]-a[1]);else{ctx.moveTo(...a);ctx.lineTo(...b);}ctx.setLineDash([7,5]);ctx.lineWidth=2;ctx.strokeStyle='#106f79';ctx.stroke();ctx.setLineDash([]);}
 }
@@ -120,7 +120,7 @@ const scene=new T.Scene();scene.background=new T.Color(0xd9e8e4);const camera=ne
 function box(x,y,z,w,h,d,color,angle=0,opacity=1){const material=new T.MeshStandardMaterial({color,transparent:opacity<1,opacity,side:T.DoubleSide});material.userData.studioOwned=true;const mesh=new T.Mesh(new T.BoxGeometry(w,h,d),material);mesh.position.set(x,y,z);mesh.rotation.y=angle;group.add(mesh);return mesh;}
 function draw3D(){group.traverse(o=>{if(o.isMesh){o.geometry?.dispose();if(o.material?.userData?.studioOwned){o.material.map?.dispose();o.material.dispose();}}});group.clear();
  for(const f of floors()){const shape=new T.Shape(),poly=f.polygon||[[f.x0,f.z0],[f.x1,f.z0],[f.x1,f.z1],[f.x0,f.z1]];poly.forEach(([x,z],i)=>i?shape.lineTo(x,z):shape.moveTo(x,z));shape.closePath();const m=new T.MeshStandardMaterial({color:f.surface==='vinyl'?0xb7d6d0:0xd8cbbb,side:T.DoubleSide});m.userData.studioOwned=true;const mesh=new T.Mesh(new T.ShapeGeometry(shape),m);mesh.rotation.x=Math.PI/2;mesh.position.y=-.025;group.add(mesh);}
- for(const e of wallPieces(arch())){const dx=e.b[0]-e.a[0],dz=e.b[1]-e.a[1],len=Math.hypot(dx,dz),angle=-Math.atan2(dz,dx),x=(e.a[0]+e.b[0])/2,z=(e.a[1]+e.b[1])/2;
+ for(const e of projectWallPieces(arch())){const dx=e.b[0]-e.a[0],dz=e.b[1]-e.a[1],len=Math.hypot(dx,dz),angle=-Math.atan2(dz,dx),x=(e.a[0]+e.b[0])/2,z=(e.a[1]+e.b[1])/2;
   if(e.kind==='window'){box(x,e.sill/2,z,len,e.sill,e.thickness,0xc1d0d0,angle);box(x,(e.sill+e.height)/2,z,len,e.height-e.sill,.04,0x7ec4d2,angle,.38);}
   else {const h=$('cutaway').checked&&e.kind==='wall'?Math.min(.8,e.height):e.height;box(x,h/2,z,len,h,e.thickness,e.kind==='glazed'?0x82d5c5:0xb6c2bf,angle,e.kind==='glazed'?.4:1);}
  }
@@ -132,7 +132,7 @@ function draw3D(){group.traverse(o=>{if(o.isMesh){o.geometry?.dispose();if(o.mat
   else put(0,o.height/2,0,o.w,o.height,o.d,0x587e8a);
  }
  buildProjectDecorations(p(),arch(),group,()=>renderer.render(scene,camera));
- const b=p().ground.bounds,span=Math.max(b.x1-b.x0,b.z1-b.z0),cx=(b.x0+b.x1)/2,cz=(b.z0+b.z1)/2;
+ const b=p().ground.bounds,span=Math.max(b.x1-b.x0,b.z1-b.z0)/view3dZoom,cx=(b.x0+b.x1)/2-offset.x,cz=(b.z0+b.z1)/2-offset.z;
  camera.position.set(cx+Math.sin(orbit)*span*.75,span*.72,cz+Math.cos(orbit)*span*.75);camera.lookAt(cx,0,cz);
  const r=$('scene3d').getBoundingClientRect();renderer.setSize(Math.max(1,r.width),Math.max(1,r.height),false);camera.aspect=r.width/r.height;camera.updateProjectionMatrix();renderer.render(scene,camera);
 }
@@ -177,7 +177,8 @@ for(const id of ['x','z','w','d'])$(id).onchange=()=>{const o=lookup(),value=Num
  commit(before);};
 $('undo').onclick=()=>{if(!history.length)return;future.push(JSON.stringify(p()));project=JSON.parse(history.pop());persist();redraw();};
 $('redo').onclick=()=>{if(!future.length)return;history.push(JSON.stringify(p()));project=JSON.parse(future.pop());persist();redraw();};
-document.addEventListener('keydown',e=>{if(e.key==='Escape'){first=null;drag=null;pendingFurniture=null;pendingTemplate=null;redraw();}if(e.key.toLowerCase()==='r'&&pendingFurniture){pendingYaw+=Math.PI/2;redraw();}if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='z'){e.preventDefault();$('undo').click();}if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='y'){e.preventDefault();$('redo').click();}});
+document.addEventListener('keyup',e=>{if(e.code==='Space')spaceHeld=false;});
+document.addEventListener('keydown',e=>{if(['INPUT','SELECT','TEXTAREA'].includes(e.target.tagName))return;if(e.code==='Space'){e.preventDefault();spaceHeld=true;}if(e.key==='Escape'){first=null;drag=null;pendingFurniture=null;pendingTemplate=null;redraw();}if(e.key.toLowerCase()==='r'&&pendingFurniture){pendingYaw+=Math.PI/2;redraw();}if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='z'){e.preventDefault();$('undo').click();}if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='y'){e.preventDefault();$('redo').click();}});
 for(const id of ['name','width','depth'])$(id).onchange=()=>{const before=JSON.stringify(p());if(id==='name')p().name=$('name').value.trim()||'Min bana';else{
   const n=clamp(Number($(id).value),8,100),b=p().ground.bounds;if(id==='width')b.x1=b.x0+n;else b.z1=b.z0+n;}
  try{project=parseProject(p());commit(before);}catch(e){project=JSON.parse(before);status(e.message);redraw();}};
@@ -200,15 +201,16 @@ $('preview').onclick=()=>{try{const report=validateLevel(p(),{engine:true});p().
 $('demo').onclick=async()=>{try{const response=await fetch('../levels/synthetic-demo.json');if(!response.ok)throw Error('Demobanan saknas.');const before=JSON.stringify(p());project=parseProject(await response.text());$('name').value=p().name;commit(before);status('Syntetisk testbana öppnad. Den är separat från ditt sparade projekt.');}catch(e){status(e.message);}};
 $('planView').onclick=()=>{view='plan';canvas.hidden=false;$('scene3d').hidden=true;$('planView').classList.add('active');$('threeView').classList.remove('active');redraw();};
 $('threeView').onclick=()=>{view='3d';canvas.hidden=true;$('scene3d').hidden=false;$('threeView').classList.add('active');$('planView').classList.remove('active');redraw();};
-$('fit').onclick=()=>{zoom=1;offset={x:0,z:0};redraw();};
-canvas.addEventListener('wheel',e=>{e.preventDefault();zoom=clamp(zoom*(e.deltaY<0?1.1:.9),.5,6);redraw();},{passive:false});
+$('fit').onclick=()=>{zoom=1;view3dZoom=1;offset={x:0,z:0};redraw();};
+canvas.addEventListener('wheel',e=>{e.preventDefault();const before=point(e);zoom=clamp(zoom*(e.deltaY<0?1.1:.9),.5,10);const after=point(e);offset.x+=after.x-before.x;offset.z+=after.z-before.z;redraw();},{passive:false});
+$('scene3d').addEventListener('wheel',e=>{e.preventDefault();view3dZoom=clamp(view3dZoom*(e.deltaY<0?1.15:.87),.5,10);redraw();},{passive:false});
 let pan=null,drag3d=null;
 const ray3d=new T.Raycaster(),groundPlane=new T.Plane(new T.Vector3(0,1,0),0);
 function hit3d(e){const r=$('scene3d').getBoundingClientRect();ray3d.setFromCamera(new T.Vector2((e.clientX-r.left)/r.width*2-1,-(e.clientY-r.top)/r.height*2+1),camera);const v=new T.Vector3();return ray3d.ray.intersectPlane(groundPlane,v)?{x:snap(v.x),z:snap(v.z)}:null;}
 $('scene3d').addEventListener('pointerdown',e=>{const q=hit3d(e);if(!q)return;$('scene3d').setPointerCapture(e.pointerId);if(pendingFurniture){try{const before=JSON.stringify(p());addFurniture(pendingFurniture,q.x,q.z);commit(before);}catch(err){status(err.message);}return;}
  const hit=ray3d.intersectObjects(group.children,true).find(h=>{let o=h.object;while(o&&!o.userData.editId)o=o.parent;return !!o?.userData.editId;});
  if(hit&&e.button===0){let node=hit.object;while(node&&!node.userData.editId)node=node.parent;selected=node.userData.editId;const item=lookup();drag3d={item,before:JSON.stringify(p()),dx:q.x-item.x,dz:q.z-item.z};redraw();}else pan=e.clientX;});
-$('scene3d').addEventListener('pointermove',e=>{if(drag3d){const q=hit3d(e);if(q&&moveObject(drag3d.item,snap(q.x-drag3d.dx),snap(q.z-drag3d.dz)))redraw();return;}if(pan===null)return;orbit+=(e.clientX-pan)*.005;pan=e.clientX;const b=p().ground.bounds,span=Math.max(b.x1-b.x0,b.z1-b.z0),cx=(b.x0+b.x1)/2,cz=(b.z0+b.z1)/2;camera.position.set(cx+Math.sin(orbit)*span*.75,span*.72,cz+Math.cos(orbit)*span*.75);camera.lookAt(cx,0,cz);renderer.render(scene,camera);});
+$('scene3d').addEventListener('pointermove',e=>{if(drag3d){const q=hit3d(e);if(q&&moveObject(drag3d.item,snap(q.x-drag3d.dx),snap(q.z-drag3d.dz)))redraw();return;}if(pan===null)return;orbit+=(e.clientX-pan)*.005;pan=e.clientX;const b=p().ground.bounds,span=Math.max(b.x1-b.x0,b.z1-b.z0)/view3dZoom,cx=(b.x0+b.x1)/2-offset.x,cz=(b.z0+b.z1)/2-offset.z;camera.position.set(cx+Math.sin(orbit)*span*.75,span*.72,cz+Math.cos(orbit)*span*.75);camera.lookAt(cx,0,cz);renderer.render(scene,camera);});
 $('scene3d').addEventListener('pointerup',()=>{pan=null;if(drag3d){commit(drag3d.before);drag3d=null;}});
 new ResizeObserver(redraw).observe(canvas.parentElement);
 $('name').value=p().name;$('width').value=p().ground.bounds.x1-p().ground.bounds.x0;$('depth').value=p().ground.bounds.z1-p().ground.bounds.z0;

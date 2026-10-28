@@ -49,3 +49,14 @@ test('nonblocking furniture keeps visuals but loses physics and nav blockers',()
  assert.equal(blockedWorld.staticCanOccupy(asset.x,asset.z,.2),false);
  assert.equal(freeWorld.staticCanOccupy(asset.x,asset.z,.2),true);
 });
+
+test('window fitting removes hidden solid layers from overlapping room walls',()=>{
+ const p=structuredClone(project),window=p.architecture.added.find(e=>e.kind==='window');
+ p.architecture.added.push({...window,id:'BYGG-V-0999',kind:'wall'});
+ const world=createWorld({levelProject:p,fresh:true});
+ const pane=[...world.glass.panes.values()].find(g=>g.wallId.startsWith(window.id));
+ const box=world.staticBoxes.find(b=>b.glassId===pane.id),dx=window.b[0]-window.a[0],dz=window.b[1]-window.a[1],length=Math.hypot(dx,dz);
+ const a={x:box.x-dz/length*.4,y:box.y,z:box.z+dx/length*.4},b={x:box.x+dz/length*.4,y:box.y,z:box.z-dx/length*.4};
+ assert.equal(world.segmentClear(a,b),false);world.glass.breakAt({id:box.id});
+ assert.equal(world.segmentClear(a,b),true,'no invisible solid wall may survive behind the broken pane');
+});

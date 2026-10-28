@@ -1,6 +1,6 @@
 /** Portable collision handoff. The engine's physics remains authoritative. */
 import {wallPieces,isDoor,STANDARD_PASSAGE_WIDTH} from './architecture.mjs';
-import {resolveProjectScene} from './project-scene.mjs';
+import {resolveProjectScene,projectWallPieces} from './project-scene.mjs';
 
 export function collisionExport(p){
  const scene=resolveProjectScene(p),segments=scene.entries,floors=scene.floors;
@@ -11,9 +11,9 @@ export function collisionExport(p){
    doorLeaf:'dynamic',opening:'leafless / no collision',window:'sill + header + breakable glass',
    floor:'walkable footprint; outside blocked',furniture:'solid by default; none is visual only'},
   walkableFloors:floors.map(f=>({id:f.id,role:f.role,polygon:f.polygon,rect:[f.x0,f.z0,f.x1,f.z1]})),
-  staticWalls:wallPieces(segments).map(w=>({id:w.id,kind:w.kind,a:w.a,b:w.b,height:w.height,thickness:w.thickness,sill:w.kind==='window'?w.sill:null,collision:w.kind==='window'||w.kind==='glazed'?'glass':'solid'})),
+  staticWalls:projectWallPieces(segments).map(w=>({id:w.id,kind:w.kind,a:w.a,b:w.b,height:w.height,thickness:w.thickness,sill:w.kind==='window'?w.sill:null,collision:w.kind==='window'||w.kind==='glazed'?'glass':'solid'})),
   passages:segments.filter(e=>isDoor(e.kind)).map(e=>({id:e.id,kind:e.kind,a:e.a,b:e.b,width:Math.hypot(e.b[0]-e.a[0],e.b[1]-e.a[1]),collision:e.kind==='opening'?'none':'dynamic-door-leaf'})),
-  furniture:scene.items.map(o=>({id:o.id,assetId:o.assetId||null,x:o.x,z:o.z,yaw:o.yaw,w:o.w,d:o.d,height:o.height,elevation:o.elevation||0,mountId:o.mountId||null,collision:o.collision||'solid'})),
+  furniture:scene.items.map(o=>({id:o.id,kind:o.kind,assetName:o.assetName||null,assetId:o.assetId||null,x:o.x,z:o.z,yaw:o.yaw,w:o.w,d:o.d,height:o.height,elevation:o.elevation||0,mountId:o.mountId||null,collision:o.collision||'solid'})),
   spawns:p.gameplay.spawns.map(s=>({id:s.id,team:s.team,x:s.x,z:s.z,yaw:s.yaw})),
   objectives:p.gameplay.objectives,fixedObstacles:scene.fixed,floor5Inherited:p.mode==='edit-floor5'};
 }

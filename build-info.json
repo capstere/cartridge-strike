@@ -486,8 +486,8 @@
     },
     {
       "path": "furniture-editor/build/ai-export.mjs",
-      "bytes": 3676,
-      "sha256": "1805b13deb52592fd6a3eecba8c4b017aa5a80ee0dbac94760d8da464b27cf32"
+      "bytes": 3741,
+      "sha256": "928878297e3cc47be92a98e65938cc8c9c0e961b5d917f9e7a8d3d0aa3ed6fbe"
     },
     {
       "path": "furniture-editor/build/architecture.mjs",
@@ -526,8 +526,8 @@
     },
     {
       "path": "furniture-editor/build/project-scene.mjs",
-      "bytes": 3675,
-      "sha256": "5c7f2df38658da13c359b4e001104f5522eb1e76a84d9e9a7d0b9361bd9203e8"
+      "bytes": 4475,
+      "sha256": "1ddb3a5c8773429b51964e21e055cfe761cb9e57b595d9df3db836b02cbb81a8"
     },
     {
       "path": "furniture-editor/build/project-visuals.mjs",
@@ -541,8 +541,8 @@
     },
     {
       "path": "furniture-editor/build/validate-level.mjs",
-      "bytes": 9834,
-      "sha256": "075cb0081354429805764e6b25a6c488d7e97554fedd66176e74c458ff30e5a8"
+      "bytes": 9859,
+      "sha256": "ad0653d5b9e8aba528b1504fc1ce0f60623099b01bd6310d3b4a4307e7054736"
     },
     {
       "path": "furniture-editor/core.mjs",
@@ -591,13 +591,13 @@
     },
     {
       "path": "furniture-editor/new.html",
-      "bytes": 7949,
-      "sha256": "e8e81f5462b20f259a8cfa1cf1af9786392d1513d72ab983395bcb3876794015"
+      "bytes": 7974,
+      "sha256": "cc93d9c47478d64bfc204f4bf6802b63b05d0d9255a9de75e8c48f27038dac17"
     },
     {
       "path": "furniture-editor/new.mjs",
-      "bytes": 37693,
-      "sha256": "10a5fccc74c8bd3b042c6bca3dc9ed75581e7e063046ff11262c9a5666df7fc7"
+      "bytes": 38797,
+      "sha256": "6bdde57e5e97608d7e72a129eb3ae15d1151b6dcd9b02d29d1100ddd59d725d4"
     },
     {
       "path": "furniture-editor/smart-placement.mjs",
@@ -876,8 +876,8 @@
     },
     {
       "path": "src/fps/level-adapter.mjs",
-      "bytes": 3818,
-      "sha256": "ace2284fa67e897d6a5c95ba26909eb96c191524ca3bf6cf0ee957b93263efce"
+      "bytes": 3843,
+      "sha256": "e9241bcce48e6467919c4ad5fe852b561455ae9a3689f8efe492503ce96ec297"
     },
     {
       "path": "src/fps/living-floor-art.mjs",

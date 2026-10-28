@@ -19,3 +19,5 @@ Baseline: `node tools/owner-door-traversal.mjs` passed 102 directional cases; `n
 - Floor 5 projects inherit the existing 5+5 anchors if no gameplay overrides exist. Engine validation checks the resolved scene. Original unmodified doors retain their width exemption.
 - Schema remains 2; these are additive behaviors within that contract. Editor version is 3.2.0, compatible game version remains 0.18.0; the historical furniture BASE_COMMIT is unchanged.
 - The export is deterministic geometry plus a derived collision map and an agent brief. It makes implementation reproducible; no promise of error-free autonomous changes replaces engine/browser verification.
+
+Shared-wall compilation also removes every underlying solid span when a window/glass part is fitted across overlapping room walls. A real shot-clearance regression confirms that no invisible opaque wall survives behind a broken window. Capsule traversal is simulated from both sides in the isolated level world; the original 102-case Floor 5 regression remains separate.
