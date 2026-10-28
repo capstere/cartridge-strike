@@ -33,13 +33,13 @@ jobs:
         run: |
           set -euo pipefail
           for file in furniture-editor/main.mjs furniture-editor/core.mjs furniture-editor/appearance.mjs \
-            furniture-editor/placement.mjs furniture-editor/build/{build-mode,architecture,precision,rectangle-room,posters,poster-art,paint-over-wall}.mjs \
+            furniture-editor/placement.mjs furniture-editor/smart-placement.mjs furniture-editor/library/{procedural,procedural-mesh}.mjs furniture-editor/build/{build-mode,architecture,precision,rectangle-room,posters,poster-art,paint-over-wall,treatments}.mjs \
             furniture-editor/{editor-browser,editor.test}.mjs furniture-editor/build/build-browser.mjs; do
             node --check "$file"
           done
-          node --test furniture-editor/editor.test.mjs furniture-editor/appearance.test.mjs \
+          node --test furniture-editor/editor.test.mjs furniture-editor/appearance.test.mjs furniture-editor/smart-interiors.test.mjs \
             furniture-editor/placement.test.mjs furniture-editor/library/library.test.mjs \
-            furniture-editor/build/{architecture,precision,rectangle-room,posters,paint-over-wall}.test.mjs
+            furniture-editor/build/{architecture,precision,rectangle-room,posters,paint-over-wall,treatments}.test.mjs
           node tools/verify-owner-runtime.mjs
       - name: Install existing pinned Playwright and software WebGL
         run: |
