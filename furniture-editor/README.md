@@ -4,6 +4,21 @@
 
 Designstudion är ett **helt separat verktyg**. Du kan ändra möbler, väggar, fönster, glasväggar, dörrar och skissa nya golvytor. Dina ändringar är ett **förslag**, inte en ändring av live-spelet. Spelets befintliga kollision, botarnas navigation, gisslan, dörrar, spawns och regler ligger kvar exakt som i version 0.17.0.
 
+## Prototypgren: möbelmått, fasta färger och 3D-kamera
+
+> **Endast utvecklingsgren:** `work/design-studio-size-palette-camera-20261028`. Detta avsnitt gäller prototypen och ska inte blandas ihop med redan publicerad Designstudio.
+
+- **Bord och skrivbord:** välj ett bord och skriv in **Längd** samt **Bredd/djup** i meter (0,15–8 m). En ändring får inte blockera dörr, passera vägg eller överlappa annan möbel. För procedurgenererade bord är skiva vit och benen silverfärgade. Kända GLB-bord får samma färgstandard och anpassas i X/Z/Y till angivna mått. **OBS:** icke-proportionell GLB-skalning kan förvränga föremålet.
+- **Köksstolar:** orange som tidigare, **kontors- och labbstolar:** svarta, **konferensstolar:** blå med svarta ben. Stolkategori går att välja under **STOLTYP / FÄRGSTANDARD** för utvald stol. Placering i lunch-/pentryrum ger normalt köksstol; andra stolar klassas normalt som kontorsstol tills användaren väljer konferensstol.
+- **Egen GLB som inte känns igen:** använd **VAD ÄR DET FÖR 3D-MODELL?** och välj Bord, Stol eller Annat. Då visas relevanta dimensioner och färgval. Original-GLB:n ändras inte. Färger läggs bara på en tillfällig modellkopia i redigeraren.
+- **Väggar:** Vit eller Grå. **Dörrar:** Vit, Grå, Röd eller Hissdörr (metall). Välj en vägg/dörr i **BYGG**, ändra **YTFÄRG**, förhandsgranska i **3D-VY**. Planvyn behåller sina kategorifärger. Finish följer med i befintligt schema-1 projekt utan att tidigare JSON-filer blir ogiltiga.
+- **Kortkommandon:** `Ctrl+D` (eller `Cmd+D` på Mac) duplicerar det markerade föremålet i möbleringsläge eller vald byggdel i byggläge. De gamla knapparna **Duplicera** finns kvar. En kopia placeras bara om det finns en ledig giltig plats.
+- **3D-kamera:** håll nere **Shift** eller **Ctrl** och **dra med vänster musknapp** för att panorera framåt/bakåt/sidled över golvplanet utan att flytta möbler eller byggdelar. Vanligt drag roterar kameran på tom yta; höger musdrag fungerar för panorering som tidigare.
+  
+**GLB-begränsning:** Om en importerad modell har skiva och ben som *en enda mesh* kan redigeraren inte säkert ge dem två separata färger. Den färgar då den sammanhängande modellen i kroppsfärgen. För riktiga vita skivor och silvriga ben behövs GLB med separata material/mesh-delar. Kontrollera alltid mått och stil visuellt efter import.
+
+Projektfilen förblir en designskiss. Dessa färger och mått ändrar inte själva FPS-spelet förrän den godkända designen integreras och testas separat.
+
 ## Smarta ritverktyg (28 oktober 2026)
 
 **BYGG · VÄGGAR & DÖRRAR** har två val som är påslagna från början:
