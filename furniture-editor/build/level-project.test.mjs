@@ -41,6 +41,14 @@ test('new ZIP round trip verifies local binary hashes and blocks unsafe paths',a
  await assert.rejects(()=>parseProjectZip(makeZip([{name:'project.json',data:JSON.stringify(p)},{name:'AGENT_BRIEF.md',data:'x'}])));
  assert.throws(()=>makeZip([{name:'../evil',data:'x'}]));
 });
+test('orange kitchen chair preset keeps the audited chair model and finish in JSON and ZIP',async()=>{
+ const chair={id:'NY-OBJ-0001',kind:'chair',assetId:'kenney:furniture-kit:chairdesk',assetName:'Orange köksstol · silverben',
+  chairRole:'kitchen',roomId:floor.id,x:2,z:2,yaw:0,w:.62,d:.62,height:1.05};
+ const project=exportProject({ground:{bounds:{x0:0,z0:0,x1:10,z1:10},wallHeightDefault:2.85,floors:[floor]},
+  furniture:{placements:[],added:[chair],removed:[]},assets:{library:[chair.assetId],local:[],posters:[]}});
+ assert.deepEqual(parseProject(JSON.stringify(project)).furniture.added[0],chair);
+ assert.deepEqual((await parseProjectZip(await exportProjectZip(project))).project.furniture.added[0],chair);
+});
 test('legacy ZIP imports without losing binary model identity or editor-only metadata',async()=>{
  const bytes=new Uint8Array([0x67,0x6c,0x54,0x46,2,0,0,0]),hash=await assetHash(bytes),v1=exportPatch([],[]);
  v1.added=[{id:'NY-OBJ-0001',kind:'prop',roomId:'I09',x:1,z:2,yaw:0,w:.4,d:.5,height:.6,assetId:'local:'+hash,assetName:'Egen'}];

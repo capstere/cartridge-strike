@@ -512,7 +512,7 @@
     {
       "path": "furniture-editor/build/level-project.mjs",
       "bytes": 12943,
-      "sha256": "61e6691f98770f87acc91d4027d77e70f6593afab4b02d60045da7dcddfa402f"
+      "sha256": "623b2140d4eef18f91bbd1e94b48bb02e7b6bbeab3a2f7b0dab2663a495a21e7"
     },
     {
       "path": "furniture-editor/build/level-project.schema.json",
@@ -596,18 +596,18 @@
     },
     {
       "path": "furniture-editor/new.css",
-      "bytes": 4294,
-      "sha256": "9c1a2328fc08ab297f2ea2178a47f8bf42fed45093d4fb709832df434e39d0ce"
+      "bytes": 5647,
+      "sha256": "1f7852f76bdef4fc68a370960c8752a80f357a020f22cf015261d0027acbe7c5"
     },
     {
       "path": "furniture-editor/new.html",
-      "bytes": 9120,
-      "sha256": "b66abcd06092712b173090e01b342e50a0511dff933b9ef4eeb88f935c03ff1e"
+      "bytes": 9739,
+      "sha256": "ea2e8d12e098f41539bb9ba7c0a7f6ad41b955bf706ffeaab22c17fb47caa93e"
     },
     {
       "path": "furniture-editor/new.mjs",
-      "bytes": 42359,
-      "sha256": "bd8bde1ebd4b4146fc49d0393cfb3a69465d87a3367a20c5e076c68dde3d07fe"
+      "bytes": 48088,
+      "sha256": "223d9f41ed1879d40f6ba7a8caa84f215f850597238b5c0e9849419007bdee00"
     },
     {
       "path": "furniture-editor/smart-placement.mjs",
