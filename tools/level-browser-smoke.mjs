@@ -97,6 +97,14 @@ try{
  assert.equal(await editGame.evaluate(()=>__fps.world.project.mode),'edit-floor5');
  assert(await editGame.evaluate(id=>!__fps.world.data.obstacles.some(o=>o.id===id),target.id));
  await editGame.close();
+ const noGPU=await browser.newContext({viewport:{width:1440,height:900},acceptDownloads:true});
+ await noGPU.addInitScript(()=>{const original=HTMLCanvasElement.prototype.getContext;HTMLCanvasElement.prototype.getContext=function(type,...args){return ['webgl','webgl2','experimental-webgl'].includes(type)?null:original.call(this,type,...args);};});
+ const plain=await noGPU.newPage();track(plain);await plain.goto(origin+'/furniture-editor/new.html',{waitUntil:'domcontentloaded'});await plain.waitForFunction(()=>!!window.__levelStudio);
+ await plain.locator('#threeView').click();assert.match(await plain.locator('#status').innerText(),/WebGL 2/);assert(await plain.locator('#plan').isVisible());
+ await plain.locator('[data-tool="room"]').click();for(const [x,z] of [[1,1],[7,7]]){const at=await plain.evaluate(([x,z])=>__levelStudio.screenWorldPoint(x,z),[x,z]);await plain.mouse.click(at.x,at.y);}
+ assert.equal(await plain.evaluate(()=>__levelStudio.project.ground.floors.length),1);
+ const plainDownload=plain.waitForEvent('download');await plain.locator('#saveJson').click();const plainFile=await plainDownload;
+ assert.equal(JSON.parse(readFileSync(await plainFile.path(),'utf8')).ground.floors.length,1);await noGPU.close();
  assert.deepEqual(errors,[]);
- console.log(JSON.stringify({status:'PASS',mouseRoom:true,zipBytes:bytes.length,spawns:10,privateFPS:true,publishedFPS:true,floor5:true,unsafeLevelRejected:true,consoleErrors:0}));
+ console.log(JSON.stringify({status:'PASS',mouseRoom:true,zipBytes:bytes.length,spawns:10,privateFPS:true,publishedFPS:true,floor5:true,planWithoutWebGL:true,unsafeLevelRejected:true,consoleErrors:0}));
 }finally{await browser.close();}

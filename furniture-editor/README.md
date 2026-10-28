@@ -1,19 +1,23 @@
-# Cartridge Strike Designstudion 3.0 — skapa en egen spelmiljö
+# Cartridge Strike Designstudion 3.2.0 — skapa en egen spelmiljö
 
-**[Öppna Designstudion](https://capstere.github.io/cartridge-strike/furniture-editor/)** (dator och mus rekommenderas).
+**[Öppna Designstudion](https://capstere.github.io/cartridge-strike/furniture-editor/new.html)** (dator och mus rekommenderas).
 
-Det äldre läget **REDIGERA FLOOR 5** är fortfarande en fristående skissredigerare mot spelversion 0.17.0. Dess v1-patch och ursprungskarta är oförändrade. **NY BANA** (`new.html`) använder banprojekt schema 2 och spelversion 0.18.0; en separat banadapter kör nya projekt genom samma fysik, navigering, dörrar och matchregler.
+**NY BANA** och **[REDIGERA FLOOR 5](https://capstere.github.io/cartridge-strike/furniture-editor/new.html?mode=edit-floor5)** använder samma plan/3D-verktyg. Golv, väggar, glas, dörrar och möbler ger automatiskt geometri och fysik. Dörrar/fönster fäster med ett klick på väggen; nya dörrar är normalt 1,20 modellenheter. Planvyn och export fungerar även utan WebGL; 3D och FPS kräver WebGL 2.
+
+Schema 2, editor 3.2.0 och kompatibel spelversion 0.18.0 används. Exportens `project.json` är källan; `COLLISION_MAP.json` är en härledd, integritetskontrollerad karta. JSON/ZIP från den äldre studion kan öppnas utan att skissen eller ursprungliga data förloras. Den **[klassiska studion](https://capstere.github.io/cartridge-strike/furniture-editor/)** finns kvar för äldre arbetsflöden.
 
 ### Bygg en ny bana
 
 1. Öppna `furniture-editor/new.html` och välj banans storlek i modellenheter.
-2. Rita RUM med två hörnklick. Rita en KORRIDOR som ansluter till nästa rum; rita dörr över den befintliga vägglinjen eller använd **DÖRR I MARKERAD VÄGG**. Dörren behöver 1,10 modellenheter och korridoren bör vara minst 2,0 fri bredd.
-3. Öppna MÖBLERA och välj ur biblioteket eller importera egna GLB lokalt. Flytta med musen; smarta fästen följer med sin möbel.
+2. Dra ett RUM eller klicka två hörn. Rita en KORRIDOR som ansluter till nästa rum; rita dörr över den befintliga vägglinjen eller använd **DÖRR I MARKERAD VÄGG**. Dörren behöver 1,10 modellenheter och korridoren bör vara minst 2,0 fri bredd.
+3. Öppna MÖBLERA och välj ur biblioteket eller importera egna GLB lokalt. Välj PLACERA och klicka på golvet. R vrider och Esc avslutar; smarta fästen följer med sin möbel.
 4. Öppna SPEL. Placera fem spawns per lag, bomb, två gisslan och rescue på golvet. Klicka **KONTROLLERA BANAN** för faktisk kapsel- och navigeringskontroll.
 5. Spara ZIP och öppna den igen för att fortsätta. **PROVSPELA MIN BANA** startar en privat lokal FPS från det aktuella projektet. Publicering kräver en separat rättighetsgranskad nivå i `levels/manifest.json` via `tools/apply-level-project.mjs`.
 
 Version 1 JSON/ZIP kan fortfarande öppnas i Floor 5-läget. Ny projektversion 2 är dokumenterad i `build/level-project.schema.json`; tekniska avvikelser från schemaförslaget finns i `docs/level-project-decisions.md`.
 
+
+> Följande äldre avsnitt beskriver den klassiska studion. För det gemensamma byggläget och spelintegration gäller beskrivningen ovan och [AI_EXPORT.md](AI_EXPORT.md).
 
 ## Designstudion: tomma ytor, smart inredning, gardiner och persienner (28 oktober 2026)
 
