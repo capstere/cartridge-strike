@@ -2,7 +2,7 @@ import * as T from '../vendor/three/three.module.js';
 import {exportProject,parseProject,parseProjectZip,exportProjectZip} from './build/level-project.mjs';
 import {validateLevel} from './build/validate-level.mjs';
 import {validate,corners,inside,segmentIntersectsRectangle,intersects} from './core.mjs';
-import {wallPieces,standardPassageSpan,isDoor} from './build/architecture.mjs';
+import {wallPieces,standardPassageSpan,standardDoorMarkerSpan,isDoor} from './build/architecture.mjs';
 import {LIBRARY_ALL} from './library/catalog.mjs';
 import {proceduralOf} from './library/procedural.mjs';
 import {populateProcedural} from './library/procedural-mesh.mjs';
@@ -92,7 +92,7 @@ canvas.addEventListener('contextmenu',e=>{e.preventDefault();const o=lookup();if
 function drawPlan(){const r=canvas.getBoundingClientRect(),dpr=Math.min(devicePixelRatio||1,2);canvas.width=Math.round(r.width*dpr);canvas.height=Math.round(r.height*dpr);ctx.clearRect(0,0,canvas.width,canvas.height);ctx.fillStyle='#e6efea';ctx.fillRect(0,0,canvas.width,canvas.height);
  const b=p().ground.bounds;ctx.strokeStyle='#bfd1ca';ctx.lineWidth=1;for(let x=b.x0;x<=b.x1;x++)for(let z=b.z0;z<=b.z1;z++){const [sx,sz]=screen(x,z);if(sx>=0&&sx<canvas.width&&sz>=0&&sz<canvas.height)ctx.fillRect(sx,sz,1,1);}
  for(const f of floors()){const [x0,z0]=screen(f.x0,f.z0),[x1,z1]=screen(f.x1,f.z1);ctx.fillStyle=f.surface==='vinyl'?'#d3e8e3':'#f3e4d0';ctx.fillRect(x0,z0,x1-x0,z1-z0);ctx.strokeStyle=selected===f.id?'#ed993a':'#789b95';ctx.lineWidth=selected===f.id?3:1;ctx.strokeRect(x0,z0,x1-x0,z1-z0);ctx.fillStyle='#426367';ctx.font=`${12*dpr}px system-ui`;ctx.fillText(f.name,x0+8,z0+17*dpr);}
- for(const e of arch()){const a=screen(...e.a),b=screen(...e.b);ctx.beginPath();ctx.moveTo(...a);ctx.lineTo(...b);ctx.lineWidth=selected===e.id?7:Math.max(3,5*dpr);ctx.strokeStyle=selected===e.id?'#f2a03e':({wall:'#bc5961',glazed:'#35aa8a',window:'#46a0c0',door:'#dc9b4f','card-door':'#dc9b4f',opening:'#fff'}[e.kind]);ctx.stroke();}
+ for(const e of arch()){const marker=isDoor(e.kind)?standardDoorMarkerSpan(e):e;const a=screen(...marker.a),b=screen(...marker.b);ctx.beginPath();ctx.moveTo(...a);ctx.lineTo(...b);ctx.lineWidth=selected===e.id?7:Math.max(3,5*dpr);ctx.strokeStyle=selected===e.id?'#f2a03e':({wall:'#bc5961',glazed:'#35aa8a',window:'#46a0c0',door:'#dc9b4f','card-door':'#dc9b4f',opening:'#fff'}[e.kind]);ctx.stroke();}
  for(const o of objects()){const pts=corners(o).map(v=>screen(...v));ctx.beginPath();pts.forEach((v,i)=>i?ctx.lineTo(...v):ctx.moveTo(...v));ctx.closePath();ctx.fillStyle=selected===o.id?'#ffc874':'#5a7e88';ctx.fill();ctx.strokeStyle='#233e4a';ctx.stroke();}
  for(const m of markers()){const [x,z]=screen(m.x,m.z);ctx.beginPath();ctx.arc(x,z,selected===m.id?12*dpr:9*dpr,0,Math.PI*2);ctx.fillStyle=m.team==='analysts'?'#298bb7':m.team==='counterAnalysts'?'#d5684d':m.id.includes('BOMB')?'#dfb03e':m.id.includes('RESCUE')?'#41b89a':'#bf78b5';ctx.fill();ctx.strokeStyle='#fff';ctx.lineWidth=2;ctx.stroke();ctx.fillStyle='#16343b';ctx.font=`bold ${10*dpr}px system-ui`;ctx.fillText(m.team?String(m.index+1):m.id.includes('H')?'H':m.id.includes('BOMB')?'B':'R',x+11*dpr,z);}
  if(first&&hover){const a=screen(first.x,first.z),b=screen(hover.x,hover.z);ctx.beginPath();if(['room','corridor'].includes($('tool').value))ctx.rect(a[0],a[1],b[0]-a[0],b[1]-a[1]);else{ctx.moveTo(...a);ctx.lineTo(...b);}ctx.setLineDash([7,5]);ctx.lineWidth=2;ctx.strokeStyle='#106f79';ctx.stroke();ctx.setLineDash([]);}
