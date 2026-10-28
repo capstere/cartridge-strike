@@ -146,6 +146,26 @@ try{
  check('single undo restores room name',await page.evaluate(()=>__furnitureEditor.getPatch().architecture.floors.at(-1)?.name==='Testlokal'));
  await page.locator('#buildUndo').click();
  check('exact room creation undo is atomic',await page.evaluate(n=>{const p=__furnitureEditor.getPatch().architecture;return p.added.length===n.added&&p.floors.length===n.floors;},roomBefore));
+ // Prototype: wall and door color options persist without touching gameplay.
+ await page.evaluate(()=>__furnitureEditor.build.select('WALL-001'));
+ await page.locator('#buildFinish').selectOption('gray');
+ check('selected source wall stores gray finish in proposal',
+   await page.evaluate(()=>__furnitureEditor.getPatch().architecture.edits.some(e=>e.id==='WALL-001'&&e.finish==='gray')));
+ await page.locator('#threeView').click();
+ const cameraBefore=await page.evaluate(()=>__furnitureEditor.getCameraTarget());
+ const area=await page.locator('#viewport').boundingBox();
+ await page.mouse.move(area.x+area.width/2,area.y+area.height/2);
+ await page.keyboard.down('Shift');
+ await page.mouse.down();await page.mouse.move(area.x+area.width/2+45,area.y+area.height/2+18,{steps:4});
+ await page.mouse.up();await page.keyboard.up('Shift');
+ check('Shift + left drag pans 3D camera in build mode',await page.evaluate(before=>{
+  const after=__furnitureEditor.getCameraTarget();
+  return Math.hypot(after.x-before.x,after.z-before.z)>.02;
+ },cameraBefore));
+ await page.evaluate(()=>__furnitureEditor.build.testCreate('wall',[23,23],[25,23]));
+ const buildDupBefore=await page.evaluate(()=>__furnitureEditor.build.export().added.length);
+ await page.keyboard.press('Control+d');
+ check('Ctrl+D duplicates selected architecture part',await page.evaluate(n=>__furnitureEditor.build.export().added.length===n+1,buildDupBefore));
  check('no FPS boot, JS/shader errors, external resources or HTTP failures',!report.errors.length&&!report.httpFailures.length&&!report.external.length&&await page.evaluate(()=>!window.__fps));
  report.status='PASS';
 }catch(e){report.status='FAIL';report.errors.push(e.stack||String(e));console.error(e);}
