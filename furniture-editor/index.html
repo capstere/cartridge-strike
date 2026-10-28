@@ -24,7 +24,10 @@
     <label for="search">Hitta en stol eller möbel</label><input id="search" type="search" placeholder="Sök t.ex. stol, I09 ..." autocomplete="off">
     <div class="filter"><label for="chairsOnly"><input type="checkbox" id="chairsOnly" checked> Bara stolar</label><span id="listCount">—</span></div>
     <div id="furnitureList" class="furniture-list" role="listbox" aria-label="Välj möbel"></div>
-    <button id="openLibrary" type="button" class="library-entry" aria-label="Öppna objektbibliotek och lägg till möbel">+ LÄGG TILL OBJEKT <span>104 3D-modeller</span></button>
+    <button id="emptyFixed" type="button" class="clear-interior">TÖM ALLA YTOR <small>Återställbar tom inredningsskiss</small></button>
+    <div id="emptyFixedStatus" class="empty-layout-info" role="status">URSPRUNG · fasta inventarier visas</div>
+    <label for="smartAttach" class="smart-attach-toggle"><input id="smartAttach" type="checkbox" checked> SMART PLACERING · på bänkar och skrivbord</label>
+    <button id="openLibrary" type="button" class="library-entry" aria-label="Öppna objektbibliotek och lägg till möbel">+ LÄGG TILL OBJEKT <span>125 objekt och 3D-modeller</span></button>
     <button id="openPosters" type="button" class="poster-entry" aria-label="Sätt upp en värdeordsaffisch på väggen">+ SÄTT UPP AFFISCH <span>Värdeord · egen bild</span></button>
     <div class="divider"></div>
     <div class="section-heading"><span>02 / FLYTTA & VRID</span><small id="selectionTag">Ingen vald</small></div>
@@ -37,7 +40,7 @@
         <select id="assetRole"><option value="auto">Identifiera automatiskt</option>
           <option value="table">Bord / skrivbord</option><option value="chair">Stol</option>
           <option value="other">Annat föremål (behåll modellens färg)</option></select>
-        <small>För egen GLB: välj Bord eller Stol om modellen inte känns igen automatiskt.</small>
+        <small>För egen GLB: välj Bord eller Stol om modellen inte känns igen automatiskt. De nya borden och apparaterna har färdiga former.</small>
       </div>
       <div id="tableSizeFields" class="table-size-fields" hidden>
         <strong>BORDETS MÅTT (METER)</strong>
