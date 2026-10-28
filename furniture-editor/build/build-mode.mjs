@@ -143,6 +143,7 @@ export function createBuildMode({data,scene,canvas,camera,getZoom,getView,rayAt,
   if(!overlayDraft)return false;
   const p=paintEndpoint(event);if(!p)return false;
   try{
+   if(treatments.some(t=>t.wallId===overlayDraft.wallId))throw Error('Ta bort gardin eller persienn innan du delar den här väggen.');
    const plan=planPaintOverWall(entries,overlayDraft.wallId,first,p,effectivePaintKind(),{posters});
    const before=capture();
    entries=plan.entries;posters=plan.posters;selection=plan.paintedId;
@@ -365,8 +366,17 @@ export function createBuildMode({data,scene,canvas,camera,getZoom,getView,rayAt,
   $('buildCount').textContent=count()+' byggändringar';}
  function showProperties(){const e=entryById(selection);$('buildNoSelection').hidden=!!e;$('buildSelected').hidden=!e;
   $('buildSelectionId').textContent=e?.id||'Ingen vald';
-  const poster=!!e?.wallId;
-  $('posterFields').hidden=!poster;$('buildKindFields').hidden=poster;
+  const treatment=!!e?.type&&['curtain','blind'].includes(e.type);
+  const poster=!!e?.wallId&&!treatment;
+  $('posterFields').hidden=!poster;$('treatmentFields').hidden=!treatment;$('buildKindFields').hidden=poster||treatment;
+  if(treatment){
+   $('buildEndpointFields').hidden=true;$('buildFloorFields').hidden=true;$('buildFinishFields').hidden=true;
+   $('treatmentSide').value=String(e.side);
+   const place=treatmentPosition(e,entries);
+   $('treatmentDescription').textContent=(e.type==='curtain'?'Vit, halvgenomskinlig tak-till-golv-gardin':'Mörkgrå persienn')+
+     (place?' · '+place.width.toFixed(2)+' meter bred':'');
+   $('buildDelete').textContent='Ta bort tillbehör';
+  }else
   if(poster){
    $('buildEndpointFields').hidden=true;$('buildFloorFields').hidden=true;$('buildFinishFields').hidden=true;
    $('posterText').value=e.text;$('posterSubtitle').value=e.subtitle;$('posterColor').value=e.color;
@@ -404,10 +414,11 @@ export function createBuildMode({data,scene,canvas,camera,getZoom,getView,rayAt,
   const center=roomSelect?[(roomSelect.polygon.reduce((s,p)=>s+p[0],0)/roomSelect.polygon.length),
    (roomSelect.polygon.reduce((s,p)=>s+p[1],0)/roomSelect.polygon.length)]:[0,0];
   let seen=0;const found=[];
-  for(const e of [...entries.filter(e=>!e.deleted),...floors,...posters]){const id=e.id,label=e.wallId?'Värdeordsaffisch':ARCHITECTURE_NAMES[e.kind]||'Ny golvyta';
+  for(const e of [...entries.filter(e=>!e.deleted),...floors,...posters,...treatments]){const id=e.id,label=e.type?(e.type==='curtain'?'Vit gardin':'Mörkgrå persienn'):e.wallId?'Värdeordsaffisch':ARCHITECTURE_NAMES[e.kind]||'Ny golvyta';
    if(filter&&!(id+' '+label).toLowerCase().includes(filter))continue;
-   const at=e.wallId?locatePoster(e,entries):null;
-   const x=at?.x??('a' in e?(e.a[0]+e.b[0])/2:(e.x0+e.x1)/2),z=at?.z??('a' in e?(e.a[1]+e.b[1])/2:(e.z0+e.z1)/2);
+   const tr=e.type?treatmentPosition(e,entries):null;
+   const at=e.wallId&&!e.type?locatePoster(e,entries):null;
+   const x=tr?.center[0]??at?.x??('a' in e?(e.a[0]+e.b[0])/2:(e.x0+e.x1)/2),z=tr?.center[1]??at?.z??('a' in e?(e.a[1]+e.b[1])/2:(e.z0+e.z1)/2);
    found.push({e,label,dist:Math.hypot(x-center[0],z-center[1])});}
   found.sort((a,b)=>(a.e.id===selection?-1:b.e.id===selection?1:0)||a.dist-b.dist||a.e.id.localeCompare(b.e.id));
   for(const {e,label} of found.slice(0,75)){
@@ -415,7 +426,8 @@ export function createBuildMode({data,scene,canvas,camera,getZoom,getView,rayAt,
    const swatch=document.createElement('span');swatch.className='arch-swatch';swatch.style.background=ARCHITECTURE_COLORS[e.kind]||'#7ec7b4';
    const name=document.createElement('span');name.textContent=label;const id=document.createElement('small');id.textContent=e.id;
    button.append(swatch,name,id);button.onclick=()=>{setTool('select');select(e.id);const at=e.wallId?locatePoster(e,entries):null;
-    onGoPoint?.(at?.x??('a' in e?(e.a[0]+e.b[0])/2:(e.x0+e.x1)/2),at?.z??('a' in e?(e.a[1]+e.b[1])/2:(e.z0+e.z1)/2));};list.append(button);seen++;
+    const tr=e.type?treatmentPosition(e,entries):null;
+    onGoPoint?.(tr?.center[0]??at?.x??('a' in e?(e.a[0]+e.b[0])/2:(e.x0+e.x1)/2),tr?.center[1]??at?.z??('a' in e?(e.a[1]+e.b[1])/2:(e.z0+e.z1)/2));};list.append(button);seen++;
   }
   $('buildListCount').textContent=filter?`${found.length} träffar`: `Visar ${seen} närmaste av ${found.length} delar`;
   $('viewportStatus').textContent=`BYGGLÄGE · ${count()} ändringar i byggskissen · ${found.length} befintliga/nya byggdelar`;
@@ -427,6 +439,7 @@ export function createBuildMode({data,scene,canvas,camera,getZoom,getView,rayAt,
    next.finish=architecturalFinish(delta.kind);
   try{if('a' in e){validateEntry(next);
     for(const p of posters.filter(p=>p.wallId===e.id))validatePoster(p,entries.map(w=>w.id===e.id?next:w));
+    for(const t of treatments.filter(t=>t.wallId===e.id))validateTreatment(t,entries.map(w=>w.id===e.id?next:w));
    }else validateFloorRect(next);
   }catch(err){notify?.(err.message);return false;}
   Object.assign(e,next);record(old);return true;
@@ -468,13 +481,19 @@ export function createBuildMode({data,scene,canvas,camera,getZoom,getView,rayAt,
   if(changeEntry(e.id,{a:fixed.a,b:fixed.b}))notify?.(action==='straight'?'Byggdelen är nu helt vågrät eller lodrät i planvyn.':'Ändpunkterna har kopplats till närliggande väggar.');
  }
  function removeSelected(){if(!selection)return;const before=capture();const e=entryById(selection);if(!e)return;
-  if(e.wallId)posters=posters.filter(x=>x.id!==selection);
+  if(e.type)treatments=treatments.filter(x=>x.id!==selection);
+  else if(e.wallId)posters=posters.filter(x=>x.id!==selection);
   else if('a' in e){if(e.source)e.deleted=true;else entries=entries.filter(x=>x.id!==selection);
-   posters=posters.filter(p=>p.wallId!==e.id);}
+   posters=posters.filter(p=>p.wallId!==e.id);treatments=treatments.filter(p=>p.wallId!==e.id);}
   else floors=floors.filter(x=>x.id!==selection);
   selection=null;record(before);notify?.('Byggdelen är borttagen ur skissen. Spelet ändras inte.');}
  function duplicate(){const e=entryById(selection);if(!e)return;const before=capture();
-  if(e.wallId){
+  if(e.type){
+   if(treatments.length>=TREATMENTS_MAX){notify?.('Max 120 gardiner/persienner.');return;}
+   const next={...e,id:nextTreatmentId(treatments),side:e.side===1?-1:1};
+   try{validateTreatment(next,entries);}catch(error){notify?.(error.message);return;}
+   treatments.push(next);selection=next.id;
+  }else if(e.wallId){
    if(posters.length>=POSTER_MAX){notify?.('Max 40 affischer.');return;}
    const at=locatePoster(e,entries);if(!at)return;
    const next={...e,id:posterId(posters),t:roundPosition(clamp(e.t+e.width/at.length+.03,0,1))};
@@ -587,6 +606,7 @@ export function createBuildMode({data,scene,canvas,camera,getZoom,getView,rayAt,
   else if(drag.type==='moveFloor'){next.x0+=off[0];next.z0+=off[1];next.x1+=off[0];next.z1+=off[1];}
   try{if('a' in e){validateEntry(next);
     for(const poster of posters.filter(p=>p.wallId===e.id))validatePoster(poster,entries.map(w=>w.id===e.id?next:w));
+    for(const t of treatments.filter(t=>t.wallId===e.id))validateTreatment(t,entries.map(w=>w.id===e.id?next:w));
    }else validateFloorRect(next);
   }catch{return;}
   Object.assign(e,next);render();showProperties();
@@ -684,7 +704,8 @@ export function createBuildMode({data,scene,canvas,camera,getZoom,getView,rayAt,
   addPoster:(wallId,options)=>{const wall=entries.find(e=>e.id===wallId);const poster=makePoster(wall,posters,.5,1,options);const before=capture();posters.push(poster);selection=poster.id;record(before);return poster.id;},
   updatePoster:(id,delta)=>{selection=id;return changePoster(delta);},
   setView:()=>render(),select,setTool,setPaintType:updatePaintType,
-  paintWall:(wallId,start,end,kind=paintType)=>{const plan=planPaintOverWall(entries,wallId,start,end,kind,{posters});const before=capture();
+  paintWall:(wallId,start,end,kind=paintType)=>{if(treatments.some(t=>t.wallId===wallId))throw Error('Ta bort tillbehöret innan du delar väggen.');
+   const plan=planPaintOverWall(entries,wallId,start,end,kind,{posters});const before=capture();
    entries=plan.entries;posters=plan.posters;selection=plan.paintedId;record(before);return plan;},
   undo,redo,count,quickChange,quickDoor,
   createRectangle:(a,b,options)=>{
