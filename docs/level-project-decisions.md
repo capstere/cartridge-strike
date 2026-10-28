@@ -21,3 +21,5 @@ Baseline: `node tools/owner-door-traversal.mjs` passed 102 directional cases; `n
 - The export is deterministic geometry plus a derived collision map and an agent brief. It makes implementation reproducible; no promise of error-free autonomous changes replaces engine/browser verification.
 
 Shared-wall compilation also removes every underlying solid span when a window/glass part is fitted across overlapping room walls. A real shot-clearance regression confirms that no invisible opaque wall survives behind a broken window. Capsule traversal is simulated from both sides in the isolated level world; the original 102-case Floor 5 regression remains separate.
+
+Publication verification found a browser environment with WebGL disabled. The new studio now creates its 3D renderer lazily: plan editing and JSON/ZIP remain usable without a GPU. A real Chromium test disables WebGL contexts, builds a room with the mouse, checks the clear 3D warning, and downloads the authored JSON. FPS/3D still require WebGL 2.

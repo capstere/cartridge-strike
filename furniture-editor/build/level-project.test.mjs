@@ -20,6 +20,11 @@ test('ground, game and width contracts reject malformed documents',()=>{
   assert.throws(()=>parseProject(q));
  }
 });
+test('malformed wall attachments are rejected before a new level can render',()=>{
+ const p=exportProject();p.architecture.posters=[null];assert.throws(()=>parseProject(p));
+ p.architecture.posters=[];p.architecture.treatments=[{id:'BYGG-T-0001',type:'blind',wallId:'missing',t0:0,t1:1,side:1}];
+ assert.throws(()=>parseProject(p));
+});
 test('schema 1 migration retains every original field, including decorations and mounts',()=>{
  const v1=exportPatch([],[],{createdAt:'2026-10-28T12:00:00.000Z'});
  v1.emptyFixed=true;v1.added=[{id:'NY-OBJ-0001',kind:'prop',roomId:'I09',x:1,z:2,yaw:0,w:.4,d:.5,height:.6,assetId:'local:'+'a'.repeat(64),mountId:'old-bench',elevation:.8}];

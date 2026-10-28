@@ -6,6 +6,8 @@ import {makeZip,readZip,PROJECT_ZIP_MAX_BYTES} from '../library/zip.mjs';
 import {floor5Baseline} from './project-scene.mjs';
 import {parseArchitecture} from './architecture.mjs';
 import {LIBRARY_MAP} from '../library/catalog.mjs';
+import {parsePosters} from './posters.mjs';
+import {parseTreatments} from './treatments.mjs';
 import {collisionExport,aiAgentBrief} from './ai-export.mjs';
 
 export const LEVEL_FORMAT='cartridge-strike-level-project',LEVEL_SCHEMA=2;
@@ -76,6 +78,7 @@ export function parseProject(input,{allowLegacy=true}={}){
   a.edits.length>600||a.added.length>250||a.removed.length>600||a.floors.length>100)fail('arkitektur');
  if(input.mode==='new-level'&&(a.edits.length||a.removed.length||a.floors.length))fail('ny bana får inte ärva Floor 5');
  for(const e of a.added){validateEntry(e,{isNew:true});unique(e.id);}
+ if(input.mode==='new-level'){parsePosters(a.posters,a.added);parseTreatments(a.treatments,a.added);}
  if(input.mode==='new-level'&&g.floors.length>0){for(const e of a.added){if(![e.a,e.b].every(([x,z])=>x>=g.bounds.x0&&x<=g.bounds.x1&&z>=g.bounds.z0&&z<=g.bounds.z1))fail('byggdel utanför grundytan');}}
  const f=input.furniture;if(!f||!['placements','added','removed'].every(k=>Array.isArray(f[k]))||
   f.placements.length+f.added.length+f.removed.length>350)fail('möbler');
@@ -88,6 +91,7 @@ export function parseProject(input,{allowLegacy=true}={}){
  if(input.mode==='edit-floor5'){
   const base=floor5Baseline(),byId=new Map(base.items.map(o=>[o.id,o]));parseArchitecture(a,base.entries);
   for(const o of f.placements){if(!byId.has(o.id)||![o.x,o.z,o.yaw].every(Number.isFinite)||!within(o.x)||!within(o.z))fail('ändrad Floor 5-möbel');
+   if(o.assetId&&!LIBRARY_MAP.has(o.assetId)&&!/^local:[a-f0-9]{64}$/.test(o.assetId))fail('okänd möbelmodell');
    for(const k of ['w','d','height'])if(o[k]!==undefined&&(!Number.isFinite(o[k])||o[k]<=0||o[k]>8))fail('möbelmått');unique(o.id);}
   for(const id of f.removed){if(!byId.has(id))fail('borttagen Floor 5-möbel');unique(id);}
  }
