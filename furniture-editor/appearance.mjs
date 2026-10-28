@@ -6,13 +6,14 @@ export const FINISH_COLORS=Object.freeze({
 export const WALL_FINISHES=Object.freeze(['white','gray']);
 export const DOOR_FINISHES=Object.freeze(['white','gray','red','elevator']);
 export const CHAIR_ROLES=Object.freeze(['kitchen','office','conference']);
+export const ASSET_ROLES=Object.freeze(['auto','table','chair','other']);
 const TABLE_KINDS=new Set(['table','desk','coffee-table']);
 const TABLE_ASSETS=/\b(table|desk|bord|skrivbord|sidetable)\b/i;
 const CHAIR_ASSETS=/\b(chair|stol|arbeitsstuhl)\b/i;
-export const isTable=item=>!!item&&(TABLE_KINDS.has(item.kind)||
- item.kind==='prop'&&(item.assetId?.includes(':table')||item.assetId?.includes(':desk')||TABLE_ASSETS.test(item.assetName||'')));
-export const isChair=item=>!!item&&(item.kind==='chair'||
- item.kind==='prop'&&(item.assetId?.includes(':chair')||CHAIR_ASSETS.test(item.assetName||'')));
+export const isTable=item=>!!item&&(item.assetRole==='table'||(item.assetRole!=='chair'&&item.assetRole!=='other'&&(TABLE_KINDS.has(item.kind)||
+ item.kind==='prop'&&(item.assetId?.includes(':table')||item.assetId?.includes(':desk')||TABLE_ASSETS.test(item.assetName||''))));
+export const isChair=item=>!!item&&(item.assetRole==='chair'||(item.assetRole!=='table'&&item.assetRole!=='other'&&(item.kind==='chair'||
+ item.kind==='prop'&&(item.assetId?.includes(':chair')||CHAIR_ASSETS.test(item.assetName||''))));
 export function chairRole(item){
  if(CHAIR_ROLES.includes(item?.chairRole))return item.chairRole;
  const label=String(item?.assetName||'').toLowerCase();
