@@ -55,7 +55,7 @@ try{
  await page.waitForFunction(()=>__furnitureEditor.getState().changed>=1);
  check('saved JSON can be imported and edited again',await page.evaluate(()=>__furnitureEditor.getState().changed>=1));
  // New V2 model library: real Kenney thumbnail + GLB must be served locally.
- check('original 104 GLB assets retained plus 21 optimized furniture/equipment models',await page.evaluate(()=>__furnitureEditor.catalogCount===125));
+ check('original 104 GLB assets retained plus 22 procedural furniture/equipment models',await page.evaluate(()=>__furnitureEditor.catalogCount===126));
  await page.locator('#openLibrary').click();
  check('library opens without loading FPS runtime',await page.locator('#libraryDialog').evaluate(e=>e.open));
  await page.locator('#librarySearch').fill('Liten växt');

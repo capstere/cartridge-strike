@@ -562,7 +562,7 @@
     {
       "path": "furniture-editor/index.html",
       "bytes": 25773,
-      "sha256": "b4b9120ef132f5f60b6c93f8683300c2b116d6403b3c5e4ba0b47a0f74bbad95"
+      "sha256": "a91ecdad3208ab46ecb1c524028f9f920c1a3dbb84e9984c75898c0a55ec7b3e"
     },
     {
       "path": "furniture-editor/library/catalog.mjs",
