@@ -61,19 +61,36 @@
     <div id="buildSidebar" class="build-sidebar" hidden>
       <div id="areaHereBuild" class="area-status" role="status" aria-live="polite">DU ÄR VID: –</div>
       <div class="section-heading"><span>01 / SKAPA BANAN</span><small>Redigerbar skiss</small></div>
-      <div class="simple-flow" role="note"><b>ENKLASTE SÄTTET</b><span>1. Välj rum &nbsp; 2. Klicka på väggen &nbsp; 3. Välj vad du vill göra</span></div>
+      <div class="simple-flow" role="note"><b>SMART RITA</b><span>1. Välj vad väggen ska bli &nbsp; 2. Dra direkt över befintlig vägglinje &nbsp; 3. Klart – ritläget stannar kvar!</span></div>
+      <button id="buildSmartPaint" class="build-smart-paint-entry" type="button">✎ SMART RITA PÅ VÄGG <small>Fönster / glasvägg / dörr · utan att radera</small></button>
+      <div id="buildPaintSettings" class="build-paint-settings" hidden>
+       <strong>VAD SKA DET BLI?</strong>
+       <div class="build-paint-palette" aria-label="Välj del utan att byta ritverktyg">
+        <button type="button" data-paint-kind="window" class="active">FÖNSTER</button>
+        <button type="button" data-paint-kind="glazed">GLASVÄGG</button>
+        <button type="button" data-paint-kind="door">DÖRR</button>
+        <button type="button" data-paint-kind="wall">VÄGG</button>
+       </div>
+       <label for="buildPaintKind">Vald typ</label>
+       <select id="buildPaintKind"><option value="window">Fönster med bröstning</option>
+        <option value="glazed">Glasvägg</option><option value="door">Dörr</option>
+        <option value="wall">Vägg</option><option value="opening">Öppen passage</option>
+        <option value="card-door">Passerkortsdörr</option></select>
+       <p><b>Dra längs en vägg</b> från start till slut, eller klicka två gånger. Väggen delas automatiskt och får ingen dold vägg bakom fönstret. Verktyget stannar valt tills du byter själv. <kbd>Esc</kbd> avbryter.</p>
+      </div>
       <p class="helper" id="buildSimpleHelp" aria-live="polite">Klicka på en vägg och välj en snabbåtgärd.</p>
-      <div class="build-quick-actions" aria-label="Snabbändring av markerad vägg">
+      <p class="helper">**Ändra HELA den markerade väggen:**</p>
+      <div class="build-quick-actions" aria-label="Ändra hela markerade väggen">
         <button type="button" data-quick-kind="wall">VÄGG</button>
         <button type="button" data-quick-kind="window" class="type-window">FÖNSTER</button>
         <button type="button" data-quick-kind="glazed" class="type-glazed">GLASVÄGG</button>
         <button type="button" id="buildDoorInWall" class="type-door">+ DÖRR I VÄGGEN</button>
       </div>
-      <p class="helper">Klicka på en befintlig vägg och använd snabbknapparna ovan. För att rita helt nya delar väljer du ett ritverktyg och klickar två punkter i planvyn.</p>
+      <p class="helper">Knapparna ovan ändrar hela den markerade väggdelen. För ett kort fönster på bara en del av väggen använder du SMART RITA PÅ VÄGG. Du behöver inte välja något rumsnamn.</p>
       <label for="buildRoom">Hoppa till rum</label><select id="buildRoom" aria-label="Visa rum i byggläget"></select>
       <label for="buildTool">RITA NYTT (två klick)</label>
       <select id="buildTool" aria-label="Ritverktyg">
-        <option value="select">↖ Välj / flytta / ändra</option>
+        <option value="select">↖ Välj / flytta / ändra</option><option value="paint">✎ SMART RITA ÖVER VÄGG</option>
         <option value="wall">Vägg</option><option value="glazed">Fönstervägg (golv till tak)</option>
         <option value="window">Fönster med bröstning</option><option value="door">Vanlig dörr</option>
         <option value="card-door">Passerkortsdörr</option><option value="elevator-door">Hissdörr</option>
@@ -82,6 +99,7 @@
       </select>
       <div class="build-palette" aria-label="Byggverktyg">
         <button data-build-tool="select" class="active" type="button">↖ VÄLJ</button>
+        <button data-build-tool="paint" class="smart-paint-palette-button" type="button">✎ SMART RITA ÖVER VÄGG</button>
         <button data-build-tool="wall" class="type-wall" type="button">VÄGG</button>
         <button data-build-tool="glazed" class="type-glazed" type="button">GLASVÄGG</button>
         <button data-build-tool="window" class="type-window" type="button">FÖNSTER</button>
