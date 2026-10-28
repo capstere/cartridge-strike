@@ -24,8 +24,9 @@ Shared-wall compilation also removes every underlying solid span when a window/g
 
 Publication verification found a browser environment with WebGL disabled. The new studio now creates its 3D renderer lazily: plan editing and JSON/ZIP remain usable without a GPU. A real Chromium test disables WebGL contexts, builds a room with the mouse, checks the clear 3D warning, and downloads the authored JSON. FPS/3D still require WebGL 2.
 
-## Free authoring and FPS walk view (editor 3.3.0)
+## Free authoring and FPS walk view (editor 3.3.1)
 
 - Placement warnings no longer veto inserting, dragging, rotating or exporting furniture. The source project may contain temporary collisions or furniture outside floor polygons. `validateLevel` still fails such a level, and the bot match button still requires motor approval. This changes only authoring, not physics.
 - Catalogue cards use the existing audited GLB thumbnail paths. The editor's 3D preview now calls `buildProjectFurniture`, the same model builder used by custom FPS levels. The first-person walk page instantiates the real FPS `Renderer` and `createWorld` with the current browser-local project. It finds a legal standing point without requiring gameplay anchors and drives the existing `world.move` capsule and automatic door simulation. Missing objectives are off-map renderer placeholders only; saved JSON/ZIP is untouched.
 - The walk page is a private design preview in the editor, with no bots, weapons or match objectives. The existing bot match remains a separate validated action. Schema remains 2 and game compatibility remains 0.18.0. Model units remain unverified real-world metres.
+- Editor 3.3.1 pins the HTML entry points and changed module imports to a release query. GitHub Pages caches static assets for ten minutes; a previously opened browser could otherwise receive new HTML with the prior JavaScript and fail during startup. This is an asset-cache revision only, not a schema or game-version change.

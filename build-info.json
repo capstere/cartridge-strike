@@ -481,13 +481,13 @@
     },
     {
       "path": "fps/walk.html",
-      "bytes": 1750,
-      "sha256": "5046ceae135704ee25dfd75be08d169870e6b086cde19eb6671f03a872d7db4d"
+      "bytes": 1758,
+      "sha256": "fe598b6026d6e51a10a336072bb7c1600b4dfea2802a82628006ec89b0ecc891"
     },
     {
       "path": "fps/walk.mjs",
-      "bytes": 4155,
-      "sha256": "8e333abcebae1d2455a7efff261150ae90686fbdffca5534222069c58a8eb03b"
+      "bytes": 4171,
+      "sha256": "a6a109c6eaf0d06a5e6845c5525f6a0bbed7b77050e31295f09b2e6e5fba2401"
     },
     {
       "path": "furniture-editor/appearance.mjs",
@@ -511,8 +511,8 @@
     },
     {
       "path": "furniture-editor/build/level-project.mjs",
-      "bytes": 12935,
-      "sha256": "50e5a2c6e8baf28f2b49fa2a4354aa50c93e4612ae3f7da681753b30d27da6cd"
+      "bytes": 12943,
+      "sha256": "61e6691f98770f87acc91d4027d77e70f6593afab4b02d60045da7dcddfa402f"
     },
     {
       "path": "furniture-editor/build/level-project.schema.json",
@@ -551,8 +551,8 @@
     },
     {
       "path": "furniture-editor/build/validate-level.mjs",
-      "bytes": 10177,
-      "sha256": "09e56f05f8d884e862ebe6fe9f00b69707a3e54d374a82ba256dc52901539beb"
+      "bytes": 10193,
+      "sha256": "74a3d7053491a10b138373883f13ed0ba29fe8b7de7eb19a6cd88ef403b88117"
     },
     {
       "path": "furniture-editor/core.mjs",
@@ -601,13 +601,13 @@
     },
     {
       "path": "furniture-editor/new.html",
-      "bytes": 9104,
-      "sha256": "7ef86641b707caf3fd5f28de09a181b877e98c7104620ec073b468f1506e4e7f"
+      "bytes": 9120,
+      "sha256": "b66abcd06092712b173090e01b342e50a0511dff933b9ef4eeb88f935c03ff1e"
     },
     {
       "path": "furniture-editor/new.mjs",
-      "bytes": 42335,
-      "sha256": "aa6e852a0718875c02d296940602a73338f27ca195e2a8e1e68a0304924434a7"
+      "bytes": 42359,
+      "sha256": "bd8bde1ebd4b4146fc49d0393cfb3a69465d87a3367a20c5e076c68dde3d07fe"
     },
     {
       "path": "furniture-editor/smart-placement.mjs",
@@ -886,8 +886,8 @@
     },
     {
       "path": "src/fps/level-adapter.mjs",
-      "bytes": 3843,
-      "sha256": "e9241bcce48e6467919c4ad5fe852b561455ae9a3689f8efe492503ce96ec297"
+      "bytes": 3851,
+      "sha256": "e87aeed6c6e97d500de653009d8fff909eb79a37d18685503406c332bea3b19e"
     },
     {
       "path": "src/fps/living-floor-art.mjs",
@@ -1086,8 +1086,8 @@
     },
     {
       "path": "src/fps/world.mjs",
-      "bytes": 8646,
-      "sha256": "eee00b08e38cd460b49888320caa7fea4cf917edf29446e1c2345a151eb62f9c"
+      "bytes": 8654,
+      "sha256": "281c6d6c6886c76690ae8ef68e721dfe94d7a2ca267a198a0716b50c36727ddb"
     },
     {
       "path": "src/world.js",
