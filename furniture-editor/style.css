@@ -71,3 +71,16 @@
 .build-precision-actions button:hover:not(:disabled){background:#cae8dc}
 .build-precision-actions button:disabled{opacity:.42;cursor:not-allowed}
 @media(max-width:380px){.build-precision-actions{grid-template-columns:1fr}}
+
+/* Rectangular room helper; the separate FPS runtime never imports this. */
+.build-palette .room-tool{grid-column:1/-1;border-left-color:#137d78;background:#d9eee8;font-size:12px}
+.build-room-settings{display:grid;gap:9px;background:#eef6f2;border:1px solid #91bcb0;padding:12px;border-radius:7px;margin:10px 0}
+.build-room-settings strong{color:#12564d;font-size:12px;letter-spacing:.3px}
+.build-room-settings p,.build-room-settings small{margin:0;font-size:11px;line-height:1.5;color:#4b6a63}
+.build-room-settings label{font-size:11px;font-weight:750;color:#3d625a}
+.build-room-settings input:not([type="checkbox"]){display:block;width:100%;min-width:0;margin-top:5px;border:1px solid #b9cbc3;border-radius:4px;height:38px;padding:6px 8px;background:white;color:#214039}
+.build-room-settings .build-room-floor{display:flex;align-items:center;gap:9px}
+.build-room-settings input[type="checkbox"]{width:17px;height:17px;accent-color:#167568}
+#buildRoomCreateExact{border:0;border-radius:5px;background:#146b60;color:#fff;font-size:11px;min-height:44px;padding:10px;font-weight:850;cursor:pointer}
+#buildRoomCreateExact:disabled{opacity:.48;cursor:not-allowed}
+#buildRoomCreateExact:hover:not(:disabled){background:#0c534b}
