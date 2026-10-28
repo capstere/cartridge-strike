@@ -9,7 +9,7 @@ const context=await browser.newContext({viewport:{width:1440,height:900},deviceS
 const page=await context.newPage();page.setDefaultTimeout(240000);
 const track=p=>{p.on('pageerror',e=>errors.push(e.message));p.on('console',m=>{if(m.type()==='error')errors.push(m.text());});};track(page);
 try{
- await page.goto(origin+'/furniture-editor/new.html');await page.waitForFunction(()=>!!window.__levelStudio);
+ await page.goto(origin+'/furniture-editor/new.html?test=1');await page.waitForFunction(()=>!!window.__levelStudio);
  assert.equal(await page.evaluate(()=>__levelStudio.project.ground.floors.length),0);
  await page.locator('#tool').selectOption('room');
  for(const [x,z] of [[2,2],[8,8]]){const s=await page.evaluate(([x,z])=>__levelStudio.screenWorldPoint(x,z),[x,z]);await page.mouse.click(s.x,s.y);}
@@ -20,14 +20,35 @@ try{
  assert.equal(await page.evaluate(()=>__levelStudio.project.architecture.added.filter(e=>e.kind==='door').length),1);
  await page.locator('[data-tool="window"]').click();at=await page.evaluate(()=>__levelStudio.screenWorldPoint(8,5));await page.mouse.click(at.x,at.y);
  assert.equal(await page.evaluate(()=>__levelStudio.project.architecture.added.filter(e=>e.kind==='window').length),1);
- await page.locator('[data-tab="furnish"]').click();await page.locator('#placeFurniture').click();
+ await page.locator('[data-tab="furnish"]').click();
+ assert.equal(await page.locator('#catalogCards .catalog-card').count(),125);
+ assert(await page.locator('#catalogCards img').count()>90);
+ await page.locator('#catalogCards [data-asset="studio:desk-120"]').click();
  at=await page.evaluate(()=>__levelStudio.screenWorldPoint(5,5));await page.mouse.click(at.x,at.y);
  assert.equal(await page.evaluate(()=>__levelStudio.project.furniture.added.length),1);
+ await page.locator('#walkView').click();
+ await page.waitForFunction(()=>document.querySelector('#walkFrame')?.contentWindow?.__walk?.renderer?.projectFurniture?.children?.length===1,null,{timeout:90000});
+ const walk=page.frame({url:/\/fps\/walk\.html/});
+ assert(walk, 'Real FPS walk view opened inside the editor');
+ assert(await walk.evaluate(()=>__walk.world.data.__custom&&__walk.renderer.projectFurniture.children.length===1));
+ const beforeWalk=await walk.evaluate(()=>({x:__walk.actor.x,z:__walk.actor.z}));
+ await walk.locator('#game').focus();await page.keyboard.down('d');await page.waitForTimeout(350);await page.keyboard.up('d');
+ const afterWalk=await walk.evaluate(()=>({x:__walk.actor.x,z:__walk.actor.z}));
+ assert.notDeepEqual(afterWalk,beforeWalk);
+ await walk.locator('#exit').click();assert(await page.locator('#plan').isVisible());
  await page.keyboard.press('Escape');await page.locator('#undo').click();assert.equal(await page.evaluate(()=>__levelStudio.project.furniture.added.length),0);
  await page.locator('#redo').click();assert.equal(await page.evaluate(()=>__levelStudio.project.furniture.added.length),1);
  await page.locator('#duplicate').click();at=await page.evaluate(()=>__levelStudio.screenWorldPoint(6.8,6.8));await page.mouse.click(at.x,at.y);await page.keyboard.press('Escape');
  assert.equal(await page.evaluate(()=>__levelStudio.project.furniture.added.length),2);
+ await page.locator('#catalogCards [data-asset="studio:desk-120"]').click();
+ at=await page.evaluate(()=>__levelStudio.screenWorldPoint(2,2));await page.mouse.click(at.x,at.y);
+ assert.equal(await page.evaluate(()=>__levelStudio.project.furniture.added.length),3,'Collision warning must not block insertion');
+ assert.match(await page.locator('#status').innerText(),/Placerad med varning/);
+ await page.keyboard.press('Escape');const targetPoint=await page.evaluate(()=>__levelStudio.screenWorldPoint(6,3));
+ await page.mouse.move(at.x,at.y);await page.mouse.down();await page.mouse.move(targetPoint.x,targetPoint.y,{steps:6});await page.mouse.up();
+ assert(await page.evaluate(()=>__levelStudio.project.furniture.added.some(o=>Math.abs(o.x-6)<.2&&Math.abs(o.z-3)<.2)));
  await page.locator('[data-tab="build"]').click();await page.locator('#tool').selectOption('poster');at=await page.evaluate(()=>__levelStudio.screenWorldPoint(3,2));await page.mouse.click(at.x,at.y);
+ await page.locator('#selection summary').click();
  await page.locator('#posterText').fill('Syntetisk bana');await page.locator('#posterText').dispatchEvent('change');
  assert.equal(await page.evaluate(()=>__levelStudio.project.architecture.posters[0].text),'Syntetisk bana');
  await page.locator('#tool').selectOption('curtain');at=await page.evaluate(()=>__levelStudio.screenWorldPoint(2,5));await page.mouse.click(at.x,at.y);

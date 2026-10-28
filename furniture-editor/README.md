@@ -1,18 +1,18 @@
-# Cartridge Strike Designstudion 3.2.0 — skapa en egen spelmiljö
+# Cartridge Strike Designstudion 3.3.0 — bygg, möblera och gå runt
 
 **[Öppna Designstudion](https://capstere.github.io/cartridge-strike/furniture-editor/new.html)** (dator och mus rekommenderas).
 
-**NY BANA** och **[REDIGERA FLOOR 5](https://capstere.github.io/cartridge-strike/furniture-editor/new.html?mode=edit-floor5)** använder samma plan/3D-verktyg. Golv, väggar, glas, dörrar och möbler ger automatiskt geometri och fysik. Dörrar/fönster fäster med ett klick på väggen; nya dörrar är normalt 1,20 modellenheter. Planvyn och export fungerar även utan WebGL; 3D och FPS kräver WebGL 2.
+**NY BANA** och **[REDIGERA FLOOR 5](https://capstere.github.io/cartridge-strike/furniture-editor/new.html?mode=edit-floor5)** använder samma byggverktyg. Ett rum ger golv och fyra väggar; klicka på en vägg för dörr, öppning, fönster eller glas. Spelets fysik följer automatiskt byggdelarna. Du kan placera möbler trots varningar och flytta dem senare. Bildkorten visar biblioteket; 3D-vyn visar samma möbelmodeller som FPS. **GÅ RUNT I BANAN** använder FPS-renderaren, dörrmotorn och kapselkollisionen direkt från ditt utkast, även innan spelmålen finns. Planvyn och export fungerar utan WebGL; 3D och promenad kräver WebGL 2.
 
-Schema 2, editor 3.2.0 och kompatibel spelversion 0.18.0 används. Exportens `project.json` är källan; `COLLISION_MAP.json` är en härledd, integritetskontrollerad karta. JSON/ZIP från den äldre studion kan öppnas utan att skissen eller ursprungliga data förloras. Den **[klassiska studion](https://capstere.github.io/cartridge-strike/furniture-editor/)** finns kvar för äldre arbetsflöden.
+Schema 2, editor 3.3.0 och kompatibel spelversion 0.18.0 används. Exportens `project.json` är källan; `COLLISION_MAP.json` är en härledd, integritetskontrollerad karta. JSON/ZIP från den äldre studion kan öppnas utan att skissen eller ursprungliga data förloras. Den **[klassiska studion](https://capstere.github.io/cartridge-strike/furniture-editor/)** finns kvar för äldre arbetsflöden.
 
 ### Bygg en ny bana
 
 1. Öppna `furniture-editor/new.html` och välj banans storlek i modellenheter.
 2. Dra ett RUM eller klicka två hörn. Rita en KORRIDOR som ansluter till nästa rum; rita dörr över den befintliga vägglinjen eller använd **DÖRR I MARKERAD VÄGG**. Dörren behöver 1,10 modellenheter och korridoren bör vara minst 2,0 fri bredd.
-3. Öppna MÖBLERA och välj ur biblioteket eller importera egna GLB lokalt. Välj PLACERA och klicka på golvet. R vrider och Esc avslutar; smarta fästen följer med sin möbel.
-4. Öppna SPEL. Placera fem spawns per lag, bomb, två gisslan och rescue på golvet. Klicka **KONTROLLERA BANAN** för faktisk kapsel- och navigeringskontroll.
-5. Spara ZIP och öppna den igen för att fortsätta. **PROVSPELA MIN BANA** startar en privat lokal FPS från det aktuella projektet. Publicering kräver en separat rättighetsgranskad nivå i `levels/manifest.json` via `tools/apply-level-project.mjs`.
+3. Öppna MÖBLERA och klicka på ett bildkort. Klicka i banan för att placera; dra och vrid tills det passar. Röd placering är en synlig varning och sparas i utkastet. Smarta fästen följer med sin möbel. R vrider och Esc avslutar.
+4. Klicka **GÅ RUNT I BANAN** så snart du har ett golv. Använd W A S D och musen; du ser spelets verkliga byggdelar och möbler. Gå tillbaka för att fortsätta bygga.
+5. Spara ZIP och skicka den till Codex när du vill. För ett riktigt botspel: öppna SPEL, placera fem spawns per lag, bomb, två gisslan och rescue, kör **KONTROLLERA SPELBARHET** och klicka **SPELA MED BOTTAR**. Publicering kräver en separat rättighetsgranskad nivå i `levels/manifest.json` via `tools/apply-level-project.mjs`.
 
 Version 1 JSON/ZIP kan fortfarande öppnas i Floor 5-läget. Ny projektversion 2 är dokumenterad i `build/level-project.schema.json`; tekniska avvikelser från schemaförslaget finns i `docs/level-project-decisions.md`.
 
