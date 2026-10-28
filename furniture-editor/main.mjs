@@ -9,7 +9,8 @@ import {EDITOR_VERSION,GAME_VERSION,BASE_COMMIT,DEFAULT_ROOMS,ROOM_LABELS,
   round,validate,snapFurnitureToWall,exportPatch,parsePatch,isChanged} from './core.mjs';
 import {LIBRARY,LIBRARY_MAP,LIBRARY_CATEGORIES} from './library/catalog.mjs';
 import {addModelToGroup,importLocalGLB,localLibrary,getLocalFile} from './library/models.mjs';
-import {makeZip,readZip} from './library/zip.mjs';
+import {makeZip,readZip,PROJECT_ZIP_MAX_BYTES} from './library/zip.mjs';
+import {readModelBundleZip} from './library/model-bundle.mjs';
 import {assetHash} from './library/glb-utils.mjs';
 import {createBuildMode} from './build/build-mode.mjs';
 import {parseArchitecture} from './build/architecture.mjs';
@@ -188,7 +189,7 @@ async function download(){try{
  }
  const zip=makeZip(files);downloadBlob(new Blob([zip],{type:'application/zip'}),'CartridgeStrike-design-med-GLB.zip');notify('ZIP sparad med alla egna GLB-filer! Skicka ZIP-filen hit om du vill använda dem i spelet.');
  }catch(e){notify('Kunde inte spara projekt: '+e.message);}}
-async function importFile(file){if(!file)return;if(file.size>24*1024*1024)throw Error('Projektfilen är för stor.');
+async function importFile(file){if(!file)return;if(file.size>PROJECT_ZIP_MAX_BYTES)throw Error('Projektfilen är för stor (max 96 MB).');
  let doc,stored=[];
  if(/\.zip$/i.test(file.name)){
   const contents=readZip(await file.arrayBuffer());doc=JSON.parse(new TextDecoder('utf-8').decode(contents.get('projekt.json')));
@@ -251,14 +252,27 @@ async function addCustom(file,{place=true}={}){if(!file)return;const entry=await
  return place?await addPreset(entry.id):entry.id;
 }
 async function importCustomBatch(files){
- const list=[...files].filter(file=>/\.glb$/i.test(file.name)).slice(0,20);
+ const list=[...files].filter(file=>/\\.glb$/i.test(file.name));
  if(!list.length)throw Error('Välj minst en .glb-fil.');
+ if(list.length>20)throw Error('Välj högst 20 GLB-filer åt gången. Dela upp importen.');
  let ok=0,failed=[];
  for(const file of list){try{await addCustom(file,{place:false});ok++;}catch(err){failed.push(file.name+': '+err.message);}}
  $('#libraryCategory').value='egna';renderLibrary();
- notify(ok+' modeller i Mina GLB-modeller. Klicka på en för att placera.'+(failed.length?' '+failed.length+' kunde inte importeras.':''));
- if(failed.length)console.warn('Local GLB import rejected:',failed);
+ const summary=ok+' av '+list.length+' GLB-modeller importerades. Klicka på en modell för att placera den.';
+ $('#libraryImportStatus').textContent=summary+(failed.length?' Misslyckades: '+failed.join(' | '):'');
+ notify(ok+' modeller i Mina GLB-modeller.'+(failed.length?' '+failed.length+' misslyckades – se detaljer i biblioteket.':''));
  return {ok,failed};
+}
+async function importCustomZip(file){
+ if(!file || !/\\.zip$/i.test(file.name))throw Error('Välj en ZIP-fil med .glb-modeller.');
+ if(file.size>96*1024*1024)throw Error('ZIP-filen får vara högst 96 MB.');
+ const {files,rejected}=await readModelBundleZip(await file.arrayBuffer());
+ const batch=files.length?await importCustomBatch(files.map(x=>new File([x.bytes],x.name,{type:'model/gltf-binary'}))):{ok:0,failed:[]};
+ const problems=[...rejected,...batch.failed];
+ $('#libraryImportStatus').textContent=batch.ok+' av '+(files.length+rejected.length)+' GLB-modeller importerades från ZIP.'+
+  (problems.length?' Kunde inte importera: '+problems.join(' | '):'')+
+  ' Modellerna stannar i din webbläsare och publiceras inte.';
+ if(!files.length)notify('Inga modeller kunde läsas in. Se detaljer i biblioteket.');
 }
 function setUpEvents(){
  $('#room').onchange=e=>{room=e.target.value;renderList();goToRoom(room);select(null);};
@@ -271,9 +285,11 @@ function setUpEvents(){
  $('#openLibrary').onclick=()=>{$('#libraryDialog').showModal();renderLibrary();$('#librarySearch').focus();};
  $('#closeLibrary').onclick=()=>$('#libraryDialog').close();
  $('#librarySearch').oninput=renderLibrary;$('#libraryCategory').onchange=renderLibrary;
- $('#customGLB').onchange=async e=>{try{const files=[...e.target.files];if(files.length===1)await addCustom(files[0]);else await importCustomBatch(files);}catch(err){notify('GLB-import: '+err.message);}finally{e.target.value='';}};
+ $('#customGLB').onchange=async e=>{try{const files=[...e.target.files];if(files.length===1)await addCustom(files[0]);else await importCustomBatch(files);}catch(err){$('#libraryImportStatus').textContent=err.message;notify('GLB-import: '+err.message);}finally{e.target.value='';}};
+ $('#customZip').onchange=async e=>{try{await importCustomZip(e.target.files?.[0]);}catch(err){$('#libraryImportStatus').textContent=err.message;notify('ZIP-import: '+err.message);}finally{e.target.value='';}};
  const drop=$('#dropZone');drop.addEventListener('dragover',e=>{if([...e.dataTransfer.items].some(x=>x.kind==='file')){e.preventDefault();drop.classList.add('drag-glb');}});drop.addEventListener('dragleave',()=>drop.classList.remove('drag-glb'));
- drop.addEventListener('drop',async e=>{e.preventDefault();drop.classList.remove('drag-glb');const file=[...e.dataTransfer.files].find(f=>/\.glb$/i.test(f.name));if(file)try{await addCustom(file);}catch(err){notify('GLB-import: '+err.message);}});
+ drop.addEventListener('drop',async e=>{e.preventDefault();drop.classList.remove('drag-glb');const files=[...e.dataTransfer.files];const pack=files.find(f=>/\.zip$/i.test(f.name));const glbs=files.filter(f=>/\.glb$/i.test(f.name));
+  try{if(pack)await importCustomZip(pack);else if(glbs.length>1)await importCustomBatch(glbs);else if(glbs.length===1)await addCustom(glbs[0]);}catch(err){$('#libraryImportStatus').textContent=err.message;notify('Modellimport: '+err.message);}});
  $('#reset').onclick=()=>{if(!window.confirm('Återställa ALLA dina ändringar i Möbelstudion? Spelet påverkas inte.'))return;
  const before=snapshot();items=baseline.map(o=>({...o,original:{...o}}));chosen=null;building.reset();checkpoint(before);store();syncModels();renderRooms();renderList();renderProperties();notify('Hela projektet återställt till ursprungsläget. Spelet påverkas inte.');};
  $('#importFile').onchange=async e=>{try{await importFile(e.target.files?.[0]);}catch(err){notify('Kunde inte öppna filen: '+err.message);}finally{e.target.value='';}};
