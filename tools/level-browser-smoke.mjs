@@ -114,6 +114,7 @@ try{
  console.log('Private preview: loaded synthetic world and simulated 10 actors PASS');
  // Reject malicious/corrupt import before closing the editor's WebGL renderer.
  await page.locator('#open').setInputFiles({name:'bad.zip',mimeType:'application/zip',buffer:Buffer.from('bad zip')});
+ await page.waitForFunction(()=>document.querySelector('#status').textContent.startsWith('Kunde inte öppna'));
  assert.match(await page.locator('#status').innerText(),/Kunde inte öppna/);
  page.once('dialog',dialog=>dialog.accept());await page.locator('#newBlank').click();
  assert.equal(await page.evaluate(()=>__levelStudio.project.ground.floors.length),0);
