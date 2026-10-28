@@ -82,7 +82,7 @@
    box(id+'-stand',x,y+.085,z,.045,.17,.06,'metal','metal');box(id+'-base',x,y+.017,z,.24,.034,.15,'dark');
   }
   for(const o of D.obstacles){
-   scene.blockedPolygons.push({id:o.id,polygon:o.polygon});
+   if(o.collision!=='none')scene.blockedPolygons.push({id:o.id,polygon:o.polygon});
    const [x0,z0,x1,z1]=bounds(o.polygon),cx=(x0+x1)/2,cz=(z0+z1)/2,w=x1-x0,d=z1-z0;
    if(D.__custom){box(o.id,cx,(o.height||.8)/2,cz,w,o.height||.8,d,'wood','furniture',o.yaw||0);continue;}
    if(o.kind==='uncertain-area'){box(o.id,cx,.95,cz,w,1.9,d,'blocked');continue;}
