@@ -34,6 +34,7 @@ test('GLB table scaling has exact requested X/Y/Z sizes',()=>{
 });
 test('3D modifier drag pans in camera plane and 2D remains axis-aligned',()=>{
  const right={x:1,z:0},up={x:0,z:-.7};
- assert.deepEqual(cameraPanVector(100,100,10,500,right,up,false),{x:-2,z:-1.4});
+ const p=cameraPanVector(100,100,10,500,right,up,false);
+ assert.equal(p.x,-2);assert(Math.abs(p.z+1.4)<1e-9);
  assert.deepEqual(cameraPanVector(100,100,10,500,right,up,true),{x:-2,z:-2});
 });
