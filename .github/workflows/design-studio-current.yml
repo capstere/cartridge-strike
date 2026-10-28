@@ -7,7 +7,7 @@ on:
       - 'furniture-editor/**'
       - '.github/workflows/design-studio-current.yml'
   push:
-    branches: [main, work/design-studio-smart-wall-paint-20261028]
+    branches: [main]
     paths:
       - 'furniture-editor/**'
       - '.github/workflows/design-studio-current.yml'
