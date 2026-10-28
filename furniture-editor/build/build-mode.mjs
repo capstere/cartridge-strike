@@ -71,8 +71,8 @@ export function createBuildMode({data,scene,canvas,camera,getZoom,getView,rayAt,
   const pt=planePoint(ev);if(!pt)return null;
   const draft=first&&mode!=='select'&&mode!==floorKind?first:null;
   const result=snapDraftPoint([pt.x,pt.z],entries,{start:draft,
-   excludeId,grid:($('snap').checked&&!ev.altKey)?0.1:0,
-   snapToGeometry:smartEnabled(ev),
+   excludeId,grid:mode==='select'?0:(($('snap').checked&&!ev.altKey)?0.1:0),
+   snapToGeometry:mode!=='select'&&smartEnabled(ev),
    axisLock:$('buildRightAngles').checked&&!ev.altKey&&!!draft});
   if(result && draft){
    const length=Math.hypot(result.point[0]-draft[0],result.point[1]-draft[1]);
