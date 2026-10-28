@@ -108,9 +108,13 @@ try{
  assert.equal(await edit.evaluate(()=>__levelStudio.project.mode),'edit-floor5');
  assert.equal(await edit.evaluate(()=>__levelStudio.project.gameplay.spawns.length),10);
  await edit.locator('#check').click();assert.match(await edit.locator('#results').innerText(),/SPELBAR I MOTORN/);
- const target=await edit.evaluate(()=>{const o=__levelStudio.scene.items[0];return {...__levelStudio.screenWorldPoint(o.x,o.z),id:o.id};});
- await edit.locator('[data-tool="select"]').click();await edit.mouse.click(target.x,target.y);await edit.locator('#remove').click();
- assert(await edit.evaluate(id=>__levelStudio.project.furniture.removed.includes(id),target.id));
+ await edit.locator('[data-tool="select"]').click();
+ const target=await edit.evaluate(()=>{const o=__levelStudio.scene.items[2];return {...__levelStudio.screenWorldPoint(o.x,o.z),id:o.id};});
+ await edit.mouse.click(target.x,target.y);
+ const picked=await edit.evaluate(()=>__levelStudio.selected);
+ assert(picked&&await edit.evaluate(id=>__levelStudio.scene.items.some(o=>o.id===id),picked),`Floor 5 mouse pick failed: ${JSON.stringify({target,picked})}`);
+ await edit.locator('#remove').click();
+ assert(await edit.evaluate(id=>__levelStudio.project.furniture.removed.includes(id),picked));
  const editDownload=edit.waitForEvent('download');await edit.locator('#save').click();const editZip=await editDownload;
  const editBytes=readFileSync(await editZip.path());await edit.locator('#open').setInputFiles({name:'floor5.zip',mimeType:'application/zip',buffer:editBytes});
  await edit.waitForFunction(()=>document.querySelector('#status').textContent.startsWith('Projektet öppnat'));
@@ -118,7 +122,7 @@ try{
  await editGame.goto(origin+'/fps/?level=preview&test=1',{waitUntil:'domcontentloaded'});await editGame.waitForFunction(()=>window.__fps||!document.querySelector('#fatal').hidden);
  assert(await editGame.locator('#fatal').isHidden(),await editGame.locator('#fatal').innerText());
  assert.equal(await editGame.evaluate(()=>__fps.world.project.mode),'edit-floor5');
- assert(await editGame.evaluate(id=>!__fps.world.data.obstacles.some(o=>o.id===id),target.id));
+ assert(await editGame.evaluate(id=>!__fps.world.data.obstacles.some(o=>o.id===id),picked));
  await editGame.close();
  const noGPU=await browser.newContext({viewport:{width:1440,height:900},acceptDownloads:true});
  await noGPU.addInitScript(()=>{const original=HTMLCanvasElement.prototype.getContext;HTMLCanvasElement.prototype.getContext=function(type,...args){return ['webgl','webgl2','experimental-webgl'].includes(type)?null:original.call(this,type,...args);};});

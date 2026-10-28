@@ -34,7 +34,8 @@ function screen(x,z){const b=p().ground.bounds,scale=Math.min(canvas.width/(b.x1
  return [canvas.width/2+(x-(b.x0+b.x1)/2+offset.x)*scale,canvas.height/2+(z-(b.z0+b.z1)/2+offset.z)*scale];}
 const dist=(a,b)=>Math.hypot(a.x-b.x,a.z-b.z);
 function find(x,z){for(const d of decorations()){const at=decorationAt(d);if(at&&Math.hypot(x-at.x,z-at.z)<.3)return d;}for(const m of markers())if(dist(m,{x,z})<.35)return m;
- for(const o of objects())if(inside(x,z,corners(o)))return o;
+ // Small and narrow objects must still be easy to pick at Floor 5 scale.
+ for(const o of objects())if(inside(x,z,corners(o,.15)))return o;
  for(const a of arch()){
   const dx=a.b[0]-a.a[0],dz=a.b[1]-a.a[1],len=Math.hypot(dx,dz),t=clamp(((x-a.a[0])*dx+(z-a.a[1])*dz)/len**2,0,1);
   if(Math.hypot(x-a.a[0]-dx*t,z-a.a[1]-dz*t)<.18)return a;
@@ -250,5 +251,5 @@ $('scene3d').addEventListener('pointerup',()=>{pan=null;if(drag3d){commit(drag3d
 new ResizeObserver(redraw).observe(canvas.parentElement);
 $('name').value=p().name;$('width').value=p().ground.bounds.x1-p().ground.bounds.x0;$('depth').value=p().ground.bounds.z1-p().ground.bounds.z0;
 localCatalog=await localLibrary().catch(()=>[]);for(const entry of localCatalog)entry.size=(await getLocalFile(entry.id))?.size;renderCatalog();redraw();
-window.__levelStudio={get scene(){return model()},get project(){return p()},get validation(){return validateLevel(p(),{engine:true})},select:id=>{selected=id;redraw();},leaveWalk,
+window.__levelStudio={get scene(){return model()},get project(){return p()},get selected(){return selected},get validation(){return validateLevel(p(),{engine:true})},select:id=>{selected=id;redraw();},leaveWalk,
  screenWorldPoint:(x,z)=>{const [sx,sz]=screen(x,z),r=canvas.getBoundingClientRect();return {x:r.left+sx*r.width/canvas.width,y:r.top+sz*r.height/canvas.height};},redraw};
