@@ -79,3 +79,26 @@ test('editing may be free but warns about removed canonical walls, doors and out
  const warnings=warningsForLayout(entries,[],data);
  assert(warnings.length>=3);assert(warnings.join(' ').includes('ursprungliga'));
 });
+
+test('wall gray/white and door red/elevator finishes roundtrip with schema v1',()=>{
+ const entries=readBaseline(data);
+ const wall=entries.find(x=>x.id==='WALL-001'),door=entries.find(x=>x.id==='D08');
+ wall.finish='gray';door.finish='red';
+ const other=makeEntry('BYGG-D-1234','elevator-door',[8,3],[9,3]);entries.push(other);
+ const patch=exportArchitecture(entries,baseline,[]);
+ assert.equal(patch.edits.find(x=>x.id==='WALL-001').finish,'gray');
+ assert.equal(patch.edits.find(x=>x.id==='D08').finish,'red');
+ assert.equal(patch.added.find(x=>x.id===other.id).finish,'elevator');
+ const loaded=parseArchitecture(JSON.parse(JSON.stringify(patch)),baseline);
+ assert.deepEqual(exportArchitecture(loaded.entries,baseline),patch);
+});
+test('invalid wall or door colors reject safely, legacy projects default predictably',()=>{
+ const wall=makeEntry('BYGG-V-4001','wall',[0,0],[2,0]);
+ assert.throws(()=>validateEntry({...wall,finish:'red'}),/Färgval/);
+ const door=makeEntry('BYGG-D-4001','door',[0,0],[1,0]);
+ assert.throws(()=>validateEntry({...door,finish:'invisible'}),/Färgval/);
+ const legacy={...wall};delete legacy.finish;
+ const doc=exportArchitecture([legacy],[],[]);
+ assert.equal(doc.added[0].finish,'white');
+ assert.equal(parseArchitecture(doc,[]).entries[0].finish,'white');
+});

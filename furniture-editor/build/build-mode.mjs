@@ -8,6 +8,7 @@ import {ARCHITECTURE_TYPES,ARCHITECTURE_NAMES,ARCHITECTURE_COLORS,readBaseline,
  isDoor,isWall} from './architecture.mjs';
 import {snapDraftPoint,dimensionsFromWall,joinNearbyEnds,straightenEntry} from './precision.mjs';
 import {createRectangleRoom,rectangleFromDimensions} from './rectangle-room.mjs';
+import {FINISH_COLORS,architecturalFinish,WALL_FINISHES,DOOR_FINISHES} from '../appearance.mjs';
 const $=id=>document.getElementById(id);
 const DIST=1e-5;
 const floorKind='floor',roomKind='room-rect';
@@ -28,7 +29,8 @@ export function createBuildMode({data,scene,canvas,camera,getZoom,getView,rayAt,
  const root=new THREE.Group();root.name='architectural-sketch-not-physics';scene.add(root);
  const geo=new THREE.BoxGeometry(1,1,1),sphere=new THREE.SphereGeometry(.13,12,8),materials=new Map();
  const mat=(name)=>{if(materials.has(name))return materials.get(name);
-  const color=palette[name]??palette.wall;
+  const [base,finish]=name.split(':');
+  const color=finish&&getView()==='3d'&&FINISH_COLORS[finish]?FINISH_COLORS[finish]:(palette[base]??palette.wall);
   const material=new THREE.MeshBasicMaterial({color,transparent:true,opacity:name==='wall'?.48:name==='frame'?.60:.55,depthWrite:false,side:THREE.DoubleSide});
   materials.set(name,material);return material;};
  const selectionMat=new THREE.MeshBasicMaterial({color:palette.selected,depthTest:false});
@@ -96,7 +98,7 @@ export function createBuildMode({data,scene,canvas,camera,getZoom,getView,rayAt,
   addBox(queue,name,id,(e.a[0]+e.b[0])/2,centerY,(e.a[1]+e.b[1])/2,
    Math.hypot(dx,dz),height,depthOverride??Math.max(.04,e.thickness),-Math.atan2(dz,dx));}
  function drawEntry(queue,seg,full){const id=seg.id,h=full?seg.height:.38;
-  if(seg.kind==='wall'){addSegmentBox(queue,'wall',id,seg,h,h/2);return;}
+  if(seg.kind==='wall'){addSegmentBox(queue,'wall:'+architecturalFinish(seg.kind,seg.finish),id,seg,h,h/2);return;}
   if(seg.kind==='glazed'){
    addSegmentBox(queue,'glazed',id,seg,full?Math.max(.15,h-.18):h,full?h/2:h/2,.035);
    if(full){addSegmentBox(queue,'frame',id,seg,.11,.07,.07);addSegmentBox(queue,'frame',id,seg,.11,seg.height-.07,.07);}
@@ -105,7 +107,7 @@ export function createBuildMode({data,scene,canvas,camera,getZoom,getView,rayAt,
   if(seg.kind==='window'){
    if(!full){addSegmentBox(queue,'window',id,seg,h,h/2);return;}
    const sill=clamp(seg.sill,.05,seg.height-.15),lintel=.18;
-   addSegmentBox(queue,'wall',id,seg,sill,sill/2);
+   addSegmentBox(queue,'wall:'+architecturalFinish(seg.kind,seg.finish),id,seg,sill,sill/2);
    addSegmentBox(queue,'window',id,seg,Math.max(.06,seg.height-sill-lintel),
     sill+(seg.height-sill-lintel)/2,.035);
    addSegmentBox(queue,'frame',id,seg,lintel,seg.height-lintel/2,.08);
@@ -117,7 +119,7 @@ export function createBuildMode({data,scene,canvas,camera,getZoom,getView,rayAt,
   const w=.075,jh=seg.height/2;
   for(const p of [seg.a,seg.b])addBox(queue,'frame',id,p[0],jh,p[1],w,seg.height,w);
   addSegmentBox(queue,'frame',id,seg,.10,seg.height-.05,.085);
-  if(seg.kind!=='opening')addSegmentBox(queue,seg.kind,id,seg,seg.height-.22,(seg.height-.22)/2,.035);
+  if(seg.kind!=='opening')addSegmentBox(queue,seg.kind+':'+architecturalFinish(seg.kind,seg.finish),id,seg,seg.height-.22,(seg.height-.22)/2,.035);
  }
  function clear3D(){boxInstances.length=0;points.length=0;
   for(const o of [...root.children]){root.remove(o);if(o.isInstancedMesh)o.dispose?.();if(o.geometry&&o.geometry!==geo&&o.geometry!==sphere)o.geometry.dispose();if(o.material&&!materialsHas(o.material)&&o.material!==selectionMat&&o.material!==selectLineMat&&o.material!==floorMat)o.material.dispose();}
@@ -147,6 +149,10 @@ export function createBuildMode({data,scene,canvas,camera,getZoom,getView,rayAt,
   // let furniture and glazing remain readable instead of painting halls red.
   mat('wall').color.setHex(full?0x97a8a8:0xc31421);mat('wall').opacity=full?.44:.48;
   mat('glazed').opacity=full?.34:.65;mat('window').opacity=full?.40:.65;
+  // Plan keeps category colors; 3D renders chosen wall/door finishes.
+  for(const [name,material] of materials){const [base,finish]=name.split(':');
+   if(finish&&FINISH_COLORS[finish])material.color.set(full?FINISH_COLORS[finish]:palette[base]??palette.wall);
+  }
   for(const w of wallPieces(entries))drawEntry(queue,w,full);
   for(const d of entries.filter(e=>!e.deleted&&isDoor(e.kind)))drawDoor(queue,d,full);
   for(const [name,list] of queue){const im=new THREE.InstancedMesh(geo,mat(name),list.length),tmp=new THREE.Object3D();
@@ -174,6 +180,13 @@ export function createBuildMode({data,scene,canvas,camera,getZoom,getView,rayAt,
   $('buildSelectionId').textContent=e?.id||'Ingen vald';
   if(e){$('buildKind').value=e.kind||'floor';const isFloor='x0' in e;$('buildKind').disabled=isFloor;
    $('buildEndpointFields').hidden=isFloor;$('buildFloorFields').hidden=!isFloor;
+   const colorable=!isFloor&&e.kind!=='opening';
+   $('buildFinishFields').hidden=!colorable;
+   if(colorable){const current=architecturalFinish(e.kind,e.finish);
+    const allowed=isWall(e.kind)?WALL_FINISHES:DOOR_FINISHES;
+    for(const option of $('buildFinish').options)option.disabled=!allowed.includes(option.value);
+    $('buildFinish').value=current;
+   }
    if(isFloor){$('buildFloorX0').value=e.x0;$('buildFloorZ0').value=e.z0;$('buildFloorX1').value=e.x1;$('buildFloorZ1').value=e.z1;$('buildFloorName').value=e.name;}
    else{$('buildA_X').value=roundPosition(e.a[0]);$('buildA_Z').value=roundPosition(e.a[1]);$('buildB_X').value=roundPosition(e.b[0]);$('buildB_Z').value=roundPosition(e.b[1]);
     $('buildHeight').value=e.height;$('buildThickness').value=e.thickness;$('buildSill').value=e.sill;
@@ -212,6 +225,8 @@ export function createBuildMode({data,scene,canvas,camera,getZoom,getView,rayAt,
  }
  function changeEntry(id,delta){const e=entryById(id);if(!e)return false;
   const old=capture(),next='a' in e?{...e,...delta,a:[...(delta.a??e.a)],b:[...(delta.b??e.b)]}:{...e,...delta};
+  if('a' in e&&delta.kind&&delta.kind!==e.kind&&delta.finish===undefined)
+   next.finish=architecturalFinish(delta.kind);
   try{if('a' in e)validateEntry(next);else validateFloorRect(next);}catch(err){notify?.(err.message);return false;}
   Object.assign(e,next);record(old);return true;
  }
@@ -257,7 +272,7 @@ export function createBuildMode({data,scene,canvas,camera,getZoom,getView,rayAt,
   selection=null;record(before);notify?.('Byggdelen är borttagen ur skissen. Spelet ändras inte.');}
  function duplicate(){const e=entryById(selection);if(!e)return;const before=capture();
   if('a' in e){const item=makeEntry(getNextId(entries,floors,e.kind),e.kind,[e.a[0]+.5,e.a[1]+.5],[e.b[0]+.5,e.b[1]+.5]);
-   item.height=e.height;item.thickness=e.thickness;item.sill=e.sill;
+   item.height=e.height;item.thickness=e.thickness;item.sill=e.sill;item.finish=e.finish;
    try{validateEntry(item);}catch(error){notify?.(error.message);return;}
    entries.push(item);selection=item.id;
   }else{const item={...e,id:getNextId(entries,floors,'floor'),x0:e.x0+.4,z0:e.z0+.4,x1:e.x1+.4,z1:e.z1+.4};
@@ -296,7 +311,9 @@ export function createBuildMode({data,scene,canvas,camera,getZoom,getView,rayAt,
   }catch(err){notify?.(err.message);render();}
  }
  function handlePointerDown(ev){if(!active||!ev.isPrimary||ev.button===1)return;
-  if(ev.button===2){drag={type:'pan',mx:ev.clientX,my:ev.clientY};canvas.setPointerCapture(ev.pointerId);ev.preventDefault();return;}
+  if(ev.button===2||(getView()==='3d'&&(ev.shiftKey||ev.ctrlKey||ev.metaKey)&&ev.button===0)){
+   drag={type:'pan',mx:ev.clientX,my:ev.clientY};canvas.setPointerCapture(ev.pointerId);ev.preventDefault();return;
+  }
   const p=point(ev);
   if(mode!=='select'){if(getView()==='3d'){notify?.('Rita nya väggar och öppningar i PLANVY. Byt till 3D-VY för att granska.');return;}
    choosePoint(ev);ev.preventDefault();return;}
@@ -358,6 +375,7 @@ export function createBuildMode({data,scene,canvas,camera,getZoom,getView,rayAt,
   document.querySelectorAll('[data-build-tool]').forEach(button=>{button.onclick=()=>setTool(button.dataset.buildTool);});
   $('buildSearch').oninput=renderList;
   $('buildKind').onchange=e=>{const s=entryById(selection);if(s&&'a' in s)changeEntry(s.id,{kind:e.target.value});};
+  $('buildFinish').onchange=e=>{const s=entryById(selection);if(s&&'a' in s)changeEntry(s.id,{finish:e.target.value});};
   const kmap={buildA_X:['a',0],buildA_Z:['a',1],buildB_X:['b',0],buildB_Z:['b',1]};
   for(const [id,[end,index]] of Object.entries(kmap))$(id).onchange=e=>{const s=entryById(selection);if(!s||!('a' in s))return;
    const value=Number(e.target.value),p=[...s[end]];p[index]=value;if(!Number.isFinite(value))return;
@@ -378,6 +396,7 @@ export function createBuildMode({data,scene,canvas,camera,getZoom,getView,rayAt,
   document.addEventListener('keydown',ev=>{if(!active||ev.target.closest('input,select,textarea,dialog'))return;
    if((ev.ctrlKey||ev.metaKey)&&(ev.key.toLowerCase()==='z'||ev.key.toLowerCase()==='y')){
     ev.preventDefault();if(ev.key.toLowerCase()==='y'||ev.shiftKey)redo();else undo();return;}
+   if((ev.ctrlKey||ev.metaKey)&&ev.key.toLowerCase()==='d'){ev.preventDefault();duplicate();return;}
    if(ev.key==='Escape'){if(first){first=null;hover=null;render();notify?.('Ritningen avbruten.');}else select(null);return;}
    if(ev.key==='Delete'||ev.key==='Backspace'){ev.preventDefault();removeSelected();return;}
    const e=entryById(selection);if(!e)return;

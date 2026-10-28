@@ -105,6 +105,36 @@ try{
  await page.locator('#importFile').setInputFiles({name:'MyFurniture.zip',mimeType:'application/zip',buffer:zipBuffer});
  await page.waitForFunction(()=>__furnitureEditor.getPatch().added.length===3);
  check('ZIP project restores original user GLB and CC0 placements',await page.evaluate(()=>__furnitureEditor.getPatch().added.length===3));
+ // Prototype: saveable dimensions, GLB role override and camera modifiers.
+ const sourceTable=await page.evaluate(()=>{
+  const found=window.SpelFloor5.obstacles.find(o=>o.kind==='authored-dining-table');
+  if(!found)throw Error('Expected authored dining table');
+  __furnitureEditor.select(found.id);return __furnitureEditor.getItem(found.id);
+ });
+ check('table measurements visible for source furniture',await page.locator('#tableSizeFields').isVisible());
+ await page.locator('#tableWidth').fill(String(Math.round((sourceTable.w-.12)*1000)/1000));
+ await page.locator('#tableWidth').press('Tab');
+ check('table width edit persists to placements without changing original map',await page.evaluate(id=>
+  __furnitureEditor.getPatch().placements.some(p=>p.id===id&&p.w>0),sourceTable.id));
+ const custom=await page.evaluate(()=>__furnitureEditor.getPatch().added.find(o=>o.assetId?.startsWith('local:')));
+ await page.evaluate(id=>__furnitureEditor.select(id),custom.id);
+ check('custom GLB category selector is accessible',await page.locator('#assetRoleFields').isVisible());
+ await page.locator('#assetRole').selectOption('table');
+ check('custom model can be classified as a resizable table',
+  await page.locator('#tableSizeFields').isVisible()&&
+  await page.evaluate(id=>__furnitureEditor.getPatch().added.find(p=>p.id===id)?.assetRole==='table',custom.id));
+ await page.locator('#threeView').click();
+ const posBefore=await page.evaluate(()=>__furnitureEditor.getCameraTarget());
+ const rect=await page.locator('#viewport').boundingBox();
+ await page.mouse.move(rect.x+rect.width/2,rect.y+rect.height/2);
+ await page.keyboard.down('Control');await page.mouse.down();
+ await page.mouse.move(rect.x+rect.width/2+38,rect.y+rect.height/2+14,{steps:3});
+ await page.mouse.up();await page.keyboard.up('Control');
+ check('Ctrl + left drag pans camera in furniture 3D without moving selected object',
+  await page.evaluate(({before,id})=>{
+   const after=__furnitureEditor.getCameraTarget(),selected=__furnitureEditor.getItem(id);
+   return Math.hypot(after.x-before.x,after.z-before.z)>.02&&selected?.assetRole==='table';
+  },{before:posBefore,id:custom.id}));
  check('no external requests, runtime boot, script/shader or HTTP errors',!report.externalRequests.length&&!report.httpFailures.length&&!report.errors.length&&await page.evaluate(()=>!window.__fps));
  report.status='PASS';
 }catch(err){report.status='FAIL';report.errors.push(err.stack||String(err));console.error(err);}

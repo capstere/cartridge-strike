@@ -84,3 +84,12 @@
 #buildRoomCreateExact{border:0;border-radius:5px;background:#146b60;color:#fff;font-size:11px;min-height:44px;padding:10px;font-weight:850;cursor:pointer}
 #buildRoomCreateExact:disabled{opacity:.48;cursor:not-allowed}
 #buildRoomCreateExact:hover:not(:disabled){background:#0c534b}
+
+/* Reusable editor-only finish and dimension controls. */
+.table-size-fields,.chair-role-fields,.build-finish-fields{background:#eff5f2;border:1px solid #d2e2dc;border-radius:6px;padding:11px;margin:11px 0;display:grid;gap:8px}
+.table-size-fields strong,.chair-role-fields label,.build-finish-fields label{font-size:11px;font-weight:850;color:#284e4a;letter-spacing:.25px}
+.table-size-fields small,.build-finish-fields small{font-size:11px;color:#5e7873;line-height:1.5}
+.chair-role-fields select,.build-finish-fields select{height:40px;padding:8px;border:1px solid #b3c7bf;border-radius:4px;background:#fff;color:#254947;width:100%;font-size:12px}
+.camera-navigation-hint{font-size:11px;padding:7px 13px;background:#e5eee9;color:#335b55;border-bottom:1px solid #bdcfc6;line-height:1.6}
+.camera-navigation-hint kbd{font:inherit;font-weight:850;border:1px solid #bacac1;background:#fff;padding:1px 4px;border-radius:3px}
+@media(max-width:600px){.camera-navigation-hint{font-size:10px;padding:5px 8px}}

@@ -29,9 +29,28 @@
     <div id="selectionPanel" hidden>
       <div class="selected-caption"><strong id="selectedName">—</strong><small id="selectedId">—</small></div>
       <div class="pos-grid"><label>Position X<input id="x" type="number" step="0.1" inputmode="decimal"></label><label>Position Z<input id="z" type="number" step="0.1" inputmode="decimal"></label></div>
+      <div id="assetRoleFields" class="chair-role-fields" hidden>
+        <label for="assetRole">VAD ÄR DET FÖR 3D-MODELL?</label>
+        <select id="assetRole"><option value="auto">Identifiera automatiskt</option>
+          <option value="table">Bord / skrivbord</option><option value="chair">Stol</option>
+          <option value="other">Annat föremål (behåll modellens färg)</option></select>
+        <small>För egen GLB: välj Bord eller Stol om modellen inte känns igen automatiskt.</small>
+      </div>
+      <div id="tableSizeFields" class="table-size-fields" hidden>
+        <strong>BORDETS MÅTT (METER)</strong>
+        <div class="pos-grid"><label>Längd<input id="tableWidth" type="number" min="0.15" max="8" step="0.05"></label>
+          <label>Bredd / djup<input id="tableDepth" type="number" min="0.15" max="8" step="0.05"></label></div>
+        <small>Ändringar kontrolleras mot väggar och möbler. GLB-bord kan ändra proportioner när de skalas.</small>
+      </div>
+      <div id="chairRoleFields" class="chair-role-fields" hidden>
+        <label for="chairRole">STOLTYP / FÄRGSTANDARD</label>
+        <select id="chairRole"><option value="kitchen">Köksstol · orange</option>
+          <option value="office">Kontors-/labb-stol · svart</option>
+          <option value="conference">Konferensstol · blå / svarta ben</option></select>
+      </div>
       <label>Rotation <strong id="degrees">0°</strong></label>
       <div class="rotate-row"><button id="rotateLeft" type="button" aria-label="Rotera 15 grader åt vänster"><span>↶</span> Vrid vänster</button><button id="rotateRight" type="button" aria-label="Rotera 15 grader åt höger">Vrid höger <span>↷</span></button></div>
-      <p class="helper">Dra möbeln ända fram till väggen. Den snäpper på plats med ca 1 cm luft, utan falska kollisionsvarningar. <kbd>Q</kbd>/<kbd>E</kbd> vrider 15°. Dörrar måste vara fria.</p>
+      <p class="helper">Dra möbeln ända fram till väggen. Den snäpper på plats med ca 1 cm luft, utan falska kollisionsvarningar. <kbd>Q</kbd>/<kbd>E</kbd> vrider 15°. <kbd>Ctrl+D</kbd> duplicerar valt föremål. Dörrar måste vara fria.</p>
       <div class="item-actions"><button id="duplicate" type="button" class="subtle">+ Duplicera</button><button id="remove" type="button" class="subtle danger">Ta bort</button></div>
     </div>
     <div id="validation" class="validation" hidden role="status"></div>
@@ -100,6 +119,12 @@
           <option value="terrace-door">Terrassdörr</option><option value="opening">Öppen passage</option>
           <option value="floor">Egen golvyta</option>
         </select>
+        <div id="buildFinishFields" class="build-finish-fields">
+          <label for="buildFinish">YTFÄRG</label><select id="buildFinish" aria-label="Vägg- eller dörrfärg">
+            <option value="white">Vit</option><option value="gray">Grå</option>
+            <option value="red">Röd (dörr)</option><option value="elevator">Hissdörr · metall</option>
+          </select><small>Färgen syns i 3D-vyn; planvyn behåller sina typfärger.</small>
+        </div>
         <div id="buildEndpointFields">
           <div class="build-coordinate-grid"><label>Start X<input id="buildA_X" type="number" step="0.1"></label><label>Start Z<input id="buildA_Z" type="number" step="0.1"></label>
           <label>Slut X<input id="buildB_X" type="number" step="0.1"></label><label>Slut Z<input id="buildB_Z" type="number" step="0.1"></label></div>
@@ -135,6 +160,7 @@
   </aside>
   <section class="workspace" aria-label="3D-möblering">
     <div class="toolbar"><div class="view-buttons design-mode"><button id="modeFurniture" type="button" class="active" aria-pressed="true">MÖBLER</button><button id="modeBuild" type="button" aria-pressed="false">BYGG · VÄGGAR & DÖRRAR</button></div><div class="view-buttons"><button id="topView" type="button" class="active" aria-pressed="true">PLANVY</button><button id="threeView" type="button" aria-pressed="false">3D-VY</button></div><div class="view-buttons"><button id="focus" type="button">⌖ VISA RUM</button><button id="whole" type="button">HELA VÅNINGEN</button></div><button id="downloadTop" type="button" class="quick-save">↓ SPARA PROJEKT</button><label class="snap"><input id="snap" type="checkbox" checked> Fäst på rutnät (10 cm)</label><label class="snap wall-snap"><input id="wallSnap" type="checkbox" checked> Fäst möbler mot vägg</label></div>
+    <div class="camera-navigation-hint" aria-label="Kamerastyrning">3D: <kbd>Shift</kbd> eller <kbd>Ctrl</kbd> + dra = flytta kameran · vanlig dragning = vrid · <kbd>Ctrl+D</kbd> = duplicera</div>
     <div id="buildToolbar" class="build-toolbar" hidden><strong>BYGGLÄGE</strong><span>Rött: vägg</span><span>Grönt: glasvägg</span><span>Blått: fönster</span><span>Ljusblått: dörr</span><small>Skiss — ingen riktig spelkollision ändras</small></div>
     <div class="stage" id="dropZone"><canvas id="viewport" aria-label="Redigerbar planvy av möbler och rum" tabindex="0"></canvas>
       <div class="scene-guide" id="furnitureLegend"><span class="legend-square chair"></span> Valbar möbel <span class="legend-square selection"></span> Markerad <span class="legend-square fixed"></span> Fast inredning</div>

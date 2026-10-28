@@ -2,9 +2,29 @@
 import * as T from '../../vendor/three/three.module.js';
 import {GLTFLoader} from '../../vendor/three/addons/loaders/GLTFLoader.js';
 import {LIBRARY_MAP} from './catalog.mjs';
+import {isTable,isChair,chairColors,FINISH_COLORS,modelScale} from '../appearance.mjs';
 import {inspectGLB,assetHash,safeFilename,assetPut,assetGet,assetAll,GLB_MAX_BYTES} from './glb-utils.mjs';
 const loader=new GLTFLoader();
 const sourceCache=new Map(),locals=new Map();
+/** Material overrides are applied only to CLONES, never to cached originals. */
+function recolorSemanticMesh(node,item){
+ if(!node.isMesh||(!isTable(item)&&!isChair(item)))return;
+ const named=(node.name+' '+(Array.isArray(node.material)?node.material.map(m=>m?.name||'').join(' '):node.material?.name||'')).toLowerCase();
+ const leg=/(leg|foot|base|frame|support|stem|stand|ben|underrede)/.test(named);
+ const finish=isTable(item)?(leg?FINISH_COLORS.silver:FINISH_COLORS.white):
+   (leg?chairColors(item).legs:chairColors(item).body);
+ const adjust=original=>{
+  if(!original?.clone||!original.color)return original;
+  const material=original.clone();
+  material.color.set(finish);
+  // One GLB mesh cannot reliably separate a tabletop from its legs.
+  // Discard only the base-color map on this preview clone so presets stay visible.
+  if('map' in material)material.map=null;
+  material.needsUpdate=true;
+  return material;
+ };
+ node.material=Array.isArray(node.material)?node.material.map(adjust):adjust(node.material);
+}
 function positiveDimensions(s){return [s.x,s.y,s.z].every(v=>Number.isFinite(v)&&v>.0001);}
 export async function readLibraryAsset(id){
  if(sourceCache.has(id))return sourceCache.get(id);
@@ -35,13 +55,16 @@ export async function addModelToGroup(item,group,onReady){
   const {scene,originalBounds,originalSize}=await readLibraryAsset(assetId);
   // A disposed/replaced preview group must not be resurrected on async load.
   if(!group.parent||group.userData.editId!==item.id)return false;
-  const scaled=Math.min(item.w/originalSize.x,item.d/originalSize.z,item.height/originalSize.y);
-  if(!Number.isFinite(scaled)||scaled<=0)throw Error('Modellen kunde inte skalas.');
+  const scale=isTable(item)?modelScale(originalSize,item):null;
+  const scalar=scale?null:Math.min(item.w/originalSize.x,item.d/originalSize.z,item.height/originalSize.y);
+  if(!scale&&(!Number.isFinite(scalar)||scalar<=0))throw Error('Modellen kunde inte skalas.');
   const clone=scene.clone(true);
-  clone.scale.setScalar(scaled);
+  if(scale)clone.scale.set(scale.x,scale.y,scale.z);
+  else clone.scale.setScalar(scalar);
   const center=originalBounds.getCenter(new T.Vector3());
-  clone.position.set(-center.x*scaled, -originalBounds.min.y*scaled, -center.z*scaled);
-  clone.traverse(node=>{if(node.isMesh){node.castShadow=false;node.receiveShadow=true;node.userData.editId=item.id;}});
+  clone.position.set(-center.x*clone.scale.x, -originalBounds.min.y*clone.scale.y, -center.z*clone.scale.z);
+  clone.traverse(node=>{if(node.isMesh){recolorSemanticMesh(node,item);
+    node.castShadow=false;node.receiveShadow=true;node.userData.editId=item.id;}});
   group.add(clone);group.userData.realModel=true;
   onReady?.();return true;
  }catch(e){group.userData.modelError=e.message;onReady?.();return false;}

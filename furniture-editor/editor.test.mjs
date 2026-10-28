@@ -60,3 +60,35 @@ test('unsafe or incompatible JSON imports are rejected, gameplay remains unmodif
  }
 });
 console.log('Furniture editor '+EDITOR_VERSION+' tested for '+GAME_VERSION);
+
+test('existing tables can change real dimensions and preserve them in old-format project JSON',()=>{
+ const {base}=fixture(),table=base.find(x=>x.kind==='table');
+ const changed=base.map(o=>o.id===table.id?{...o,w:o.w+.25,d:o.d+.1}:o);
+ const doc=exportPatch(changed,base);
+ const update=doc.placements.find(x=>x.id===table.id);
+ assert(update&&update.w===round(table.w+.25)&&update.d===round(table.d+.1));
+ const restored=parsePatch(doc,base).find(o=>o.id===table.id);
+ assert.equal(restored.w,changed.find(o=>o.id===table.id).w);
+ assert.equal(restored.d,changed.find(o=>o.id===table.id).d);
+});
+test('chair role and curated GLB role survive export and import',()=>{
+ const {base}=fixture(),chair=base.find(x=>x.kind==='chair');
+ const objects=base.map(o=>o.id===chair.id?{...o,chairRole:'conference'}:o);
+ objects.push({id:'NY-OBJ-7000',source:'added',kind:'prop',assetId:'kenney:furniture-kit:table',
+ assetName:'Bord',assetRole:'table',roomId:'I09',x:9,z:4,yaw:0,w:2,d:.8,height:.75});
+ const doc=exportPatch(objects,base);
+ assert.equal(doc.placements.find(x=>x.id===chair.id).chairRole,'conference');
+ assert.equal(doc.added.find(x=>x.id==='NY-OBJ-7000').assetRole,'table');
+ const loaded=parsePatch(doc,base);
+ assert.equal(loaded.find(x=>x.id===chair.id).chairRole,'conference');
+ assert.equal(loaded.find(x=>x.id==='NY-OBJ-7000').assetRole,'table');
+ assert.throws(()=>parsePatch({...doc,added:doc.added.map(x=>({...x,assetRole:'elevator'}))},base),/kategori/);
+});
+test('copied desks and coffee tables are valid saved additions',()=>{
+ const {base}=fixture();
+ for(const kind of ['desk','coffee-table']){
+  const item={id:'NY-BORD-7001',kind,source:'added',roomId:'I09',x:8,z:6,yaw:0,w:1.2,d:.6,height:.75};
+  const saved=exportPatch([...base,item],base);
+  assert.equal(parsePatch(saved,base).find(x=>x.id===item.id)?.kind,kind);
+ }
+});
