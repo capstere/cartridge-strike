@@ -1,10 +1,45 @@
 import * as T from '../../vendor/three/three.module.js';
-import {addModelToGroup} from '../library/models.mjs';
+import {addModelToGroup,getLocalFile,importLocalGLB} from '../library/models.mjs';
+import {assetHash} from '../library/glb-utils.mjs';
 import {proceduralOf} from '../library/procedural.mjs';
 import {populateProcedural} from '../library/procedural-mesh.mjs';
+import {locatePoster} from './posters.mjs';
+import {createPosterTexture} from './poster-art.mjs';
+import {treatmentPosition} from './treatments.mjs';
+
+export function buildProjectDecorations(project,entries,root,onReady){
+ for(const poster of project.architecture.posters||[]){
+  const at=locatePoster(poster,entries);if(!at)continue;
+  const map=createPosterTexture(T,poster,onReady),material=new T.MeshBasicMaterial({map,side:T.DoubleSide});
+  material.userData.studioOwned=true;
+  const plane=new T.Mesh(new T.PlaneGeometry(poster.width,poster.height),material);
+  plane.position.set(at.x,poster.y,at.z);plane.rotation.y=at.angle;plane.userData.editId=poster.id;root.add(plane);
+ }
+ for(const item of project.architecture.treatments||[]){
+  const at=treatmentPosition(item,entries);if(!at)continue;
+  const holder=new T.Group();holder.userData.editId=item.id;holder.position.set(at.center[0],0,at.center[1]);holder.rotation.y=at.angle;root.add(holder);
+  const curtain=item.type==='curtain',bottom=curtain?.06:(at.wall.kind==='window'?at.wall.sill:.2),top=at.wall.height-.08;
+  const material=new T.MeshStandardMaterial({color:curtain?0xf2f4ed:0x58656a,side:T.DoubleSide,transparent:curtain,opacity:curtain?.32:1,roughness:.85,depthWrite:!curtain});material.userData.studioOwned=true;
+  const count=curtain?Math.max(4,Math.ceil(at.width/.12)):Math.max(4,Math.ceil((top-bottom)/.08));
+  for(let i=0;i<count;i++){
+   const mesh=new T.Mesh(new T.BoxGeometry(curtain?at.width/count:.01+at.width,curtain?top-bottom:.04,curtain?.02:.03),material);
+   mesh.position.set(curtain?-at.width/2+at.width*(i+.5)/count:0,curtain?(top+bottom)/2:bottom+(top-bottom)*(i+.5)/count,curtain?(i%2)*.035:0);holder.add(mesh);
+  }
+ }
+}
 
 /** Same furniture models and dimensions in the studio and private/published FPS. */
-export async function buildProjectFurniture(items,root){
+export async function buildProjectFurniture(items,root,{assets=[]}={}){
+ for(const id of new Set(items.map(o=>o.assetId).filter(id=>id?.startsWith('local:')))){
+  if(await getLocalFile(id))continue;
+  const row=assets.find(a=>a.assetId===id);
+  if(!row||row.file!==`assets/models/${id.slice(6)}.glb`)throw Error('Modellfil saknas: '+id);
+  const response=await fetch(new URL('../../'+row.file,import.meta.url));
+  if(!response.ok)throw Error('Modellfil saknas: '+row.file);
+  const bytes=new Uint8Array(await response.arrayBuffer());
+  if(bytes.length!==row.bytes||await assetHash(bytes)!==id.slice(6))throw Error('Modellens innehållshash stämmer inte: '+row.file);
+  await importLocalGLB(new File([bytes],row.file.split('/').at(-1),{type:'model/gltf-binary'}));
+ }
  const pending=[];
  for(const item of items){
   const holder=new T.Group();holder.userData.editId=item.id;

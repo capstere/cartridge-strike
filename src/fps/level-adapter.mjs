@@ -15,7 +15,7 @@ export function levelProjectToWorldData(input){
  const doors=entries.filter(e=>doorKind(e.kind)||e.kind==='opening').map(e=>({
   id:e.id,name:e.id,a:e.a,b:e.b,center:[(e.a[0]+e.b[0])/2,(e.a[1]+e.b[1])/2],
   width:Math.hypot(e.b[0]-e.a[0],e.b[1]-e.a[1]),kind:e.kind==='opening'?'open-passage-no-leaf':'door-aperture',
-  status:'included',accessCardConfirmed:e.kind==='card-door',blocked:false,
+  status:'included',accessCardConfirmed:e.kind==='card-door',blocked:!!e.originallyBlocked&&!project.architecture.edits.some(row=>row.id===e.id),
   passageOpenConfirmed:e.kind==='opening',height:e.height,doorType:e.kind==='card-door'?'card':e.kind==='elevator-door'?'elevator':e.kind==='terrace-door'?'terrace':'ordinary',
   removed:false,lockedUntilImplemented:['elevator-door','terrace-door'].includes(e.kind)
  }));

@@ -25,6 +25,15 @@ try{
  assert.equal(await page.evaluate(()=>__levelStudio.project.furniture.added.length),1);
  await page.keyboard.press('Escape');await page.locator('#undo').click();assert.equal(await page.evaluate(()=>__levelStudio.project.furniture.added.length),0);
  await page.locator('#redo').click();assert.equal(await page.evaluate(()=>__levelStudio.project.furniture.added.length),1);
+ await page.locator('#duplicate').click();at=await page.evaluate(()=>__levelStudio.screenWorldPoint(6.8,6.8));await page.mouse.click(at.x,at.y);await page.keyboard.press('Escape');
+ assert.equal(await page.evaluate(()=>__levelStudio.project.furniture.added.length),2);
+ await page.locator('[data-tab="build"]').click();await page.locator('#tool').selectOption('poster');at=await page.evaluate(()=>__levelStudio.screenWorldPoint(3,2));await page.mouse.click(at.x,at.y);
+ await page.locator('#posterText').fill('Syntetisk bana');await page.locator('#posterText').dispatchEvent('change');
+ assert.equal(await page.evaluate(()=>__levelStudio.project.architecture.posters[0].text),'Syntetisk bana');
+ await page.locator('#tool').selectOption('curtain');at=await page.evaluate(()=>__levelStudio.screenWorldPoint(2,5));await page.mouse.click(at.x,at.y);
+ await page.locator('#tool').selectOption('blind');at=await page.evaluate(()=>__levelStudio.screenWorldPoint(8,5));await page.mouse.click(at.x,at.y);
+ assert.equal(await page.evaluate(()=>__levelStudio.project.architecture.treatments.length),2);
+
 
  await page.locator('#threeView').click();assert(await page.locator('#scene3d').isVisible());
  await page.locator('#planView').click();await page.locator('#demo').click();

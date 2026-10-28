@@ -501,13 +501,28 @@
     },
     {
       "path": "furniture-editor/build/level-project.mjs",
-      "bytes": 10903,
-      "sha256": "c3de0acda8b9acafbe195cac3950dd604ef39662eac8e99ea4e949deccdc48e5"
+      "bytes": 12498,
+      "sha256": "6de65004cf5544fc8b56c844525dd017f0d01db48bdb2bdbd8abd3aaed6858d5"
     },
     {
       "path": "furniture-editor/build/level-project.schema.json",
       "bytes": 7021,
       "sha256": "ea51a6b6511b39af77d4b47a83a88b9fe930a9c254e06fff904df1da986cbeab"
+    },
+    {
+      "path": "furniture-editor/build/paint-over-wall.mjs",
+      "bytes": 5928,
+      "sha256": "a1131eaec823503f96e89d7929250d0cbcd87ab8ab77a064e2eceb0fe341e095"
+    },
+    {
+      "path": "furniture-editor/build/poster-art.mjs",
+      "bytes": 3442,
+      "sha256": "6b5b8e32702ed1739cee069b43e4fc2a81d5692429951ac89e7b7754abe28a08"
+    },
+    {
+      "path": "furniture-editor/build/posters.mjs",
+      "bytes": 4041,
+      "sha256": "a3ce5df079570e18e101f07ec180d4432f273dca6eccf33c52bf751d64710e1d"
     },
     {
       "path": "furniture-editor/build/project-scene.mjs",
@@ -516,13 +531,18 @@
     },
     {
       "path": "furniture-editor/build/project-visuals.mjs",
-      "bytes": 1660,
-      "sha256": "6e9df5f449d9f155cb574e59d7b0f4a2603ea7b26194a1f33c5240a7606535c6"
+      "bytes": 4166,
+      "sha256": "ed4aaa063a84c032b8f82a2a3b560654575da0684ac8b26d9a6c87192d2fb69e"
+    },
+    {
+      "path": "furniture-editor/build/treatments.mjs",
+      "bytes": 3399,
+      "sha256": "f4b41e991b2d3c27e53b969ca6c96de4a295474c4d66a1ff437106003a270fd7"
     },
     {
       "path": "furniture-editor/build/validate-level.mjs",
-      "bytes": 9672,
-      "sha256": "4224d423c74de1b153247c463b4e92bf5f2b320276f53dbd63bbb77c56cc4871"
+      "bytes": 9834,
+      "sha256": "075cb0081354429805764e6b25a6c488d7e97554fedd66176e74c458ff30e5a8"
     },
     {
       "path": "furniture-editor/core.mjs",
@@ -571,18 +591,18 @@
     },
     {
       "path": "furniture-editor/new.html",
-      "bytes": 7701,
-      "sha256": "302996c986b665bdc9ea9d28da3e02fc6bb5889b4ecac4b218405965edc42564"
+      "bytes": 7949,
+      "sha256": "e8e81f5462b20f259a8cfa1cf1af9786392d1513d72ab983395bcb3876794015"
     },
     {
       "path": "furniture-editor/new.mjs",
-      "bytes": 34355,
-      "sha256": "3f25b02c8beb25aac38f1a7e2bedf293816ad2d4b97ea1c6fd2fbd272fc6376b"
+      "bytes": 37693,
+      "sha256": "10a5fccc74c8bd3b042c6bca3dc9ed75581e7e063046ff11262c9a5666df7fc7"
     },
     {
       "path": "furniture-editor/smart-placement.mjs",
-      "bytes": 2435,
-      "sha256": "d1cabc328c6584b130b3623c15650ca6477e02a595d1cfd410bf4a51f14a4e8b"
+      "bytes": 3430,
+      "sha256": "9b6fa83a5e3500e8ca8232251afb82889001ffe25005f9df13eb210413fb68a5"
     },
     {
       "path": "index.html",
@@ -856,8 +876,8 @@
     },
     {
       "path": "src/fps/level-adapter.mjs",
-      "bytes": 3748,
-      "sha256": "73c811f883ee413a38afe661e6f71920d2ade9b98a6934e9e5b5734adca1f8cd"
+      "bytes": 3818,
+      "sha256": "ace2284fa67e897d6a5c95ba26909eb96c191524ca3bf6cf0ee957b93263efce"
     },
     {
       "path": "src/fps/living-floor-art.mjs",
@@ -936,8 +956,8 @@
     },
     {
       "path": "src/fps/render.mjs",
-      "bytes": 14625,
-      "sha256": "15745c5b4a1a4a9531b2413bd71318d6cc45b2557a9ca812b06301db7154f264"
+      "bytes": 14773,
+      "sha256": "dbf29f264c846a444f5f8693602b1d69a505ecd45a94b107f994b36e8f2f4557"
     },
     {
       "path": "src/fps/riposte-audio.mjs",

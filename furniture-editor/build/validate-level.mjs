@@ -44,6 +44,7 @@ export function validateLevel(input,{engine=false}={}){
  for(const o of furniture){
   if(o.collision==='none'||(p.mode==='edit-floor5'&&o.original&&!p.furniture.placements.some(v=>v.id===o.id)))continue;
   const footprint=corners(o);
+  if(scene.fixed.some(f=>intersects(footprint,f.polygon)))add('V08','fail','Möbeln överlappar en fast inventarie.',o.id,'Flytta möbeln till en fri golvyta.');
   if(!footprint.every(([x,z])=>onFloor(x,z)))
    add('V08','fail','Möbeln ryms inte helt på en golvyta.',o.id,'Flytta möbeln inåt.');
   for(const w of walls)if(segmentIntersectsRectangle(w.a,w.b,o,Math.max(.012,w.thickness/2-.007)))
