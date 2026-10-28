@@ -66,6 +66,13 @@
         <button data-build-tool="opening" type="button">ÖPPNING</button>
         <button data-build-tool="floor" type="button">GOLVYTA</button>
       </div>
+      <div class="build-precision" role="group" aria-label="Smarta rithjälpmedel">
+        <strong>SMART RITNING</strong>
+        <label><input id="buildSmartSnap" type="checkbox" checked> Fäst exakt mot väggar och hörn</label>
+        <label><input id="buildRightAngles" type="checkbox" checked> Hjälp mig rita helt raka linjer</label>
+        <small>Fungerar även på väggar utanför rutnätet. Håll Alt medan du ritar för fri placering.</small>
+        <output id="buildSnapFeedback" aria-live="off">Välj VÄGG och klicka två punkter. Höjden hämtas från anslutande vägg.</output>
+      </div>
       <p id="buildInstructions" class="build-hint">Klicka på en vägg för att välja den, eller använd ett ritverktyg.</p>
       <label for="buildSearch">Sök byggdel (t.ex. WALL-010, D06)</label><input id="buildSearch" type="search" placeholder="Sök vägg eller dörr …">
       <div id="buildListCount" class="build-list-count">—</div><div id="buildList" class="build-list" role="listbox" aria-label="Befintliga väggar och dörrar"></div>
@@ -91,6 +98,11 @@
           <label>X min<input id="buildFloorX0" type="number" step="0.1"></label><label>Z min<input id="buildFloorZ0" type="number" step="0.1"></label>
           <label>X max<input id="buildFloorX1" type="number" step="0.1"></label><label>Z max<input id="buildFloorZ1" type="number" step="0.1"></label></div>
           <label>Golvnamn<input id="buildFloorName" type="text" maxlength="60"></label>
+        </div>
+        <div class="build-precision-actions" aria-label="Justera nyritad byggdel">
+          <button id="buildStraighten" type="button" disabled title="Räta upp vald ny vägg i planvyn">RÄTA UPP 90°</button>
+          <button id="buildJoinEnds" type="button" disabled title="Fäst ändarna mot närliggande väggar">STÄNG GLIPOR</button>
+          <button id="buildMatchHeight" type="button" disabled title="Hämta höjd och tjocklek från anslutande vägg">MATCHA HÖJD</button>
         </div>
         <div class="item-actions"><button id="buildDuplicate" type="button" class="subtle">+ Duplicera</button><button id="buildDelete" type="button" class="subtle danger">Ta bort i skissen</button></div>
       </div>
