@@ -87,7 +87,7 @@
         <button type="button" data-quick-kind="wall">VÄGG</button>
         <button type="button" data-quick-kind="window" class="type-window">FÖNSTER</button>
         <button type="button" data-quick-kind="glazed" class="type-glazed">GLASVÄGG</button>
-        <button type="button" id="buildDoorInWall" class="type-door">+ DÖRR I VÄGGEN</button>
+        <button type="button" id="buildDoorInWall" class="type-door">+ STANDARD-DÖRR 1,20</button>
       </div>
       <p class="helper">Knapparna ovan ändrar hela den markerade väggdelen. För ett kort fönster på bara en del av väggen använder du SMART RITA PÅ VÄGG. Du behöver inte välja något rumsnamn.</p>
       <label for="buildRoom">Hoppa till rum</label><select id="buildRoom" aria-label="Visa rum i byggläget"></select>
@@ -219,10 +219,10 @@
   <section class="workspace" aria-label="3D-möblering">
     <div class="toolbar"><div class="view-buttons design-mode"><button id="modeFurniture" type="button" class="active" aria-pressed="true">MÖBLER</button><button id="modeBuild" type="button" aria-pressed="false">BYGG · VÄGGAR & DÖRRAR</button></div><div class="view-buttons"><button id="topView" type="button" class="active" aria-pressed="true">PLANVY</button><button id="threeView" type="button" aria-pressed="false">3D-VY</button></div><div class="view-buttons"><button id="focus" type="button">⌖ VISA RUM</button><button id="whole" type="button">HELA VÅNINGEN</button></div><button id="downloadTop" type="button" class="quick-save">↓ SPARA PROJEKT</button><label class="snap"><input id="snap" type="checkbox" checked> Fäst på rutnät (10 cm)</label><label class="snap wall-snap"><input id="wallSnap" type="checkbox" checked> Fäst möbler mot vägg</label></div>
     <div class="camera-navigation-hint" aria-label="Kamerastyrning">3D: <kbd>Shift</kbd> eller <kbd>Ctrl</kbd> + dra = flytta kameran · vanlig dragning = vrid · <kbd>Ctrl+D</kbd> = duplicera</div>
-    <div id="buildToolbar" class="build-toolbar" hidden><strong>BYGGLÄGE</strong><span>Rött: vägg</span><span>Grönt: glasvägg</span><span>Blått: fönster</span><span>Ljusblått: dörr</span><small>Skiss — ingen riktig spelkollision ändras</small></div>
+    <div id="buildToolbar" class="build-toolbar" hidden><strong>BYGGLÄGE</strong><span>Rött: vägg</span><span>Grönt: glasvägg</span><span>Blått: fönster</span><span>Ljusblått: dörr (STANDARD 1,20)</span><small>Skiss — ingen riktig spelkollision ändras</small></div>
     <div class="stage" id="dropZone"><canvas id="viewport" aria-label="Redigerbar planvy av möbler och rum" tabindex="0"></canvas>
       <div class="scene-guide" id="furnitureLegend"><span class="legend-square chair"></span> Valbar möbel <span class="legend-square selection"></span> Markerad <span class="legend-square fixed"></span> Fast inredning</div>
-      <div class="scene-guide" id="buildLegend" hidden><span class="arch-swatch arch-wall"></span> Vägg <span class="arch-swatch arch-glass"></span> Glasvägg <span class="arch-swatch arch-window"></span> Fönster <span class="arch-swatch arch-door"></span> Dörr</div>
+      <div class="scene-guide" id="buildLegend" hidden><span class="arch-swatch arch-wall"></span> Vägg <span class="arch-swatch arch-glass"></span> Glasvägg <span class="arch-swatch arch-window"></span> Fönster <span class="arch-swatch arch-door"></span> Dörrmarkering: STANDARD 1,20</div>
       <div class="scene-instruction">Välj Möbler eller Bygg · Rita med två klick · Dra ändpunkter · Scrolla för att zooma</div>
       <div class="orient"><strong>N</strong><span>↑</span></div>
       <div class="loading" id="loading" role="status">Läser aktuell spelplan …</div>
