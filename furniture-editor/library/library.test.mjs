@@ -11,7 +11,7 @@ import {exportPatch,parsePatch,BASE_COMMIT} from '../core.mjs';
 const dir=dirname(fileURLToPath(import.meta.url)),root=resolve(dir,'../..');
 
 test('104 rights-audited, isolated models and supported model types',()=>{
- assert.equal(LIBRARY.length,104);assert.equal(LIBRARY_MAP.size,104);
+ assert.equal(LIBRARY.length,104);assert.equal(LIBRARY_MAP.size,125);
  assert.equal(LIBRARY_SOURCE.commit,'37f5baddf99899547ae661668880809c42b450f0');
  assert.equal(LIBRARY.filter(o=>o.pack==='furniture-kit'||o.id.startsWith('kenney:')).length,72);
  for(const o of LIBRARY){
