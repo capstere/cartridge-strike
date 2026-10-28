@@ -4,7 +4,7 @@ import {GlassVisuals} from './glass-visuals.mjs';
 import {buildRiposteProps} from './riposte-props.mjs';
 import {makeWeapon} from './models.mjs';
 import {WEAPONS} from './config.mjs';
-import {buildProjectFurniture,buildProjectDecorations} from '../../furniture-editor/build/project-visuals.mjs';
+import {buildProjectFurniture,buildProjectDecorations} from '../../furniture-editor/build/project-visuals.mjs?v=3.5.0';
 import {buildFacilityScene} from './facility-scene.mjs';
 import {installFocusLighting} from './strike-kit-environment.mjs';
 import {VisualDepth} from './visual-depth.mjs';
