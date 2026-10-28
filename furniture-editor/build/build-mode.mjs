@@ -9,9 +9,11 @@ import {ARCHITECTURE_TYPES,ARCHITECTURE_NAMES,ARCHITECTURE_COLORS,readBaseline,
 import {snapDraftPoint,dimensionsFromWall,joinNearbyEnds,straightenEntry} from './precision.mjs';
 import {createRectangleRoom,rectangleFromDimensions} from './rectangle-room.mjs';
 import {FINISH_COLORS,architecturalFinish,WALL_FINISHES,DOOR_FINISHES} from '../appearance.mjs';
+import {makePoster,parsePosters,serializePosters,validatePoster,locatePoster,posterId,POSTER_MAX} from './posters.mjs';
+import {createPosterTexture,compressPosterImage} from './poster-art.mjs';
 const $=id=>document.getElementById(id);
 const DIST=1e-5;
-const floorKind='floor',roomKind='room-rect';
+const floorKind='floor',roomKind='room-rect',posterKind='poster';
 const palette={wall:0xc31421,glazed:0x22b14c,window:0x00a2e8,
  door:0x99d9ea,'card-door':0x99d9ea,'elevator-door':0x99d9ea,'terrace-door':0x99d9ea,
  opening:0x899796,frame:0x72888c,selected:0xffd16a};
@@ -23,7 +25,7 @@ function minMax(p){return {minX:Math.min(p.a[0],p.b[0]),maxX:Math.max(p.a[0],p.b
 
 export function createBuildMode({data,scene,canvas,camera,getZoom,getView,rayAt,planePoint,onPan,onOrbit,
  scheduleRender,notify,onChange,onGoRoom,onGoPoint,originalWalls}){
- const baseline=readBaseline(data);let entries=cloneAll(baseline),floors=[];
+ const baseline=readBaseline(data);let entries=cloneAll(baseline),floors=[],posters=[];
  let active=false,selection=null,mode='select',first=null,hover=null,drag=null;
  let history=[],future=[],dirty=false,strokeColor=0;
  const root=new THREE.Group();root.name='architectural-sketch-not-physics';scene.add(root);
@@ -36,13 +38,17 @@ export function createBuildMode({data,scene,canvas,camera,getZoom,getView,rayAt,
  const selectionMat=new THREE.MeshBasicMaterial({color:palette.selected,depthTest:false});
  const selectLineMat=new THREE.LineBasicMaterial({color:palette.selected,depthTest:false});
  const floorMat=new THREE.MeshBasicMaterial({color:0x79c8bd,transparent:true,opacity:.28,side:THREE.DoubleSide,depthWrite:false});
- const raycaster=new THREE.Raycaster();const points=[],boxInstances=[];
- function entryById(id){return entries.find(e=>e.id===id)||floors.find(f=>f.id===id);}
- function count(){const p=exportArchitecture(entries,baseline,floors);return p.edits.length+p.added.length+p.removed.length+p.floors.length;}
- function snapshots(){return {entries:cloneAll(entries),floors:copyFloors(floors)};}
+ const raycaster=new THREE.Raycaster();const points=[],boxInstances=[],posterPick=[],posterCache=new Map();
+ const copyPosters=a=>a.map(x=>({...x}));
+ function exportAll(){return {...exportArchitecture(entries,baseline,floors),posters:serializePosters(posters)};}
+ function posterById(id){return posters.find(p=>p.id===id);}
+ function resetPosterCache(){for(const row of posterCache.values()){row.material.map?.dispose();row.material.dispose();}posterCache.clear();}
+ function entryById(id){return entries.find(e=>e.id===id)||floors.find(f=>f.id===id)||posterById(id);}
+ function count(){const p=exportAll();return p.edits.length+p.added.length+p.removed.length+p.floors.length+p.posters.length;}
+ function snapshots(){return {entries:cloneAll(entries),floors:copyFloors(floors),posters:copyPosters(posters)};}
  function capture(){return JSON.stringify(snapshots());}
  function restore(snapshot){const data=typeof snapshot==='string'?JSON.parse(snapshot):snapshot;
-  entries=cloneAll(data.entries);floors=copyFloors(data.floors);selection=entryById(selection)&&!entryById(selection).deleted?selection:null;
+  entries=cloneAll(data.entries);floors=copyFloors(data.floors);posters=copyPosters(data.posters||[]);selection=entryById(selection)&&!entryById(selection).deleted?selection:null;
   render();showProperties();renderList();}
  function record(before){if(before===capture())return false;history.push(before);if(history.length>60)history.shift();future=[];
   dirty=true;render();showProperties();renderList();onChange?.();return true;}
@@ -61,7 +67,7 @@ export function createBuildMode({data,scene,canvas,camera,getZoom,getView,rayAt,
   $('viewport').style.cursor=active?'crosshair':'auto';
   if(active){$('buildRoom').value=$('room').value;setTool('select');notify?.('Byggläge: välj en vägg eller välj ett ritverktyg. Två klick ritar en ny del.');}
   syncVisibility();render();showProperties();renderList();}
- function setTool(next){if(!['select',...ARCHITECTURE_TYPES,floorKind,roomKind].includes(next))return;
+ function setTool(next){if(!['select',...ARCHITECTURE_TYPES,floorKind,roomKind,posterKind].includes(next))return;
   mode=next;first=null;hover=null;
   $('buildTool').value=next;
   $('buildRoomSettings').hidden=next!==roomKind;
@@ -71,12 +77,13 @@ export function createBuildMode({data,scene,canvas,camera,getZoom,getView,rayAt,
   $('buildInstructions').textContent=next==='select'?'Klicka för att välja. Dra en ändpunkt för att justera, eller dra mitt på för att flytta hela delen.':
    next==='floor'?'Klicka två hörn för att rita en ny golvrektangel.':
    next===roomKind?'Klicka första och motsatta hörnet i planvyn. Fyra väggar och valfritt golv skapas tillsammans. Eller ange exakta mått efter första klicket.':
+   next===posterKind?'Klicka på önskad vägg i PLANVY eller direkt på väggytan i 3D. Därefter kan du ändra text, mått och ladda upp din affischbild.':
    `Klicka en startpunkt och därefter en slutpunkt: ${ARCHITECTURE_NAMES[next]}.`;
   render();}
  function smartEnabled(ev){return $('buildSmartSnap').checked&&!ev.altKey;}
  function point(ev,excludeId=null){
   const pt=planePoint(ev);if(!pt)return null;
-  const draft=first&&mode!=='select'&&mode!==floorKind&&mode!==roomKind?first:null;
+  const draft=first&&mode!=='select'&&mode!==floorKind&&mode!==roomKind&&mode!==posterKind?first:null;
   const result=snapDraftPoint([pt.x,pt.z],entries,{start:draft,
    excludeId,grid:mode==='select'?0:(($('snap').checked&&!ev.altKey)?0.1:0),
    snapToGeometry:mode!=='select'&&smartEnabled(ev),
@@ -121,12 +128,80 @@ export function createBuildMode({data,scene,canvas,camera,getZoom,getView,rayAt,
   addSegmentBox(queue,'frame',id,seg,.10,seg.height-.05,.085);
   if(seg.kind!=='opening')addSegmentBox(queue,seg.kind+':'+architecturalFinish(seg.kind,seg.finish),id,seg,seg.height-.22,(seg.height-.22)/2,.035);
  }
- function clear3D(){boxInstances.length=0;points.length=0;
+ function clear3D(){boxInstances.length=0;points.length=0;posterPick.length=0;
   for(const o of [...root.children]){root.remove(o);if(o.isInstancedMesh)o.dispose?.();if(o.geometry&&o.geometry!==geo&&o.geometry!==sphere)o.geometry.dispose();if(o.material&&!materialsHas(o.material)&&o.material!==selectionMat&&o.material!==selectLineMat&&o.material!==floorMat)o.material.dispose();}
  }
- function materialsHas(mat){return [...materials.values()].includes(mat);}
+ function materialsHas(mat){return [...materials.values()].includes(mat)||[...posterCache.values()].some(row=>row.material===mat);}
+ function posterMaterial(p){
+  const signature=JSON.stringify([p.text,p.subtitle,p.color,p.image,p.width,p.height]);
+  const cached=posterCache.get(p.id);if(cached?.signature===signature)return cached.material;
+  if(cached){cached.material.map?.dispose();cached.material.dispose();}
+  const texture=createPosterTexture(THREE,p,scheduleRender);
+  const material=new THREE.MeshBasicMaterial({map:texture,side:THREE.DoubleSide,depthWrite:true});
+  posterCache.set(p.id,{signature,material});return material;
+ }
+ function renderPosters(full){
+  for(const p of posters){
+   const at=locatePoster(p,entries);if(!at)continue;
+   const material=posterMaterial(p);
+   if(full){
+    const plane=new THREE.Mesh(new THREE.PlaneGeometry(p.width,p.height),material);
+    plane.position.set(at.x,p.y,at.z);plane.rotation.y=at.angle;
+    plane.renderOrder=5;plane.userData.posterId=p.id;root.add(plane);posterPick.push(plane);
+   }else{
+    const marker=new THREE.Mesh(sphere,selectionMat);
+    marker.position.set(at.x,.43,at.z);marker.scale.setScalar(.48);
+    marker.userData.posterId=p.id;root.add(marker);posterPick.push(marker);
+   }
+  }
+ }
+ function tryPosterOnWall(event){
+  let wall=null,t=.5,side=1;
+  if(getView()==='3d'){
+   const hits=rayAt(event).intersectObjects(boxInstances,false);
+   for(const hit of hits){
+    const id=hit.object.userData.ids?.[hit.instanceId],w=entries.find(e=>e.id===id&&!e.deleted&&isWall(e.kind));
+    if(!w)continue;
+    wall=w;
+    const dx=w.b[0]-w.a[0],dz=w.b[1]-w.a[1],L2=dx*dx+dz*dz;
+    t=clamp(((hit.point.x-w.a[0])*dx+(hit.point.z-w.a[1])*dz)/L2,0,1);
+    const nx=-dz/Math.sqrt(L2),nz=dx/Math.sqrt(L2);
+    side=(camera.position.x-(w.a[0]+dx*t))*nx+(camera.position.z-(w.a[1]+dz*t))*nz>=0?1:-1;
+    break;
+   }
+  }else{
+   const p=planePoint(event);
+   if(!p)return false;
+   let best=.55;
+   for(const e of entries.filter(e=>!e.deleted&&isWall(e.kind))){
+    const d=pointToSegmentDistance([p.x,p.z],e.a,e.b);
+    if(d>=best)continue;
+    const dx=e.b[0]-e.a[0],dz=e.b[1]-e.a[1],L2=dx*dx+dz*dz;
+    wall=e;best=d;t=clamp(((p.x-e.a[0])*dx+(p.z-e.a[1])*dz)/L2,0,1);
+   }
+  }
+  if(!wall){notify?.('Klicka på en röd/grå vägg. Affischer kan inte sitta på en dörr.');return false;}
+  try{
+   if(posters.length>=POSTER_MAX)throw Error('Max 40 affischer per projekt.');
+   const poster=makePoster(wall,posters,t,side);
+   const before=capture();posters.push(poster);selection=poster.id;
+   setTool('select');record(before);
+   notify?.('Affisch tillagd på väggen. Ändra värdeordet eller ladda upp en bild till vänster.');
+   return true;
+  }catch(error){notify?.(error.message);return false;}
+ }
+ function changePoster(delta){
+  const p=posterById(selection);if(!p)return false;
+  const next={...p,...delta};try{validatePoster(next,entries);}catch(error){notify?.(error.message);showProperties();return false;}
+  const before=capture();Object.assign(p,next);record(before);return true;
+ }
  function drawSelection(){if(!selection)return;
   const e=entryById(selection);if(!e||e.deleted)return;
+  if(posterById(selection)){
+   const at=locatePoster(e,entries);if(!at)return;
+   const marker=new THREE.Mesh(sphere,selectionMat);marker.position.set(at.x,.55,at.z);
+   marker.scale.setScalar(.7);marker.renderOrder=8;root.add(marker);return;
+  }
   if('a' in e){const pos=[e.a,e.b];
    const geometry=new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(e.a[0],.22,e.a[1]),new THREE.Vector3(e.b[0],.22,e.b[1])]);
    const line=new THREE.Line(geometry,selectLineMat);line.renderOrder=5;root.add(line);
@@ -165,9 +240,11 @@ export function createBuildMode({data,scene,canvas,camera,getZoom,getView,rayAt,
    const mesh=new THREE.Mesh(new THREE.ShapeGeometry(shape),floorMat);mesh.rotation.x=Math.PI/2;mesh.position.y=-.025;
    mesh.userData.archId=f.id;mesh.name=f.id;root.add(mesh);
   }
-  drawSelection();drawFirst();syncVisibility();scheduleRender();
+  renderPosters(full);drawSelection();drawFirst();syncVisibility();scheduleRender();
  }
  function nearSegment(point,includeFloors=false){const cutoff=clamp(getZoom()/Math.max(200,canvas.clientHeight)*14,.12,.85);let selectedId=null,least=cutoff;
+  for(const poster of posters){const at=locatePoster(poster,entries);
+   if(at&&Math.hypot(at.x-point[0],at.z-point[1])<least){least=Math.hypot(at.x-point[0],at.z-point[1]);selectedId=poster.id;}}
   for(const e of entries){if(e.deleted)continue;const d=pointToSegmentDistance(point,e.a,e.b);
    if(d<least){least=d;selectedId=e.id;}}
   if(includeFloors)for(const f of floors){if(point[0]>=f.x0&&point[0]<=f.x1&&point[1]>=f.z0&&point[1]<=f.z1&&!selectedId)selectedId=f.id;}
@@ -208,16 +285,18 @@ export function createBuildMode({data,scene,canvas,camera,getZoom,getView,rayAt,
   const center=roomSelect?[(roomSelect.polygon.reduce((s,p)=>s+p[0],0)/roomSelect.polygon.length),
    (roomSelect.polygon.reduce((s,p)=>s+p[1],0)/roomSelect.polygon.length)]:[0,0];
   let seen=0;const found=[];
-  for(const e of [...entries.filter(e=>!e.deleted),...floors]){const id=e.id,label=ARCHITECTURE_NAMES[e.kind]||'Ny golvyta';
+  for(const e of [...entries.filter(e=>!e.deleted),...floors,...posters]){const id=e.id,label=e.wallId?'Värdeordsaffisch':ARCHITECTURE_NAMES[e.kind]||'Ny golvyta';
    if(filter&&!(id+' '+label).toLowerCase().includes(filter))continue;
-   const x='a' in e?(e.a[0]+e.b[0])/2:(e.x0+e.x1)/2,z='a' in e?(e.a[1]+e.b[1])/2:(e.z0+e.z1)/2;
+   const at=e.wallId?locatePoster(e,entries):null;
+   const x=at?.x??('a' in e?(e.a[0]+e.b[0])/2:(e.x0+e.x1)/2),z=at?.z??('a' in e?(e.a[1]+e.b[1])/2:(e.z0+e.z1)/2);
    found.push({e,label,dist:Math.hypot(x-center[0],z-center[1])});}
   found.sort((a,b)=>(a.e.id===selection?-1:b.e.id===selection?1:0)||a.dist-b.dist||a.e.id.localeCompare(b.e.id));
   for(const {e,label} of found.slice(0,75)){
    const button=document.createElement('button');button.type='button';button.className='build-list-item';button.classList.toggle('active',e.id===selection);
    const swatch=document.createElement('span');swatch.className='arch-swatch';swatch.style.background=ARCHITECTURE_COLORS[e.kind]||'#7ec7b4';
    const name=document.createElement('span');name.textContent=label;const id=document.createElement('small');id.textContent=e.id;
-   button.append(swatch,name,id);button.onclick=()=>{setTool('select');select(e.id);onGoPoint?.('a' in e?(e.a[0]+e.b[0])/2:(e.x0+e.x1)/2,'a' in e?(e.a[1]+e.b[1])/2:(e.z0+e.z1)/2);};list.append(button);seen++;
+   button.append(swatch,name,id);button.onclick=()=>{setTool('select');select(e.id);const at=e.wallId?locatePoster(e,entries):null;
+    onGoPoint?.(at?.x??('a' in e?(e.a[0]+e.b[0])/2:(e.x0+e.x1)/2),at?.z??('a' in e?(e.a[1]+e.b[1])/2:(e.z0+e.z1)/2));};list.append(button);seen++;
   }
   $('buildListCount').textContent=filter?`${found.length} träffar`: `Visar ${seen} närmaste av ${found.length} delar`;
   $('viewportStatus').textContent=`BYGGLÄGE · ${count()} ändringar i byggskissen · ${found.length} befintliga/nya byggdelar`;
@@ -267,11 +346,18 @@ export function createBuildMode({data,scene,canvas,camera,getZoom,getView,rayAt,
   if(changeEntry(e.id,{a:fixed.a,b:fixed.b}))notify?.(action==='straight'?'Byggdelen är nu helt vågrät eller lodrät i planvyn.':'Ändpunkterna har kopplats till närliggande väggar.');
  }
  function removeSelected(){if(!selection)return;const before=capture();const e=entryById(selection);if(!e)return;
-  if('a' in e){if(e.source)e.deleted=true;else entries=entries.filter(x=>x.id!==selection);}
+  if(e.wallId)posters=posters.filter(x=>x.id!==selection);
+  else if('a' in e){if(e.source)e.deleted=true;else entries=entries.filter(x=>x.id!==selection);}
   else floors=floors.filter(x=>x.id!==selection);
   selection=null;record(before);notify?.('Byggdelen är borttagen ur skissen. Spelet ändras inte.');}
  function duplicate(){const e=entryById(selection);if(!e)return;const before=capture();
-  if('a' in e){const item=makeEntry(getNextId(entries,floors,e.kind),e.kind,[e.a[0]+.5,e.a[1]+.5],[e.b[0]+.5,e.b[1]+.5]);
+  if(e.wallId){
+   if(posters.length>=POSTER_MAX){notify?.('Max 40 affischer.');return;}
+   const at=locatePoster(e,entries);if(!at)return;
+   const next={...e,id:posterId(posters),t:roundPosition(clamp(e.t+e.width/at.length+.03,0,1))};
+   try{validatePoster(next,entries);}catch{notify?.('Det finns inte tillräckligt med väggyta bredvid affischen.');return;}
+   posters.push(next);selection=next.id;
+  }else if('a' in e){const item=makeEntry(getNextId(entries,floors,e.kind),e.kind,[e.a[0]+.5,e.a[1]+.5],[e.b[0]+.5,e.b[1]+.5]);
    item.height=e.height;item.thickness=e.thickness;item.sill=e.sill;item.finish=e.finish;
    try{validateEntry(item);}catch(error){notify?.(error.message);return;}
    entries.push(item);selection=item.id;
@@ -315,6 +401,7 @@ export function createBuildMode({data,scene,canvas,camera,getZoom,getView,rayAt,
    drag={type:'pan',mx:ev.clientX,my:ev.clientY};canvas.setPointerCapture(ev.pointerId);ev.preventDefault();return;
   }
   const p=point(ev);
+  if(mode===posterKind){tryPosterOnWall(ev);ev.preventDefault();return;}
   if(mode!=='select'){if(getView()==='3d'){notify?.('Rita nya väggar och öppningar i PLANVY. Byt till 3D-VY för att granska.');return;}
    choosePoint(ev);ev.preventDefault();return;}
   let targetId=null,handle=null;
@@ -322,12 +409,16 @@ export function createBuildMode({data,scene,canvas,camera,getZoom,getView,rayAt,
    if(current&&'a' in current){if(near(p,current.a,radius)){targetId=selection;handle='a';}else if(near(p,current.b,radius)){targetId=selection;handle='b';}}
   }
   if(!targetId&&getView()==='3d'){
+   const posterHits=rayAt(ev).intersectObjects(posterPick,false);
+   if(posterHits.length)targetId=posterHits[0].object.userData.posterId;
+  }
+  if(!targetId&&getView()==='3d'){
    const intersects=rayAt(ev).intersectObjects(boxInstances,false);
    for(const hit of intersects){const id=hit.object.userData.ids?.[hit.instanceId];if(id){targetId=id;break;}}
   }
   if(!targetId&&p)targetId=nearSegment(p,true);
   if(targetId){if(selection!==targetId)select(targetId);const e=entryById(targetId);
-   drag={type:handle||('a' in e?'move':'moveFloor'),id:targetId,before:capture(),
+   drag={type:handle||(e.wallId?'pan':('a' in e?'move':'moveFloor')),id:targetId,before:capture(),
     start:p||null,mx:ev.clientX,my:ev.clientY,orig:'a' in e?cloneEntry(e):{...e}};
    canvas.setPointerCapture(ev.pointerId);ev.preventDefault();return;}
   select(null);drag={type:getView()==='top'?'pan':'orbit',mx:ev.clientX,my:ev.clientY};canvas.setPointerCapture(ev.pointerId);
