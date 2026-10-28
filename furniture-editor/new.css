@@ -10,3 +10,10 @@
 .catalog-image img{width:100%;height:100%;object-fit:contain}.catalog-fallback{width:100%;font-size:.76rem;margin-top:8px}
 #walkView{border-color:#a4d8b8;background:#266a57;font-weight:700}#walkFrame{display:block;flex:1;min-height:0;width:100%;border:0;background:#18252a}
 .selection details{margin-top:12px}.selection summary{cursor:pointer;color:#b9e9da;font-size:.82rem}.selection label:has(:disabled){display:none}.selection .row{flex-wrap:wrap}
+
+/* Visible movement controls work in plan and 3D, including touch and keyboard activation. */
+.move-pad{position:absolute;right:14px;bottom:48px;z-index:3;display:grid;grid-template-areas:"label label label" ". forward ." "left . right" ". backward .";grid-template-columns:repeat(3,36px);gap:3px;padding:7px;background:#173b40de;border:1px solid #8bbfbb;border-radius:10px;box-shadow:0 3px 16px #142b3299;user-select:none;touch-action:none}
+.move-pad span{grid-area:label;text-align:center;font-size:.58rem;letter-spacing:.07em;color:#e5f7ef;font-weight:700}
+.move-pad button{padding:0;margin:0;width:36px;height:36px;font-size:1.3rem;line-height:1;touch-action:none;background:#2a6968;border-color:#94cebf}
+.move-pad button:active{background:#3ba68b}.move-pad [data-move="forward"]{grid-area:forward}.move-pad [data-move="backward"]{grid-area:backward}.move-pad [data-move="left"]{grid-area:left}.move-pad [data-move="right"]{grid-area:right}
+.catalog-image{position:relative}.catalog-color-badge{position:absolute;right:3px;top:3px;background:#d76b28;color:#1c2626;border:1px solid #a34d17;border-radius:3px;padding:1px 3px;font-size:.55rem;font-weight:800;letter-spacing:.02em}

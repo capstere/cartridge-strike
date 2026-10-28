@@ -15,13 +15,26 @@ try{
  for(const [x,z] of [[2,2],[8,8]]){const s=await page.evaluate(([x,z])=>__levelStudio.screenWorldPoint(x,z),[x,z]);await page.mouse.click(s.x,s.y);}
  assert.equal(await page.evaluate(()=>__levelStudio.project.ground.floors.length),1);
  assert.equal(await page.evaluate(()=>__levelStudio.project.architecture.added.length),4);
+ const authoredBeforeMove=await page.evaluate(()=>JSON.stringify(__levelStudio.project));
+ const centered=await page.evaluate(()=>__levelStudio.viewState.planCenter);
+ await page.locator('[data-move="right"]').click();
+ assert((await page.evaluate(()=>__levelStudio.viewState.planCenter.x))>centered.x,'On-screen right control moves the plan');
+ const beforeKeys=await page.evaluate(()=>__levelStudio.viewState.planCenter.z);
+ await page.keyboard.down('w');await page.waitForTimeout(180);await page.keyboard.up('w');
+ assert((await page.evaluate(()=>__levelStudio.viewState.planCenter.z))<beforeKeys,'W moves forward in the plan');
+ const planBox=await page.locator('#plan').boundingBox(),beforePan=await page.evaluate(()=>__levelStudio.viewState.planCenter.x);
+ await page.mouse.move(planBox.x+planBox.width*.65,planBox.y+planBox.height*.55);await page.mouse.down({button:'right'});
+ await page.mouse.move(planBox.x+planBox.width*.72,planBox.y+planBox.height*.55,{steps:5});await page.mouse.up({button:'right'});
+ assert((await page.evaluate(()=>__levelStudio.viewState.planCenter.x))<beforePan,'Right drag pans the plan without moving a building part');
+ assert.equal(await page.evaluate(()=>JSON.stringify(__levelStudio.project)),authoredBeforeMove,'Camera movement never changes the authored project');
+ await page.locator('#fit').click();
  await page.locator('[data-tool="door"]').click();
  let at=await page.evaluate(()=>__levelStudio.screenWorldPoint(5,2));await page.mouse.click(at.x,at.y);
  assert.equal(await page.evaluate(()=>__levelStudio.project.architecture.added.filter(e=>e.kind==='door').length),1);
  await page.locator('[data-tool="window"]').click();at=await page.evaluate(()=>__levelStudio.screenWorldPoint(8,5));await page.mouse.click(at.x,at.y);
  assert.equal(await page.evaluate(()=>__levelStudio.project.architecture.added.filter(e=>e.kind==='window').length),1);
  await page.locator('[data-tab="furnish"]').click();
- assert.equal(await page.locator('#catalogCards .catalog-card').count(),125);
+ assert.equal(await page.locator('#catalogCards .catalog-card').count(),126);
  assert(await page.locator('#catalogCards img').count()>90);
  await page.locator('#catalogCards [data-asset="studio:desk-120"]').click();
  at=await page.evaluate(()=>__levelStudio.screenWorldPoint(5,5));await page.mouse.click(at.x,at.y);
@@ -49,6 +62,13 @@ try{
  await page.keyboard.press('Escape');const targetPoint=await page.evaluate(()=>__levelStudio.screenWorldPoint(6,3));
  await page.mouse.move(at.x,at.y);await page.mouse.down();await page.mouse.move(targetPoint.x,targetPoint.y,{steps:6});await page.mouse.up();
  assert(await page.evaluate(()=>__levelStudio.project.furniture.added.some(o=>Math.abs(o.x-6)<.2&&Math.abs(o.z-3)<.2)));
+ await page.locator('#catalogSearch').fill('orange köksstol');
+ assert.equal(await page.locator('#catalogCards .catalog-card').count(),1);
+ await page.locator('#catalogCards [data-asset="studio:orange-kitchen-chair"]').click();
+ at=await page.evaluate(()=>__levelStudio.screenWorldPoint(4,6));await page.mouse.click(at.x,at.y);await page.keyboard.press('Escape');
+ assert(await page.evaluate(()=>__levelStudio.project.furniture.added.some(o=>o.assetId==='kenney:furniture-kit:chairdesk'&&o.chairRole==='kitchen')),'Orange kitchen chair uses the original CC0 GLB and saved finish');
+ const orangeId=await page.evaluate(()=>__levelStudio.project.furniture.added.find(o=>o.chairRole==='kitchen').id);
+ await page.locator('#catalogSearch').fill('');
  await page.locator('[data-tab="build"]').click();await page.locator('#tool').selectOption('poster');at=await page.evaluate(()=>__levelStudio.screenWorldPoint(3,2));await page.mouse.click(at.x,at.y);
  await page.locator('#selection summary').click();
  await page.locator('#posterText').fill('Syntetisk bana');await page.locator('#posterText').dispatchEvent('change');
@@ -59,6 +79,19 @@ try{
 
 
  await page.locator('#threeView').click();assert(await page.locator('#scene3d').isVisible());
+ await page.waitForFunction(id=>__levelStudio.visualColors.some(row=>row.id===id&&row.color==='df753c'),orangeId,{timeout:30000});
+ console.log('Orange kitchen chair: source GLB rendered with kitchen finish PASS');
+ const first3D=await page.evaluate(()=>__levelStudio.viewState.threeCenter);
+ await page.locator('[data-move="forward"]').click();
+ const nudged3D=await page.evaluate(()=>__levelStudio.viewState.threeCenter);
+ assert.notDeepEqual(nudged3D,first3D,'3D forward control moves camera focus');
+ await page.keyboard.down('d');await page.waitForTimeout(180);await page.keyboard.up('d');
+ const keyed3D=await page.evaluate(()=>__levelStudio.viewState.threeCenter);
+ assert.notDeepEqual(keyed3D,nudged3D,'D strafes the 3D editor camera');
+ const threeBox=await page.locator('#scene3d').boundingBox();
+ await page.mouse.move(threeBox.x+threeBox.width*.55,threeBox.y+threeBox.height*.5);await page.mouse.down({button:'right'});
+ await page.mouse.move(threeBox.x+threeBox.width*.65,threeBox.y+threeBox.height*.55,{steps:5});await page.mouse.up({button:'right'});
+ assert.notDeepEqual(await page.evaluate(()=>__levelStudio.viewState.threeCenter),keyed3D,'Right drag pans the 3D editor camera');
  await page.locator('#planView').click();await page.locator('#demo').click();
  await page.locator('#check').click();assert.match(await page.locator('#results').innerText(),/SPELBAR I MOTORN/);
  const download=page.waitForEvent('download');await page.locator('#save').click();const file=await download;
