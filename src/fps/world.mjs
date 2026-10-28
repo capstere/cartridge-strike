@@ -14,10 +14,19 @@ let sharedWorld;
 let levelCacheKey='',levelCache;
 const flatPoint=p=>({x:p[0],y:0,z:p[1]});
 
+export function inheritFloor5Gameplay(project){
+ if(project.mode!=='edit-floor5'||project.gameplay.spawns.length)return project;
+ const p=structuredClone(project),a=createWorld().anchors;
+ p.gameplay.spawns=['analysts','counterAnalysts'].flatMap(team=>a[team].map((v,index)=>({id:`SP-${team==='analysts'?'A':'C'}-${String(index+1).padStart(2,'0')}`,team,index,x:v.x,z:v.z,yaw:v.yaw||0})));
+ p.gameplay.objectives={bomb:{...a.bomb,id:'OBJ-BOMB'},rescue:{...a.rescue,id:'OBJ-RESCUE'},hostages:a.hostages.map((v,i)=>({...v,id:'OBJ-H'+(i+1)}))};
+ return p;
+}
+
 function createLevelWorld(project,{fresh=false}={}){
+ project=inheritFloor5Gameplay(project);
  const key=JSON.stringify(project);
  if(!fresh&&levelCacheKey===key&&levelCache)return levelCache;
- const {data,anchors}=levelProjectToWorldData(project);
+ const {data,anchors,scene}=levelProjectToWorldData(project);
  const source=globalThis.SpelWorldForLevel(data);
  const description=source.build({doors:Object.fromEntries(data.doors.filter(d=>d.accessCardConfirmed).map(d=>[d.id,true]))});
  const glassPlan=prepareGlass(description,data),physics=createPhysics(description,data),doors=createDoors(data,physics);
@@ -33,7 +42,7 @@ function createLevelWorld(project,{fresh=false}={}){
  const navigation=createNavigation(data,navPhysics),roomAt=(x,z)=>[...data.rooms,...data.corridors].find(r=>insidePolygon(x,z,r.polygon))||null;
  physics.setDynamicBoxes(doors.boxes);
  const glass=createGlassState(glassPlan,physics,()=>navigation.invalidate());
- const world={newLevel:true,description,data,anchors,doors,glass,details:null,living:null,furnishings:{instances:[],boxes:[]},tactical:null,
+ const world={newLevel:true,project,projectScene:scene,description,data,anchors,doors,glass,details:null,living:null,furnishings:{instances:[],boxes:[]},tactical:null,
   roomAt,materialAt:(x,z)=>roomAt(x,z)?.surface||'carpet',...physics,findPath:navigation.findPath,navigation,
   statistics:{...physics.statistics,navigation:navigation.statistics,furnishings:0}};
  if(!fresh){levelCacheKey=key;levelCache=world;}

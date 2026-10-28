@@ -15,6 +15,17 @@ try{
  for(const [x,z] of [[2,2],[8,8]]){const s=await page.evaluate(([x,z])=>__levelStudio.screenWorldPoint(x,z),[x,z]);await page.mouse.click(s.x,s.y);}
  assert.equal(await page.evaluate(()=>__levelStudio.project.ground.floors.length),1);
  assert.equal(await page.evaluate(()=>__levelStudio.project.architecture.added.length),4);
+ await page.locator('[data-tool="door"]').click();
+ let at=await page.evaluate(()=>__levelStudio.screenWorldPoint(5,2));await page.mouse.click(at.x,at.y);
+ assert.equal(await page.evaluate(()=>__levelStudio.project.architecture.added.filter(e=>e.kind==='door').length),1);
+ await page.locator('[data-tool="window"]').click();at=await page.evaluate(()=>__levelStudio.screenWorldPoint(8,5));await page.mouse.click(at.x,at.y);
+ assert.equal(await page.evaluate(()=>__levelStudio.project.architecture.added.filter(e=>e.kind==='window').length),1);
+ await page.locator('[data-tab="furnish"]').click();await page.locator('#placeFurniture').click();
+ at=await page.evaluate(()=>__levelStudio.screenWorldPoint(5,5));await page.mouse.click(at.x,at.y);
+ assert.equal(await page.evaluate(()=>__levelStudio.project.furniture.added.length),1);
+ await page.keyboard.press('Escape');await page.locator('#undo').click();assert.equal(await page.evaluate(()=>__levelStudio.project.furniture.added.length),0);
+ await page.locator('#redo').click();assert.equal(await page.evaluate(()=>__levelStudio.project.furniture.added.length),1);
+
  await page.locator('#threeView').click();assert(await page.locator('#scene3d').isVisible());
  await page.locator('#planView').click();await page.locator('#demo').click();
  await page.locator('#check').click();assert.match(await page.locator('#results').innerText(),/SPELBAR I MOTORN/);
@@ -59,6 +70,24 @@ try{
  const unsafe=await context.newPage();await unsafe.goto(origin+'/fps/?level=..%2F..%2Fsecret&test=1',{waitUntil:'domcontentloaded'});await unsafe.waitForFunction(()=>!document.querySelector('#fatal').hidden);assert.match(await unsafe.locator('#fatal').innerText(),/Ogiltigt nivå-ID/);await unsafe.close();
  const old=await context.newPage();track(old);await old.goto(origin+'/fps/?test=1',{waitUntil:'domcontentloaded'});await old.waitForFunction(()=>window.__fps||!document.querySelector('#fatal').hidden);
  assert(await old.locator('#fatal').isHidden(),await old.locator('#fatal').innerText());assert.equal(await old.evaluate(()=>__fps.world.data.__custom),undefined);
+ await old.close();
+ const edit=await context.newPage();track(edit);await edit.goto(origin+'/furniture-editor/new.html?mode=edit-floor5',{waitUntil:'domcontentloaded'});
+ await edit.waitForFunction(()=>!!window.__levelStudio);
+ assert.equal(await edit.evaluate(()=>__levelStudio.project.mode),'edit-floor5');
+ assert.equal(await edit.evaluate(()=>__levelStudio.project.gameplay.spawns.length),10);
+ await edit.locator('#check').click();assert.match(await edit.locator('#results').innerText(),/SPELBAR I MOTORN/);
+ const target=await edit.evaluate(()=>{const o=__levelStudio.scene.items[0];return {...__levelStudio.screenWorldPoint(o.x,o.z),id:o.id};});
+ await edit.locator('[data-tool="select"]').click();await edit.mouse.click(target.x,target.y);await edit.locator('#remove').click();
+ assert(await edit.evaluate(id=>__levelStudio.project.furniture.removed.includes(id),target.id));
+ const editDownload=edit.waitForEvent('download');await edit.locator('#save').click();const editZip=await editDownload;
+ const editBytes=readFileSync(await editZip.path());await edit.locator('#open').setInputFiles({name:'floor5.zip',mimeType:'application/zip',buffer:editBytes});
+ await edit.waitForFunction(()=>document.querySelector('#status').textContent.startsWith('Projektet öppnat'));
+ const editPopup=edit.waitForEvent('popup');await edit.locator('#preview').click();const editGame=await editPopup;track(editGame);await edit.close();
+ await editGame.goto(origin+'/fps/?level=preview&test=1',{waitUntil:'domcontentloaded'});await editGame.waitForFunction(()=>window.__fps||!document.querySelector('#fatal').hidden);
+ assert(await editGame.locator('#fatal').isHidden(),await editGame.locator('#fatal').innerText());
+ assert.equal(await editGame.evaluate(()=>__fps.world.project.mode),'edit-floor5');
+ assert(await editGame.evaluate(id=>!__fps.world.data.obstacles.some(o=>o.id===id),target.id));
+ await editGame.close();
  assert.deepEqual(errors,[]);
  console.log(JSON.stringify({status:'PASS',mouseRoom:true,zipBytes:bytes.length,spawns:10,privateFPS:true,publishedFPS:true,floor5:true,unsafeLevelRejected:true,consoleErrors:0}));
 }finally{await browser.close();}

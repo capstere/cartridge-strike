@@ -4,6 +4,7 @@ import {GlassVisuals} from './glass-visuals.mjs';
 import {buildRiposteProps} from './riposte-props.mjs';
 import {makeWeapon} from './models.mjs';
 import {WEAPONS} from './config.mjs';
+import {buildProjectFurniture} from '../../furniture-editor/build/project-visuals.mjs';
 import {buildFacilityScene} from './facility-scene.mjs';
 import {installFocusLighting} from './strike-kit-environment.mjs';
 import {VisualDepth} from './visual-depth.mjs';
@@ -78,6 +79,7 @@ export class Renderer extends EngineRenderer {
     // Stage the field before the existing app declares its assets ready. Never bake in render().
     this.assetsReady=this.assetsReady.then(async()=>{
       if(this.presentationDisposed)return;
+      if(world.projectScene){this.projectFurniture=new THREE.Group();this.scene.add(this.projectFurniture);await buildProjectFurniture(world.projectScene.items,this.projectFurniture);}
       this.actionVisuals=new ActionVisuals(this.scene,world);
       await loadCharacterLibrary();
       if(this.presentationDisposed)return;

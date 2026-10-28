@@ -1,32 +1,36 @@
 import {parseProject} from './level-project.mjs';
 import {levelProjectToWorldData} from '../../src/fps/level-adapter.mjs';
-import {createWorld} from '../../src/fps/world.mjs';
+import {createWorld,inheritFloor5Gameplay} from '../../src/fps/world.mjs';
+import {resolveProjectScene} from './project-scene.mjs';
 import {corners,inside,intersects,segmentIntersectsRectangle} from '../core.mjs';
 import {wallPieces} from './architecture.mjs';
+import {testDoorTraversal} from './door-traversal.mjs';
 
 /** Validation never labels a structural-only result playable. */
 export function validateLevel(input,{engine=false}={}){
  const results=[];const add=(check,status,detail,id,fix)=>results.push({check,status,detail,...(id?{id}:{}),...(fix?{fix}:{})});
  let p;try{p=parseProject(input);}catch(e){add('V14','fail',e.message,null,'Rätta filformatet och öppna projektet igen.');return report(false,results);}
- const g=p.ground,play=p.gameplay,entries=p.architecture.added;
+ p=inheritFloor5Gameplay(p);const scene=resolveProjectScene(p),g=p.ground,play=p.gameplay,entries=scene.entries;
+ const onFloor=(x,z)=>scene.floors.some(f=>inside(x,z,f.polygon));
+ const edited=e=>p.mode==='new-level'||!e.source||p.architecture.edits.some(a=>a.id===e.id);
  const points=[...play.spawns,...[play.objectives.bomb,play.objectives.rescue,...play.objectives.hostages].filter(Boolean)];
  for(const team of ['analysts','counterAnalysts']){
   const actual=play.spawns.filter(s=>s.team===team).length;
   if(actual<play.counts[team])add('V03','fail',`${team}: ${actual} av ${play.counts[team]} startpunkter.`,team,'Placera alla fem lagmedlemmar i SPEL.');
  }
  if(!results.some(r=>r.check==='V03'))add('V03','pass','Båda lagen har angivet antal startpunkter.');
- if(!g.floors.length)add('V04','fail','Banan saknar golv.','ground','Rita minst ett rum eller en korridor.');
- for(const x of points)if(!g.floors.some(f=>x.x>=f.x0&&x.x<=f.x1&&x.z>=f.z0&&x.z<=f.z1))add('V04','fail',`${x.id} ligger utanför golvet.`,x.id,'Dra punkten innanför en golvyta.');
+ if(!scene.floors.length)add('V04','fail','Banan saknar golv.','ground','Rita minst ett rum eller en korridor.');
+ for(const x of points)if(!onFloor(x.x,x.z))add('V04','fail',`${x.id} ligger utanför golvet.`,x.id,'Dra punkten innanför en golvyta.');
  if(!results.some(r=>r.check==='V04'))add('V04','pass','Punkter ligger inom grundytans golv.');
  add('V05','pass','ID och datatyper kontrollerade av projektparsern.');
- for(const e of entries.filter(e=>['door','card-door','opening'].includes(e.kind))){
+ for(const e of entries.filter(e=>edited(e)&&['door','card-door','opening'].includes(e.kind))){
   const width=Math.hypot(e.a[0]-e.b[0],e.a[1]-e.b[1]);
   if(width<1.10-1e-6)add('V06','fail',`${e.kind} är ${width.toFixed(2)} modellenheter bred.`,e.id,'Öka till minst 1,10 modellenheter.');
  }
  if(!results.some(r=>r.check==='V06'))add('V06','pass','Nya dörrar och passager når 1,10 modellenheter nominellt.');
  add('V09','pass','Dörrar använder motorns automatiska gångjärn och svängriktning.');
  if(!engine)add('V10','info','Glasets kollisions- och skottlogik väntar på motorvalidering.');
- for(const f of g.floors.filter(f=>f.role==='corridor'))if(Math.min(f.x1-f.x0,f.z1-f.z0)<2-1e-6)
+ for(const f of scene.floors.filter(f=>f.role==='corridor'))if(Math.min(f.x1-f.x0,f.z1-f.z0)<2-1e-6)
   add('V15','warn',`Korridor ${f.name} är smalare än 2,0 modellenheter.`,f.id,'Bredda korridoren för enklare spel.');
  if(!engine&&!results.some(r=>r.check==='V15'))add('V15','info','Nominell korridorbredd kontrollerad; fri bredd väntar på 0,1-rutnät i motorn.');
  add('V14','pass','Storlek och antal ligger inom schema- och importgränser.');
@@ -36,10 +40,11 @@ export function validateLevel(input,{engine=false}={}){
   add('V01','fail','Bomb, rescue och två gisslan krävs för klassiskt spel.',null,'Placera målen i SPEL.');return report(true,results);
  }
  let world;try{world=createWorld({levelProject:p,fresh:true});}catch(e){add('V01','fail','Motorn kunde inte bygga banan: '+e.message,null,'Kontrollera geometri och spawns.');return report(true,results);}
- const walls=wallPieces(entries),furniture=p.furniture.added;
+ const walls=wallPieces(entries),furniture=scene.items;
  for(const o of furniture){
+  if(o.collision==='none'||(p.mode==='edit-floor5'&&o.original&&!p.furniture.placements.some(v=>v.id===o.id)))continue;
   const footprint=corners(o);
-  if(!g.floors.some(f=>footprint.every(([x,z])=>x>=f.x0&&x<=f.x1&&z>=f.z0&&z<=f.z1)))
+  if(!footprint.every(([x,z])=>onFloor(x,z)))
    add('V08','fail','Möbeln ryms inte helt på en golvyta.',o.id,'Flytta möbeln inåt.');
   for(const w of walls)if(segmentIntersectsRectangle(w.a,w.b,o,Math.max(.012,w.thickness/2-.007)))
    add('V08','fail','Möbeln överlappar en vägg eller glasyta.',o.id,'Flytta möbeln från väggen.');
@@ -58,7 +63,7 @@ export function validateLevel(input,{engine=false}={}){
  }
  if(!results.some(r=>r.check==='V10'&&r.status==='fail'))add('V10','pass','Motorns glasrutor blockerar rörelse och kan krossas av skott.');
  const targets=[play.objectives.bomb,play.objectives.rescue,...play.objectives.hostages];
- for(const f of g.floors.filter(f=>f.role==='corridor')){
+ for(const f of scene.floors.filter(f=>f.role==='corridor')){
   const alongX=f.x1-f.x0>=f.z1-f.z0,low=alongX?f.z0:f.x0,high=alongX?f.z1:f.x1,
    start=alongX?f.x0:f.z0,end=alongX?f.x1:f.z1;
   let minimum=Infinity;
@@ -75,7 +80,7 @@ export function validateLevel(input,{engine=false}={}){
  for(const spawn of play.spawns)for(const target of targets)if(!world.findPath(spawn,target).length)
   add('V01','fail',`${spawn.id} kan inte nå ${target.id}.`,spawn.id,'Öppna en sammanhängande passage och kontrollera möbler.');
  if(!results.some(r=>r.check==='V01'))add('V01','pass',`${play.spawns.length} startpunkter når alla ${targets.length} mål i navigationsmotorn.`);
- for(const d of world.data.doors.filter(d=>!d.blocked&&!d.lockedUntilImplemented)){
+ for(const d of world.data.doors.filter(d=>!d.blocked&&!d.lockedUntilImplemented&&(p.mode==='new-level'||p.architecture.added.some(e=>e.id===d.id)||p.architecture.edits.some(e=>e.id===d.id)))){
   const dx=d.b[0]-d.a[0],dz=d.b[1]-d.a[1],len=Math.hypot(dx,dz),nx=-dz/len,nz=dx/len;
   const a={x:d.center[0]+nx*.85,z:d.center[1]+nz*.85},b={x:d.center[0]-nx*.85,z:d.center[1]-nz*.85};
   if(!world.staticCanOccupy(a.x,a.z,.20)||!world.staticCanOccupy(b.x,b.z,.20)||
@@ -83,14 +88,17 @@ export function validateLevel(input,{engine=false}={}){
    add('V06','fail','Motorns kapsel/navigering når inte igenom dörren i båda riktningar.',d.id,'Rensa dörrzonen och pröva bredare öppning.');
  }
  if(!results.some(r=>r.check==='V06'&&r.status==='fail'))add('V06','pass','Båda riktningar genom aktiva dörrar testade med motorns kapsel och navigering.');
- for(const f of g.floors)if(!world.navigation.nodes.some(n=>n.x>f.x0&&n.x<f.x1&&n.z>f.z0&&n.z<f.z1))
+ for(const f of scene.floors)if(!world.navigation.nodes.some(n=>n.x>f.x0&&n.x<f.x1&&n.z>f.z0&&n.z<f.z1))
   add('V11','warn',`Ingen nåbar navigationspunkt i ${f.name}.`,f.id,'Anslut golvytan och frigör plats.');
  if(!results.some(r=>r.check==='V11'))add('V11','pass','Golvytorna har navigationspunkter.');
  const a=world.anchors.analysts,c=world.anchors.counterAnalysts;
  if(a.some(x=>c.some(y=>world.segmentClear({...x,y:1.5},{...y,y:1.5}))))add('V13','warn','Motståndarnas startpunkter har direkt siktlinje.',null,'Lägg skydd mellan lagen.');
  else add('V13','pass','Ingen direkt sikt mellan lagens spawns.');
  add('V12','info','Bedöm långa siktlinjer och skydd i 3D-vyn.');
- add('V16','info','Navigering använder båda öppna dörrbladslägena; fysisk sväng styrs vid aktörens ankomst.');
+ const ids=p.mode==='edit-floor5'?new Set([...p.architecture.added,...p.architecture.edits].map(e=>e.id)):null;
+ const traversals=testDoorTraversal(world,{ids});
+ for(const row of traversals.filter(r=>r.status==='fail'))add('V16','fail',`Kapseln fastnar i dörren från sida ${row.side}.`,row.id,'Frigör svängytan och kontrollera öppningens bredd.');
+ if(!traversals.some(r=>r.status==='fail'))add('V16','pass',`${traversals.length} dörriktningar simulerade med rörlig kapsel och automatiskt dörrblad.`);
  return report(true,results);
 }
 function report(engine,results){const errors=results.filter(r=>r.status==='fail').length,warnings=results.filter(r=>r.status==='warn').length;
