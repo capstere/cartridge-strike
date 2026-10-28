@@ -11,9 +11,10 @@ import {createRectangleRoom,rectangleFromDimensions} from './rectangle-room.mjs'
 import {FINISH_COLORS,architecturalFinish,WALL_FINISHES,DOOR_FINISHES} from '../appearance.mjs';
 import {makePoster,parsePosters,serializePosters,validatePoster,locatePoster,posterId,POSTER_MAX} from './posters.mjs';
 import {createPosterTexture,compressPosterImage} from './poster-art.mjs';
+import {PAINT_KINDS,wallAtPoint,projectToWall,planPaintOverWall} from './paint-over-wall.mjs';
 const $=id=>document.getElementById(id);
 const DIST=1e-5;
-const floorKind='floor',roomKind='room-rect',posterKind='poster';
+const floorKind='floor',roomKind='room-rect',posterKind='poster',paintKind='paint';
 const palette={wall:0xc31421,glazed:0x22b14c,window:0x00a2e8,
  door:0x99d9ea,'card-door':0x99d9ea,'elevator-door':0x99d9ea,'terrace-door':0x99d9ea,
  opening:0x899796,frame:0x72888c,selected:0xffd16a};
@@ -26,7 +27,7 @@ function minMax(p){return {minX:Math.min(p.a[0],p.b[0]),maxX:Math.max(p.a[0],p.b
 export function createBuildMode({data,scene,canvas,camera,getZoom,getView,rayAt,planePoint,onPan,onOrbit,
  scheduleRender,notify,onChange,onGoRoom,onGoPoint,originalWalls}){
  const baseline=readBaseline(data);let entries=cloneAll(baseline),floors=[],posters=[];
- let active=false,selection=null,mode='select',first=null,hover=null,drag=null;
+ let active=false,selection=null,mode='select',first=null,hover=null,drag=null,paintType='window',overlayDraft=null;
  let history=[],future=[],dirty=false,strokeColor=0;
  const root=new THREE.Group();root.name='architectural-sketch-not-physics';scene.add(root);
  const geo=new THREE.BoxGeometry(1,1,1),sphere=new THREE.SphereGeometry(.13,12,8),materials=new Map();
@@ -67,10 +68,12 @@ export function createBuildMode({data,scene,canvas,camera,getZoom,getView,rayAt,
   $('viewport').style.cursor=active?'crosshair':'auto';
   if(active){$('buildRoom').value=$('room').value;setTool('select');notify?.('Byggläge: välj en vägg eller välj ett ritverktyg. Två klick ritar en ny del.');}
   syncVisibility();render();showProperties();renderList();}
- function setTool(next){if(!['select',...ARCHITECTURE_TYPES,floorKind,roomKind,posterKind].includes(next))return;
-  mode=next;first=null;hover=null;
+ function setTool(next){if(!['select',...ARCHITECTURE_TYPES,floorKind,roomKind,posterKind,paintKind].includes(next))return;
+  mode=next;first=null;hover=null;overlayDraft=null;
   $('buildTool').value=next;
   $('buildRoomSettings').hidden=next!==roomKind;
+  $('buildPaintSettings').hidden=next!==paintKind;
+  $('buildSmartPaint').classList.toggle('active',next===paintKind);
   $('buildRoomCreateExact').disabled=!first;
   for(const b of document.querySelectorAll('[data-build-tool]')){
     const is=b.dataset.buildTool===next;b.classList.toggle('active',is);b.setAttribute('aria-pressed',String(is));}
@@ -78,12 +81,13 @@ export function createBuildMode({data,scene,canvas,camera,getZoom,getView,rayAt,
    next==='floor'?'Klicka två hörn för att rita en ny golvrektangel.':
    next===roomKind?'Klicka första och motsatta hörnet i planvyn. Fyra väggar och valfritt golv skapas tillsammans. Eller ange exakta mått efter första klicket.':
    next===posterKind?'Klicka på önskad vägg i PLANVY eller direkt på väggytan i 3D. Därefter kan du ändra text, mått och ladda upp din affischbild.':
+   next===paintKind?'Dra direkt längs en befintlig vägg, eller klicka två punkter. Välj Fönster, Glasvägg eller Dörr i samma panel utan att byta verktyg.':
    `Klicka en startpunkt och därefter en slutpunkt: ${ARCHITECTURE_NAMES[next]}.`;
   render();}
  function smartEnabled(ev){return $('buildSmartSnap').checked&&!ev.altKey;}
  function point(ev,excludeId=null){
   const pt=planePoint(ev);if(!pt)return null;
-  const draft=first&&mode!=='select'&&mode!==floorKind&&mode!==roomKind&&mode!==posterKind?first:null;
+  const draft=first&&mode!=='select'&&mode!==floorKind&&mode!==roomKind&&mode!==posterKind&&mode!==paintKind?first:null;
   const result=snapDraftPoint([pt.x,pt.z],entries,{start:draft,
    excludeId,grid:mode==='select'?0:(($('snap').checked&&!ev.altKey)?0.1:0),
    snapToGeometry:mode!=='select'&&smartEnabled(ev),
@@ -98,6 +102,48 @@ export function createBuildMode({data,scene,canvas,camera,getZoom,getView,rayAt,
    $('buildSnapFeedback').textContent=result.kind==='fri'?'Fri placering':result.kind==='rutnät'?'Rutnät 10 cm':'Fäster till '+result.kind;
   }
   return result?.point||null;
+ }
+ function effectivePaintKind(){return mode===paintKind?paintType:mode;}
+ function updatePaintType(kind){
+  if(!PAINT_KINDS.includes(kind))return;
+  paintType=kind;$('buildPaintKind').value=kind;
+  for(const button of document.querySelectorAll('[data-paint-kind]')){
+   const selected=button.dataset.paintKind===kind;
+   button.classList.toggle('active',selected);button.setAttribute('aria-pressed',String(selected));
+  }
+  if(mode!==paintKind)setTool(paintKind);
+  if(overlayDraft){first=null;hover=null;overlayDraft=null;render();}
+  notify?.('SMART RITA: '+(ARCHITECTURE_NAMES[kind]||kind)+' valt. Dra över en vägg eller klicka två punkter.');
+ }
+ function paintEndpoint(event){
+  const pt=planePoint(event);return pt?[pt.x,pt.z]:null;
+ }
+ function beginOverlay(event,forced=false){
+  if(!forced&&!PAINT_KINDS.includes(effectivePaintKind()))return false;
+  if(event.altKey&&!forced)return false;
+  const p=paintEndpoint(event);if(!p)return false;
+  const hit=wallAtPoint(entries,p,{radius:clamp(getZoom()/Math.max(200,canvas.clientHeight)*6,.12,.29)});
+  if(!hit){
+   if(forced)notify?.('Börja genom att klicka på själva vägglinjen (röd eller grå).');
+   return false;
+  }
+  overlayDraft={wallId:hit.wall.id};
+  first=hit.point;hover=hit.point;
+  $('buildSnapFeedback').textContent='SMART RITA · '+(ARCHITECTURE_NAMES[effectivePaintKind()]||'Fönster')+' · klicka slutpunkt på samma vägg';
+  render();return true;
+ }
+ function completeOverlay(event){
+  if(!overlayDraft)return false;
+  const p=paintEndpoint(event);if(!p)return false;
+  try{
+   const plan=planPaintOverWall(entries,overlayDraft.wallId,first,p,effectivePaintKind(),{posters});
+   const before=capture();
+   entries=plan.entries;posters=plan.posters;selection=plan.paintedId;
+   first=null;hover=null;overlayDraft=null;drag=null;
+   record(before);
+   notify?.((ARCHITECTURE_NAMES[plan.kind]||'Byggdel')+' klar! '+(plan.full?'Hela väggen ändrad.':'Väggen delades automatiskt utan överlapp.')+' Rita nästa direkt – verktyget är fortfarande aktivt. Ctrl+Z ångrar.');
+   return true;
+  }catch(error){notify?.(error.message);return false;}
  }
  function addBox(queue,name,id,x,y,z,w,h,d,ang=0){if(w<.001||h<.001||d<.001)return;
   const list=queue.get(name)||[];list.push({id,x,y,z,w,h,d,ang});queue.set(name,list);}
