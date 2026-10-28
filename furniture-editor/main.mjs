@@ -130,9 +130,10 @@ function updateCamera(){
 }
 function view(mode){cameraMode=mode;$('#topView').classList.toggle('active',mode==='top');$('#threeView').classList.toggle('active',mode==='3d');$('#topView').setAttribute('aria-pressed',mode==='top');$('#threeView').setAttribute('aria-pressed',mode==='3d');building?.setView();scheduleRender();}
 function roomAt(x,z){return data.rooms.find(r=>r.status==='included'&&inside(x,z,r.polygon))||null;}
-function updateLocationLabel(){const r=roomAt(target.x,target.z);const el=$('#areaHere');if(!el)return;
- el.textContent=r?'DU ÄR VID: '+(ROOM_LABELS[r.id]||r.name||'Område')+' · '+r.id:'DU ÄR VID: en fri yta utanför möblerbara rum';
- el.title='Kamerans mittpunkt: X '+target.x.toFixed(2)+' · Z '+target.z.toFixed(2);
+function updateLocationLabel(){const r=roomAt(target.x,target.z);
+ const label=r?'DU ÄR VID: '+(ROOM_LABELS[r.id]||r.name||'Område')+' · '+r.id:'DU ÄR VID: en fri yta utanför möblerbara rum';
+ for(const id of ['#areaHere','#areaHereBuild']){const el=$(id);if(!el)continue;
+  el.textContent=label;el.title='Kamerans mittpunkt: X '+target.x.toFixed(2)+' · Z '+target.z.toFixed(2);}
  if(r&&room!==r.id){room=r.id;$('#room').value=r.id;renderList();}
 }
 function goToRoom(id=room){const r=data.rooms.find(r=>r.id===id);if(!r)return;const [x0,z0,x1,z1]=bounds(r.polygon);target.set((x0+x1)/2,0,(z0+z1)/2);zoom=Math.max(4,Math.min(42,Math.max(z1-z0+3,(x1-x0+3)*.80)));updateLocationLabel();scheduleRender();}
