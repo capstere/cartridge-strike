@@ -18,6 +18,7 @@ import {assetHash} from './library/glb-utils.mjs';
 import {createBuildMode} from './build/build-mode.mjs';
 import {parseArchitecture} from './build/architecture.mjs';
 import {parsePosters} from './build/posters.mjs';
+import {parseTreatments} from './build/treatments.mjs';
 import {findCameraPlacement} from './placement.mjs';
 import {isTable,isChair,chairRole,chairColors,validateDimensions,FINISH_COLORS,cameraPanVector} from './appearance.mjs';
 const $=s=>document.querySelector(s),data=globalThis.SpelFloor5,worldSource=globalThis.SpelWorld;
@@ -252,6 +253,7 @@ async function importFile(file){if(!file)return;if(file.size>PROJECT_ZIP_MAX_BYT
  }else{if(file.size>5*1024*1024)throw Error('JSON-filen är för stor (max 5 MB).');doc=JSON.parse(await file.text());}
  const parsed=parsePatch(doc,baseline),arch=parseArchitecture(doc.architecture,building.getBaseline());
  parsePosters(doc.architecture?.posters,arch.entries);
+ parseTreatments(doc.architecture?.treatments,arch.entries);
  if(stored.length){for(const f of stored){const name=doc.added.find(x=>x.assetId===f.id)?.assetName||'Egen-modell';
    await importLocalGLB(new File([f.data],name+'.glb',{type:'model/gltf-binary'}));}
   localEntries=await localLibrary();renderLibrary();
@@ -284,7 +286,8 @@ function renderLibrary(){const query=$('#librarySearch').value.trim().toLocaleLo
 }
 /** Place at the camera's CURRENT location; never jump to the room dropdown's center. */
 function findPlacement(entry){
- return findCameraPlacement(entry,target,data.rooms,items.filter(o=>!o.deleted),data,{inside,round,validate});
+ return findCameraPlacement(entry,target,data.rooms,items.filter(o=>!o.deleted),data,{inside,round,
+  validate:(candidate,used,source)=>validate(candidate,used,source,null,{emptyFixed})});
 }
 async function addPreset(id){
  const entry=LIBRARY_MAP.get(id)||localEntries.find(e=>e.id===id);
