@@ -14,6 +14,7 @@ import {readModelBundleZip} from './library/model-bundle.mjs';
 import {assetHash} from './library/glb-utils.mjs';
 import {createBuildMode} from './build/build-mode.mjs';
 import {parseArchitecture} from './build/architecture.mjs';
+import {parsePosters} from './build/posters.mjs';
 import {isTable,isChair,chairRole,chairColors,validateDimensions,FINISH_COLORS,cameraPanVector} from './appearance.mjs';
 const $=s=>document.querySelector(s),data=globalThis.SpelFloor5,worldSource=globalThis.SpelWorld;
 if(!data||!worldSource||!T.WebGLRenderer)throw new Error('Spelplanen eller Three.js saknas.');
@@ -231,8 +232,9 @@ async function importFile(file){if(!file)return;if(file.size>PROJECT_ZIP_MAX_BYT
   const packages=[...contents.keys()].filter(n=>n!=='projekt.json');
   if(packages.length!==expected.length)throw Error('ZIP-filen saknar eller innehåller extra 3D-modeller.');
   for(const id of expected){const name='models/'+id.slice(6)+'.glb',bytes=contents.get(name);if(!bytes||'local:'+await assetHash(bytes)!==id)throw Error('GLB-filen har ändrats efter sparningen.');stored.push({id,data:bytes});}
- }else{if(file.size>350000)throw Error('JSON-filen är för stor.');doc=JSON.parse(await file.text());}
- const parsed=parsePatch(doc,baseline);parseArchitecture(doc.architecture,building.getBaseline());
+ }else{if(file.size>5*1024*1024)throw Error('JSON-filen är för stor (max 5 MB).');doc=JSON.parse(await file.text());}
+ const parsed=parsePatch(doc,baseline),arch=parseArchitecture(doc.architecture,building.getBaseline());
+ parsePosters(doc.architecture?.posters,arch.entries);
  if(stored.length){for(const f of stored){const name=doc.added.find(x=>x.assetId===f.id)?.assetName||'Egen-modell';
    await importLocalGLB(new File([f.data],name+'.glb',{type:'model/gltf-binary'}));}
   localEntries=await localLibrary();renderLibrary();
