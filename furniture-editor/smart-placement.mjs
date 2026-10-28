@@ -29,7 +29,7 @@ export function findSupport(item,point,objects,{radius=.38}={}){
   if(dist>radius+.16)continue;
   const priority=dist+Math.abs(point.x-surface.x)*.002;
   if(priority<score){score=priority;best={...target,yaw:surface.yaw,
-   mountId:surface.id,elevation:round(surface.height-.008),kind:role};}
+   mountId:surface.id,elevation:round(surface.height-.008),snapRole:role};}
  }
  return best;
 }
