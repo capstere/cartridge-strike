@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "gameVersion": "0.17.0",
+  "gameVersion": "0.18.0",
   "entrypoint": "fps/index.html",
   "release": {
     "mode": "owner-approved-facility-details-glass",
@@ -472,7 +472,7 @@
     {
       "path": "fps/index.html",
       "bytes": 10356,
-      "sha256": "05b222c856ca49af925c6a933d4cf7e47121fbd74effa42f762b776ab1445f78"
+      "sha256": "8b7d123572b13aa0c3d423c4c58f9731796c622951ec21c1db2b5ae2c878af21"
     },
     {
       "path": "fps/style.css",
@@ -480,9 +480,104 @@
       "sha256": "b257d3585567e1367a7d69b2e815e32535d0ae3e62d71431de99ec50df575cc5"
     },
     {
+      "path": "furniture-editor/appearance.mjs",
+      "bytes": 3462,
+      "sha256": "7b002b11298725eb846921fb14d3307b46bd419b882c6feff0e290cda2ed851f"
+    },
+    {
+      "path": "furniture-editor/build/architecture.mjs",
+      "bytes": 11679,
+      "sha256": "c70c5c898626762f798cc3a53b08f6debbc8eabe2ae60b0842cbfd0f9ff304af"
+    },
+    {
+      "path": "furniture-editor/build/level-project.mjs",
+      "bytes": 10468,
+      "sha256": "d1dd8e061f9ea13941e09a7fbe86f714a9948ca3b7c74e3b68f9e1dc3ba8a97e"
+    },
+    {
+      "path": "furniture-editor/build/level-project.schema.json",
+      "bytes": 7021,
+      "sha256": "ea51a6b6511b39af77d4b47a83a88b9fe930a9c254e06fff904df1da986cbeab"
+    },
+    {
+      "path": "furniture-editor/build/validate-level.mjs",
+      "bytes": 8768,
+      "sha256": "0bd1c88ebe231e41f037a40a389ee9fcd077b813d12886ef33895793a46254ed"
+    },
+    {
+      "path": "furniture-editor/core.mjs",
+      "bytes": 13511,
+      "sha256": "0237320972ce46b4cc9fa07ddbfddb1f259d7e12b2a86ed5389e08b25b253467"
+    },
+    {
+      "path": "furniture-editor/index.html",
+      "bytes": 25710,
+      "sha256": "98defdb84740f19b5d32872923c604c5d9e05d5b46c8c86186e517100a978bd1"
+    },
+    {
+      "path": "furniture-editor/library/catalog.mjs",
+      "bytes": 47690,
+      "sha256": "59449beb150a42fdc4b259283c50171563a31c3f723efd4f928724c113d34a40"
+    },
+    {
+      "path": "furniture-editor/library/glb-utils.mjs",
+      "bytes": 3886,
+      "sha256": "de67282165c33c21f7029b8482ee9cb55062e35cb7de68fa95e653c0c0a453d6"
+    },
+    {
+      "path": "furniture-editor/library/models.mjs",
+      "bytes": 6210,
+      "sha256": "2a35479a85d658f92688cfd23b2729b153bb84cee7b91c0671c3ab8870fc7ddf"
+    },
+    {
+      "path": "furniture-editor/library/procedural-mesh.mjs",
+      "bytes": 3128,
+      "sha256": "b9b57293aca45a23d1eef7081dac18d3f2df8d0aef93d89cf106ed448386ac19"
+    },
+    {
+      "path": "furniture-editor/library/procedural.mjs",
+      "bytes": 3506,
+      "sha256": "36886ec4483d055ebef18663e817e704691f7b3e066f4667a8a0bfd2e581415f"
+    },
+    {
+      "path": "furniture-editor/library/zip.mjs",
+      "bytes": 5141,
+      "sha256": "a4bb47eb76afd0f88a226af3fb04600bf312fc5322de3cd499b445cbc60457d9"
+    },
+    {
+      "path": "furniture-editor/new.css",
+      "bytes": 2587,
+      "sha256": "c2ddada11a3ad69f8d1634e475808cba0241e7c7fb08d2442f8ca3e15cebc59e"
+    },
+    {
+      "path": "furniture-editor/new.html",
+      "bytes": 5205,
+      "sha256": "f0383c1a0c89045fefd4b0107d2ab4df4b573adb14cdf1335a2a1f24146f9a57"
+    },
+    {
+      "path": "furniture-editor/new.mjs",
+      "bytes": 24959,
+      "sha256": "176b4160bd552c58a4cf881c40b384b3d03b6f1d23ee4480ac8fc1d0aa77c83c"
+    },
+    {
+      "path": "furniture-editor/smart-placement.mjs",
+      "bytes": 2435,
+      "sha256": "d1cabc328c6584b130b3623c15650ca6477e02a595d1cfd410bf4a51f14a4e8b"
+    },
+    {
       "path": "index.html",
       "bytes": 619,
       "sha256": "851822b26e7424b066fc99d2f2ccca16ea4a5bba09b963d152a0cd714c268dda"
+    },
+    {
+      "path": "levels/manifest.json",
+      "bytes": 157,
+      "sha256": "c3761949b66ccf0a7b4e6055434ad9a170fdb92cdfbe5551ce09a3bdd1fdf0a9"
+    },
+    {
+      "path": "levels/synthetic-demo.json",
+      "bytes": 8045,
+      "sha256": "d7d3d7f136cb9b334d371b8b7d9fc97bac4e0fd3bec1d0954efd3cc1b9637b62"
     },
     {
       "path": "licenses/action-audio.txt",
@@ -586,8 +681,8 @@
     },
     {
       "path": "src/fps/app.mjs",
-      "bytes": 27949,
-      "sha256": "c79fabf1c4359fdb4dec94f7c12f490010ed085e1b8dd086e12870b646ebc4e8"
+      "bytes": 29304,
+      "sha256": "0a49feb2bd1ea43a656eadd31a5dfc1bbaff83a9c31135cef691895dec31b764"
     },
     {
       "path": "src/fps/audio.mjs",
@@ -740,6 +835,11 @@
       "sha256": "c11965f87a2f0da16543209f2093d6067fdd0c2941c6752612cdb84d63654db5"
     },
     {
+      "path": "src/fps/level-adapter.mjs",
+      "bytes": 3462,
+      "sha256": "d4870a2c5160906cd1fd9a20f7f57df7da2528c586b06677302068f636ffe477"
+    },
+    {
       "path": "src/fps/living-floor-art.mjs",
       "bytes": 8469,
       "sha256": "a70c83a4f6723c8a8ed42911e397f3f69cdb0a0e8c23755bc69523b9abcbf21a"
@@ -811,13 +911,13 @@
     },
     {
       "path": "src/fps/render-engine.mjs",
-      "bytes": 29810,
-      "sha256": "cda29394d72a75c14135200b1f01b175f236dcdedbd0fbf60d72f6a354fe152c"
+      "bytes": 29954,
+      "sha256": "4a9ed43811057365f8751cb0c6470b217026ca12d558df73f87b2331a3e83086"
     },
     {
       "path": "src/fps/render.mjs",
-      "bytes": 14170,
-      "sha256": "15a122e4e85d62e178a6954dfe2dad051d4560048347b53988aae151ee8bb255"
+      "bytes": 14352,
+      "sha256": "301518e0ad5e1c8ba81362cabffabc1afc0a1d2c3d95cde99da04ec74587456a"
     },
     {
       "path": "src/fps/riposte-audio.mjs",
@@ -931,13 +1031,13 @@
     },
     {
       "path": "src/fps/world.mjs",
-      "bytes": 6095,
-      "sha256": "88d4707cc6dde4d7bb1efb4d564adcd58f431ae638a0d15657c50e805052e210"
+      "bytes": 8016,
+      "sha256": "dd6fec3b7cef0e5956e9fab5760a34345f288afbc2709d496992dc3206126ce8"
     },
     {
       "path": "src/world.js",
-      "bytes": 17783,
-      "sha256": "a6bfcfcd35c426808bc67c8de705801c8ee3ee96930c38737fa046ebcdfbc676"
+      "bytes": 18435,
+      "sha256": "ab4cb8ee2f6cfbf4997684d9ce66731b38c98e86246d90e4d95162a87fd0741e"
     },
     {
       "path": "vendor/package.json",
@@ -1366,5 +1466,17 @@
       "Excluded volumes and exterior floor boundaries stay inaccessible after breaking glazing.",
       "No appliance simulation or lift/terrace access."
     ]
+  },
+  "levelRelease": {
+    "schemaVersion": 2,
+    "compatibleWith": [
+      "0.18.0"
+    ],
+    "defaultLevel": "floor5",
+    "publicLevels": [
+      "synthetic-demo"
+    ],
+    "modelUnitsVerifiedAsMetres": false,
+    "privatePreview": "browser-local"
   }
 }

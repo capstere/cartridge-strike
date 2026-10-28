@@ -1,0 +1,39 @@
+name: Level project and WebGL journey
+on:
+  pull_request:
+    paths:
+      - 'furniture-editor/**'
+      - 'src/**'
+      - 'levels/**'
+      - 'tools/level-*'
+      - '.github/workflows/level-project.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  level:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Pure tests, Floor 5 doors and SHA manifest
+        run: |
+          node --test furniture-editor/*.test.mjs furniture-editor/build/*.test.mjs furniture-editor/library/*.test.mjs src/fps/level-adapter.test.mjs
+          node tools/owner-door-traversal.mjs
+          node tools/verify-owner-runtime.mjs
+      - name: Install pinned browser and software WebGL
+        run: |
+          npm ci --prefix frontline/source/tools/dev --ignore-scripts --no-audit --no-fund
+          node frontline/source/tools/dev/node_modules/playwright-core/cli.js install chromium
+          sudo timeout 80s apt-get -o Acquire::Retries=1 -o Acquire::http::Timeout=20 install -y libgl1-mesa-dri libglx-mesa0 xvfb
+      - name: Test original editor, new studio and both FPS levels in Chromium
+        run: |
+          python3 -m http.server 8765 --bind 127.0.0.1 >/tmp/level-http.log 2>&1 &
+          PID=$!
+          trap 'kill "$PID" || true' EXIT
+          timeout 220s xvfb-run -a node furniture-editor/editor-browser.mjs
+          timeout 220s xvfb-run -a node furniture-editor/build/build-browser.mjs
+          timeout 240s xvfb-run -a node tools/level-browser-smoke.mjs

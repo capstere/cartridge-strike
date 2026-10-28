@@ -55,7 +55,7 @@ export class Renderer extends EngineRenderer {
   constructor(canvas,world,settings){
     const visualWorld={...world,description:{...world.description,boxes:world.description.boxes.filter(b=>!b.livingVisual)}};
     super(canvas,visualWorld,settings);
-    this.detailScene=buildFacilityDetails(world.details,this.registry);this.scene.add(this.detailScene.root);freezeStaticTransforms(this.detailScene.root);
+    if(!world.newLevel){this.detailScene=buildFacilityDetails(world.details,this.registry);this.scene.add(this.detailScene.root);freezeStaticTransforms(this.detailScene.root);}
     this.glassVisuals=new GlassVisuals(this.scene,world.glass,this.registry);
     this.visualDepth=new VisualDepth(this.renderer);this.inspectAt=-Infinity;this.inspectActor=null;
     this.onInspectKey=e=>{if(e.code==='KeyV'&&!e.repeat&&document.pointerLockElement===canvas&&this.presentationGame)this.requestInspect(this.presentationGame);};
@@ -81,16 +81,16 @@ export class Renderer extends EngineRenderer {
       this.actionVisuals=new ActionVisuals(this.scene,world);
       await loadCharacterLibrary();
       if(this.presentationDisposed)return;
-      this.facilityScene=await buildFacilityScene(world,settings);
+      this.facilityScene=world.newLevel?null:await buildFacilityScene(world,settings);
       if(this.presentationDisposed){this.facilityScene?.dispose();return;}
-      this.livingScene=buildLivingScene(world,this.registry,{replacedProps:this.facilityScene?.plan.replacedProps,refinedFreight:!!this.facilityScene});
+      this.livingScene=world.newLevel?null:buildLivingScene(world,this.registry,{replacedProps:this.facilityScene?.plan.replacedProps,refinedFreight:!!this.facilityScene});
       if(this.facilityScene)this.scene.add(this.facilityScene.root);
-      this.scene.add(this.livingScene.root);this.livingScene.decorateCeilings(this.scene);
-      [this.doorVisuals,this.riposteProps]=await Promise.all([buildDoorVisuals(world.doors),buildRiposteProps(world)]);
+      if(this.livingScene){this.scene.add(this.livingScene.root);this.livingScene.decorateCeilings(this.scene);}
+      [this.doorVisuals,this.riposteProps]=await Promise.all([buildDoorVisuals(world.doors),world.newLevel?Promise.resolve(null):buildRiposteProps(world)]);
       if(this.presentationDisposed){this.doorVisuals?.dispose();this.riposteProps?.dispose();return;}
-      if(this.doorVisuals)this.scene.add(this.doorVisuals.root);this.scene.add(this.riposteProps.root);
-      freezeStaticTransforms(this.riposteProps.root);
-      freezeStaticTransforms(this.livingScene.root);
+      if(this.doorVisuals)this.scene.add(this.doorVisuals.root);if(this.riposteProps)this.scene.add(this.riposteProps.root);
+      if(this.riposteProps)freezeStaticTransforms(this.riposteProps.root);
+      if(this.livingScene)freezeStaticTransforms(this.livingScene.root);
       if(!this.settings.mobile){
       const started=performance.now(),field=await bakeLightfield(world,this.fixtures,{maxSize:96});
       if(this.presentationDisposed)return;

@@ -11,6 +11,7 @@ import {RADIO,isEndless} from './action-rules.mjs';
 import { MobileControls, isTouchDevice } from './mobile-controls.mjs';
 import { PlayerRecoil } from './riposte-recoil.mjs';
 import { TacticalControls } from './tactical-controls.mjs';
+import {parseProject} from '../../furniture-editor/build/level-project.mjs';
 
 const $=id=>document.getElementById(id),testMode=new URLSearchParams(location.search).has('test');
 const touchDevice=isTouchDevice();
@@ -29,6 +30,19 @@ const recoil=new PlayerRecoil();
 let autoTargetId=null,autoTargetSince=0,autoFireTarget=null;
 const resetAutoAim=()=>{autoTargetId=null;autoTargetSince=0;autoFireTarget=null;};
 let tactical=null,grenadeAssist=null,focusHud=null;
+async function selectedLevel(){
+ const id=new URLSearchParams(location.search).get('level');if(id===null)return null;
+ if(id==='preview'){
+  const saved=localStorage.getItem('cartridge-level-preview');if(!saved)throw Error('Ingen privat förhandsvisning finns i den här webbläsaren.');
+  return parseProject(saved);
+ }
+ if(!/^[a-z0-9-]{1,48}$/.test(id))throw Error('Ogiltigt nivå-ID.');
+ const manifest=await (await fetch('../levels/manifest.json',{cache:'no-store'})).json();
+ const entry=manifest.levels?.find(row=>row.id===id);
+ if(!entry||entry.file!==`levels/${id}.json`)throw Error('Nivån finns inte i det publicerade manifestet.');
+ const response=await fetch('../'+entry.file);if(!response.ok)throw Error('Nivåfilen saknas.');
+ const body=await response.text();return parseProject(body);
+}
 const mobile=new MobileControls({
   root:$('mobile-controls'),
   onLook(dx,dy){if(modal||!game?.player?.alive)return;const k=settings.sensitivity*2.15*(tactical?.lookScale(true,yaw,pitch)??1);const before=pitch;yaw-=dx*k;pitch=Math.max(-1.49,Math.min(1.49,pitch-dy*k));recoil.counter(pitch-before);},
@@ -157,5 +171,5 @@ function updateMode(){settings.mode=$('game-mode').value;$('loadout-row').hidden
 $('game-mode').value=['classic','endless'].includes(settings.mode)?settings.mode:'classic';$('loadout').value=settings.loadout||'smg';$('game-mode').onchange=updateMode;$('loadout').onchange=()=>{settings.loadout=$('loadout').value;saveSettings();};
 $('radio-options').innerHTML=RADIO.map((r,i)=>`<div><kbd>${i+1}</kbd><span>${r.text}<small>${r.label}</small></span></div>`).join('');updateMode();
 
-try{await new Promise(r=>setTimeout(r,10));world=createWorld();game=new Game(world);renderer=new Renderer($('game'),world,settings);audio=new AudioSystem(world,settings);await renderer.assetsReady;grenadeAssist=new GrenadeAssist(renderer,settings);$('loading').hidden=true;$('start').disabled=false;raf=requestAnimationFrame(frame);if(testMode){globalThis.__fps={get game(){return game;},world,renderer,audio,settings,start(selected,config={},autoplay=false){start(selected,config,autoplay);return this.snapshot();},step(controls=null,dt=1/60){tactical.update(dt);game.update(dt,controls??input(dt));yaw=game.player.yaw;pitch=game.player.pitch;consumeEvents();tactical.render(renderer);grenadeAssist.update(game,viewActor(),modal);renderer.render(game,viewActor(),dt);updateHud();return this.snapshot();},snapshot(){return JSON.parse(JSON.stringify({...game.state,player:game.player,actors:game.actors.map(({bot,...rest})=>rest),hostages:game.hostages},(k,v)=>k==='bot'?undefined:v));},render(){tactical.render(renderer);grenadeAssist.update(game,viewActor(),modal);renderer.render(game,viewActor(),1/60);updateHud();},pause(value){game.pause(value);},input,showBuy,newMatch,get modal(){return modal;},mobile,recoil,tactical,grenadeAssist,focusHud,renderBudget,minimapCache};}}
+try{await new Promise(r=>setTimeout(r,10));const levelProject=await selectedLevel();world=createWorld({levelProject});if(levelProject){$('loading').textContent='Bygger '+levelProject.name+'…';document.title='Cartridge Strike · '+levelProject.name;document.querySelector('.intro .eyebrow').textContent=(new URLSearchParams(location.search).get('level')==='preview'?'PRIVAT PROVSPELNING / ':'PUBLICERAD BANA / ')+levelProject.name;document.querySelector('.intro .lead').textContent='Egen bana · fem mot fem med befintlig spelmekanik.';}game=new Game(world);renderer=new Renderer($('game'),world,settings);audio=new AudioSystem(world,settings);await renderer.assetsReady;grenadeAssist=new GrenadeAssist(renderer,settings);$('loading').hidden=true;$('start').disabled=false;raf=requestAnimationFrame(frame);if(testMode){globalThis.__fps={get game(){return game;},world,renderer,audio,settings,start(selected,config={},autoplay=false){start(selected,config,autoplay);return this.snapshot();},step(controls=null,dt=1/60){tactical.update(dt);game.update(dt,controls??input(dt));yaw=game.player.yaw;pitch=game.player.pitch;consumeEvents();tactical.render(renderer);grenadeAssist.update(game,viewActor(),modal);renderer.render(game,viewActor(),dt);updateHud();return this.snapshot();},snapshot(){return JSON.parse(JSON.stringify({...game.state,player:game.player,actors:game.actors.map(({bot,...rest})=>rest),hostages:game.hostages},(k,v)=>k==='bot'?undefined:v));},render(){tactical.render(renderer);grenadeAssist.update(game,viewActor(),modal);renderer.render(game,viewActor(),1/60);updateHud();},pause(value){game.pause(value);},input,showBuy,newMatch,get modal(){return modal;},mobile,recoil,tactical,grenadeAssist,focusHud,renderBudget,minimapCache};}}
 catch(error){fatal(error);}
