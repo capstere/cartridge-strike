@@ -606,8 +606,8 @@
     },
     {
       "path": "furniture-editor/new.mjs",
-      "bytes": 54604,
-      "sha256": "3f15274560cb62d2cb65c26ddac022661ade088ac9539e828b85aa4495e6dab9"
+      "bytes": 54921,
+      "sha256": "524ab7f22b81a874e45894f155ce21ed753bbaf5a6ed1738fa766031624d5639"
     },
     {
       "path": "furniture-editor/smart-placement.mjs",

@@ -324,7 +324,8 @@ $('scene3d').addEventListener('pointerdown',e=>{if(e.button===1||e.button===2||(
  $('scene3d').setPointerCapture(e.pointerId);if(e.altKey){orbitDrag={x:e.clientX};return;}
  const pick=pick3d(e),tool=tab==='build'?$('tool').value:tab==='play'?$('gameTool').value:'furnish';
  const onWall=arch().some(a=>a.id===pick.id&&['wall','window','glazed'].includes(a.kind));
- const q=onWall&&pick.surface?pick.surface:pick.ground;if(!q)return;
+ const attachesToWall=tab==='build'&&['door','card-door','opening','window','glazed','poster','curtain','blind'].includes(tool);
+ const q=onWall&&attachesToWall&&pick.surface?pick.surface:pick.ground;if(!q)return;
  if(pendingFurniture){try{const before=JSON.stringify(p());addFurniture(pendingFurniture,q.x,q.z);commit(before);}catch(err){status(err.message);}return;}
  if(tab==='play'){const marker=markers().find(m=>m.id===pick.id);if(marker){selected=marker.id;drag3d={item:marker,before:JSON.stringify(p()),dx:pick.ground.x-marker.x,dz:pick.ground.z-marker.z};redraw();}else try{const before=JSON.stringify(p());placeMarker(tool,q.x,q.z);commit(before);}catch(err){status(err.message);}return;}
  if(tab==='build'&&tool!=='select'){handleBuild(q,tool,{x:e.clientX,y:e.clientY,tool,view:'3d'});return;}
@@ -338,7 +339,9 @@ $('scene3d').addEventListener('pointermove',e=>{if(drag3d){const q=hit3d(e);if(q
   const right={x:Math.cos(orbit),z:-Math.sin(orbit)},forward={x:-Math.sin(orbit),z:-Math.cos(orbit)},focus=view3dCenter??=frameBuiltFloors();
   focus.x+=(-dx*right.x+dy*forward.x)*scale;focus.z+=(-dx*right.z+dy*forward.z)*scale;position3DCamera();renderer.render(scene,camera);return;}
  if(orbitDrag){orbit+=(e.clientX-orbitDrag.x)*.005;orbitDrag.x=e.clientX;position3DCamera();renderer.render(scene,camera);return;}
- const pick=pick3d(e),onWall=arch().some(a=>a.id===pick.id&&['wall','window','glazed'].includes(a.kind));hover3d=onWall&&pick.surface?pick.surface:pick.ground;
+ const pick=pick3d(e),onWall=arch().some(a=>a.id===pick.id&&['wall','window','glazed'].includes(a.kind));
+ const tool=tab==='build'?$('tool').value:null,attachesToWall=['door','card-door','opening','window','glazed','poster','curtain','blind'].includes(tool);
+ hover3d=onWall&&attachesToWall&&pick.surface?pick.surface:pick.ground;
  if(hover3d)$('coordinates').textContent=`X ${hover3d.x.toFixed(1)} · Z ${hover3d.z.toFixed(1)}`;update3DPreview();});
 $('scene3d').addEventListener('pointerup',e=>{if(drawGesture?.view==='3d'&&first&&Math.hypot(e.clientX-drawGesture.x,e.clientY-drawGesture.y)>6){const q=hit3d(e);if(q)finishBuild(first,q,drawGesture.tool);}drawGesture=null;orbitDrag=null;pan3d=null;if(drag3d){commit(drag3d.before);drag3d=null;}});
 $('scene3d').addEventListener('pointercancel',()=>{orbitDrag=null;pan3d=null;drag3d=null;drawGesture=null;});
