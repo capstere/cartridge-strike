@@ -481,13 +481,13 @@
     },
     {
       "path": "fps/walk.html",
-      "bytes": 1758,
-      "sha256": "7366e1c0e2efc86d5fde4c4a285c26d03202629d861bd92290d3e76c9b534000"
+      "bytes": 1790,
+      "sha256": "c12aa43ce39747fa9d63ce333cdf933317d9db07159b6879a506c396374ea89c"
     },
     {
       "path": "fps/walk.mjs",
-      "bytes": 4179,
-      "sha256": "923c18d59c80dcb10b3740fc4aa286685b8df609938d27d9bb84f55a9b5e598c"
+      "bytes": 4731,
+      "sha256": "bb88ca92be8d1c8f5a58e3b3a0a647b1f183285749222da1be8052eede297af9"
     },
     {
       "path": "furniture-editor/appearance.mjs",
@@ -505,6 +505,11 @@
       "sha256": "a40075fc796c407b16ff7b70bd370896fe577f946e6b1353bb23ca43dad2358c"
     },
     {
+      "path": "furniture-editor/build/direct-manipulation.mjs",
+      "bytes": 10304,
+      "sha256": "3c970d43919fda5d50917d9bb32dd812c726a18683b83a71524144f772856daf"
+    },
+    {
       "path": "furniture-editor/build/door-traversal.mjs",
       "bytes": 1234,
       "sha256": "b8b12db83c03031fda6eaf1b6a11d7c453dc5d398066df092b235a213193fed2"
@@ -512,7 +517,7 @@
     {
       "path": "furniture-editor/build/level-project.mjs",
       "bytes": 12951,
-      "sha256": "1f4b73378fcbafa238721c734c3557fa54ab12327354cfe8315d52bdbefcd850"
+      "sha256": "2a7da6bdc69cf8de317a7cccc32b6a1fe475054cdd92afbf09a673a713611611"
     },
     {
       "path": "furniture-editor/build/level-project.schema.json",
@@ -596,18 +601,18 @@
     },
     {
       "path": "furniture-editor/new.css",
-      "bytes": 6289,
-      "sha256": "c708a0c24891b45820cd9629ff34500cf7f50747e35e468b45fba01fe23435ce"
+      "bytes": 7488,
+      "sha256": "37709a258ae2776fd9b334592806f3a8e72f2334a5d4f3cca0c3c02e8853b2d1"
     },
     {
       "path": "furniture-editor/new.html",
-      "bytes": 10240,
-      "sha256": "e7b611c39fd80d83b5369103908feca0a85540546691845a0665cd8201278f6a"
+      "bytes": 11105,
+      "sha256": "84ce1353a87fc0143a7d5d505bfc949afced846792fb9cf01aa7a02a0855de40"
     },
     {
       "path": "furniture-editor/new.mjs",
-      "bytes": 54921,
-      "sha256": "524ab7f22b81a874e45894f155ce21ed753bbaf5a6ed1738fa766031624d5639"
+      "bytes": 67747,
+      "sha256": "6532019f1f256d56d9e41db80cad5a8bf76fefc961870e6439bbaeec88e1a06f"
     },
     {
       "path": "furniture-editor/smart-placement.mjs",
