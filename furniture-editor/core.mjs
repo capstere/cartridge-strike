@@ -60,7 +60,7 @@ export function catalog(data,furnishings){
  return objects.sort((a,b)=>a.roomId.localeCompare(b.roomId)||a.kind.localeCompare(b.kind)||a.id.localeCompare(b.id));
 }
 export function isChanged(current,baseline){return Math.hypot(current.x-baseline.x,current.z-baseline.z)>1e-4||Math.abs(normalizeAngle(current.yaw-baseline.yaw))>1e-4||Math.abs(current.w-baseline.w)>1e-4||Math.abs(current.d-baseline.d)>1e-4||(isChair(current)&&chairRole(current)!==chairRole(baseline));}
-export function validate(item,objects,data,original=null){
+export function validate(item,objects,data,original=null,{emptyFixed=false}={}){
  const room=data.rooms.find(r=>r.id===item.roomId&&r.status==='included');
  if(!room)return 'Rummet är inte godkänt för möblering.';
  // A square chair turning around its existing anchor does not move its original
@@ -71,7 +71,7 @@ export function validate(item,objects,data,original=null){
  // Allow wall-adjacent furniture: the polygon is a room centreline, not an extra 2.5 cm safety exclusion.
  const pts=corners(item);
  if(pts.some(p=>!inside(...p,room.polygon)))return 'Möbeln hamnar utanför rummet.';
- const blocked=[...data.excludedRooms,...data.rooms.filter(r=>r.status==='uncertain'),...data.obstacles.filter(o=>!EDITABLE_KINDS[o.kind])];
+ const blocked=[...data.excludedRooms,...data.rooms.filter(r=>r.status==='uncertain'),...(!emptyFixed?data.obstacles.filter(o=>!EDITABLE_KINDS[o.kind]):[])];
  if(blocked.some(b=>intersects(pts,b.polygon)))return 'Möbeln hamnar på en fast möbel eller spärrad yta.';
  for(const w of data.walls){
   // Physical wall half-thickness only, with 7 mm of contact tolerance. The old
@@ -86,6 +86,8 @@ export function validate(item,objects,data,original=null){
   if(obj.roomId!==item.roomId)continue;
   // Only guard newly introduced overlaps. Known approximate placement in the
   // reviewed baseline must not prevent rotating a chair in place.
+  if(item.mountId===obj.id&&item.elevation>=Math.min(.45,obj.height*.5))continue;
+  if(obj.mountId===item.id&&obj.elevation>=Math.min(.45,item.height*.5))continue;
   if(intersects(corners(item,.012),corners(obj,.012)) &&
    !(original&&obj.original&&intersects(corners(original,.012),corners(obj.original,.012))))return 'Möbeln överlappar en annan möbel.';
  }
@@ -120,6 +122,7 @@ export function exportPatch(objects,baseline,{createdAt=new Date().toISOString()
  for(const o of objects){const old=base.get(o.id);if(o.deleted){if(old)removed.push(o.id);continue;}
   const payload={id:o.id,roomId:o.roomId,kind:o.kind,x:round(o.x),z:round(o.z),yaw:round(normalizeAngle(o.yaw),6)};
   if(!old)added.push({...payload,w:round(o.w),d:round(o.d),height:round(o.height),
+   ...(o.elevation?{elevation:round(o.elevation)}:{}),...(o.mountId?{mountId:o.mountId}:{}),
    ...(isChair(o)?{chairRole:chairRole(o)}:{}),
    ...(o.kind==='prop'&&o.assetRole&&o.assetRole!=='auto'?{assetRole:o.assetRole}:{}),
    ...(o.assetId?{assetId:o.assetId,assetName:String(o.assetName||'3D-objekt').slice(0,90)}:{})});
@@ -154,6 +157,8 @@ export function parsePatch(document,baseline){
      (LIBRARY_MAP.has(p.assetId)||/^local:[a-f0-9]{64}$/.test(p.assetId));
    if((!classic&&!curated)||![p.w,p.d,p.height].every(v=>typeof v==='number'&&Number.isFinite(v)&&v>.05&&v<=8))
      throw Error('Ogiltig ny möbel eller okänd 3D-modell.');
+   if(p.elevation!==undefined&&(!Number.isFinite(p.elevation)||p.elevation<0||p.elevation>3))throw Error('Ogiltig höjd över golv.');
+   if(p.mountId!==undefined&&(typeof p.mountId!=='string'||p.mountId.length>100||p.mountId===p.id))throw Error('Ogiltigt fäste.');
    const obj={...p,assetName:curated?String(p.assetName||LIBRARY_MAP.get(p.assetId)?.name||'Egen 3D-modell').slice(0,90):undefined,source:'added'};
    if(p.assetRole!==undefined&&(!curated||!ASSET_ROLES.includes(p.assetRole)))throw Error('Ogiltig kategori för 3D-modellen.');
    if(p.chairRole!==undefined&&(!isChair(obj)||!CHAIR_ROLES.includes(p.chairRole)))throw Error('Ogiltig stolskategori.');
@@ -174,5 +179,9 @@ export function parsePatch(document,baseline){
  }
  placements.forEach(p=>inspect(p,false));added.forEach(p=>inspect(p,true));
  for(const id of removed){if(typeof id!=='string'||!b.has(id)||seen.has(id))throw Error('Ogiltig borttagen möbel.');seen.add(id);get.get(id).deleted=true;}
+ for(const item of items.filter(o=>!o.deleted&&o.mountId)){
+  const support=get.get(item.mountId);
+  if(!support||support.deleted||item.mountId===item.id||item.elevation<.3)throw Error('Utrustningens fäste saknas i projektet.');
+ }
  return items;
 }
