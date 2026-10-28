@@ -194,6 +194,40 @@ try{
  await page.locator('#buildTool').selectOption('poster');
  check('poster tool can be selected in build toolbar',await page.evaluate(()=>
   __furnitureEditor.build.getTool()==='poster'));
+ // SMART RITA over an existing standalone authored wall: real mouse drag, one undo.
+ await page.locator('#topView').click();
+ const painting=await page.evaluate(()=>{
+   const c=__furnitureEditor.getCameraTarget(),z=c.z;
+   const id=__furnitureEditor.build.testCreate('wall',[c.x-2.2,z],[c.x+2.2,z]);
+   return {id,x:c.x,z,before:__furnitureEditor.build.getEntries().length};
+ });
+ await page.locator('#buildSmartPaint').click();
+ check('one-click SMART RITA mode opens dedicated in-place type palette',
+   await page.locator('#buildPaintSettings').isVisible()&&
+   await page.evaluate(()=>__furnitureEditor.build.getDrawingState().mode==='paint'));
+ const screenPoint=async x=>page.evaluate(({x,z})=>__furnitureEditor.screenWorldPoint(x,z),{x,z:painting.z});
+ const paintStart=await screenPoint(painting.x-1.4),paintEnd=await screenPoint(painting.x+.7);
+ await page.mouse.move(paintStart.x,paintStart.y);
+ await page.mouse.down();
+ await page.mouse.move(paintEnd.x,paintEnd.y,{steps:14});
+ await page.mouse.up();
+ check('mouse drag paints a short window OVER a wall, splitting into three without overlap',
+  await page.evaluate(({id,before})=>{
+   const entries=__furnitureEditor.build.getEntries();
+   return entries.length===before+2&&!entries.some(e=>e.id===id)&&
+    entries.filter(e=>e.kind==='window'&&e.id.startsWith('BYGG-')).length>0;
+  },painting));
+ check('SMART RITA remains selected for the next window without changing tools',
+  await page.evaluate(()=>__furnitureEditor.build.getTool()==='paint'));
+ await page.locator('#buildUndo').click();
+ check('single undo restores original unsplit wall',await page.evaluate(({id,before})=>{
+  const entries=__furnitureEditor.build.getEntries();
+  return entries.length===before&&entries.some(e=>e.id===id&&e.kind==='wall');
+ },painting));
+ await page.locator('#buildPaintKind').selectOption('glazed');
+ check('changing from window to glass does not exit SMART RITA',
+  await page.evaluate(()=>__furnitureEditor.build.getDrawingState().mode==='paint'&&
+   __furnitureEditor.build.getDrawingState().paintType==='glazed'));
  check('no FPS boot, JS/shader errors, external resources or HTTP failures',!report.errors.length&&!report.httpFailures.length&&!report.external.length&&await page.evaluate(()=>!window.__fps));
  report.status='PASS';
 }catch(e){report.status='FAIL';report.errors.push(e.stack||String(e));console.error(e);}
