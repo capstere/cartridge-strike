@@ -74,6 +74,7 @@ try{
  await page.locator('.build-list-item').first().click();
  check('one-click door shortcut enabled on selected wall',await page.locator('#buildDoorInWall').isEnabled());
  await page.locator('#buildDoorInWall').click();
+ check('quick door uses STANDARD 1.20 length',await page.evaluate(()=>__furnitureEditor.getPatch().architecture.added.some(e=>e.kind==='door'&&Math.abs(Math.hypot(e.b[0]-e.a[0],e.b[1]-e.a[1])-1.2)<.002)));
  check('quick door is aligned with wall',await page.evaluate(()=>__furnitureEditor.getPatch().architecture.added.some(e=>e.kind==='door'&&Math.abs(e.a[1]+33.7147944)<.1)));
  await page.locator('#buildUndo').click();
  check('quick door undo restores unchanged original wall',await page.evaluate(()=>__furnitureEditor.getPatch().architecture.added.length===0));
