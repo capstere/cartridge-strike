@@ -2,6 +2,7 @@
  * The canonical map, collision, door ownership and navigation are NEVER mutated.
  * The edits returned by exportArchitecture are user-authored proposals only.
  */
+import {architecturalFinish,WALL_FINISHES,DOOR_FINISHES} from '../appearance.mjs';
 export const ARCHITECTURE_SCHEMA=1;
 export const ARCHITECTURE_TYPES=Object.freeze(['wall','glazed','window','door','card-door','elevator-door','terrace-door','opening']);
 export const ARCHITECTURE_NAMES=Object.freeze({
@@ -29,7 +30,7 @@ export function readBaseline(data){
  for(const w of data.walls){
   const kind=w.surfaceType==='glazed'?'glazed':w.surfaceType==='window'?'window':'wall';
   result.push({id:w.id,source:true,sourceKind:'wall',kind,a:[...w.a],b:[...w.b],
-   height:w.height||2.85,thickness:w.thickness||.1,sill:.9});
+   height:w.height||2.85,thickness:w.thickness||.1,sill:.9,finish:'white'});
  }
  for(const d of data.doors){
   let kind='door';
@@ -38,7 +39,7 @@ export function readBaseline(data){
   else if(d.doorType==='terrace'||d.id==='D01T')kind='terrace-door';
   else if(d.accessCardConfirmed||d.doorType==='access-card')kind='card-door';
   result.push({id:d.id,source:true,sourceKind:'door',kind,a:[...d.a],b:[...d.b],
-   height:d.height||2.4,thickness:.09,sill:.9,originallyBlocked:!!d.blocked});
+   height:d.height||2.4,thickness:.09,sill:.9,finish:architecturalFinish(kind),originallyBlocked:!!d.blocked});
  }
  const keys=new Set();for(const e of result){if(keys.has(e.id))throw Error('Dubbelt arkitektur-ID '+e.id);keys.add(e.id);}
  return result;
@@ -53,6 +54,9 @@ export function validateEntry(entry,{isNew=false}={}){
  if(!finite(entry.height)||entry.height<.45||entry.height>6)throw Error('Byggdelens höjd måste vara 0,45–6 m.');
  if(!finite(entry.thickness)||entry.thickness<.025||entry.thickness>.7)throw Error('Väggtjockleken måste vara 0,025–0,70 m.');
  if(!finite(entry.sill)||entry.sill<0||entry.sill>entry.height-.15)throw Error('Fönsterbröstningen är inte giltig.');
+ if(entry.finish!==undefined&&
+   !((isWall(entry.kind)?WALL_FINISHES:DOOR_FINISHES).includes(entry.finish)))
+  throw Error('Färgvalet passar inte byggdelen.');
  return true;
 }
 export function validateFloorRect(e){
@@ -65,11 +69,11 @@ export function validateFloorRect(e){
 }
 const eq=(a,b)=>Math.abs(a-b)<.0001;
 export function entryChanged(e,original){
- return e.kind!==original.kind||!eq(e.height,original.height)||!eq(e.thickness,original.thickness)||!eq(e.sill,original.sill)||
+ return e.kind!==original.kind||architecturalFinish(e.kind,e.finish)!==architecturalFinish(original.kind,original.finish)||!eq(e.height,original.height)||!eq(e.thickness,original.thickness)||!eq(e.sill,original.sill)||
   [...e.a,...e.b].some((v,i)=>!eq(v,[...original.a,...original.b][i]));
 }
 export const serializeEntry=e=>({id:e.id,kind:e.kind,a:e.a.map(roundPosition),b:e.b.map(roundPosition),
- height:roundPosition(e.height),thickness:roundPosition(e.thickness),sill:roundPosition(e.sill)});
+ height:roundPosition(e.height),thickness:roundPosition(e.thickness),sill:roundPosition(e.sill),finish:architecturalFinish(e.kind,e.finish)});
 export function exportArchitecture(entries,baseline,floorRects=[]){
  const source=new Map(baseline.map(e=>[e.id,e])),edits=[],added=[],removed=[];
  for(const e of entries){const orig=source.get(e.id);if(e.deleted){if(orig)removed.push(e.id);continue;}
@@ -107,7 +111,7 @@ export function getNextId(entries,floors,kind){const prefix=kind==='floor'?'BYGG
  return prefix+String(n).padStart(4,'0');
 }
 export function makeEntry(id,kind,a,b){return {id,source:false,sourceKind:'new',kind,a:[...a],b:[...b],
- height:isDoor(kind)?2.4:2.85,thickness:isDoor(kind)?.09:.11,sill:.9};}
+ height:isDoor(kind)?2.4:2.85,thickness:isDoor(kind)?.09:.11,sill:.9,finish:architecturalFinish(kind)};}
 /** Place a correctly aligned default door in a selected straight wall.
  * This is a sketch aperture only; runtime door mechanics stay unchanged.
  */
