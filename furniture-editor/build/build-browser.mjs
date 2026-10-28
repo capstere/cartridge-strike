@@ -177,6 +177,11 @@ try{
  await page.locator('#posterText').press('Tab');
  check('custom value word saved to design architecture',await page.evaluate(()=>
   __furnitureEditor.getPatch().architecture.posters.some(p=>p.text==='SAMARBETE')));
+ const art=await readFile(resolve('furniture-editor/library/thumbs/hissrum12/pallet.webp'));
+ await page.locator('#posterImage').setInputFiles({name:'vardeposter.webp',mimeType:'image/webp',buffer:art});
+ await page.waitForFunction(()=>__furnitureEditor.getPatch().architecture.posters.some(p=>p.image?.startsWith('data:image/jpeg;base64,')));
+ check('local poster image compressed and embedded in portable architecture JSON',
+  await page.evaluate(()=>__furnitureEditor.getPatch().architecture.posters.some(p=>p.image?.startsWith('data:image/jpeg;base64,')&&p.image.length<100000)));
  const posterCount=await page.evaluate(()=>__furnitureEditor.getPatch().architecture.posters.length);
  await page.locator('#viewport').focus();
  await page.keyboard.press('Control+d');
