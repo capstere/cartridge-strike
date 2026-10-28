@@ -45,7 +45,8 @@ export async function buildProjectFurniture(items,root,{assets=[]}={}){
   const holder=new T.Group();holder.userData.editId=item.id;
   holder.position.set(item.x,item.elevation||0,item.z);holder.rotation.y=item.yaw||0;root.add(holder);
   const put=(x,y,z,w,h,d,material=0x668c90)=>{const m=typeof material==='number'?new T.MeshStandardMaterial({color:material}):material;
-   const mesh=new T.Mesh(new T.BoxGeometry(w,h,d),m);mesh.position.set(x,y,z);holder.add(mesh);return mesh;};
+   if(typeof material==='number')m.userData.studioOwned=true;
+   const mesh=new T.Mesh(new T.BoxGeometry(w,h,d),m);mesh.userData.studioGeometry=true;mesh.position.set(x,y,z);holder.add(mesh);return mesh;};
   if(proceduralOf(item))populateProcedural(item,holder,put);
   else if(item.assetId)pending.push(addModelToGroup(item,holder).then(ok=>{if(!ok)throw Error(`Modellen ${item.assetName||item.id} saknas: ${holder.userData.modelError}`);}));
   else if(['table','desk','coffee-table'].includes(item.kind)){

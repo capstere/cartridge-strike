@@ -480,14 +480,24 @@
       "sha256": "b257d3585567e1367a7d69b2e815e32535d0ae3e62d71431de99ec50df575cc5"
     },
     {
+      "path": "fps/walk.html",
+      "bytes": 1750,
+      "sha256": "5046ceae135704ee25dfd75be08d169870e6b086cde19eb6671f03a872d7db4d"
+    },
+    {
+      "path": "fps/walk.mjs",
+      "bytes": 4155,
+      "sha256": "8e333abcebae1d2455a7efff261150ae90686fbdffca5534222069c58a8eb03b"
+    },
+    {
       "path": "furniture-editor/appearance.mjs",
       "bytes": 3462,
       "sha256": "7b002b11298725eb846921fb14d3307b46bd419b882c6feff0e290cda2ed851f"
     },
     {
       "path": "furniture-editor/build/ai-export.mjs",
-      "bytes": 3741,
-      "sha256": "928878297e3cc47be92a98e65938cc8c9c0e961b5d917f9e7a8d3d0aa3ed6fbe"
+      "bytes": 3936,
+      "sha256": "ddce980ed3c007b0dd02d8e83890639c69b9a8dc39ae8e7aaf77c0f2018ad278"
     },
     {
       "path": "furniture-editor/build/architecture.mjs",
@@ -501,8 +511,8 @@
     },
     {
       "path": "furniture-editor/build/level-project.mjs",
-      "bytes": 12809,
-      "sha256": "4991c461663efb6d85f660d88f5de8acb96c306613d38b43eba0bf8f7b4a7b0a"
+      "bytes": 12935,
+      "sha256": "50e5a2c6e8baf28f2b49fa2a4354aa50c93e4612ae3f7da681753b30d27da6cd"
     },
     {
       "path": "furniture-editor/build/level-project.schema.json",
@@ -531,8 +541,8 @@
     },
     {
       "path": "furniture-editor/build/project-visuals.mjs",
-      "bytes": 4166,
-      "sha256": "ed4aaa063a84c032b8f82a2a3b560654575da0684ac8b26d9a6c87192d2fb69e"
+      "bytes": 4262,
+      "sha256": "0960e1242b2fd220324d629226b2353d9a443e96d1d534481046230ce586c375"
     },
     {
       "path": "furniture-editor/build/treatments.mjs",
@@ -586,18 +596,18 @@
     },
     {
       "path": "furniture-editor/new.css",
-      "bytes": 3026,
-      "sha256": "5a128d6679c4f967c5315c036e5089d6935fd12323418131221688f957f00aef"
+      "bytes": 4294,
+      "sha256": "9c1a2328fc08ab297f2ea2178a47f8bf42fed45093d4fb709832df434e39d0ce"
     },
     {
       "path": "furniture-editor/new.html",
-      "bytes": 7974,
-      "sha256": "cc93d9c47478d64bfc204f4bf6802b63b05d0d9255a9de75e8c48f27038dac17"
+      "bytes": 9104,
+      "sha256": "7ef86641b707caf3fd5f28de09a181b877e98c7104620ec073b468f1506e4e7f"
     },
     {
       "path": "furniture-editor/new.mjs",
-      "bytes": 39209,
-      "sha256": "bbe6228a8bd1b834f85dad0ea86e3287f6c307ec800976fe5a959bd2416fd073"
+      "bytes": 42335,
+      "sha256": "aa6e852a0718875c02d296940602a73338f27ca195e2a8e1e68a0304924434a7"
     },
     {
       "path": "furniture-editor/smart-placement.mjs",
@@ -1068,6 +1078,11 @@
       "path": "src/fps/visual-depth.mjs",
       "bytes": 7168,
       "sha256": "ca03c44d9703054001fe8ea84a3cb926bc91ecaf8c194bfd3f593ffe3b89e356"
+    },
+    {
+      "path": "src/fps/walk-start.mjs",
+      "bytes": 742,
+      "sha256": "5bc33c8fb85be594a6ce584ffacf8ee18b9abaf1b607cd16c055fbdbed885432"
     },
     {
       "path": "src/fps/world.mjs",

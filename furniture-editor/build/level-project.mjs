@@ -11,7 +11,7 @@ import {parseTreatments} from './treatments.mjs';
 import {collisionExport,aiAgentBrief} from './ai-export.mjs';
 
 export const LEVEL_FORMAT='cartridge-strike-level-project',LEVEL_SCHEMA=2;
-export const LEVEL_GAME_VERSION='0.18.0',LEVEL_BASE_COMMIT='f5c63a22483feeeb29583853dab0c0911af5c09a',LEVEL_EDITOR_VERSION='3.2.0';
+export const LEVEL_GAME_VERSION='0.18.0',LEVEL_BASE_COMMIT='f5c63a22483feeeb29583853dab0c0911af5c09a',LEVEL_EDITOR_VERSION='3.3.0';
 const emptyArchitecture=()=>({schemaVersion:1,edits:[],added:[],removed:[],floors:[],posters:[],treatments:[]});
 const within=n=>typeof n==='number'&&Number.isFinite(n)&&Math.abs(n)<=100;
 const rect=r=>r&&[r.x0,r.z0,r.x1,r.z1].every(within)&&r.x1>r.x0&&r.z1>r.z0;
@@ -87,7 +87,10 @@ export function parseProject(input,{allowLegacy=true}={}){
   [o.x,o.z,o.yaw,o.w,o.d,o.height].every(Number.isFinite)||!within(o.x)||!within(o.z)||o.w<=0||o.d<=0||o.w>8||o.d>8||o.height<=0||o.height>8)fail('möbel');
   if(o.assetId&&!LIBRARY_MAP.has(o.assetId)&&!/^local:[a-f0-9]{64}$/.test(o.assetId))fail('okänd möbelmodell');
   if(o.collision!==undefined&&!['solid','none'].includes(o.collision))fail('okänd möbelkollision');
-  unique(o.id);if(input.mode==='new-level'&&!g.floors.some(r=>o.x>=r.x0&&o.x<=r.x1&&o.z>=r.z0&&o.z<=r.z1))fail('möbel utan golv');}
+  // The studio is an authoring tool. An object can temporarily stand outside
+  // walkable floor while the user rearranges the plan. Engine validation reports
+  // it as unplayable; saving the source project must never lose that draft work.
+  unique(o.id);}
  if(input.mode==='edit-floor5'){
   const base=floor5Baseline(),byId=new Map(base.items.map(o=>[o.id,o]));parseArchitecture(a,base.entries);
   for(const o of f.placements){if(!byId.has(o.id)||![o.x,o.z,o.yaw].every(Number.isFinite)||!within(o.x)||!within(o.z))fail('ändrad Floor 5-möbel');

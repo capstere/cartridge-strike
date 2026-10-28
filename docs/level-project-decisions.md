@@ -23,3 +23,9 @@ Baseline: `node tools/owner-door-traversal.mjs` passed 102 directional cases; `n
 Shared-wall compilation also removes every underlying solid span when a window/glass part is fitted across overlapping room walls. A real shot-clearance regression confirms that no invisible opaque wall survives behind a broken window. Capsule traversal is simulated from both sides in the isolated level world; the original 102-case Floor 5 regression remains separate.
 
 Publication verification found a browser environment with WebGL disabled. The new studio now creates its 3D renderer lazily: plan editing and JSON/ZIP remain usable without a GPU. A real Chromium test disables WebGL contexts, builds a room with the mouse, checks the clear 3D warning, and downloads the authored JSON. FPS/3D still require WebGL 2.
+
+## Free authoring and FPS walk view (editor 3.3.0)
+
+- Placement warnings no longer veto inserting, dragging, rotating or exporting furniture. The source project may contain temporary collisions or furniture outside floor polygons. `validateLevel` still fails such a level, and the bot match button still requires motor approval. This changes only authoring, not physics.
+- Catalogue cards use the existing audited GLB thumbnail paths. The editor's 3D preview now calls `buildProjectFurniture`, the same model builder used by custom FPS levels. The first-person walk page instantiates the real FPS `Renderer` and `createWorld` with the current browser-local project. It finds a legal standing point without requiring gameplay anchors and drives the existing `world.move` capsule and automatic door simulation. Missing objectives are off-map renderer placeholders only; saved JSON/ZIP is untouched.
+- The walk page is a private design preview in the editor, with no bots, weapons or match objectives. The existing bot match remains a separate validated action. Schema remains 2 and game compatibility remains 0.18.0. Model units remain unverified real-world metres.
