@@ -40,7 +40,7 @@ export function createBuildMode({data,scene,canvas,camera,getZoom,getView,rayAt,
  function snapshots(){return {entries:cloneAll(entries),floors:copyFloors(floors)};}
  function capture(){return JSON.stringify(snapshots());}
  function restore(snapshot){const data=typeof snapshot==='string'?JSON.parse(snapshot):snapshot;
-  entries=cloneAll(data.entries);floors=copyFloors(data.floors);selection=entryById(selection)?.deleted?null:selection;
+  entries=cloneAll(data.entries);floors=copyFloors(data.floors);selection=entryById(selection)&&!entryById(selection).deleted?selection:null;
   render();showProperties();renderList();}
  function record(before){if(before===capture())return false;history.push(before);if(history.length>60)history.shift();future=[];
   dirty=true;render();showProperties();renderList();onChange?.();return true;}
@@ -211,7 +211,7 @@ export function createBuildMode({data,scene,canvas,camera,getZoom,getView,rayAt,
   $('buildUndo').disabled=!history.length;$('buildRedo').disabled=!future.length;
  }
  function changeEntry(id,delta){const e=entryById(id);if(!e)return false;
-  const old=capture(),next={...e,...delta,a:[...(delta.a??e.a)],b:[...(delta.b??e.b)]};
+  const old=capture(),next='a' in e?{...e,...delta,a:[...(delta.a??e.a)],b:[...(delta.b??e.b)]}:{...e,...delta};
   try{if('a' in e)validateEntry(next);else validateFloorRect(next);}catch(err){notify?.(err.message);return false;}
   Object.assign(e,next);record(old);return true;
  }
