@@ -1,4 +1,4 @@
-import {parseProject} from './level-project.mjs';
+import {parseProject} from './level-project.mjs?v=3.3.1';
 import {levelProjectToWorldData} from '../../src/fps/level-adapter.mjs';
 import {createWorld,inheritFloor5Gameplay} from '../../src/fps/world.mjs';
 import {resolveProjectScene,projectWallPieces} from './project-scene.mjs';

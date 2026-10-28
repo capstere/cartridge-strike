@@ -1,10 +1,10 @@
-# Cartridge Strike Designstudion 3.3.0 — bygg, möblera och gå runt
+# Cartridge Strike Designstudion 3.3.1 — bygg, möblera och gå runt
 
 **[Öppna Designstudion](https://capstere.github.io/cartridge-strike/furniture-editor/new.html)** (dator och mus rekommenderas).
 
 **NY BANA** och **[REDIGERA FLOOR 5](https://capstere.github.io/cartridge-strike/furniture-editor/new.html?mode=edit-floor5)** använder samma byggverktyg. Ett rum ger golv och fyra väggar; klicka på en vägg för dörr, öppning, fönster eller glas. Spelets fysik följer automatiskt byggdelarna. Du kan placera möbler trots varningar och flytta dem senare. Bildkorten visar biblioteket; 3D-vyn visar samma möbelmodeller som FPS. **GÅ RUNT I BANAN** använder FPS-renderaren, dörrmotorn och kapselkollisionen direkt från ditt utkast, även innan spelmålen finns. Planvyn och export fungerar utan WebGL; 3D och promenad kräver WebGL 2.
 
-Schema 2, editor 3.3.0 och kompatibel spelversion 0.18.0 används. Exportens `project.json` är källan; `COLLISION_MAP.json` är en härledd, integritetskontrollerad karta. JSON/ZIP från den äldre studion kan öppnas utan att skissen eller ursprungliga data förloras. Den **[klassiska studion](https://capstere.github.io/cartridge-strike/furniture-editor/)** finns kvar för äldre arbetsflöden.
+Schema 2, editor 3.3.1 och kompatibel spelversion 0.18.0 används. Exportens `project.json` är källan; `COLLISION_MAP.json` är en härledd, integritetskontrollerad karta. JSON/ZIP från den äldre studion kan öppnas utan att skissen eller ursprungliga data förloras. Den **[klassiska studion](https://capstere.github.io/cartridge-strike/furniture-editor/)** finns kvar för äldre arbetsflöden.
 
 ### Bygg en ny bana
 

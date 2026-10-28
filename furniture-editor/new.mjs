@@ -5,8 +5,8 @@ import {resolveProjectScene,writeProjectScene,floor5Baseline,projectWallPieces} 
 import {inheritFloor5Gameplay} from '../src/fps/world.mjs';
 import {wallAtPoint,planPaintOverWall} from './build/paint-over-wall.mjs';
 import * as T from '../vendor/three/three.module.js';
-import {exportProject,parseProject,parseProjectZip,exportProjectZip} from './build/level-project.mjs';
-import {validateLevel} from './build/validate-level.mjs';
+import {exportProject,parseProject,parseProjectZip,exportProjectZip} from './build/level-project.mjs?v=3.3.1';
+import {validateLevel} from './build/validate-level.mjs?v=3.3.1';
 import {validate,corners,inside,segmentIntersectsRectangle,intersects} from './core.mjs';
 import {wallPieces,standardPassageSpan,standardDoorMarkerSpan,isDoor} from './build/architecture.mjs';
 import {LIBRARY_ALL} from './library/catalog.mjs';
