@@ -29,6 +29,28 @@ try{
  assert.equal(await page.evaluate(()=>__levelStudio.viewState.panActive),false,'Right drag releases plan camera control');
  assert.equal(await page.evaluate(()=>JSON.stringify(__levelStudio.project)),authoredBeforeMove,'Camera movement never changes the authored project');
  await page.locator('#fit').click();
+ await page.locator('#threeView').click();
+ await page.locator('[data-tool="wall"]').click();
+ let at3=await page.evaluate(()=>__levelStudio.screen3DPoint(9,0,5));await page.mouse.click(at3.x,at3.y);
+ assert.match(await page.locator('#status').innerText(),/Startpunkt vald/);
+ await page.keyboard.press('Escape');
+ assert.equal(await page.locator('#tool').inputValue(),'select','Esc returns to selection from a half-drawn 3D wall');
+ assert.equal(await page.evaluate(()=>__levelStudio.project.architecture.added.length),4);
+ await page.locator('[data-tool="wall"]').click();
+ at3=await page.evaluate(()=>__levelStudio.screen3DPoint(9,0,5));await page.mouse.click(at3.x,at3.y);
+ at3=await page.evaluate(()=>__levelStudio.screen3DPoint(11,0,5));await page.mouse.click(at3.x,at3.y);
+ assert.equal(await page.evaluate(()=>__levelStudio.project.architecture.added.filter(e=>e.kind==='wall').length),5,'3D clicks build an actual wall');
+ await page.keyboard.press('Delete');
+ assert.equal(await page.evaluate(()=>__levelStudio.project.architecture.added.filter(e=>e.kind==='wall').length),4,'Delete removes the selected 3D wall');
+ await page.locator('[data-tool="window"]').click();
+ at3=await page.evaluate(()=>__levelStudio.screen3DPoint(8,.4,5));await page.mouse.click(at3.x,at3.y);
+ assert.equal(await page.evaluate(()=>__levelStudio.project.architecture.added.filter(e=>e.kind==='window').length),1,'3D click on visible wall fits a window and cuts collision');
+ await page.keyboard.press('Escape');assert.equal(await page.locator('#tool').inputValue(),'select');
+ await page.keyboard.press('Backspace');
+ assert.equal(await page.evaluate(()=>__levelStudio.project.architecture.added.filter(e=>e.kind==='window').length),0,'Backspace removes the selected 3D window');
+ await page.locator('#undo').click();await page.locator('#undo').click();
+ assert.equal(await page.evaluate(()=>__levelStudio.project.architecture.added.length),4,'Undo restores original room walls');
+ await page.locator('#planView').click();await page.locator('#fit').click();
  await page.locator('[data-tool="door"]').click();
  let at=await page.evaluate(()=>__levelStudio.screenWorldPoint(5,2));await page.mouse.move(at.x,at.y);
  assert.deepEqual(await page.evaluate(at=>__levelStudio.worldAtScreen(at.x,at.y),at),{x:5,z:2},'Updating coordinates never shifts the drawing surface');
@@ -70,9 +92,13 @@ try{
  await page.locator('#catalogSearch').fill('orange köksstol');
  assert.equal(await page.locator('#catalogCards .catalog-card').count(),1);
  await page.locator('#catalogCards [data-asset="studio:orange-kitchen-chair"]').click();
- at=await page.evaluate(()=>__levelStudio.screenWorldPoint(4,6));await page.mouse.click(at.x,at.y);await page.keyboard.press('Escape');
- assert(await page.evaluate(()=>__levelStudio.project.furniture.added.some(o=>o.assetId==='kenney:furniture-kit:chairdesk'&&o.chairRole==='kitchen')),'Orange kitchen chair uses the original CC0 GLB and saved finish');
+ await page.locator('#threeView').click();
+ at3=await page.evaluate(()=>__levelStudio.screen3DPoint(4,0,6));await page.mouse.click(at3.x,at3.y);await page.keyboard.press('Escape');
+ assert(await page.evaluate(()=>__levelStudio.project.furniture.added.some(o=>o.assetId==='studio:orange-kitchen-chair'&&o.chairRole==='kitchen')),'3D placement saves the ordinary four-legged orange chair');
  const orangeId=await page.evaluate(()=>__levelStudio.project.furniture.added.find(o=>o.chairRole==='kitchen').id);
+ await page.waitForFunction(id=>__levelStudio.visualColors.filter(row=>row.id===id&&row.color==='df753c').length===2,orangeId,{timeout:30000});
+ assert.equal(await page.evaluate(id=>__levelStudio.visualColors.filter(row=>row.id===id&&row.color==='aab6bd').length,orangeId),4,'Orange seat/back and four silver legs match the regular blue chairs');
+ await page.locator('#planView').click();
  await page.locator('#catalogSearch').fill('');
  await page.locator('[data-tab="build"]').click();await page.locator('#tool').selectOption('poster');at=await page.evaluate(()=>__levelStudio.screenWorldPoint(3,2));await page.mouse.click(at.x,at.y);
  await page.locator('#selection summary').click();
@@ -84,8 +110,8 @@ try{
 
 
  await page.locator('#threeView').click();assert(await page.locator('#scene3d').isVisible());
- await page.waitForFunction(id=>__levelStudio.visualColors.some(row=>row.id===id&&row.color==='df753c'),orangeId,{timeout:30000});
- console.log('Orange kitchen chair: source GLB rendered with kitchen finish PASS');
+ await page.waitForFunction(id=>__levelStudio.visualColors.filter(row=>row.id===id).length===6,orangeId,{timeout:30000});
+ console.log('Orange kitchen chair: ordinary dining-chair silhouette rendered in 3D PASS');
  const first3D=await page.evaluate(()=>__levelStudio.viewState.threeCenter);
  await page.locator('[data-move="forward"]').click();
  const nudged3D=await page.evaluate(()=>__levelStudio.viewState.threeCenter);

@@ -2,17 +2,29 @@
  * All objects centered X/Z and resting on the floor; elevation applied by parent.
  */
 import * as T from '../../vendor/three/three.module.js';
-import {proceduralOf} from './procedural.mjs';
+import {proceduralOf} from './procedural.mjs?v=3.5.0';
+import {chairColors} from '../appearance.mjs';
 const circle=new T.CylinderGeometry(.5,.5,1,24);
 const metallic=new T.MeshStandardMaterial({color:0xaab6bd,metalness:.57,roughness:.43});
 const white=new T.MeshStandardMaterial({color:0xf5f7f6,metalness:.05,roughness:.76});
 const dark=new T.MeshStandardMaterial({color:0x30373c,metalness:.22,roughness:.54});
 const navy=new T.MeshStandardMaterial({color:0x285b9e,metalness:.04,roughness:.89});
 const screenGlass=new T.MeshStandardMaterial({color:0x161f23,metalness:.13,roughness:.45});
+const chairMaterials=new Map();
+function chairMaterial(color){if(!chairMaterials.has(color))chairMaterials.set(color,new T.MeshStandardMaterial({color}));return chairMaterials.get(color);}
 function addRound(group,x,y,z,diameter,h,material){
  const mesh=new T.Mesh(circle,material);
  mesh.scale.set(diameter,h,diameter);mesh.position.set(x,y,z);mesh.userData.editId=group.userData.editId;
  group.add(mesh);return mesh;
+}
+/** The authored blue Floor 5 dining-chair silhouette: seat, back and four legs. */
+export function populateDiningChair(item,put){
+ const w=item.w,d=item.d,{body,legs}=chairColors(item);
+ const cloth=chairMaterial(body),metal=chairMaterial(legs);
+ put(0,.46,0,w,.075,d,cloth);
+ put(0,.73,d*.31,w,.48,.06,cloth);
+ for(const x of [-w*.32,w*.32])for(const z of [-d*.32,d*.32])
+  put(x,.225,z,.026,.45,.026,metal);
 }
 export function populateProcedural(item,group,put){
  const entry=proceduralOf(item);if(!entry)return false;
@@ -23,6 +35,7 @@ export function populateProcedural(item,group,put){
    box(x,top/2,z,legH,top-.04,legH,metallic);
  };
  switch(entry.shape){
+  case 'dining-chair':populateDiningChair(item,box);break;
   case 'desk':case 'table':
    box(0,h-.035,0,w,.07,d,white);legs(h-.06);break;
   case 'round':

@@ -37,4 +37,4 @@ jobs:
           trap 'kill "$PID" || true' EXIT
           timeout 220s xvfb-run -a node furniture-editor/editor-browser.mjs
           timeout 220s xvfb-run -a node furniture-editor/build/build-browser.mjs
-          timeout 240s xvfb-run -a node tools/level-browser-smoke.mjs
+          timeout 360s xvfb-run -a node tools/level-browser-smoke.mjs

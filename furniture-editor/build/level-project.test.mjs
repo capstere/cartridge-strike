@@ -41,9 +41,9 @@ test('new ZIP round trip verifies local binary hashes and blocks unsafe paths',a
  await assert.rejects(()=>parseProjectZip(makeZip([{name:'project.json',data:JSON.stringify(p)},{name:'AGENT_BRIEF.md',data:'x'}])));
  assert.throws(()=>makeZip([{name:'../evil',data:'x'}]));
 });
-test('orange kitchen chair preset keeps the audited chair model and finish in JSON and ZIP',async()=>{
- const chair={id:'NY-OBJ-0001',kind:'chair',assetId:'kenney:furniture-kit:chairdesk',assetName:'Orange köksstol · silverben',
-  chairRole:'kitchen',roomId:floor.id,x:2,z:2,yaw:0,w:.62,d:.62,height:1.05};
+test('orange kitchen chair keeps the authored dining-chair shape and finish in JSON and ZIP',async()=>{
+ const chair={id:'NY-OBJ-0001',kind:'chair',assetId:'studio:orange-kitchen-chair',assetName:'Orange köksstol · vanlig stol',
+  chairRole:'kitchen',roomId:floor.id,x:2,z:2,yaw:0,w:.48,d:.48,height:.76};
  const project=exportProject({ground:{bounds:{x0:0,z0:0,x1:10,z1:10},wallHeightDefault:2.85,floors:[floor]},
   furniture:{placements:[],added:[chair],removed:[]},assets:{library:[chair.assetId],local:[],posters:[]}});
  assert.deepEqual(parseProject(JSON.stringify(project)).furniture.added[0],chair);

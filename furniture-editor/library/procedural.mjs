@@ -1,5 +1,6 @@
 /** Editor-only, procedural low-poly furnishings: no GLB download or external assets. */
 export const PROCEDURAL_LIBRARY=Object.freeze([
+ {id:'studio:orange-kitchen-chair',name:'Orange köksstol · vanlig stol',category:'stolar',width:.48,depth:.48,height:.76,shape:'dining-chair',kind:'chair',chairRole:'kitchen',featured:true},
  {id:'studio:desk-120',name:'Skrivbord 120 × 70 · vitt/silver',category:'bord',width:1.2,depth:.7,height:.75,shape:'desk'},
  {id:'studio:desk-160',name:'Skrivbord 160 × 80 · vitt/silver',category:'kontor',width:1.6,depth:.8,height:.75,shape:'desk'},
  {id:'studio:desk-180',name:'Skrivbord 180 × 80 · vitt/silver',category:'kontor',width:1.8,depth:.8,height:.75,shape:'desk'},
@@ -21,8 +22,19 @@ export const PROCEDURAL_LIBRARY=Object.freeze([
  {id:'studio:keyboard',name:'Tangentbord svart',category:'kontor',width:.45,depth:.16,height:.035,shape:'keyboard',placement:'countertop'},
  {id:'studio:printer',name:'Skrivare / etikettprinter',category:'kontor',width:.4,depth:.38,height:.26,shape:'printer',placement:'countertop'},
  {id:'studio:storage-cabinet',name:'Förvaringsskåp vitt',category:'labb',width:.8,depth:.52,height:1.8,shape:'cabinet',placement:'floor'}
-].map(o=>Object.freeze({...o,kind:'prop',license:'Original · Designstudion, procedurbyggd',source:'Optimerad instansgeometri · inga extra filer',model:o.shape,thumb:null})));
+].map(o=>Object.freeze({...o,kind:o.kind||'prop',license:'Original · Designstudion, procedurbyggd',source:'Samma fyrbenta stolform som Floor 5 · inga extra filer',model:o.shape,thumb:null})));
 export const PROCEDURAL_MAP=new Map(PROCEDURAL_LIBRARY.map(o=>[o.id,o]));
+/** Correct only the mislabeled office-chair preset from editor 3.4 drafts. */
+export function upgradeLegacyOrangeChair(project){let count=0;
+ for(const item of [...project.furniture.added,...project.furniture.placements]){
+  if(item.assetId!=='kenney:furniture-kit:chairdesk'||item.assetName!=='Orange köksstol · silverben'||item.chairRole!=='kitchen')continue;
+  item.assetId='studio:orange-kitchen-chair';item.assetName='Orange köksstol · vanlig stol';
+  if(item.w===.62&&item.d===.62&&item.height===1.05){item.w=.48;item.d=.48;item.height=.76;}
+  if(!project.assets.library.includes(item.assetId))project.assets.library.push(item.assetId);
+  count++;
+ }
+ return count;
+}
 export function proceduralOf(item){return PROCEDURAL_MAP.get(item?.assetId)||null;}
 export function placementRole(item){return proceduralOf(item)?.placement||'floor';}
 export function roundTable(item){return proceduralOf(item)?.shape==='round';}
