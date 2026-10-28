@@ -68,8 +68,8 @@ test('existing tables can change real dimensions and preserve them in old-format
  const update=doc.placements.find(x=>x.id===table.id);
  assert(update&&update.w===round(table.w+.25)&&update.d===round(table.d+.1));
  const restored=parsePatch(doc,base).find(o=>o.id===table.id);
- assert.equal(restored.w,changed.find(o=>o.id===table.id).w);
- assert.equal(restored.d,changed.find(o=>o.id===table.id).d);
+ assert(Math.abs(restored.w-changed.find(o=>o.id===table.id).w)<1e-9);
+ assert(Math.abs(restored.d-changed.find(o=>o.id===table.id).d)<1e-9);
 });
 test('chair role and curated GLB role survive export and import',()=>{
  const {base}=fixture(),chair=base.find(x=>x.kind==='chair');

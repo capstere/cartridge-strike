@@ -4,6 +4,31 @@
 
 Designstudion är ett **helt separat verktyg**. Du kan ändra möbler, väggar, fönster, glasväggar, dörrar och skissa nya golvytor. Dina ändringar är ett **förslag**, inte en ändring av live-spelet. Spelets befintliga kollision, botarnas navigation, gisslan, dörrar, spawns och regler ligger kvar exakt som i version 0.17.0.
 
+
+## SMART RITA: rita fönster direkt över befintlig vägg (28 oktober 2026)
+
+1. Välj **BYGG → ✎ SMART RITA PÅ VÄGG**. Välj **FÖNSTER**, **GLASVÄGG**, **DÖRR** eller **VÄGG** i den nya färgade panelen; grundvalet är FÖNSTER. **Du behöver inte byta verktyg** när du vill rita nästa del.
+2. I **PLANVY**: dra från en punkt på en vägglinje till en annan punkt på *samma vägg* och släpp. Alternativt klickar du två punkter. Medan du ritar visas ett streck med längden och vad som kommer skapas.
+3. När du släpper delas väggen automatiskt i en kvarvarande väggdel, den målade delen och en återstående väggdel. Den ursprungliga solida väggen **tas bort ur skissen över målningen**. Du kan sedan rita en till del direkt utan att lämna läget.
+4. Välj en annan typ i samma panel utan att ändra verktyg. **Ctrl+Z** ångrar hela operationen (inklusive all uppdelning) i ett steg. **Esc** avbryter en påbörjad linje. Den vanliga knappen **VÄLJ** lämnar ritläget.
+5. Befintliga fönster-/glasväggs-/dörrverktyg kan också rita över en redan existerande vägg: två klick längs vägglinjen ger samma automatiska delning. Starta utanför en vägg eller håll **Alt** om du avsiktligt vill rita en fristående byggdel.
+
+**Ritregler:** Minst 25 cm målat avsnitt. Väldigt korta mindre än 25 cm väggstumpar på kanterna absorberas automatiskt i den målade delen. Verktyget nekar målning som skulle skriva över en befintlig dörr, eller skapa en omöjlig placering för en väggmonterad affisch. En affisch som ryms helt på kvarvarande vägg flyttas automatiskt till motsvarande del med bibehållen position.
+
+**Arkitektur och prestanda:** Detta är en ren ändring i designskissens väggobjekt, inte i spelets faktiska kollisionsvärld eller navigation. Projektets arkitekturschema version 1 och befintlig save/import är fortsatt kompatibla. Möbler, live FPS, spawns, botar och runtime rörs inte.
+
+## Prototypgren: navigera utan rumsnamn och sätt upp värdeordsaffischer
+
+**Placera objekt där du befinner dig:** Flytta kameran över önskat rum med panorerings- och zoomverktygen. Den nya rutan **DU ÄR VID** visar automatiskt vilket rum kameran står över och uppdaterar listan efter positionen. Klicka **+ LÄGG TILL OBJEKT**, välj en modell. Den placeras på närmaste tillgängliga plats runt *kamerans nuvarande mittpunkt* (max cirka 2,6 m bort). Den gamla rumsrullistan används enbart när du själv vill **Hoppa till rum**. Att öppna biblioteket och lägga till en modell flyttar **inte** kameran, ändrar inte zoom och skickar dig inte tillbaka till ett rum du besökt tidigare.
+
+**Begränsning:** Nuvarande möbleringsvalidering tillåter endast godkända möblerbara rum från ursprungsbanan. Du kan navigera fritt över hela våningsplanet, men kan inte lägga en möbel i en otillåten korridor eller helt utanför den godkända golvytan. I så fall visas ett tydligt meddelande och kameran stannar kvar. Framtida blankt banläge får ett separat, fritt koordinatsystem.
+
+**Affischer med värdeord:** Byt till **BYGG → AFFISCH PÅ VÄGG**. Klicka på en befintlig eller nyritad vägg i planvyn **eller på väggen i 3D**. En affisch skapas på vald vägg, direkt i designskissen. Markera affischen för att skriva en valfri rubrik och underrad, välja färg, bredd, höjd, avstånd längs väggen, upphängningshöjd och vilken sida av väggen som ska synas.
+
+**Riktiga affischbilder:** Under vald affisch, välj en **PNG/JPG/WebP**. Designstudion läser filen lokalt, reducerar upplösningen och sparar bilden komprimerad i JSON/ZIP-projektet (upp till cirka 75 KB per posterbild). Bilderna **publiceras inte till GitHub**, skickas inte till en server och behöver inte vara GLB. Affischen visas som en tunn 3D-yta monterad på väggen. Ladda gärna upp en skärmbild av värdeordspostern med dess färdiga typsnitt och layout, så slipper du återskapa den i textfält. **Ta bort bilden** byter tillbaka till textaffischen. Max 40 affischer per projekt; bildfylld JSON-fil får vara högst 5 MB vid import.
+
+**Säkerhet och kompatibilitet:** Rums-/byggformatet är fortfarande schema 1 med en **valfri** `posters`-lista, så tidigare sparfiler utan affischer fortsätter fungera. Ta bort vägg → dess affischer tas bort i samma ångerbara åtgärd. Justering av en vägg som skulle skapa en ogiltig affischplacering avvisas. Affischer är enbart ritförslag, inte ändringar av riktiga spelväggar eller kollisioner. Verifiera godkända rättigheter/sekretess innan du publicerar affischbilder på en offentlig webbplats.
+
 ## Prototypgren: möbelmått, fasta färger och 3D-kamera
 
 > **Endast utvecklingsgren:** `work/design-studio-size-palette-camera-20261028`. Detta avsnitt gäller prototypen och ska inte blandas ihop med redan publicerad Designstudio.

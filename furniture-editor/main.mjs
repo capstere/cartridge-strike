@@ -14,6 +14,8 @@ import {readModelBundleZip} from './library/model-bundle.mjs';
 import {assetHash} from './library/glb-utils.mjs';
 import {createBuildMode} from './build/build-mode.mjs';
 import {parseArchitecture} from './build/architecture.mjs';
+import {parsePosters} from './build/posters.mjs';
+import {findCameraPlacement} from './placement.mjs';
 import {isTable,isChair,chairRole,chairColors,validateDimensions,FINISH_COLORS,cameraPanVector} from './appearance.mjs';
 const $=s=>document.querySelector(s),data=globalThis.SpelFloor5,worldSource=globalThis.SpelWorld;
 if(!data||!worldSource||!T.WebGLRenderer)throw new Error('Spelplanen eller Three.js saknas.');
@@ -128,8 +130,15 @@ function updateCamera(){
  camera.lookAt(target);camera.updateMatrixWorld();
 }
 function view(mode){cameraMode=mode;$('#topView').classList.toggle('active',mode==='top');$('#threeView').classList.toggle('active',mode==='3d');$('#topView').setAttribute('aria-pressed',mode==='top');$('#threeView').setAttribute('aria-pressed',mode==='3d');building?.setView();scheduleRender();}
-function goToRoom(id=room){const r=data.rooms.find(r=>r.id===id);if(!r)return;const [x0,z0,x1,z1]=bounds(r.polygon);target.set((x0+x1)/2,0,(z0+z1)/2);zoom=Math.max(4,Math.min(42,Math.max(z1-z0+3,(x1-x0+3)*.80)));scheduleRender();}
-function whole(){const coords=data.floorPolygons.flat(),[x0,z0,x1,z1]=bounds(coords);target.set((x0+x1)/2,0,(z0+z1)/2);zoom=Math.max(z1-z0+7,(x1-x0+7)*.70);scheduleRender();}
+function roomAt(x,z){return data.rooms.find(r=>r.status==='included'&&inside(x,z,r.polygon))||null;}
+function updateLocationLabel(){const r=roomAt(target.x,target.z);
+ const label=r?'DU ÄR VID: '+(ROOM_LABELS[r.id]||r.name||'Område')+' · '+r.id:'DU ÄR VID: en fri yta utanför möblerbara rum';
+ for(const id of ['#areaHere','#areaHereBuild']){const el=$(id);if(!el)continue;
+  el.textContent=label;el.title='Kamerans mittpunkt: X '+target.x.toFixed(2)+' · Z '+target.z.toFixed(2);}
+ if(r&&room!==r.id){room=r.id;$('#room').value=r.id;renderList();}
+}
+function goToRoom(id=room){const r=data.rooms.find(r=>r.id===id);if(!r)return;const [x0,z0,x1,z1]=bounds(r.polygon);target.set((x0+x1)/2,0,(z0+z1)/2);zoom=Math.max(4,Math.min(42,Math.max(z1-z0+3,(x1-x0+3)*.80)));updateLocationLabel();scheduleRender();}
+function whole(){const coords=data.floorPolygons.flat(),[x0,z0,x1,z1]=bounds(coords);target.set((x0+x1)/2,0,(z0+z1)/2);zoom=Math.max(z1-z0+7,(x1-x0+7)*.70);updateLocationLabel();scheduleRender();}
 function select(id,focus=false){const item=items.find(o=>o.id===id&&!o.deleted);chosen=item?.id||null;
  if(item){room=item.roomId;$('#room').value=room;if(focus){target.set(item.x,0,item.z);zoom=Math.min(zoom,6);}}
  renderList();renderProperties();updateHighlight();scheduleRender();
@@ -226,8 +235,9 @@ async function importFile(file){if(!file)return;if(file.size>PROJECT_ZIP_MAX_BYT
   const packages=[...contents.keys()].filter(n=>n!=='projekt.json');
   if(packages.length!==expected.length)throw Error('ZIP-filen saknar eller innehåller extra 3D-modeller.');
   for(const id of expected){const name='models/'+id.slice(6)+'.glb',bytes=contents.get(name);if(!bytes||'local:'+await assetHash(bytes)!==id)throw Error('GLB-filen har ändrats efter sparningen.');stored.push({id,data:bytes});}
- }else{if(file.size>350000)throw Error('JSON-filen är för stor.');doc=JSON.parse(await file.text());}
- const parsed=parsePatch(doc,baseline);parseArchitecture(doc.architecture,building.getBaseline());
+ }else{if(file.size>5*1024*1024)throw Error('JSON-filen är för stor (max 5 MB).');doc=JSON.parse(await file.text());}
+ const parsed=parsePatch(doc,baseline),arch=parseArchitecture(doc.architecture,building.getBaseline());
+ parsePosters(doc.architecture?.posters,arch.entries);
  if(stored.length){for(const f of stored){const name=doc.added.find(x=>x.assetId===f.id)?.assetName||'Egen-modell';
    await importLocalGLB(new File([f.data],name+'.glb',{type:'model/gltf-binary'}));}
   localEntries=await localLibrary();renderLibrary();
@@ -241,7 +251,7 @@ function lookupHit(ev){const intersections=rayAt(ev).intersectObjects(pickMeshes
 function pan(dx,dy){
  const right=new T.Vector3(1,0,0).applyQuaternion(camera.quaternion),up=new T.Vector3(0,1,0).applyQuaternion(camera.quaternion);
  const delta=cameraPanVector(dx,dy,zoom,$canvas.getBoundingClientRect().height,right,up,cameraMode==='top');
- target.x+=delta.x;target.z+=delta.z;scheduleRender();
+ target.x+=delta.x;target.z+=delta.z;updateLocationLabel();scheduleRender();
 }
 const LIBRARY_EMOJI={hissrum12:'▧',stolar:'◩',bord:'▰',kontor:'▥',kok:'▤',badrum:'◪',labb:'⬡',industri:'▦',dekor:'✦',egna:'★'};
 function renderLibrary(){const query=$('#librarySearch').value.trim().toLocaleLowerCase('sv'),cat=$('#libraryCategory').value;
@@ -258,22 +268,17 @@ function renderLibrary(){const query=$('#librarySearch').value.trim().toLocaleLo
  }
  if(!visible.length){const p=document.createElement('p');p.className='helper';p.textContent='Inga objekt hittades. Prova en annan sökning eller importera en GLB.';list.append(p);}
 }
-function findPlacement(entry){const r=data.rooms.find(r=>r.id===room&&r.status==='included');if(!r)return null;
- const [x0,z0,x1,z1]=bounds(r.polygon),cx=(x0+x1)/2,cz=(z0+z1)/2,dist=Math.hypot(x1-x0,z1-z0),used=items.filter(o=>!o.deleted);
- let tries=0;const check=(x,z)=>{const test={...entry,id:'temporary',roomId:room,x:round(x),z:round(z),yaw:0,w:entry.width,d:entry.depth,height:entry.height};tries++;return !validate(test,used,data)?{x:test.x,z:test.z}:null;};
- for(let radius=0;radius<=dist;radius+=.36){const samples=radius<.1?1:Math.max(12,Math.ceil(radius*14));for(let i=0;i<samples;i++){
-  const angle=2*Math.PI*i/samples,x=cx+radius*Math.cos(angle),z=cz+radius*Math.sin(angle),found=check(x,z);if(found)return found;
-  if(tries>1200)break;
- }if(tries>1200)break;}
- return null;
+/** Place at the camera's CURRENT location; never jump to the room dropdown's center. */
+function findPlacement(entry){
+ return findCameraPlacement(entry,target,data.rooms,items.filter(o=>!o.deleted),data,{inside,round,validate});
 }
 async function addPreset(id){const entry=LIBRARY_MAP.get(id)||localEntries.find(e=>e.id===id);
  if(!entry){notify('Okänt objekt.');return null;}
- const pos=findPlacement(entry);if(!pos){notify('Hittade ingen ledig plats i det här rummet. Prova ett större rum eller flytta befintliga möbler.');return null;}
+ const pos=findPlacement(entry);if(!pos){notify('Här där kameran är finns ingen ledig möblerbar plats. Flytta vyn till en golvyta med ett rum och försök igen. Kameran flyttas inte.');return null;}
  let serial=1,objectId;do{objectId='NY-OBJ-'+String(serial++).padStart(4,'0');}while(items.some(o=>o.id===objectId));
- const before=snapshot(),item={id:objectId,roomId:room,kind:'prop',assetId:entry.id,assetName:entry.name,source:'added',
+ const before=snapshot(),item={id:objectId,roomId:pos.roomId,kind:'prop',assetId:entry.id,assetName:entry.name,source:'added',
   x:pos.x,z:pos.z,yaw:0,w:entry.width,d:entry.depth,height:entry.height};
- items.push(item);checkpoint(before);$('#chairsOnly').checked=false;syncModels();renderRooms();select(objectId,true);$('#libraryDialog').close();notify(entry.name+' tillagd! Dra objektet dit du vill och spara projektet.');return objectId;
+ items.push(item);checkpoint(before);$('#chairsOnly').checked=false;syncModels();renderRooms();select(objectId,false);$('#libraryDialog').close();notify(entry.name+' placerad där du tittar. Kameran stannar här!');return objectId;
 }
 async function addCustom(file,{place=true}={}){if(!file)return;const entry=await importLocalGLB(file),existing=localEntries.findIndex(x=>x.id===entry.id);
  if(existing<0)localEntries.push(entry);else localEntries[existing]=entry;
@@ -319,6 +324,7 @@ function setUpEvents(){
  $('#assetRole').onchange=e=>{const o=items.find(x=>x.id===chosen&&!x.deleted);if(o)changeAssetRole(o.id,e.target.value);};
  $('#duplicate').onclick=createDuplicate;$('#remove').onclick=removeSelection;$('#download').onclick=download;$('#downloadTop').onclick=download;$('#undo').onclick=undo;$('#redo').onclick=redo;
  $('#openLibrary').onclick=()=>{$('#libraryDialog').showModal();renderLibrary();$('#librarySearch').focus();};
+ $('#openPosters').onclick=()=>{building.enable(true);building.setTool('poster');notify('Klicka på en vägg för att placera din affisch. Skriv text eller välj en lokal bild.');};
  $('#closeLibrary').onclick=()=>$('#libraryDialog').close();
  $('#librarySearch').oninput=renderLibrary;$('#libraryCategory').onchange=renderLibrary;
  $('#customGLB').onchange=async e=>{try{const files=[...e.target.files];if(files.length===1)await addCustom(files[0]);else await importCustomBatch(files);}catch(err){$('#libraryImportStatus').textContent=err.message;notify('GLB-import: '+err.message);}finally{e.target.value='';}};
@@ -381,6 +387,7 @@ async function bootstrap(){makeGround();
   renderNow:()=>{resize();renderer.render(scene,camera);},
   screenWorldPoint:(x,z)=>{resize();const r=$canvas.getBoundingClientRect(),p=new T.Vector3(x,.15,z).project(camera);return {x:r.left+(p.x+1)*r.width/2,y:r.top+(1-p.y)*r.height/2};},
   catalogCount:LIBRARY.length,addPreset:async id=>addPreset(id),openLibrary:()=>$('#openLibrary').click(),
+  roomAt:(x,z)=>roomAt(x,z)?.id||null,
   screenPoint:id=>{const group=furnitureGroups.get(id);if(!group)return null;const r=$canvas.getBoundingClientRect();const p=group.position.clone().add(new T.Vector3(0,.5,0)).project(camera);return {x:r.left+(p.x+1)*r.width/2,y:r.top+(1-p.y)*r.height/2};},
   move:(id,x,z)=>mutate(id,{x,z}),resize:(id,w,d)=>changeDimensions(id,{w,d}),
   setChairRole:changeChairRole,setAssetRole:changeAssetRole,duplicate:createDuplicate,

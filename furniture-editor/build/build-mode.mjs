@@ -9,9 +9,12 @@ import {ARCHITECTURE_TYPES,ARCHITECTURE_NAMES,ARCHITECTURE_COLORS,readBaseline,
 import {snapDraftPoint,dimensionsFromWall,joinNearbyEnds,straightenEntry} from './precision.mjs';
 import {createRectangleRoom,rectangleFromDimensions} from './rectangle-room.mjs';
 import {FINISH_COLORS,architecturalFinish,WALL_FINISHES,DOOR_FINISHES} from '../appearance.mjs';
+import {makePoster,parsePosters,serializePosters,validatePoster,locatePoster,posterId,POSTER_MAX} from './posters.mjs';
+import {createPosterTexture,compressPosterImage} from './poster-art.mjs';
+import {PAINT_KINDS,wallAtPoint,projectToWall,planPaintOverWall} from './paint-over-wall.mjs';
 const $=id=>document.getElementById(id);
 const DIST=1e-5;
-const floorKind='floor',roomKind='room-rect';
+const floorKind='floor',roomKind='room-rect',posterKind='poster',paintKind='paint';
 const palette={wall:0xc31421,glazed:0x22b14c,window:0x00a2e8,
  door:0x99d9ea,'card-door':0x99d9ea,'elevator-door':0x99d9ea,'terrace-door':0x99d9ea,
  opening:0x899796,frame:0x72888c,selected:0xffd16a};
@@ -23,8 +26,8 @@ function minMax(p){return {minX:Math.min(p.a[0],p.b[0]),maxX:Math.max(p.a[0],p.b
 
 export function createBuildMode({data,scene,canvas,camera,getZoom,getView,rayAt,planePoint,onPan,onOrbit,
  scheduleRender,notify,onChange,onGoRoom,onGoPoint,originalWalls}){
- const baseline=readBaseline(data);let entries=cloneAll(baseline),floors=[];
- let active=false,selection=null,mode='select',first=null,hover=null,drag=null;
+ const baseline=readBaseline(data);let entries=cloneAll(baseline),floors=[],posters=[];
+ let active=false,selection=null,mode='select',first=null,hover=null,drag=null,paintType='window',overlayDraft=null;
  let history=[],future=[],dirty=false,strokeColor=0;
  const root=new THREE.Group();root.name='architectural-sketch-not-physics';scene.add(root);
  const geo=new THREE.BoxGeometry(1,1,1),sphere=new THREE.SphereGeometry(.13,12,8),materials=new Map();
@@ -36,13 +39,17 @@ export function createBuildMode({data,scene,canvas,camera,getZoom,getView,rayAt,
  const selectionMat=new THREE.MeshBasicMaterial({color:palette.selected,depthTest:false});
  const selectLineMat=new THREE.LineBasicMaterial({color:palette.selected,depthTest:false});
  const floorMat=new THREE.MeshBasicMaterial({color:0x79c8bd,transparent:true,opacity:.28,side:THREE.DoubleSide,depthWrite:false});
- const raycaster=new THREE.Raycaster();const points=[],boxInstances=[];
- function entryById(id){return entries.find(e=>e.id===id)||floors.find(f=>f.id===id);}
- function count(){const p=exportArchitecture(entries,baseline,floors);return p.edits.length+p.added.length+p.removed.length+p.floors.length;}
- function snapshots(){return {entries:cloneAll(entries),floors:copyFloors(floors)};}
+ const raycaster=new THREE.Raycaster();const points=[],boxInstances=[],posterPick=[],posterCache=new Map();
+ const copyPosters=a=>a.map(x=>({...x}));
+ function exportAll(){return {...exportArchitecture(entries,baseline,floors),posters:serializePosters(posters)};}
+ function posterById(id){return posters.find(p=>p.id===id);}
+ function resetPosterCache(){for(const row of posterCache.values()){row.material.map?.dispose();row.material.dispose();}posterCache.clear();}
+ function entryById(id){return entries.find(e=>e.id===id)||floors.find(f=>f.id===id)||posterById(id);}
+ function count(){const p=exportAll();return p.edits.length+p.added.length+p.removed.length+p.floors.length+p.posters.length;}
+ function snapshots(){return {entries:cloneAll(entries),floors:copyFloors(floors),posters:copyPosters(posters)};}
  function capture(){return JSON.stringify(snapshots());}
  function restore(snapshot){const data=typeof snapshot==='string'?JSON.parse(snapshot):snapshot;
-  entries=cloneAll(data.entries);floors=copyFloors(data.floors);selection=entryById(selection)&&!entryById(selection).deleted?selection:null;
+  entries=cloneAll(data.entries);floors=copyFloors(data.floors);posters=copyPosters(data.posters||[]);selection=entryById(selection)&&!entryById(selection).deleted?selection:null;
   render();showProperties();renderList();}
  function record(before){if(before===capture())return false;history.push(before);if(history.length>60)history.shift();future=[];
   dirty=true;render();showProperties();renderList();onChange?.();return true;}
@@ -61,22 +68,26 @@ export function createBuildMode({data,scene,canvas,camera,getZoom,getView,rayAt,
   $('viewport').style.cursor=active?'crosshair':'auto';
   if(active){$('buildRoom').value=$('room').value;setTool('select');notify?.('Byggläge: välj en vägg eller välj ett ritverktyg. Två klick ritar en ny del.');}
   syncVisibility();render();showProperties();renderList();}
- function setTool(next){if(!['select',...ARCHITECTURE_TYPES,floorKind,roomKind].includes(next))return;
-  mode=next;first=null;hover=null;
+ function setTool(next){if(!['select',...ARCHITECTURE_TYPES,floorKind,roomKind,posterKind,paintKind].includes(next))return;
+  mode=next;first=null;hover=null;overlayDraft=null;
   $('buildTool').value=next;
   $('buildRoomSettings').hidden=next!==roomKind;
+  $('buildPaintSettings').hidden=next!==paintKind;
+  $('buildSmartPaint').classList.toggle('active',next===paintKind);
   $('buildRoomCreateExact').disabled=!first;
   for(const b of document.querySelectorAll('[data-build-tool]')){
     const is=b.dataset.buildTool===next;b.classList.toggle('active',is);b.setAttribute('aria-pressed',String(is));}
   $('buildInstructions').textContent=next==='select'?'Klicka för att välja. Dra en ändpunkt för att justera, eller dra mitt på för att flytta hela delen.':
    next==='floor'?'Klicka två hörn för att rita en ny golvrektangel.':
    next===roomKind?'Klicka första och motsatta hörnet i planvyn. Fyra väggar och valfritt golv skapas tillsammans. Eller ange exakta mått efter första klicket.':
+   next===posterKind?'Klicka på önskad vägg i PLANVY eller direkt på väggytan i 3D. Därefter kan du ändra text, mått och ladda upp din affischbild.':
+   next===paintKind?'Dra direkt längs en befintlig vägg, eller klicka två punkter. Välj Fönster, Glasvägg eller Dörr i samma panel utan att byta verktyg.':
    `Klicka en startpunkt och därefter en slutpunkt: ${ARCHITECTURE_NAMES[next]}.`;
   render();}
  function smartEnabled(ev){return $('buildSmartSnap').checked&&!ev.altKey;}
  function point(ev,excludeId=null){
   const pt=planePoint(ev);if(!pt)return null;
-  const draft=first&&mode!=='select'&&mode!==floorKind&&mode!==roomKind?first:null;
+  const draft=first&&mode!=='select'&&mode!==floorKind&&mode!==roomKind&&mode!==posterKind&&mode!==paintKind?first:null;
   const result=snapDraftPoint([pt.x,pt.z],entries,{start:draft,
    excludeId,grid:mode==='select'?0:(($('snap').checked&&!ev.altKey)?0.1:0),
    snapToGeometry:mode!=='select'&&smartEnabled(ev),
@@ -91,6 +102,48 @@ export function createBuildMode({data,scene,canvas,camera,getZoom,getView,rayAt,
    $('buildSnapFeedback').textContent=result.kind==='fri'?'Fri placering':result.kind==='rutnät'?'Rutnät 10 cm':'Fäster till '+result.kind;
   }
   return result?.point||null;
+ }
+ function effectivePaintKind(){return mode===paintKind?paintType:mode;}
+ function updatePaintType(kind){
+  if(!PAINT_KINDS.includes(kind))return;
+  paintType=kind;$('buildPaintKind').value=kind;
+  for(const button of document.querySelectorAll('[data-paint-kind]')){
+   const selected=button.dataset.paintKind===kind;
+   button.classList.toggle('active',selected);button.setAttribute('aria-pressed',String(selected));
+  }
+  if(mode!==paintKind)setTool(paintKind);
+  if(overlayDraft){first=null;hover=null;overlayDraft=null;render();}
+  notify?.('SMART RITA: '+(ARCHITECTURE_NAMES[kind]||kind)+' valt. Dra över en vägg eller klicka två punkter.');
+ }
+ function paintEndpoint(event){
+  const pt=planePoint(event);return pt?[pt.x,pt.z]:null;
+ }
+ function beginOverlay(event,forced=false){
+  if(!forced&&!PAINT_KINDS.includes(effectivePaintKind()))return false;
+  if(event.altKey&&!forced)return false;
+  const p=paintEndpoint(event);if(!p)return false;
+  const hit=wallAtPoint(entries,p,{radius:clamp(getZoom()/Math.max(200,canvas.clientHeight)*6,.12,.29)});
+  if(!hit){
+   if(forced)notify?.('Börja genom att klicka på själva vägglinjen (röd eller grå).');
+   return false;
+  }
+  overlayDraft={wallId:hit.wall.id};
+  first=hit.point;hover=hit.point;
+  $('buildSnapFeedback').textContent='SMART RITA · '+(ARCHITECTURE_NAMES[effectivePaintKind()]||'Fönster')+' · klicka slutpunkt på samma vägg';
+  render();return true;
+ }
+ function completeOverlay(event){
+  if(!overlayDraft)return false;
+  const p=paintEndpoint(event);if(!p)return false;
+  try{
+   const plan=planPaintOverWall(entries,overlayDraft.wallId,first,p,effectivePaintKind(),{posters});
+   const before=capture();
+   entries=plan.entries;posters=plan.posters;selection=plan.paintedId;
+   first=null;hover=null;overlayDraft=null;drag=null;
+   record(before);
+   notify?.((ARCHITECTURE_NAMES[plan.kind]||'Byggdel')+' klar! '+(plan.full?'Hela väggen ändrad.':'Väggen delades automatiskt utan överlapp.')+' Rita nästa direkt – verktyget är fortfarande aktivt. Ctrl+Z ångrar.');
+   return true;
+  }catch(error){notify?.(error.message);return false;}
  }
  function addBox(queue,name,id,x,y,z,w,h,d,ang=0){if(w<.001||h<.001||d<.001)return;
   const list=queue.get(name)||[];list.push({id,x,y,z,w,h,d,ang});queue.set(name,list);}
@@ -121,12 +174,80 @@ export function createBuildMode({data,scene,canvas,camera,getZoom,getView,rayAt,
   addSegmentBox(queue,'frame',id,seg,.10,seg.height-.05,.085);
   if(seg.kind!=='opening')addSegmentBox(queue,seg.kind+':'+architecturalFinish(seg.kind,seg.finish),id,seg,seg.height-.22,(seg.height-.22)/2,.035);
  }
- function clear3D(){boxInstances.length=0;points.length=0;
+ function clear3D(){boxInstances.length=0;points.length=0;posterPick.length=0;
   for(const o of [...root.children]){root.remove(o);if(o.isInstancedMesh)o.dispose?.();if(o.geometry&&o.geometry!==geo&&o.geometry!==sphere)o.geometry.dispose();if(o.material&&!materialsHas(o.material)&&o.material!==selectionMat&&o.material!==selectLineMat&&o.material!==floorMat)o.material.dispose();}
  }
- function materialsHas(mat){return [...materials.values()].includes(mat);}
+ function materialsHas(mat){return [...materials.values()].includes(mat)||[...posterCache.values()].some(row=>row.material===mat);}
+ function posterMaterial(p){
+  const signature=JSON.stringify([p.text,p.subtitle,p.color,p.image,p.width,p.height]);
+  const cached=posterCache.get(p.id);if(cached?.signature===signature)return cached.material;
+  if(cached){cached.material.map?.dispose();cached.material.dispose();}
+  const texture=createPosterTexture(THREE,p,scheduleRender);
+  const material=new THREE.MeshBasicMaterial({map:texture,side:THREE.DoubleSide,depthWrite:true});
+  posterCache.set(p.id,{signature,material});return material;
+ }
+ function renderPosters(full){
+  for(const p of posters){
+   const at=locatePoster(p,entries);if(!at)continue;
+   const material=posterMaterial(p);
+   if(full){
+    const plane=new THREE.Mesh(new THREE.PlaneGeometry(p.width,p.height),material);
+    plane.position.set(at.x,p.y,at.z);plane.rotation.y=at.angle;
+    plane.renderOrder=5;plane.userData.posterId=p.id;root.add(plane);posterPick.push(plane);
+   }else{
+    const marker=new THREE.Mesh(sphere,selectionMat);
+    marker.position.set(at.x,.43,at.z);marker.scale.setScalar(.48);
+    marker.userData.posterId=p.id;root.add(marker);posterPick.push(marker);
+   }
+  }
+ }
+ function tryPosterOnWall(event){
+  let wall=null,t=.5,side=1;
+  if(getView()==='3d'){
+   const hits=rayAt(event).intersectObjects(boxInstances,false);
+   for(const hit of hits){
+    const id=hit.object.userData.ids?.[hit.instanceId],w=entries.find(e=>e.id===id&&!e.deleted&&isWall(e.kind));
+    if(!w)continue;
+    wall=w;
+    const dx=w.b[0]-w.a[0],dz=w.b[1]-w.a[1],L2=dx*dx+dz*dz;
+    t=clamp(((hit.point.x-w.a[0])*dx+(hit.point.z-w.a[1])*dz)/L2,0,1);
+    const nx=-dz/Math.sqrt(L2),nz=dx/Math.sqrt(L2);
+    side=(camera.position.x-(w.a[0]+dx*t))*nx+(camera.position.z-(w.a[1]+dz*t))*nz>=0?1:-1;
+    break;
+   }
+  }else{
+   const p=planePoint(event);
+   if(!p)return false;
+   let best=.55;
+   for(const e of entries.filter(e=>!e.deleted&&isWall(e.kind))){
+    const d=pointToSegmentDistance([p.x,p.z],e.a,e.b);
+    if(d>=best)continue;
+    const dx=e.b[0]-e.a[0],dz=e.b[1]-e.a[1],L2=dx*dx+dz*dz;
+    wall=e;best=d;t=clamp(((p.x-e.a[0])*dx+(p.z-e.a[1])*dz)/L2,0,1);
+   }
+  }
+  if(!wall){notify?.('Klicka på en röd/grå vägg. Affischer kan inte sitta på en dörr.');return false;}
+  try{
+   if(posters.length>=POSTER_MAX)throw Error('Max 40 affischer per projekt.');
+   const poster=makePoster(wall,posters,t,side);
+   const before=capture();posters.push(poster);selection=poster.id;
+   setTool('select');record(before);
+   notify?.('Affisch tillagd på väggen. Ändra värdeordet eller ladda upp en bild till vänster.');
+   return true;
+  }catch(error){notify?.(error.message);return false;}
+ }
+ function changePoster(delta){
+  const p=posterById(selection);if(!p)return false;
+  const next={...p,...delta};try{validatePoster(next,entries);}catch(error){notify?.(error.message);showProperties();return false;}
+  const before=capture();Object.assign(p,next);record(before);return true;
+ }
  function drawSelection(){if(!selection)return;
   const e=entryById(selection);if(!e||e.deleted)return;
+  if(posterById(selection)){
+   const at=locatePoster(e,entries);if(!at)return;
+   const marker=new THREE.Mesh(sphere,selectionMat);marker.position.set(at.x,.55,at.z);
+   marker.scale.setScalar(.7);marker.renderOrder=8;root.add(marker);return;
+  }
   if('a' in e){const pos=[e.a,e.b];
    const geometry=new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(e.a[0],.22,e.a[1]),new THREE.Vector3(e.b[0],.22,e.b[1])]);
    const line=new THREE.Line(geometry,selectLineMat);line.renderOrder=5;root.add(line);
@@ -165,9 +286,11 @@ export function createBuildMode({data,scene,canvas,camera,getZoom,getView,rayAt,
    const mesh=new THREE.Mesh(new THREE.ShapeGeometry(shape),floorMat);mesh.rotation.x=Math.PI/2;mesh.position.y=-.025;
    mesh.userData.archId=f.id;mesh.name=f.id;root.add(mesh);
   }
-  drawSelection();drawFirst();syncVisibility();scheduleRender();
+  renderPosters(full);drawSelection();drawFirst();syncVisibility();scheduleRender();
  }
  function nearSegment(point,includeFloors=false){const cutoff=clamp(getZoom()/Math.max(200,canvas.clientHeight)*14,.12,.85);let selectedId=null,least=cutoff;
+  for(const poster of posters){const at=locatePoster(poster,entries);
+   if(at&&Math.hypot(at.x-point[0],at.z-point[1])<least){least=Math.hypot(at.x-point[0],at.z-point[1]);selectedId=poster.id;}}
   for(const e of entries){if(e.deleted)continue;const d=pointToSegmentDistance(point,e.a,e.b);
    if(d<least){least=d;selectedId=e.id;}}
   if(includeFloors)for(const f of floors){if(point[0]>=f.x0&&point[0]<=f.x1&&point[1]>=f.z0&&point[1]<=f.z1&&!selectedId)selectedId=f.id;}
@@ -178,7 +301,15 @@ export function createBuildMode({data,scene,canvas,camera,getZoom,getView,rayAt,
   $('buildCount').textContent=count()+' byggändringar';}
  function showProperties(){const e=entryById(selection);$('buildNoSelection').hidden=!!e;$('buildSelected').hidden=!e;
   $('buildSelectionId').textContent=e?.id||'Ingen vald';
-  if(e){$('buildKind').value=e.kind||'floor';const isFloor='x0' in e;$('buildKind').disabled=isFloor;
+  const poster=!!e?.wallId;
+  $('posterFields').hidden=!poster;$('buildKindFields').hidden=poster;
+  if(poster){
+   $('buildEndpointFields').hidden=true;$('buildFloorFields').hidden=true;$('buildFinishFields').hidden=true;
+   $('posterText').value=e.text;$('posterSubtitle').value=e.subtitle;$('posterColor').value=e.color;
+   $('posterWidth').value=e.width;$('posterHeight').value=e.height;$('posterY').value=e.y;
+   $('posterT').value=Math.round(e.t*100);$('posterSide').value=String(e.side);
+   $('posterRemoveImage').disabled=!e.image;$('buildDelete').textContent='Ta bort affisch';
+  }else if(e){$('buildKind').value=e.kind||'floor';const isFloor='x0' in e;$('buildKind').disabled=isFloor;
    $('buildEndpointFields').hidden=isFloor;$('buildFloorFields').hidden=!isFloor;
    const colorable=!isFloor&&e.kind!=='opening';
    $('buildFinishFields').hidden=!colorable;
@@ -200,7 +331,8 @@ export function createBuildMode({data,scene,canvas,camera,getZoom,getView,rayAt,
   $('buildDoorInWall').disabled=!wallSelected;
   const editable=!!e&&'a' in e&&!e.source;
   for(const id of ['buildStraighten','buildJoinEnds','buildMatchHeight'])$(id).disabled=!editable;
-  $('buildSimpleHelp').textContent=e?('Markerad: '+(ARCHITECTURE_NAMES[e.kind]||'Golv')+' · '+e.id+' — välj en åtgärd nedan'):'Klicka först på en vägg på kartan. Välj sedan Fönster, Glasvägg eller Lägg till dörr.';
+  $('buildSimpleHelp').textContent=poster?'Affischen är kopplad till sin vägg. Ändra värdeord, storlek eller välj en lokal bild.':
+   e?('Markerad: '+(ARCHITECTURE_NAMES[e.kind]||'Golv')+' · '+e.id+' — välj en åtgärd nedan'):'Välj en vägg eller klicka AFFISCH PÅ VÄGG för att skapa en värdeordsaffisch.';
   reportWarnings();
  }
  function renderList(){const list=$('buildList');list.replaceChildren();const filter=$('buildSearch').value.trim().toLowerCase();
@@ -208,16 +340,18 @@ export function createBuildMode({data,scene,canvas,camera,getZoom,getView,rayAt,
   const center=roomSelect?[(roomSelect.polygon.reduce((s,p)=>s+p[0],0)/roomSelect.polygon.length),
    (roomSelect.polygon.reduce((s,p)=>s+p[1],0)/roomSelect.polygon.length)]:[0,0];
   let seen=0;const found=[];
-  for(const e of [...entries.filter(e=>!e.deleted),...floors]){const id=e.id,label=ARCHITECTURE_NAMES[e.kind]||'Ny golvyta';
+  for(const e of [...entries.filter(e=>!e.deleted),...floors,...posters]){const id=e.id,label=e.wallId?'Värdeordsaffisch':ARCHITECTURE_NAMES[e.kind]||'Ny golvyta';
    if(filter&&!(id+' '+label).toLowerCase().includes(filter))continue;
-   const x='a' in e?(e.a[0]+e.b[0])/2:(e.x0+e.x1)/2,z='a' in e?(e.a[1]+e.b[1])/2:(e.z0+e.z1)/2;
+   const at=e.wallId?locatePoster(e,entries):null;
+   const x=at?.x??('a' in e?(e.a[0]+e.b[0])/2:(e.x0+e.x1)/2),z=at?.z??('a' in e?(e.a[1]+e.b[1])/2:(e.z0+e.z1)/2);
    found.push({e,label,dist:Math.hypot(x-center[0],z-center[1])});}
   found.sort((a,b)=>(a.e.id===selection?-1:b.e.id===selection?1:0)||a.dist-b.dist||a.e.id.localeCompare(b.e.id));
   for(const {e,label} of found.slice(0,75)){
    const button=document.createElement('button');button.type='button';button.className='build-list-item';button.classList.toggle('active',e.id===selection);
    const swatch=document.createElement('span');swatch.className='arch-swatch';swatch.style.background=ARCHITECTURE_COLORS[e.kind]||'#7ec7b4';
    const name=document.createElement('span');name.textContent=label;const id=document.createElement('small');id.textContent=e.id;
-   button.append(swatch,name,id);button.onclick=()=>{setTool('select');select(e.id);onGoPoint?.('a' in e?(e.a[0]+e.b[0])/2:(e.x0+e.x1)/2,'a' in e?(e.a[1]+e.b[1])/2:(e.z0+e.z1)/2);};list.append(button);seen++;
+   button.append(swatch,name,id);button.onclick=()=>{setTool('select');select(e.id);const at=e.wallId?locatePoster(e,entries):null;
+    onGoPoint?.(at?.x??('a' in e?(e.a[0]+e.b[0])/2:(e.x0+e.x1)/2),at?.z??('a' in e?(e.a[1]+e.b[1])/2:(e.z0+e.z1)/2));};list.append(button);seen++;
   }
   $('buildListCount').textContent=filter?`${found.length} träffar`: `Visar ${seen} närmaste av ${found.length} delar`;
   $('viewportStatus').textContent=`BYGGLÄGE · ${count()} ändringar i byggskissen · ${found.length} befintliga/nya byggdelar`;
@@ -227,7 +361,10 @@ export function createBuildMode({data,scene,canvas,camera,getZoom,getView,rayAt,
   const old=capture(),next='a' in e?{...e,...delta,a:[...(delta.a??e.a)],b:[...(delta.b??e.b)]}:{...e,...delta};
   if('a' in e&&delta.kind&&delta.kind!==e.kind&&delta.finish===undefined)
    next.finish=architecturalFinish(delta.kind);
-  try{if('a' in e)validateEntry(next);else validateFloorRect(next);}catch(err){notify?.(err.message);return false;}
+  try{if('a' in e){validateEntry(next);
+    for(const p of posters.filter(p=>p.wallId===e.id))validatePoster(p,entries.map(w=>w.id===e.id?next:w));
+   }else validateFloorRect(next);
+  }catch(err){notify?.(err.message);return false;}
   Object.assign(e,next);record(old);return true;
  }
  function quickChange(kind){
@@ -267,11 +404,19 @@ export function createBuildMode({data,scene,canvas,camera,getZoom,getView,rayAt,
   if(changeEntry(e.id,{a:fixed.a,b:fixed.b}))notify?.(action==='straight'?'Byggdelen är nu helt vågrät eller lodrät i planvyn.':'Ändpunkterna har kopplats till närliggande väggar.');
  }
  function removeSelected(){if(!selection)return;const before=capture();const e=entryById(selection);if(!e)return;
-  if('a' in e){if(e.source)e.deleted=true;else entries=entries.filter(x=>x.id!==selection);}
+  if(e.wallId)posters=posters.filter(x=>x.id!==selection);
+  else if('a' in e){if(e.source)e.deleted=true;else entries=entries.filter(x=>x.id!==selection);
+   posters=posters.filter(p=>p.wallId!==e.id);}
   else floors=floors.filter(x=>x.id!==selection);
   selection=null;record(before);notify?.('Byggdelen är borttagen ur skissen. Spelet ändras inte.');}
  function duplicate(){const e=entryById(selection);if(!e)return;const before=capture();
-  if('a' in e){const item=makeEntry(getNextId(entries,floors,e.kind),e.kind,[e.a[0]+.5,e.a[1]+.5],[e.b[0]+.5,e.b[1]+.5]);
+  if(e.wallId){
+   if(posters.length>=POSTER_MAX){notify?.('Max 40 affischer.');return;}
+   const at=locatePoster(e,entries);if(!at)return;
+   const next={...e,id:posterId(posters),t:roundPosition(clamp(e.t+e.width/at.length+.03,0,1))};
+   try{validatePoster(next,entries);}catch{notify?.('Det finns inte tillräckligt med väggyta bredvid affischen.');return;}
+   posters.push(next);selection=next.id;
+  }else if('a' in e){const item=makeEntry(getNextId(entries,floors,e.kind),e.kind,[e.a[0]+.5,e.a[1]+.5],[e.b[0]+.5,e.b[1]+.5]);
    item.height=e.height;item.thickness=e.thickness;item.sill=e.sill;item.finish=e.finish;
    try{validateEntry(item);}catch(error){notify?.(error.message);return;}
    entries.push(item);selection=item.id;
@@ -295,7 +440,11 @@ export function createBuildMode({data,scene,canvas,camera,getZoom,getView,rayAt,
    return true;
   }catch(error){notify?.(error.message);render();return false;}
  }
- function choosePoint(ev){const p=point(ev);if(!p)return;
+ function choosePoint(ev){
+  if(overlayDraft){completeOverlay(ev);return;}
+  if(mode===paintKind){beginOverlay(ev,true);return;}
+  if(PAINT_KINDS.includes(mode)&&beginOverlay(ev))return;
+  const p=point(ev);if(!p)return;
   if(!first){first=p;hover=p;$('buildRoomCreateExact').disabled=mode!==roomKind;render();
    notify?.(mode===roomKind?'Första rumshörnet valt. Klicka diagonalt mittemot, eller välj SKAPA MED EXAKTA MÅTT.':'Startpunkt vald. Klicka nu på slutpunkten. Escape avbryter.');return;}
   const start=first;
@@ -315,11 +464,22 @@ export function createBuildMode({data,scene,canvas,camera,getZoom,getView,rayAt,
    drag={type:'pan',mx:ev.clientX,my:ev.clientY};canvas.setPointerCapture(ev.pointerId);ev.preventDefault();return;
   }
   const p=point(ev);
+  if(mode===posterKind){tryPosterOnWall(ev);ev.preventDefault();return;}
   if(mode!=='select'){if(getView()==='3d'){notify?.('Rita nya väggar och öppningar i PLANVY. Byt till 3D-VY för att granska.');return;}
-   choosePoint(ev);ev.preventDefault();return;}
+   const startingStroke=mode===paintKind&&!first;
+   choosePoint(ev);
+   if(startingStroke&&overlayDraft&&first){
+    drag={type:'paint-stroke',mx:ev.clientX,my:ev.clientY,originX:ev.clientX,originY:ev.clientY,moved:false};
+    canvas.setPointerCapture(ev.pointerId);
+   }
+   ev.preventDefault();return;}
   let targetId=null,handle=null;
   if(p&&selection){const current=entryById(selection),radius=clamp(getZoom()/Math.max(200,canvas.clientHeight)*16,.17,.75);
    if(current&&'a' in current){if(near(p,current.a,radius)){targetId=selection;handle='a';}else if(near(p,current.b,radius)){targetId=selection;handle='b';}}
+  }
+  if(!targetId&&getView()==='3d'){
+   const posterHits=rayAt(ev).intersectObjects(posterPick,false);
+   if(posterHits.length)targetId=posterHits[0].object.userData.posterId;
   }
   if(!targetId&&getView()==='3d'){
    const intersects=rayAt(ev).intersectObjects(boxInstances,false);
@@ -327,14 +487,27 @@ export function createBuildMode({data,scene,canvas,camera,getZoom,getView,rayAt,
   }
   if(!targetId&&p)targetId=nearSegment(p,true);
   if(targetId){if(selection!==targetId)select(targetId);const e=entryById(targetId);
-   drag={type:handle||('a' in e?'move':'moveFloor'),id:targetId,before:capture(),
+   drag={type:handle||(e.wallId?'pan':('a' in e?'move':'moveFloor')),id:targetId,before:capture(),
     start:p||null,mx:ev.clientX,my:ev.clientY,orig:'a' in e?cloneEntry(e):{...e}};
    canvas.setPointerCapture(ev.pointerId);ev.preventDefault();return;}
   select(null);drag={type:getView()==='top'?'pan':'orbit',mx:ev.clientX,my:ev.clientY};canvas.setPointerCapture(ev.pointerId);
  }
  function handlePointerMove(ev){if(!active)return;
-  if(first&&mode!=='select'){const p=point(ev);if(p){hover=p;render();}}
+  if(first&&mode!=='select'){
+   if(overlayDraft){
+    const raw=paintEndpoint(ev),wall=entries.find(e=>e.id===overlayDraft.wallId&&!e.deleted);
+    const projection=raw&&wall?projectToWall(raw,wall):null;
+    if(projection){hover=projection.point;
+     $('buildSnapFeedback').textContent='ÖVER VÄGG · '+(ARCHITECTURE_NAMES[effectivePaintKind()]||'Fönster')+' · '+Math.hypot(hover[0]-first[0],hover[1]-first[1]).toFixed(2)+' m · klicka eller släpp här';
+     render();
+    }
+   }else{const p=point(ev);if(p){hover=p;render();}}
+  }
   if(!drag)return;const dx=ev.clientX-drag.mx,dy=ev.clientY-drag.my;drag.mx=ev.clientX;drag.my=ev.clientY;
+  if(drag.type==='paint-stroke'){
+   if(Math.hypot(ev.clientX-drag.originX,ev.clientY-drag.originY)>9)drag.moved=true;
+   return;
+  }
   if(drag.type==='pan'){onPan(dx,dy);return;}
   if(drag.type==='orbit'){onOrbit(dx,dy);return;}
   const p=point(ev,drag.id);if(!p||!drag.start)return;
@@ -348,10 +521,14 @@ export function createBuildMode({data,scene,canvas,camera,getZoom,getView,rayAt,
   }
   else if(drag.type==='move'){next.a=[drag.orig.a[0]+off[0],drag.orig.a[1]+off[1]];next.b=[drag.orig.b[0]+off[0],drag.orig.b[1]+off[1]];}
   else if(drag.type==='moveFloor'){next.x0+=off[0];next.z0+=off[1];next.x1+=off[0];next.z1+=off[1];}
-  try{if('a' in e)validateEntry(next);else validateFloorRect(next);}catch{return;}
+  try{if('a' in e){validateEntry(next);
+    for(const poster of posters.filter(p=>p.wallId===e.id))validatePoster(poster,entries.map(w=>w.id===e.id?next:w));
+   }else validateFloorRect(next);
+  }catch{return;}
   Object.assign(e,next);render();showProperties();
  }
- function handlePointerEnd(){if(!active||!drag)return;const previous=drag.before;const was=drag.type;drag=null;
+ function handlePointerEnd(ev){if(!active||!drag)return;const previous=drag.before;const was=drag.type;const painted=drag.type==='paint-stroke'&&drag.moved;drag=null;
+  if(painted)completeOverlay(ev);
   if(['a','b','move','moveFloor'].includes(was))record(previous);
  }
  function bind(){
@@ -359,6 +536,13 @@ export function createBuildMode({data,scene,canvas,camera,getZoom,getView,rayAt,
   picker.onchange=e=>{onGoRoom?.(e.target.value);renderList();};
   $('modeFurniture').onclick=()=>enable(false);$('modeBuild').onclick=()=>enable(true);
   $('buildTool').onchange=e=>setTool(e.target.value);
+  $('buildSmartPaint').onclick=()=>setTool(paintKind);
+  $('buildPaintKind').onchange=e=>updatePaintType(e.target.value);
+  for(const button of document.querySelectorAll('[data-paint-kind]'))button.onclick=()=>updatePaintType(button.dataset.paintKind);
+  for(const button of document.querySelectorAll('[data-paint-kind]')){
+   const selected=button.dataset.paintKind===paintType;
+   button.classList.toggle('active',selected);button.setAttribute('aria-pressed',String(selected));
+  }
   for(const btn of document.querySelectorAll('[data-quick-kind]'))btn.onclick=()=>quickChange(btn.dataset.quickKind);
   $('buildDoorInWall').onclick=quickDoor;
   $('buildStraighten').onclick=()=>precisionAction('straight');
@@ -376,6 +560,26 @@ export function createBuildMode({data,scene,canvas,camera,getZoom,getView,rayAt,
   $('buildSearch').oninput=renderList;
   $('buildKind').onchange=e=>{const s=entryById(selection);if(s&&'a' in s)changeEntry(s.id,{kind:e.target.value});};
   $('buildFinish').onchange=e=>{const s=entryById(selection);if(s&&'a' in s)changeEntry(s.id,{finish:e.target.value});};
+  for(const [id,key] of [['posterText','text'],['posterSubtitle','subtitle'],['posterColor','color']]){
+   $(id).onchange=e=>changePoster({[key]:e.target.value});
+  }
+  for(const [id,key] of [['posterWidth','width'],['posterHeight','height'],['posterY','y']]){
+   $(id).onchange=e=>{const value=Number(e.target.value);
+    if(Number.isFinite(value))changePoster({[key]:value});showProperties();};
+  }
+  $('posterT').onchange=e=>{const value=Number(e.target.value);
+   if(Number.isFinite(value))changePoster({t:roundPosition(value/100)});showProperties();};
+  $('posterSide').onchange=e=>{changePoster({side:Number(e.target.value)});showProperties();};
+  $('posterImage').onchange=async e=>{
+   const id=selection,p=posterById(id),file=e.target.files?.[0];e.target.value='';
+   if(!p||!file)return;
+   try{
+    const image=await compressPosterImage(file);
+    if(selection!==id||!posterById(id))throw Error('Affischen har ändrats. Välj den igen.');
+    changePoster({image});notify?.('Affischbilden är komprimerad och sparas i JSON/ZIP-projektet.');
+   }catch(err){notify?.('Bildimport: '+err.message);}
+  };
+  $('posterRemoveImage').onclick=()=>{if(changePoster({image:''}))notify?.('Textaffischen visas igen.');};
   const kmap={buildA_X:['a',0],buildA_Z:['a',1],buildB_X:['b',0],buildB_Z:['b',1]};
   for(const [id,[end,index]] of Object.entries(kmap))$(id).onchange=e=>{const s=entryById(selection);if(!s||!('a' in s))return;
    const value=Number(e.target.value),p=[...s[end]];p[index]=value;if(!Number.isFinite(value))return;
@@ -388,8 +592,8 @@ export function createBuildMode({data,scene,canvas,camera,getZoom,getView,rayAt,
    if(key==='name'||Number.isFinite(value))changeEntry(s.id,{[key]:value});showProperties();};
   $('buildDelete').onclick=removeSelected;$('buildDuplicate').onclick=duplicate;
   $('buildUndo').onclick=undo;$('buildRedo').onclick=redo;
-  $('buildReset').onclick=()=>{if(!confirm('Återställa alla vägg-/dörr-/golvändringar i skissen? Möblerna påverkas inte.'))return;
-   const before=capture();entries=cloneAll(baseline);floors=[];selection=null;record(before);notify?.('Byggskissen återställd. Originalspelet har aldrig ändrats.');};
+  $('buildReset').onclick=()=>{if(!confirm('Återställa alla vägg-/dörr-/golv-/affischändringar i skissen? Möblerna påverkas inte.'))return;
+   const before=capture();entries=cloneAll(baseline);floors=[];posters=[];resetPosterCache();selection=null;record(before);notify?.('Byggskissen återställd. Originalspelet har aldrig ändrats.');};
   canvas.addEventListener('pointerdown',handlePointerDown);
   canvas.addEventListener('pointermove',handlePointerMove);
   canvas.addEventListener('pointerup',handlePointerEnd);canvas.addEventListener('pointercancel',handlePointerEnd);
@@ -397,7 +601,7 @@ export function createBuildMode({data,scene,canvas,camera,getZoom,getView,rayAt,
    if((ev.ctrlKey||ev.metaKey)&&(ev.key.toLowerCase()==='z'||ev.key.toLowerCase()==='y')){
     ev.preventDefault();if(ev.key.toLowerCase()==='y'||ev.shiftKey)redo();else undo();return;}
    if((ev.ctrlKey||ev.metaKey)&&ev.key.toLowerCase()==='d'){ev.preventDefault();duplicate();return;}
-   if(ev.key==='Escape'){if(first){first=null;hover=null;render();notify?.('Ritningen avbruten.');}else select(null);return;}
+   if(ev.key==='Escape'){if(first){first=null;hover=null;overlayDraft=null;render();notify?.('Ritningen avbruten.');}else select(null);return;}
    if(ev.key==='Delete'||ev.key==='Backspace'){ev.preventDefault();removeSelected();return;}
    const e=entryById(selection);if(!e)return;
    const step=ev.shiftKey?.5:.1;const pos=ev.key==='ArrowLeft'?[-step,0]:ev.key==='ArrowRight'?[step,0]:
@@ -406,19 +610,25 @@ export function createBuildMode({data,scene,canvas,camera,getZoom,getView,rayAt,
     else changeEntry(e.id,{x0:e.x0+pos[0],x1:e.x1+pos[0],z0:e.z0+pos[1],z1:e.z1+pos[1]});}
   });
  }
- function load(patch){const read=parseArchitecture(patch,baseline);entries=read.entries;floors=read.floors;history=[];future=[];
-  selection=null;first=null;hover=null;dirty=hasSketch();render();showProperties();renderList();}
- function resetWithoutConfirm(){entries=cloneAll(baseline);floors=[];history=[];future=[];selection=null;render();showProperties();renderList();}
+ function load(patch){const read=parseArchitecture(patch,baseline),loadedPosters=parsePosters(patch?.posters,read.entries);
+  entries=read.entries;floors=read.floors;posters=loadedPosters;resetPosterCache();history=[];future=[];
+  selection=null;first=null;hover=null;overlayDraft=null;dirty=hasSketch();render();showProperties();renderList();}
+ function resetWithoutConfirm(){entries=cloneAll(baseline);floors=[];posters=[];resetPosterCache();history=[];future=[];selection=null;render();showProperties();renderList();}
  bind();render();showProperties();renderList();syncVisibility();
  return {get active(){return active;},enable,getBaseline:()=>cloneAll(baseline),getEntries:()=>cloneAll(entries),getFloors:()=>copyFloors(floors),
-  export:()=>exportArchitecture(entries,baseline,floors),load,reset:resetWithoutConfirm,hasSketch,
-  setView:()=>render(),select,setTool,undo,redo,count,quickChange,quickDoor,
+  export:exportAll,load,reset:resetWithoutConfirm,hasSketch,posters:()=>copyPosters(posters),
+  addPoster:(wallId,options)=>{const wall=entries.find(e=>e.id===wallId);const poster=makePoster(wall,posters,.5,1,options);const before=capture();posters.push(poster);selection=poster.id;record(before);return poster.id;},
+  updatePoster:(id,delta)=>{selection=id;return changePoster(delta);},
+  setView:()=>render(),select,setTool,setPaintType:updatePaintType,
+  paintWall:(wallId,start,end,kind=paintType)=>{const plan=planPaintOverWall(entries,wallId,start,end,kind,{posters});const before=capture();
+   entries=plan.entries;posters=plan.posters;selection=plan.paintedId;record(before);return plan;},
+  undo,redo,count,quickChange,quickDoor,
   createRectangle:(a,b,options)=>{
    const before=capture(),made=createRectangleRoom(entries,floors,a,b,options);
    entries.push(...made.walls);if(made.floor)floors.push(made.floor);selection=made.floor?.id||made.walls[0].id;
    record(before);return made;
   },
-  getSelected:()=>selection,getTool:()=>mode,getDrawingState:()=>({mode,first:first?[...first]:null,selected:selection}),
+  getSelected:()=>selection,getTool:()=>mode,getDrawingState:()=>({mode,paintType,overlayWallId:overlayDraft?.wallId||null,first:first?[...first]:null,selected:selection}),
   testCreate:(kind,a,b)=>{const before=capture();const e=makeEntry(getNextId(entries,floors,kind),kind,a,b);validateEntry(e);entries.push(e);selection=e.id;record(before);return e.id;},
   testChange:(id,delta)=>changeEntry(id,delta)};
 }

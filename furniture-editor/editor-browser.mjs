@@ -135,6 +135,20 @@ try{
    const after=__furnitureEditor.getCameraTarget(),selected=__furnitureEditor.getItem(id);
    return Math.hypot(after.x-before.x,after.z-before.z)>.02&&selected?.assetRole==='table';
   },{before:posBefore,id:custom.id}));
+ // Navigation regression: opening/using the object library must never reset the camera.
+ await page.locator('#room').selectOption('I09'); // intentional jump, unlike Add Object
+ const focus=await page.evaluate(()=>__furnitureEditor.getCameraTarget());
+ check('current position indicator follows the camera, no room code knowledge needed',
+  await page.locator('#areaHere').textContent().then(t=>t.includes('I09')));
+ const newId=await page.evaluate(()=>__furnitureEditor.addPreset('kenney:furniture-kit:plantsmall1'));
+ const after=await page.evaluate(()=>__furnitureEditor.getCameraTarget());
+ check('Add Object does not teleport or change the camera location',
+  Math.abs(after.x-focus.x)<1e-7&&Math.abs(after.z-focus.z)<1e-7);
+ if(newId)check('camera-centered model is assigned to the current area rather than old selection',
+  await page.evaluate(({id,focus})=>{
+   const item=__furnitureEditor.getItem(id);
+   return item.roomId===__furnitureEditor.roomAt(focus.x,focus.z);
+  },{id:newId,focus}));
  check('no external requests, runtime boot, script/shader or HTTP errors',!report.externalRequests.length&&!report.httpFailures.length&&!report.errors.length&&await page.evaluate(()=>!window.__fps));
  report.status='PASS';
 }catch(err){report.status='FAIL';report.errors.push(err.stack||String(err));console.error(err);}

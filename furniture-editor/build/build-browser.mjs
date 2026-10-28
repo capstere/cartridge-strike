@@ -123,10 +123,11 @@ try{
  await clickWorld(7.1,10.1);await clickWorld(9.3,12.3);
  const newRoom=await page.evaluate(()=>__furnitureEditor.getPatch().architecture);
  check('two clicks create four connected walls and one floor',newRoom.added.length===roomBefore.added.length+4&&newRoom.floors.length===roomBefore.floors.length+1);
- const edges=newRoom.added.slice(-4);
- check('room geometry has exact shared corners',edges.every((edge,i)=>JSON.stringify(edge.b)===JSON.stringify(edges[(i+1)%4].a)));
+ const priorRoomIds=new Set(roomBefore.added.map(x=>x.id));
+ const edges=newRoom.added.filter(x=>!priorRoomIds.has(x.id));
+ check('room geometry has exact shared corners',edges.length===4&&edges.every((edge,i)=>JSON.stringify(edge.b)===JSON.stringify(edges[(i+1)%4].a)));
  await page.locator('#buildUndo').click();
- check('single undo removes the entire room',await page.evaluate(n=>{const p=__furnitureEditor.getPatch().architecture;return p.added.length===n.added&&p.floors.length===n.floors;},roomBefore));
+ check('single undo removes the entire room',await page.evaluate(n=>{const p=__furnitureEditor.getPatch().architecture;return p.added.length===n.added.length&&p.floors.length===n.floors.length;},roomBefore));
  await page.locator('#buildTool').selectOption('room-rect');
  await page.locator('#buildRoomWidth').fill('2.4');await page.locator('#buildRoomDepth').fill('1.6');
  await page.locator('#buildRoomHeight').fill('3.2');await page.locator('#buildRoomName').fill('Testlokal');
@@ -134,8 +135,9 @@ try{
  check('exact room button activates after choosing start corner',await page.locator('#buildRoomCreateExact').isEnabled());
  await page.locator('#buildRoomCreateExact').click();
  check('exact dimensions, height and floor name survive export',await page.evaluate(n=>{
-  const p=__furnitureEditor.getPatch().architecture,edges=p.added.slice(-4),f=p.floors.at(-1);
-  return p.added.length===n.added+4&&p.floors.length===n.floors+1&&
+  const p=__furnitureEditor.getPatch().architecture,ids=new Set(n.added.map(x=>x.id)),edges=p.added.filter(x=>!ids.has(x.id)),
+   oldFloors=new Set(n.floors.map(x=>x.id)),f=p.floors.find(x=>!oldFloors.has(x.id));
+  return p.added.length===n.added.length+4&&edges.length===4&&p.floors.length===n.floors.length+1&&
    edges.every(w=>w.height===3.2)&&f?.name==='Testlokal'&&
    Math.abs(f.x1-f.x0-2.4)<.002&&Math.abs(f.z1-f.z0-1.6)<.002;
  },roomBefore));
@@ -145,7 +147,7 @@ try{
  await page.locator('#buildUndo').click();
  check('single undo restores room name',await page.evaluate(()=>__furnitureEditor.getPatch().architecture.floors.at(-1)?.name==='Testlokal'));
  await page.locator('#buildUndo').click();
- check('exact room creation undo is atomic',await page.evaluate(n=>{const p=__furnitureEditor.getPatch().architecture;return p.added.length===n.added&&p.floors.length===n.floors;},roomBefore));
+ check('exact room creation undo is atomic',await page.evaluate(n=>{const p=__furnitureEditor.getPatch().architecture;return p.added.length===n.added.length&&p.floors.length===n.floors.length;},roomBefore));
  // Prototype: wall and door color options persist without touching gameplay.
  await page.evaluate(()=>__furnitureEditor.build.select('WALL-001'));
  await page.locator('#buildFinish').selectOption('gray');
@@ -166,6 +168,68 @@ try{
  const buildDupBefore=await page.evaluate(()=>__furnitureEditor.build.export().added.length);
  await page.keyboard.press('Control+d');
  check('Ctrl+D duplicates selected architecture part',await page.evaluate(n=>__furnitureEditor.build.export().added.length===n+1,buildDupBefore));
+ // Value posters must be editable on a wall and survive version-1 architecture JSON.
+ await page.evaluate(()=>{
+  const wall=__furnitureEditor.build.getBaseline().find(w=>w.kind==='wall'&&Math.hypot(w.a[0]-w.b[0],w.a[1]-w.b[1])>4&&w.height>2);
+  if(!wall)throw Error('No valid wall for test poster');
+  __furnitureEditor.build.addPoster(wall.id);
+ });
+ check('poster properties appear for selected wall artwork',await page.locator('#posterFields').isVisible());
+ await page.locator('#posterText').fill('SAMARBETE');
+ await page.locator('#posterText').press('Tab');
+ check('custom value word saved to design architecture',await page.evaluate(()=>
+  __furnitureEditor.getPatch().architecture.posters.some(p=>p.text==='SAMARBETE')));
+ const art=await readFile(resolve('furniture-editor/library/thumbs/hissrum12/pallet.webp'));
+ await page.locator('#posterImage').setInputFiles({name:'vardeposter.webp',mimeType:'image/webp',buffer:art});
+ await page.waitForFunction(()=>__furnitureEditor.getPatch().architecture.posters.some(p=>p.image?.startsWith('data:image/jpeg;base64,')));
+ check('local poster image compressed and embedded in portable architecture JSON',
+  await page.evaluate(()=>__furnitureEditor.getPatch().architecture.posters.some(p=>p.image?.startsWith('data:image/jpeg;base64,')&&p.image.length<100000)));
+ const posterCount=await page.evaluate(()=>__furnitureEditor.getPatch().architecture.posters.length);
+ await page.locator('#viewport').focus();
+ await page.keyboard.press('Control+d');
+ check('Ctrl+D duplicates selected wall poster',await page.evaluate(count=>
+  __furnitureEditor.getPatch().architecture.posters.length===count+1,posterCount));
+ const posterSaved=await page.evaluate(()=>__furnitureEditor.getPatch().architecture);
+ await page.evaluate(p=>__furnitureEditor.build.load(p),posterSaved);
+ check('poster list survives load in project editor',await page.evaluate(count=>
+  __furnitureEditor.build.posters().length===count,posterSaved.posters.length));
+ await page.locator('#buildTool').selectOption('poster');
+ check('poster tool can be selected in build toolbar',await page.evaluate(()=>
+  __furnitureEditor.build.getTool()==='poster'));
+ // SMART RITA over an existing standalone authored wall: real mouse drag, one undo.
+ await page.locator('#topView').click();
+ const painting=await page.evaluate(()=>{
+   const c=__furnitureEditor.getCameraTarget(),z=c.z;
+   const id=__furnitureEditor.build.testCreate('wall',[c.x-2.2,z],[c.x+2.2,z]);
+   return {id,x:c.x,z,before:__furnitureEditor.build.getEntries().length};
+ });
+ await page.locator('#buildSmartPaint').click();
+ check('one-click SMART RITA mode opens dedicated in-place type palette',
+   await page.locator('#buildPaintSettings').isVisible()&&
+   await page.evaluate(()=>__furnitureEditor.build.getDrawingState().mode==='paint'));
+ const screenPoint=async x=>page.evaluate(({x,z})=>__furnitureEditor.screenWorldPoint(x,z),{x,z:painting.z});
+ const paintStart=await screenPoint(painting.x-1.4),paintEnd=await screenPoint(painting.x+.7);
+ await page.mouse.move(paintStart.x,paintStart.y);
+ await page.mouse.down();
+ await page.mouse.move(paintEnd.x,paintEnd.y,{steps:14});
+ await page.mouse.up();
+ check('mouse drag paints a short window OVER a wall, splitting into three without overlap',
+  await page.evaluate(({id,before})=>{
+   const entries=__furnitureEditor.build.getEntries();
+   return entries.length===before+2&&!entries.some(e=>e.id===id)&&
+    entries.filter(e=>e.kind==='window'&&e.id.startsWith('BYGG-')).length>0;
+  },painting));
+ check('SMART RITA remains selected for the next window without changing tools',
+  await page.evaluate(()=>__furnitureEditor.build.getTool()==='paint'));
+ await page.locator('#buildUndo').click();
+ check('single undo restores original unsplit wall',await page.evaluate(({id,before})=>{
+  const entries=__furnitureEditor.build.getEntries();
+  return entries.length===before&&entries.some(e=>e.id===id&&e.kind==='wall');
+ },painting));
+ await page.locator('#buildPaintKind').selectOption('glazed');
+ check('changing from window to glass does not exit SMART RITA',
+  await page.evaluate(()=>__furnitureEditor.build.getDrawingState().mode==='paint'&&
+   __furnitureEditor.build.getDrawingState().paintType==='glazed'));
  check('no FPS boot, JS/shader errors, external resources or HTTP failures',!report.errors.length&&!report.httpFailures.length&&!report.external.length&&await page.evaluate(()=>!window.__fps));
  report.status='PASS';
 }catch(e){report.status='FAIL';report.errors.push(e.stack||String(e));console.error(e);}

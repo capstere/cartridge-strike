@@ -18,11 +18,14 @@
   <aside class="sidebar">
     <div id="furnitureSidebar">
     <div class="section-heading"><span>01 / HITTA MÖBEL</span><small>Våning 5</small></div>
-    <label for="room">Visa rum</label><select id="room" aria-label="Välj rum"></select>
+    <div class="area-status" id="areaHere" role="status" aria-live="polite">DU ÄR VID: –</div>
+    <p class="helper area-tip">Flytta fritt med musen. När du väljer <b>+ LÄGG TILL OBJEKT</b> placeras objektet där kameran är – inte i ett tidigare valt rum.</p>
+    <label for="room">Hoppa till rum (valfritt)</label><select id="room" aria-label="Välj rum för att hoppa dit"></select>
     <label for="search">Hitta en stol eller möbel</label><input id="search" type="search" placeholder="Sök t.ex. stol, I09 ..." autocomplete="off">
     <div class="filter"><label for="chairsOnly"><input type="checkbox" id="chairsOnly" checked> Bara stolar</label><span id="listCount">—</span></div>
     <div id="furnitureList" class="furniture-list" role="listbox" aria-label="Välj möbel"></div>
     <button id="openLibrary" type="button" class="library-entry" aria-label="Öppna objektbibliotek och lägg till möbel">+ LÄGG TILL OBJEKT <span>104 3D-modeller</span></button>
+    <button id="openPosters" type="button" class="poster-entry" aria-label="Sätt upp en värdeordsaffisch på väggen">+ SÄTT UPP AFFISCH <span>Värdeord · egen bild</span></button>
     <div class="divider"></div>
     <div class="section-heading"><span>02 / FLYTTA & VRID</span><small id="selectionTag">Ingen vald</small></div>
     <div id="emptySelection" class="empty-selection">Klicka på en <strong>orange stol</strong> i 3D-vyn eller välj en stol i listan.</div>
@@ -56,28 +59,47 @@
     <div id="validation" class="validation" hidden role="status"></div>
     </div>
     <div id="buildSidebar" class="build-sidebar" hidden>
+      <div id="areaHereBuild" class="area-status" role="status" aria-live="polite">DU ÄR VID: –</div>
       <div class="section-heading"><span>01 / SKAPA BANAN</span><small>Redigerbar skiss</small></div>
-      <div class="simple-flow" role="note"><b>ENKLASTE SÄTTET</b><span>1. Välj rum &nbsp; 2. Klicka på väggen &nbsp; 3. Välj vad du vill göra</span></div>
+      <div class="simple-flow" role="note"><b>SMART RITA</b><span>1. Välj vad väggen ska bli &nbsp; 2. Dra direkt över befintlig vägglinje &nbsp; 3. Klart – ritläget stannar kvar!</span></div>
+      <button id="buildSmartPaint" class="build-smart-paint-entry" type="button">✎ SMART RITA PÅ VÄGG <small>Fönster / glasvägg / dörr · utan att radera</small></button>
+      <div id="buildPaintSettings" class="build-paint-settings" hidden>
+       <strong>VAD SKA DET BLI?</strong>
+       <div class="build-paint-palette" aria-label="Välj del utan att byta ritverktyg">
+        <button type="button" data-paint-kind="window" class="active">FÖNSTER</button>
+        <button type="button" data-paint-kind="glazed">GLASVÄGG</button>
+        <button type="button" data-paint-kind="door">DÖRR</button>
+        <button type="button" data-paint-kind="wall">VÄGG</button>
+       </div>
+       <label for="buildPaintKind">Vald typ</label>
+       <select id="buildPaintKind"><option value="window">Fönster med bröstning</option>
+        <option value="glazed">Glasvägg</option><option value="door">Dörr</option>
+        <option value="wall">Vägg</option><option value="opening">Öppen passage</option>
+        <option value="card-door">Passerkortsdörr</option></select>
+       <p><b>Dra längs en vägg</b> från start till slut, eller klicka två gånger. Väggen delas automatiskt och får ingen dold vägg bakom fönstret. Verktyget stannar valt tills du byter själv. <kbd>Esc</kbd> avbryter.</p>
+      </div>
       <p class="helper" id="buildSimpleHelp" aria-live="polite">Klicka på en vägg och välj en snabbåtgärd.</p>
-      <div class="build-quick-actions" aria-label="Snabbändring av markerad vägg">
+      <p class="helper">**Ändra HELA den markerade väggen:**</p>
+      <div class="build-quick-actions" aria-label="Ändra hela markerade väggen">
         <button type="button" data-quick-kind="wall">VÄGG</button>
         <button type="button" data-quick-kind="window" class="type-window">FÖNSTER</button>
         <button type="button" data-quick-kind="glazed" class="type-glazed">GLASVÄGG</button>
         <button type="button" id="buildDoorInWall" class="type-door">+ DÖRR I VÄGGEN</button>
       </div>
-      <p class="helper">Klicka på en befintlig vägg och använd snabbknapparna ovan. För att rita helt nya delar väljer du ett ritverktyg och klickar två punkter i planvyn.</p>
+      <p class="helper">Knapparna ovan ändrar hela den markerade väggdelen. För ett kort fönster på bara en del av väggen använder du SMART RITA PÅ VÄGG. Du behöver inte välja något rumsnamn.</p>
       <label for="buildRoom">Hoppa till rum</label><select id="buildRoom" aria-label="Visa rum i byggläget"></select>
       <label for="buildTool">RITA NYTT (två klick)</label>
       <select id="buildTool" aria-label="Ritverktyg">
-        <option value="select">↖ Välj / flytta / ändra</option>
+        <option value="select">↖ Välj / flytta / ändra</option><option value="paint">✎ SMART RITA ÖVER VÄGG</option>
         <option value="wall">Vägg</option><option value="glazed">Fönstervägg (golv till tak)</option>
         <option value="window">Fönster med bröstning</option><option value="door">Vanlig dörr</option>
         <option value="card-door">Passerkortsdörr</option><option value="elevator-door">Hissdörr</option>
         <option value="terrace-door">Terrassdörr</option><option value="opening">Öppen passage</option>
-        <option value="floor">Ny golvyta</option><option value="room-rect">RUM – rektangel (4 väggar)</option>
+        <option value="floor">Ny golvyta</option><option value="room-rect">RUM – rektangel (4 väggar)</option><option value="poster">AFFISCH · placera på vägg</option>
       </select>
       <div class="build-palette" aria-label="Byggverktyg">
         <button data-build-tool="select" class="active" type="button">↖ VÄLJ</button>
+        <button data-build-tool="paint" class="smart-paint-palette-button" type="button">✎ SMART RITA ÖVER VÄGG</button>
         <button data-build-tool="wall" class="type-wall" type="button">VÄGG</button>
         <button data-build-tool="glazed" class="type-glazed" type="button">GLASVÄGG</button>
         <button data-build-tool="window" class="type-window" type="button">FÖNSTER</button>
@@ -85,6 +107,7 @@
         <button data-build-tool="opening" type="button">ÖPPNING</button>
         <button data-build-tool="floor" type="button">GOLVYTA</button>
         <button data-build-tool="room-rect" type="button" class="room-tool">▣ RUM · REKTANGEL</button>
+        <button data-build-tool="poster" type="button" class="room-tool">▣ AFFISCH PÅ VÄGG</button>
       </div>
       <div id="buildRoomSettings" class="build-room-settings" hidden>
         <strong>SKAPA REKTANGULÄRT RUM</strong>
@@ -112,13 +135,36 @@
       <div class="section-heading"><span>02 / VALD BYGGDEL</span><small id="buildSelectionId">Ingen vald</small></div>
       <p id="buildNoSelection" class="helper">Välj en vägg eller dörr, eller rita något nytt med två klick.</p>
       <div id="buildSelected" hidden>
-        <label for="buildKind">Typ</label><select id="buildKind" aria-label="Ändra byggdelens typ">
+        <div id="buildKindFields"><label for="buildKind">Typ</label><select id="buildKind" aria-label="Ändra byggdelens typ">
           <option value="wall">Vägg</option><option value="glazed">Fönstervägg</option>
           <option value="window">Fönster</option><option value="door">Vanlig dörr</option>
           <option value="card-door">Passerkortsdörr</option><option value="elevator-door">Hissdörr</option>
           <option value="terrace-door">Terrassdörr</option><option value="opening">Öppen passage</option>
           <option value="floor">Egen golvyta</option>
-        </select>
+        </select></div>
+        <div id="posterFields" class="poster-properties" hidden>
+          <strong>VÄRDEORDSAFFISCH</strong>
+          <label for="posterText">Rubrik / värdeord</label>
+          <input id="posterText" type="text" maxlength="140" placeholder="Exempel: Tillsammans">
+          <label for="posterSubtitle">Underrad</label>
+          <input id="posterSubtitle" type="text" maxlength="140" placeholder="Valfri kort mening">
+          <label for="posterColor">Affischens bakgrund</label>
+          <select id="posterColor"><option value="navy">Mörkblå</option><option value="white">Vit</option>
+            <option value="blue">Blå</option><option value="orange">Orange</option></select>
+          <div class="build-coordinate-grid">
+            <label>Bredd (m)<input id="posterWidth" type="number" min="0.2" max="2.5" step="0.05"></label>
+            <label>Höjd (m)<input id="posterHeight" type="number" min="0.2" max="3" step="0.05"></label>
+            <label>Höjd till mitten (m)<input id="posterY" type="number" min="0.3" max="5.9" step="0.05"></label>
+            <label>Position längs vägg (%)<input id="posterT" type="number" min="0" max="100" step="1"></label>
+          </div>
+          <label for="posterSide">Affischens sida av väggen</label>
+          <select id="posterSide"><option value="1">Sida A</option><option value="-1">Sida B</option></select>
+          <label for="posterImage" class="poster-upload">Egen affischbild (PNG/JPG/WebP)
+            <input id="posterImage" type="file" accept="image/png,image/jpeg,image/webp">
+          </label>
+          <button type="button" id="posterRemoveImage" class="subtle">Ta bort bilden · visa textaffisch</button>
+          <small>Bilderna komprimeras lokalt och följer med i designfilen. Ingen extern uppladdning. Textaffischer fungerar även utan bild.</small>
+        </div>
         <div id="buildFinishFields" class="build-finish-fields">
           <label for="buildFinish">YTFÄRG</label><select id="buildFinish" aria-label="Vägg- eller dörrfärg">
             <option value="white">Vit</option><option value="gray">Grå</option>

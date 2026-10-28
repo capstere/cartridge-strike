@@ -1,0 +1,61 @@
+name: Design Studio - current editor regression
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'furniture-editor/**'
+      - '.github/workflows/design-studio-current.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'furniture-editor/**'
+      - '.github/workflows/design-studio-current.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: design-studio-current-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  editor:
+    runs-on: ubuntu-latest
+    timeout-minutes: 24
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Syntax and unit tests of safe editor modules
+        run: |
+          set -euo pipefail
+          for file in furniture-editor/main.mjs furniture-editor/core.mjs furniture-editor/appearance.mjs \
+            furniture-editor/placement.mjs furniture-editor/build/{build-mode,architecture,precision,rectangle-room,posters,poster-art,paint-over-wall}.mjs \
+            furniture-editor/{editor-browser,editor.test}.mjs furniture-editor/build/build-browser.mjs; do
+            node --check "$file"
+          done
+          node --test furniture-editor/editor.test.mjs furniture-editor/appearance.test.mjs \
+            furniture-editor/placement.test.mjs furniture-editor/library/library.test.mjs \
+            furniture-editor/build/{architecture,precision,rectangle-room,posters,paint-over-wall}.test.mjs
+          node tools/verify-owner-runtime.mjs
+      - name: Install existing pinned Playwright and software WebGL
+        run: |
+          npm ci --prefix frontline/source/tools/dev --ignore-scripts --no-audit --no-fund
+          node frontline/source/tools/dev/node_modules/playwright-core/cli.js install chromium
+          sudo timeout 80s apt-get -o Acquire::Retries=1 -o Acquire::http::Timeout=20 install -y libgl1-mesa-dri libglx-mesa0 libegl-mesa0 xvfb
+      - name: Real browser navigation, model, architecture, paint and posters smoke
+        run: |
+          set -euo pipefail
+          python3 -m http.server 8765 --bind 127.0.0.1 >/tmp/studio-http.log 2>&1 &
+          SERVER_PID=$!
+          trap 'kill "$SERVER_PID" || true' EXIT
+          for i in $(seq 1 25); do
+            if curl -fsS http://127.0.0.1:8765/furniture-editor/ >/dev/null; then break; fi
+            sleep 1
+          done
+          timeout 200s xvfb-run -a node furniture-editor/editor-browser.mjs
+          timeout 200s xvfb-run -a node furniture-editor/build/build-browser.mjs
+      # No Actions artifacts: keep limited account artifact storage free.
