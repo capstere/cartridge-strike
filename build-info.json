@@ -911,8 +911,8 @@
     },
     {
       "path": "src/fps/render-engine.mjs",
-      "bytes": 30018,
-      "sha256": "6ac36ce194fff64a052169aed52ad6fa354338735ec50c9bdac23ad7964d4376"
+      "bytes": 30056,
+      "sha256": "0668024c553b635c86020b3ba459593b54f151c61cfb8c75e2e07c117a3124c6"
     },
     {
       "path": "src/fps/render.mjs",
