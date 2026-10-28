@@ -34,7 +34,7 @@ const target=new T.Vector3(7.5,0,11.8),raycaster=new T.Raycaster(),floorPlane=ne
 const boxGeometry=new T.BoxGeometry(1,1,1),pickMeshes=[],furnitureGroups=new Map(),originMaterials=[],sourceWallMeshes=[];
 const mat=(color,rough=.8,metal=0,opts={})=>new T.MeshStandardMaterial({color,roughness:rough,metalness:metal,...opts});
 const pickMaterial=new T.MeshBasicMaterial({transparent:true,opacity:0,depthWrite:false,colorWrite:false});
-const m={floor:mat(0xf5f8f3),rooms:mat(0xebf0ee),dark:mat(0x324b50),metal:mat(0x819b9b,.45,.6),white:mat(0xeceee9),wood:mat(0xc1a582),orange:mat(0xdf753c),blue:mat(0x629ca3),conferenceBlue:mat(FINISH_COLORS.blue),black:mat(FINISH_COLORS.black),teal:mat(0x3b9291),selected:mat(0x17a7a2,.4),fixed:mat(0x9faeac,.85,0,{transparent:true,opacity:.77}),wall:mat(0xa9b7b5,.95,0,{transparent:true,opacity:.63}),glass:mat(0x8ec8cd,.26,.1,{transparent:true,opacity:.34,depthWrite:false}),door:mat(0xd2a36b)};
+const m={floor:mat(0xf5f8f3),rooms:mat(0xebf0ee),dark:mat(0x324b50),metal:mat(0x819b9b,.45,.6),silver:mat(FINISH_COLORS.silver,.45,.65),white:mat(FINISH_COLORS.white),wood:mat(0xc1a582),orange:mat(0xdf753c),blue:mat(0x629ca3),conferenceBlue:mat(FINISH_COLORS.blue),black:mat(FINISH_COLORS.black),teal:mat(0x3b9291),selected:mat(0x17a7a2,.4),fixed:mat(0x9faeac,.85,0,{transparent:true,opacity:.77}),wall:mat(0xa9b7b5,.95,0,{transparent:true,opacity:.63}),glass:mat(0x8ec8cd,.26,.1,{transparent:true,opacity:.34,depthWrite:false}),door:mat(0xd2a36b)};
 originMaterials.push(...Object.values(m),pickMaterial);
 const dynamicGroup=new T.Group();dynamicGroup.name='editable-furnishings';scene.add(dynamicGroup);
 function addBox(parent,x,y,z,w,h,d,material,clickable=false){const o=new T.Mesh(boxGeometry,material);o.position.set(x,y,z);o.scale.set(Math.max(.005,w),Math.max(.005,h),Math.max(.005,d));parent.add(o);if(clickable)pickMeshes.push(o);return o;}
@@ -95,7 +95,7 @@ function makeModel(item){
  }else if(item.kind==='table'||item.kind==='coffee-table'||item.kind==='desk'){
   const height=item.kind==='coffee-table'?.46:.75;
   put(0,height,0,w,.065,d,m.white);
-  for(const x of[-w*.43,w*.43])for(const z of[-d*.38,d*.38])put(x,height/2,z,.052,height-.03,.052,m.metal);
+  for(const x of[-w*.43,w*.43])for(const z of[-d*.38,d*.38])put(x,height/2,z,.052,height-.03,.052,m.silver);
  }else{
   put(0,item.height/2,0,w,item.height,d,m.white);put(0,item.height-.06,d*.51,w*.83,.07,.018,m.dark);
  }
