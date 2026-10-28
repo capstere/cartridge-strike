@@ -524,6 +524,7 @@ export function createBuildMode({data,scene,canvas,camera,getZoom,getView,rayAt,
   }catch(error){notify?.(error.message);render();return false;}
  }
  function choosePoint(ev){
+  if(mode===curtainKind||mode===blindKind){createTreatmentAt(ev);return;}
   if(overlayDraft){completeOverlay(ev);return;}
   if(mode===paintKind){beginOverlay(ev,true);return;}
   if(PAINT_KINDS.includes(mode)&&beginOverlay(ev))return;
@@ -548,9 +549,15 @@ export function createBuildMode({data,scene,canvas,camera,getZoom,getView,rayAt,
   }
   const p=point(ev);
   if(mode===posterKind){tryPosterOnWall(ev);ev.preventDefault();return;}
+  if(mode===blindKind){createTreatmentAt(ev);ev.preventDefault();return;}
   if(mode!=='select'){if(getView()==='3d'){notify?.('Rita nya väggar och öppningar i PLANVY. Byt till 3D-VY för att granska.');return;}
    const startingStroke=mode===paintKind&&!first;
+   const startingCurtain=mode===curtainKind&&!first;
    choosePoint(ev);
+   if(startingCurtain&&curtainWallId&&first){
+    drag={type:'treatment-stroke',mx:ev.clientX,my:ev.clientY,originX:ev.clientX,originY:ev.clientY,moved:false};
+    canvas.setPointerCapture(ev.pointerId);
+   }
    if(startingStroke&&overlayDraft&&first){
     drag={type:'paint-stroke',mx:ev.clientX,my:ev.clientY,originX:ev.clientX,originY:ev.clientY,moved:false};
     canvas.setPointerCapture(ev.pointerId);
@@ -584,9 +591,16 @@ export function createBuildMode({data,scene,canvas,camera,getZoom,getView,rayAt,
      $('buildSnapFeedback').textContent='ÖVER VÄGG · '+(ARCHITECTURE_NAMES[effectivePaintKind()]||'Fönster')+' · '+Math.hypot(hover[0]-first[0],hover[1]-first[1]).toFixed(2)+' m · klicka eller släpp här';
      render();
     }
+   }else if(mode===curtainKind&&curtainWallId){
+    const p=paintEndpoint(ev),wall=entries.find(x=>x.id===curtainWallId&&!x.deleted);
+    if(p&&wall){hover=projectToWall(p,wall)?.point||first;render();}
    }else{const p=point(ev);if(p){hover=p;render();}}
   }
   if(!drag)return;const dx=ev.clientX-drag.mx,dy=ev.clientY-drag.my;drag.mx=ev.clientX;drag.my=ev.clientY;
+  if(drag.type==='treatment-stroke'){
+   if(Math.hypot(ev.clientX-drag.originX,ev.clientY-drag.originY)>9)drag.moved=true;
+   return;
+  }
   if(drag.type==='paint-stroke'){
    if(Math.hypot(ev.clientX-drag.originX,ev.clientY-drag.originY)>9)drag.moved=true;
    return;
@@ -611,8 +625,9 @@ export function createBuildMode({data,scene,canvas,camera,getZoom,getView,rayAt,
   }catch{return;}
   Object.assign(e,next);render();showProperties();
  }
- function handlePointerEnd(ev){if(!active||!drag)return;const previous=drag.before;const was=drag.type;const painted=drag.type==='paint-stroke'&&drag.moved;drag=null;
+ function handlePointerEnd(ev){if(!active||!drag)return;const previous=drag.before;const was=drag.type;const painted=drag.type==='paint-stroke'&&drag.moved,curtained=drag.type==='treatment-stroke'&&drag.moved;drag=null;
   if(painted)completeOverlay(ev);
+  if(curtained)createTreatmentAt(ev);
   if(['a','b','move','moveFloor'].includes(was))record(previous);
  }
  function bind(){
@@ -664,6 +679,8 @@ export function createBuildMode({data,scene,canvas,camera,getZoom,getView,rayAt,
    }catch(err){notify?.('Bildimport: '+err.message);}
   };
   $('posterRemoveImage').onclick=()=>{if(changePoster({image:''}))notify?.('Textaffischen visas igen.');};
+  $('treatmentSide').onchange=e=>{const current=treatments.find(t=>t.id===selection);
+   if(!current)return;const before=capture();current.side=Number(e.target.value);record(before);};
   const kmap={buildA_X:['a',0],buildA_Z:['a',1],buildB_X:['b',0],buildB_Z:['b',1]};
   for(const [id,[end,index]] of Object.entries(kmap))$(id).onchange=e=>{const s=entryById(selection);if(!s||!('a' in s))return;
    const value=Number(e.target.value),p=[...s[end]];p[index]=value;if(!Number.isFinite(value))return;
@@ -677,7 +694,7 @@ export function createBuildMode({data,scene,canvas,camera,getZoom,getView,rayAt,
   $('buildDelete').onclick=removeSelected;$('buildDuplicate').onclick=duplicate;
   $('buildUndo').onclick=undo;$('buildRedo').onclick=redo;
   $('buildReset').onclick=()=>{if(!confirm('Återställa alla vägg-/dörr-/golv-/affischändringar i skissen? Möblerna påverkas inte.'))return;
-   const before=capture();entries=cloneAll(baseline);floors=[];posters=[];resetPosterCache();selection=null;record(before);notify?.('Byggskissen återställd. Originalspelet har aldrig ändrats.');};
+   const before=capture();entries=cloneAll(baseline);floors=[];posters=[];treatments=[];resetPosterCache();selection=null;record(before);notify?.('Byggskissen återställd. Originalspelet har aldrig ändrats.');};
   canvas.addEventListener('pointerdown',handlePointerDown);
   canvas.addEventListener('pointermove',handlePointerMove);
   canvas.addEventListener('pointerup',handlePointerEnd);canvas.addEventListener('pointercancel',handlePointerEnd);
@@ -685,7 +702,7 @@ export function createBuildMode({data,scene,canvas,camera,getZoom,getView,rayAt,
    if((ev.ctrlKey||ev.metaKey)&&(ev.key.toLowerCase()==='z'||ev.key.toLowerCase()==='y')){
     ev.preventDefault();if(ev.key.toLowerCase()==='y'||ev.shiftKey)redo();else undo();return;}
    if((ev.ctrlKey||ev.metaKey)&&ev.key.toLowerCase()==='d'){ev.preventDefault();duplicate();return;}
-   if(ev.key==='Escape'){if(first){first=null;hover=null;overlayDraft=null;render();notify?.('Ritningen avbruten.');}else select(null);return;}
+   if(ev.key==='Escape'){if(first){first=null;hover=null;overlayDraft=null;curtainWallId=null;render();notify?.('Ritningen avbruten.');}else select(null);return;}
    if(ev.key==='Delete'||ev.key==='Backspace'){ev.preventDefault();removeSelected();return;}
    const e=entryById(selection);if(!e)return;
    const step=ev.shiftKey?.5:.1;const pos=ev.key==='ArrowLeft'?[-step,0]:ev.key==='ArrowRight'?[step,0]:
@@ -694,13 +711,15 @@ export function createBuildMode({data,scene,canvas,camera,getZoom,getView,rayAt,
     else changeEntry(e.id,{x0:e.x0+pos[0],x1:e.x1+pos[0],z0:e.z0+pos[1],z1:e.z1+pos[1]});}
   });
  }
- function load(patch){const read=parseArchitecture(patch,baseline),loadedPosters=parsePosters(patch?.posters,read.entries);
-  entries=read.entries;floors=read.floors;posters=loadedPosters;resetPosterCache();history=[];future=[];
-  selection=null;first=null;hover=null;overlayDraft=null;dirty=hasSketch();render();showProperties();renderList();}
- function resetWithoutConfirm(){entries=cloneAll(baseline);floors=[];posters=[];resetPosterCache();history=[];future=[];selection=null;render();showProperties();renderList();}
+ function load(patch){const read=parseArchitecture(patch,baseline),loadedPosters=parsePosters(patch?.posters,read.entries),loadedTreatments=parseTreatments(patch?.treatments,read.entries);
+  entries=read.entries;floors=read.floors;posters=loadedPosters;treatments=loadedTreatments;resetPosterCache();history=[];future=[];
+  selection=null;first=null;hover=null;overlayDraft=null;curtainWallId=null;dirty=hasSketch();render();showProperties();renderList();}
+ function resetWithoutConfirm(){entries=cloneAll(baseline);floors=[];posters=[];treatments=[];resetPosterCache();history=[];future=[];selection=null;render();showProperties();renderList();}
  bind();render();showProperties();renderList();syncVisibility();
  return {get active(){return active;},enable,getBaseline:()=>cloneAll(baseline),getEntries:()=>cloneAll(entries),getFloors:()=>copyFloors(floors),
-  export:exportAll,load,reset:resetWithoutConfirm,hasSketch,posters:()=>copyPosters(posters),
+  export:exportAll,load,reset:resetWithoutConfirm,hasSketch,posters:()=>copyPosters(posters),treatments:()=>treatments.map(t=>({...t})),
+  drawCurtain:(wallId,start,end)=>{const created=createCurtain(entries,treatments,wallId,start,end);const before=capture();treatments.push(created);selection=created.id;record(before);return created.id;},
+  attachBlind:(wallId)=>{const created=createBlind(entries,treatments,wallId);const before=capture();treatments.push(created);selection=created.id;record(before);return created.id;},
   addPoster:(wallId,options)=>{const wall=entries.find(e=>e.id===wallId);const poster=makePoster(wall,posters,.5,1,options);const before=capture();posters.push(poster);selection=poster.id;record(before);return poster.id;},
   updatePoster:(id,delta)=>{selection=id;return changePoster(delta);},
   setView:()=>render(),select,setTool,setPaintType:updatePaintType,
