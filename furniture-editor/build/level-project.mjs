@@ -3,6 +3,7 @@ import {BASE_COMMIT,GAME_VERSION,PATCH_FORMAT,PATCH_SCHEMA} from '../core.mjs';
 import {validateEntry,validateFloorRect} from './architecture.mjs';
 import {assetHash} from '../library/glb-utils.mjs';
 import {makeZip,readZip,PROJECT_ZIP_MAX_BYTES} from '../library/zip.mjs';
+import {collisionExport,aiAgentBrief} from './ai-export.mjs';
 
 export const LEVEL_FORMAT='cartridge-strike-level-project',LEVEL_SCHEMA=2;
 export const LEVEL_GAME_VERSION='0.18.0',LEVEL_BASE_COMMIT='f5c63a22483feeeb29583853dab0c0911af5c09a',LEVEL_EDITOR_VERSION='3.1.0';
@@ -78,6 +79,7 @@ export function parseProject(input,{allowLegacy=true}={}){
  if(input.mode==='new-level'&&(f.placements.length||f.removed.length))fail('ny bana får inte ärva möbler');
  for(const o of f.added){if(!/^NY-(OBJ|STOL|BORD|SOFFA)-\d{1,5}$/.test(o.id)||!
   [o.x,o.z,o.yaw,o.w,o.d,o.height].every(Number.isFinite)||!within(o.x)||!within(o.z)||o.w<=0||o.d<=0||o.w>8||o.d>8)fail('möbel');
+  if(o.collision!==undefined&&!['solid','none'].includes(o.collision))fail('okänd möbelkollision');
   unique(o.id);if(input.mode==='new-level'&&!g.floors.some(r=>o.x>=r.x0&&o.x<=r.x1&&o.z>=r.z0&&o.z<=r.z1))fail('möbel utan golv');}
  const play=input.gameplay;if(play?.mode!=='classic'||!play.counts||!Array.isArray(play.spawns)||play.spawns.length>10||
   !play.objectives||!Array.isArray(play.objectives.hostages))fail('spelregler');
@@ -104,7 +106,8 @@ export async function exportProjectZip(project,files=new Map()){
   await assetHash(bytes)!==(asset.assetId?.slice(6)||asset.sha256))fail('saknad eller ändrad fil '+asset.file);
   entries.push({name:asset.file,data:bytes});}
  if(files.size!==expected.length)fail('oväntade filer');
- entries.push({name:'AGENT_BRIEF.md',data:'# '+project.name+'\n\n'+(project.agentBrief.goal||'Level project')+'\n'});
+ entries.push({name:'AGENT_BRIEF.md',data:aiAgentBrief(project)});
+ entries.push({name:'COLLISION_MAP.json',data:JSON.stringify(collisionExport(project),null,2)+'\n'});
  return makeZip(entries);
 }
 export async function parseProjectZip(bytes){
@@ -115,7 +118,8 @@ export async function parseProjectZip(bytes){
  for(const asset of expected){const path=legacy?asset.file.replace('assets/',''):asset.file,data=files.get(path);
   if(!data||data.length!==asset.bytes&&!(legacy&&asset.bytes===0)||await assetHash(data)!==(asset.assetId?.slice(6)||asset.sha256))fail('saknad eller ändrad fil '+path);
   out.set(asset.file,data);if(legacy&&asset.bytes===0)asset.bytes=data.length;}
- const allowed=new Set([legacy?'projekt.json':'project.json',...expected.map(x=>legacy?x.file.replace('assets/',''):x.file),...(!legacy?['AGENT_BRIEF.md']:[])]);
+ const allowed=new Set([legacy?'projekt.json':'project.json',...expected.map(x=>legacy?x.file.replace('assets/',''):x.file),...(!legacy?['AGENT_BRIEF.md','COLLISION_MAP.json']:[])]);
  for(const path of files.keys())if(!allowed.has(path))fail('oväntad ZIP-fil '+path);
+ if(!legacy&&files.has('COLLISION_MAP.json')&&utf8.decode(files.get('COLLISION_MAP.json'))!==JSON.stringify(collisionExport(project),null,2)+'\n')fail('förändrad eller inaktuell kollisionskarta');
  return {project:parseProject(project),files:out};
 }

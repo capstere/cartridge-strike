@@ -38,3 +38,14 @@ test('blocked door and disconnected floor fail motor validation',()=>{
  const isolated=structuredClone(project);isolated.architecture.added=isolated.architecture.added.filter(a=>a.kind!=='door');
  assert(validateLevel(isolated,{engine:true}).summary.errors>0);
 });
+
+test('nonblocking furniture keeps visuals but loses physics and nav blockers',()=>{
+ const free=structuredClone(project);free.furniture.added[0].collision='none';
+ const blockedWorld=createWorld({levelProject:project,fresh:true}),freeWorld=createWorld({levelProject:free,fresh:true});
+ const asset=free.furniture.added[0];
+ assert(blockedWorld.staticBoxes.some(b=>b.id===asset.id));
+ assert(freeWorld.description.boxes.some(b=>b.id===asset.id));
+ assert(!freeWorld.staticBoxes.some(b=>b.id===asset.id));
+ assert.equal(blockedWorld.staticCanOccupy(asset.x,asset.z,.2),false);
+ assert.equal(freeWorld.staticCanOccupy(asset.x,asset.z,.2),true);
+});

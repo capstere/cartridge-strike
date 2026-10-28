@@ -49,3 +49,17 @@ test('ZIP rejects inconsistent central-directory filename even when local entry 
  const central=changed.findIndex((_,i)=>i+4<changed.length&&changed[i]===0x50&&changed[i+1]===0x4b&&changed[i+2]===1&&changed[i+3]===2);
  changed[central+46]=46;assert.throws(()=>readZip(changed));
 });
+
+test('AI handoff ZIP validates derived collision map and accepts older ZIP',async()=>{
+ const {collisionExport}=await import('./ai-export.mjs');
+ const p=exportProject(),zip=await exportProjectZip(p),files=readZip(zip),decode=new TextDecoder();
+ assert.equal(JSON.parse(decode.decode(files.get('COLLISION_MAP.json'))).floor5Inherited,false);
+ assert.equal(collisionExport(p).walkableFloors.length,0);
+ assert.match(decode.decode(files.get('AGENT_BRIEF.md')),/project.json/);
+ assert.deepEqual((await parseProjectZip(zip)).project,p);
+ const pack=entries=>makeZip(entries.map(([name,data])=>({name,data})));
+ await assert.rejects(()=>parseProjectZip(pack([...files].map(([n,d])=>[n,n==='COLLISION_MAP.json'?'{}':d]))),/kollisionskarta/);
+ assert.deepEqual((await parseProjectZip(pack([...files].filter(([n])=>n!=='COLLISION_MAP.json')))).project,p);
+ const invalid=structuredClone(p);invalid.furniture.added=[{id:'NY-OBJ-0001',kind:'prop',x:1,z:1,yaw:0,w:.3,d:.3,height:.5,collision:'ghost'}];
+ assert.throws(()=>parseProject(invalid),/möbelkollision/);
+});

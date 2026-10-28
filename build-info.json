@@ -165,14 +165,14 @@
       "sha256": "ac4071825b15d6c612791ccbf1d6588e89384e83706b5214137a2d01ec0f4be8"
     },
     {
-      "path": "assets/fps/audio/riposte-f_knife-1.mp3",
-      "bytes": 2517,
-      "sha256": "0619b408af2f73a7d88920c677f27e4926aa23fbe10ae3bb01a71606cc542ac7"
-    },
-    {
       "path": "assets/fps/audio/riposte-f_knife_hit-1.mp3",
       "bytes": 3453,
       "sha256": "23262da97855db49c7b447ef452a1831f52c493c38099809ae61921e26a4d536"
+    },
+    {
+      "path": "assets/fps/audio/riposte-f_knife-1.mp3",
+      "bytes": 2517,
+      "sha256": "0619b408af2f73a7d88920c677f27e4926aa23fbe10ae3bb01a71606cc542ac7"
     },
     {
       "path": "assets/fps/audio/riposte-f_pickup-1.mp3",
@@ -310,36 +310,6 @@
       "sha256": "33f128a7adca7e9f42c9b95790ce31a5611e0ec1b831778bd4290c1fff4fddaf"
     },
     {
-      "path": "assets/fps/materials/WhitePlaster02/WhitePlaster02_1K-JPG_Color.jpg",
-      "bytes": 527219,
-      "sha256": "a1ebbe091bd1ae93d2abd5de8d69f9003a8d0ee6532bcf9a87c2492c97051f23"
-    },
-    {
-      "path": "assets/fps/materials/WhitePlaster02/WhitePlaster02_1K-JPG_NormalGL.jpg",
-      "bytes": 652310,
-      "sha256": "eb572ca3630d5bfde72e2601b1f02412da23ca005cd19384dced8690be4cb783"
-    },
-    {
-      "path": "assets/fps/materials/WhitePlaster02/WhitePlaster02_1K-JPG_Roughness.jpg",
-      "bytes": 295900,
-      "sha256": "4ff1fe957cd161b07f721fe6c28a9459c8c2e8ec65627a26c16e483a07c80d85"
-    },
-    {
-      "path": "assets/fps/materials/Wood051/Wood051_1K-JPG_Color.jpg",
-      "bytes": 871537,
-      "sha256": "f3c6c5456457e8d05c1fee4d2f186f41d0aea2b8a06859b69ce2934e11aa8798"
-    },
-    {
-      "path": "assets/fps/materials/Wood051/Wood051_1K-JPG_NormalGL.jpg",
-      "bytes": 1583401,
-      "sha256": "9078dc50c43b55831ae322460fc96b62df68c7a148400bd7755ab2788fec1708"
-    },
-    {
-      "path": "assets/fps/materials/Wood051/Wood051_1K-JPG_Roughness.jpg",
-      "bytes": 680793,
-      "sha256": "b5736b940d721b49922cb14eebd52fd34f134b7ef99331ecf28565ce40358098"
-    },
-    {
       "path": "assets/fps/materials/riposte/paintwood/map.webp",
       "bytes": 10220,
       "sha256": "fde5a948c16580f30fc4a603854cd333c75f7297e2b57eecf58ebecc3eeec496"
@@ -383,6 +353,36 @@
       "path": "assets/fps/materials/riposte/timber/rough.webp",
       "bytes": 7486,
       "sha256": "c39dac1088336d7f94af5c06e233d0efd7a377eebf9096e0893a02f023b4f312"
+    },
+    {
+      "path": "assets/fps/materials/WhitePlaster02/WhitePlaster02_1K-JPG_Color.jpg",
+      "bytes": 527219,
+      "sha256": "a1ebbe091bd1ae93d2abd5de8d69f9003a8d0ee6532bcf9a87c2492c97051f23"
+    },
+    {
+      "path": "assets/fps/materials/WhitePlaster02/WhitePlaster02_1K-JPG_NormalGL.jpg",
+      "bytes": 652310,
+      "sha256": "eb572ca3630d5bfde72e2601b1f02412da23ca005cd19384dced8690be4cb783"
+    },
+    {
+      "path": "assets/fps/materials/WhitePlaster02/WhitePlaster02_1K-JPG_Roughness.jpg",
+      "bytes": 295900,
+      "sha256": "4ff1fe957cd161b07f721fe6c28a9459c8c2e8ec65627a26c16e483a07c80d85"
+    },
+    {
+      "path": "assets/fps/materials/Wood051/Wood051_1K-JPG_Color.jpg",
+      "bytes": 871537,
+      "sha256": "f3c6c5456457e8d05c1fee4d2f186f41d0aea2b8a06859b69ce2934e11aa8798"
+    },
+    {
+      "path": "assets/fps/materials/Wood051/Wood051_1K-JPG_NormalGL.jpg",
+      "bytes": 1583401,
+      "sha256": "9078dc50c43b55831ae322460fc96b62df68c7a148400bd7755ab2788fec1708"
+    },
+    {
+      "path": "assets/fps/materials/Wood051/Wood051_1K-JPG_Roughness.jpg",
+      "bytes": 680793,
+      "sha256": "b5736b940d721b49922cb14eebd52fd34f134b7ef99331ecf28565ce40358098"
     },
     {
       "path": "assets/fps/models/bookcaseClosedDoors.glb",
@@ -485,14 +485,19 @@
       "sha256": "7b002b11298725eb846921fb14d3307b46bd419b882c6feff0e290cda2ed851f"
     },
     {
+      "path": "furniture-editor/build/ai-export.mjs",
+      "bytes": 3345,
+      "sha256": "8ef3c39a2855ec2fcf90b0745b93f28138203a1d321e204c54092bda95441347"
+    },
+    {
       "path": "furniture-editor/build/architecture.mjs",
-      "bytes": 11679,
-      "sha256": "c70c5c898626762f798cc3a53b08f6debbc8eabe2ae60b0842cbfd0f9ff304af"
+      "bytes": 12279,
+      "sha256": "f3704cb954f5d0946498eb0ae51bb4962341f86f5f448ecaebec6bbbb430d518"
     },
     {
       "path": "furniture-editor/build/level-project.mjs",
-      "bytes": 10468,
-      "sha256": "d1dd8e061f9ea13941e09a7fbe86f714a9948ca3b7c74e3b68f9e1dc3ba8a97e"
+      "bytes": 10903,
+      "sha256": "c335ca411fae111ce5c22bee49db05cfd7f430b26941c5442d7646db3f7e6e10"
     },
     {
       "path": "furniture-editor/build/level-project.schema.json",
@@ -541,23 +546,23 @@
     },
     {
       "path": "furniture-editor/library/zip.mjs",
-      "bytes": 5141,
-      "sha256": "a4bb47eb76afd0f88a226af3fb04600bf312fc5322de3cd499b445cbc60457d9"
+      "bytes": 5162,
+      "sha256": "902974e6eba6ef4f80acd1fe4a07d51d9a4b64e7633e475e528eeb1051091871"
     },
     {
       "path": "furniture-editor/new.css",
-      "bytes": 2587,
-      "sha256": "c2ddada11a3ad69f8d1634e475808cba0241e7c7fb08d2442f8ca3e15cebc59e"
+      "bytes": 2619,
+      "sha256": "243c539eae238aa162f32fd209d0ece69b7f0953ae1ea8d66df2f4cbbe6385ab"
     },
     {
       "path": "furniture-editor/new.html",
-      "bytes": 5205,
-      "sha256": "f0383c1a0c89045fefd4b0107d2ab4df4b573adb14cdf1335a2a1f24146f9a57"
+      "bytes": 5922,
+      "sha256": "f144cfa7ae2ce99add313c8a4e5cabae6a54275ef5fe6dad16b1728fd995f223"
     },
     {
       "path": "furniture-editor/new.mjs",
-      "bytes": 24959,
-      "sha256": "176b4160bd552c58a4cf881c40b384b3d03b6f1d23ee4480ac8fc1d0aa77c83c"
+      "bytes": 25947,
+      "sha256": "12e4cf8a1ac50734594c3dac1b41f51f0182ab070fe0e8a8fe14196ff9185e6d"
     },
     {
       "path": "furniture-editor/smart-placement.mjs",
@@ -836,8 +841,8 @@
     },
     {
       "path": "src/fps/level-adapter.mjs",
-      "bytes": 3462,
-      "sha256": "d4870a2c5160906cd1fd9a20f7f57df7da2528c586b06677302068f636ffe477"
+      "bytes": 3493,
+      "sha256": "e182ea12eeaefa4594b60684a69daa7c3e9af91099a0d2d4a539cc71b075d028"
     },
     {
       "path": "src/fps/living-floor-art.mjs",
@@ -886,8 +891,8 @@
     },
     {
       "path": "src/fps/physics.mjs",
-      "bytes": 19246,
-      "sha256": "59e544deb4fd29858ea2f80ca7ae8e3300fa82a477627c7b9dfb162dcad46d4c"
+      "bytes": 19492,
+      "sha256": "675c00ae03691ae82796e36f76adfe51cc2483815b5a46a3d5f8ca6d40832669"
     },
     {
       "path": "src/fps/presentation-hands.mjs",
@@ -1036,8 +1041,8 @@
     },
     {
       "path": "src/world.js",
-      "bytes": 18435,
-      "sha256": "ab4cb8ee2f6cfbf4997684d9ce66731b38c98e86246d90e4d95162a87fd0741e"
+      "bytes": 18459,
+      "sha256": "e10fcdee26c54587241f799e899acdf24907efb7bdfc3472ec9eef198216292f"
     },
     {
       "path": "vendor/package.json",

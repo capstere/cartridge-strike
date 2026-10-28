@@ -22,7 +22,7 @@ export function levelProjectToWorldData(input){
  const walls=wallPieces(entries.map(e=>({...e,source:false}))).map(e=>({id:`${e.id}-${wallIds.set(e.id,(wallIds.get(e.id)||0)+1).get(e.id)}`,a:e.a,b:e.b,height:e.height,thickness:e.thickness,sill:e.sill,
   surfaceType:e.kind==='glazed'||e.kind==='window'?e.kind:'opaque'}));
  const obstacles=project.furniture.added.map(o=>({id:o.id,name:o.assetName||o.kind,
-  polygon:corners(o),height:o.height,kind:o.kind,roomId:o.roomId,yaw:o.yaw}));
+  polygon:corners(o),height:o.height,kind:o.kind,roomId:o.roomId,yaw:o.yaw,collision:o.collision||'solid'}));
  const hints=project.navHints.length?project.navHints:doors.filter(d=>!d.blocked).map(d=>{
   const dx=d.b[0]-d.a[0],dz=d.b[1]-d.a[1],n=Math.hypot(dx,dz),x=d.center[0],z=d.center[1];
   return {id:'NH-'+d.id,points:[[x-dz/n*.7,z+dx/n*.7],[x,z],[x+dz/n*.7,z-dx/n*.7]]};

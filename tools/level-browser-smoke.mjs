@@ -34,6 +34,12 @@ try{
  // Reject malicious/corrupt import before closing the editor's WebGL renderer.
  await page.locator('#open').setInputFiles({name:'bad.zip',mimeType:'application/zip',buffer:Buffer.from('bad zip')});
  assert.match(await page.locator('#status').innerText(),/Kunde inte öppna/);
+ page.once('dialog',dialog=>dialog.accept());await page.locator('#newBlank').click();
+ assert.equal(await page.evaluate(()=>__levelStudio.project.ground.floors.length),0);
+ assert.equal(await page.evaluate(()=>__levelStudio.project.architecture.added.length),0);
+ await page.locator('#undo').click();
+ assert.equal(await page.evaluate(()=>__levelStudio.project.gameplay.spawns.length),10);
+ console.log('Blank-world reset and undo PASS');
  // SwiftShader has a strict concurrent WebGL budget in headless CI. Verify each
  // full scene sequentially, without weakening any original journey assertions.
  await privatePage.close();await page.close();
