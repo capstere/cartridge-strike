@@ -21,8 +21,8 @@ jobs:
           node-version: '22'
       - name: Pure tests, Floor 5 doors and SHA manifest
         run: |
-          node --test furniture-editor/*.test.mjs furniture-editor/build/*.test.mjs furniture-editor/library/*.test.mjs src/fps/level-adapter.test.mjs
-          node tools/owner-door-traversal.mjs
+          node --experimental-loader ./tools/vendor-three-test-loader.mjs --test furniture-editor/*.test.mjs furniture-editor/build/*.test.mjs furniture-editor/library/*.test.mjs src/fps/level-adapter.test.mjs
+          node --experimental-loader ./tools/vendor-three-test-loader.mjs tools/owner-door-traversal.mjs
           node tools/verify-owner-runtime.mjs
       - name: Install pinned browser and software WebGL
         run: |

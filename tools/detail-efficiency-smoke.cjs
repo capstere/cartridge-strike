@@ -73,7 +73,7 @@ const args=['--no-sandbox','--use-gl=angle','--use-angle=swiftshader','--enable-
    assert.deepEqual(checks.doors,{predictions:4,exactMatches:4});
    assert.ok(checks.movingPredictions>=10&&checks.movingPredictions<=13,'Keep existing moving-aim update budget');
    for(const key of ['rewind','paused','resumed','off','switched','fpsFinite','frameReset','visible'])assert.equal(checks[key],true,key);
-   assert.equal(checks.ammo,1);assert.ok(checks.version.includes(process.env.EXPECTED_GAME_VERSION||'0.17.0'));
+   assert.equal(checks.ammo,1);const expectedVersion=process.env.EXPECTED_GAME_VERSION||JSON.parse(fs.readFileSync(path.join(__dirname,'../build-info.json'),'utf8')).gameVersion;assert.ok(checks.version.includes(expectedVersion),`Expected game version ${expectedVersion}, got ${checks.version}`);
    assert.deepEqual(errors,[]);assert.equal(await page.locator('#fatal').isVisible(),false);
    await page.screenshot({path:`test-results/detail-${mobile?'mobile':'desktop'}.png`,timeout:60000,animations:'disabled'});
    report[mobile?'mobile':'desktop']=checks;console.log('DETAIL '+(mobile?'MOBILE':'DESKTOP')+' PASS',JSON.stringify(checks));

@@ -30,14 +30,29 @@ try{
  assert.equal(await privatePage.evaluate(()=>__fps.world.data.rooms.length),2);
  await privatePage.evaluate(()=>{__fps.start('analysts',{mode:'endless',botFire:false,wanderers:false});for(let i=0;i<30;i++)__fps.step(null,1/60);});
  assert.equal(await privatePage.evaluate(()=>__fps.game.actors.length),10);
- const published=await context.newPage();track(published);
- await published.goto(origin+'/fps/?level=synthetic-demo&test=1');await published.waitForFunction(()=>window.__fps||!document.querySelector('#fatal').hidden);
- assert(await published.locator('#fatal').isHidden(),await published.locator('#fatal').innerText());
- const unsafe=await context.newPage();await unsafe.goto(origin+'/fps/?level=..%2F..%2Fsecret&test=1');await unsafe.waitForFunction(()=>!document.querySelector('#fatal').hidden);assert.match(await unsafe.locator('#fatal').innerText(),/Ogiltigt nivå-ID/);
- const old=await context.newPage();track(old);await old.goto(origin+'/fps/?test=1');await old.waitForFunction(()=>window.__fps||!document.querySelector('#fatal').hidden);
- assert(await old.locator('#fatal').isHidden(),await old.locator('#fatal').innerText());assert.equal(await old.evaluate(()=>__fps.world.data.__custom),undefined);
+ console.log('Private preview: loaded synthetic world and simulated 10 actors PASS');
+ // Reject malicious/corrupt import before closing the editor's WebGL renderer.
  await page.locator('#open').setInputFiles({name:'bad.zip',mimeType:'application/zip',buffer:Buffer.from('bad zip')});
  assert.match(await page.locator('#status').innerText(),/Kunde inte öppna/);
+ // SwiftShader has a strict concurrent WebGL budget in headless CI. Verify each
+ // full scene sequentially, without weakening any original journey assertions.
+ await privatePage.close();await page.close();
+ console.log('Editor and private preview closed; opening the published level in a fresh WebGL context');
+ const published=await context.newPage();track(published);
+ const publishedRequests=[];published.on('requestfailed',req=>publishedRequests.push(req.url()+': '+req.failure()?.errorText));
+ await published.goto(origin+'/fps/?level=synthetic-demo&test=1',{waitUntil:'domcontentloaded'});
+ console.log('Published demo DOM loaded');
+ try{await published.waitForFunction(()=>window.__fps||!document.querySelector('#fatal').hidden,null,{timeout:90000});}
+ catch(err){const diagnostic=await published.evaluate(()=>({loading:document.querySelector('#loading')?.textContent,fatal:document.querySelector('#fatal pre')?.textContent,ready:!!window.__fps})).catch(()=>null);
+  throw Error('Published demo did not boot: '+JSON.stringify({diagnostic,publishedRequests,errors,original:String(err)}));}
+ assert(await published.locator('#fatal').isHidden(),await published.locator('#fatal').innerText());
+ assert.equal(await published.evaluate(()=>__fps.world.data.__custom),true);
+ assert.equal(await published.evaluate(()=>__fps.world.data.corridors.length),1);
+ console.log('Published synthetic demo booted in Chromium/WebGL PASS');
+ await published.close();
+ const unsafe=await context.newPage();await unsafe.goto(origin+'/fps/?level=..%2F..%2Fsecret&test=1',{waitUntil:'domcontentloaded'});await unsafe.waitForFunction(()=>!document.querySelector('#fatal').hidden);assert.match(await unsafe.locator('#fatal').innerText(),/Ogiltigt nivå-ID/);await unsafe.close();
+ const old=await context.newPage();track(old);await old.goto(origin+'/fps/?test=1',{waitUntil:'domcontentloaded'});await old.waitForFunction(()=>window.__fps||!document.querySelector('#fatal').hidden);
+ assert(await old.locator('#fatal').isHidden(),await old.locator('#fatal').innerText());assert.equal(await old.evaluate(()=>__fps.world.data.__custom),undefined);
  assert.deepEqual(errors,[]);
  console.log(JSON.stringify({status:'PASS',mouseRoom:true,zipBytes:bytes.length,spawns:10,privateFPS:true,publishedFPS:true,floor5:true,unsafeLevelRejected:true,consoleErrors:0}));
 }finally{await browser.close();}
