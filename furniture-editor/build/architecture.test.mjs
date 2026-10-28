@@ -102,3 +102,14 @@ test('invalid wall or door colors reject safely, legacy projects default predict
  assert.equal(doc.added[0].finish,'white');
  assert.equal(parseArchitecture(doc,[]).entries[0].finish,'white');
 });
+
+test('standard 1.20 span and leafless opening physically cut wall segments',async()=>{
+ const {standardPassageSpan,STANDARD_PASSAGE_WIDTH}=await import('./architecture.mjs');
+ assert.equal(STANDARD_PASSAGE_WIDTH,1.2);
+ const span=standardPassageSpan([2,0],[8,0]);assert.equal(entryLength(span),1.2);
+ assert.deepEqual(span.a,[4.4,0]);assert.deepEqual(span.b,[5.6,0]);
+ const pieces=wallPieces([makeEntry('BYGG-V-0008','wall',[2,0],[8,0]),makeEntry('BYGG-D-0008','opening',span.a,span.b)]);
+ assert.equal(pieces.length,2);assert(pieces[0].b[0]<4.4&&pieces[1].a[0]>5.6);
+ assert.throws(()=>standardPassageSpan([1,1],[1,1]),/två olika/);
+ assert.throws(()=>standardPassageSpan([0,0],[2,0],.8),/1,10/);
+});
