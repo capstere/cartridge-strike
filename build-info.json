@@ -491,8 +491,8 @@
     },
     {
       "path": "furniture-editor/build/architecture.mjs",
-      "bytes": 12279,
-      "sha256": "f3704cb954f5d0946498eb0ae51bb4962341f86f5f448ecaebec6bbbb430d518"
+      "bytes": 13011,
+      "sha256": "a40075fc796c407b16ff7b70bd370896fe577f946e6b1353bb23ca43dad2358c"
     },
     {
       "path": "furniture-editor/build/level-project.mjs",
@@ -516,8 +516,8 @@
     },
     {
       "path": "furniture-editor/index.html",
-      "bytes": 25710,
-      "sha256": "98defdb84740f19b5d32872923c604c5d9e05d5b46c8c86186e517100a978bd1"
+      "bytes": 25754,
+      "sha256": "b085975c6d458ad6c9d51e49f31f6928b33481158c540de136ec15b766621eaa"
     },
     {
       "path": "furniture-editor/library/catalog.mjs",
@@ -561,8 +561,8 @@
     },
     {
       "path": "furniture-editor/new.mjs",
-      "bytes": 25947,
-      "sha256": "12e4cf8a1ac50734594c3dac1b41f51f0182ab070fe0e8a8fe14196ff9185e6d"
+      "bytes": 26036,
+      "sha256": "fdd6b3424943b806b604b70acc33fbfacc370666c6fe8772619b97aaa139c4fc"
     },
     {
       "path": "furniture-editor/smart-placement.mjs",

@@ -5,7 +5,7 @@ import * as THREE from '../../vendor/three/three.module.js';
 import {ARCHITECTURE_TYPES,ARCHITECTURE_NAMES,ARCHITECTURE_COLORS,readBaseline,
  cloneEntry,roundPosition,entryLength,validateEntry,validateFloorRect,pointToSegmentDistance,
  exportArchitecture,parseArchitecture,makeEntry,getNextId,doorOnWallSegment,floorRect,wallPieces,warningsForLayout,
- isDoor,isWall} from './architecture.mjs';
+ isDoor,isWall,standardPassageSpan,standardDoorMarkerSpan,STANDARD_PASSAGE_WIDTH} from './architecture.mjs';
 import {snapDraftPoint,dimensionsFromWall,joinNearbyEnds,straightenEntry} from './precision.mjs';
 import {createRectangleRoom,rectangleFromDimensions} from './rectangle-room.mjs';
 import {FINISH_COLORS,architecturalFinish,WALL_FINISHES,DOOR_FINISHES} from '../appearance.mjs';
@@ -203,7 +203,7 @@ export function createBuildMode({data,scene,canvas,camera,getZoom,getView,rayAt,
   }
  }
  function drawDoor(queue,seg,full){const id=seg.id;
-  if(!full){const m=seg.kind==='opening'?'opening':seg.kind;addSegmentBox(queue,m,id,seg,.30,.15,.10);return;}
+  if(!full){const m=seg.kind==='opening'?'opening':seg.kind;addSegmentBox(queue,m,id,standardDoorMarkerSpan(seg),.30,.15,.10);return;}
   const L=entryLength(seg),dx=seg.b[0]-seg.a[0],dz=seg.b[1]-seg.a[1],ux=dx/L,uz=dz/L;
   const w=.075,jh=seg.height/2;
   for(const p of [seg.a,seg.b])addBox(queue,'frame',id,p[0],jh,p[1],w,seg.height,w);
@@ -467,7 +467,7 @@ export function createBuildMode({data,scene,canvas,camera,getZoom,getView,rayAt,
   try{door=doorOnWallSegment(e,getNextId(entries,floors,'door'));}
   catch(error){notify?.(error.message);return null;}
   const before=capture();entries.push(door);selection=door.id;setTool('select');record(before);
-  notify?.('En 90 cm dörr har satts mitt på väggen. Dra den längs väggen eller ändra måtten nedan.');
+  notify?.('STANDARD: 1,20 dörrmarkering, centrerad i väggen. Ändra öppningens faktiska mått i sidopanelen.');
   return door.id;
  }
  function precisionAction(action){
@@ -542,7 +542,8 @@ export function createBuildMode({data,scene,canvas,camera,getZoom,getView,rayAt,
   first=null;hover=null;const before=capture();
   try{
    if(mode==='floor'){const f=floorRect(getNextId(entries,floors,'floor'),start,p);validateFloorRect(f);floors.push(f);selection=f.id;}
-   else{const e=makeEntry(getNextId(entries,floors,mode),mode,start,p);
+   else{const span=isDoor(mode)?standardPassageSpan(start,p):{a:start,b:p};
+    const e=makeEntry(getNextId(entries,floors,mode),mode,span.a,span.b);
     const neighbor=dimensionsFromWall(start,entries);
     if(neighbor){e.height=isDoor(e.kind)?Math.min(2.4,neighbor.height):neighbor.height;e.thickness=neighbor.thickness;}
     validateEntry(e,{isNew:true});entries.push(e);selection=e.id;}

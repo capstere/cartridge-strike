@@ -88,3 +88,15 @@ test('exact line projection accepts both reverse directions and rejects perpendi
  const backwards=planPaintOverWall(make(),old.id,[6,2],[4,2],'window');
  assert.deepEqual(backwards.span,[[4,2],[6,2]]);
 });
+
+test('SMART RITA door and leafless opening ALWAYS produce same standard 1.20 span',()=>{
+ for(const kind of ['door','card-door','opening']){
+  for(const points of [[[2,2],[3.5,2]],[[3,2],[7,2]],[[7,2],[5,2]]]){
+   const plan=planPaintOverWall(make(),old.id,points[0],points[1],kind),entry=plan.entries.find(e=>e.id===plan.paintedId);
+   assert(entry);assert(Math.abs(Math.hypot(entry.b[0]-entry.a[0],entry.b[1]-entry.a[1])-1.2)<.002,kind);
+   assert.equal(plan.full,false);
+   assert.equal(plan.pieces.length,3);
+  }
+ }
+ assert.throws(()=>planPaintOverWall([{...old,b:[2.4,2]}],old.id,[1,2],[2.4,2],'door'),/STANDARD/);
+});

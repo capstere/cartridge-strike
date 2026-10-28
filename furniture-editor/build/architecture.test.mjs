@@ -113,3 +113,23 @@ test('standard 1.20 span and leafless opening physically cut wall segments',asyn
  assert.throws(()=>standardPassageSpan([1,1],[1,1]),/två olika/);
  assert.throws(()=>standardPassageSpan([0,0],[2,0],.8),/1,10/);
 });
+
+test('STANDARD markers are 1.20 for all door types and source geometry is unchanged',async()=>{
+ const {standardDoorMarkerSpan,STANDARD_PASSAGE_WIDTH,doorOnWallSegment}=await import('./architecture.mjs');
+ assert.equal(STANDARD_PASSAGE_WIDTH,1.20);
+ for(const kind of ['door','card-door','elevator-door','terrace-door','opening']){
+  for(const [a,b] of [[[0,0],[.8,0]],[[0,0],[2.4,0]],[[2,3],[2,4.6]],[[1,1],[3,3]]]){
+   const source=makeEntry('BYGG-D-0012',kind,a,b),old=JSON.stringify(source);
+   const marker=standardDoorMarkerSpan(source);
+   assert(Math.abs(entryLength(marker)-STANDARD_PASSAGE_WIDTH)<1e-9,kind);
+   assert.equal((marker.a[0]+marker.b[0])/2,(a[0]+b[0])/2);
+   assert.equal((marker.a[1]+marker.b[1])/2,(a[1]+b[1])/2);
+   assert.equal(JSON.stringify(source),old,'no source door geometry mutation');
+  }
+ }
+ const wall=makeEntry('BYGG-V-0012','wall',[0,0],[5,0]);
+ const door=doorOnWallSegment(wall,'BYGG-D-0012');
+ assert(Math.abs(entryLength(door)-1.2)<.001);
+ assert.equal(door.a[0],1.9);assert.equal(door.b[0],3.1);
+ assert.throws(()=>doorOnWallSegment(makeEntry('BYGG-V-0022','wall',[0,0],[1.3,0]),'BYGG-D-0022'),/STANDARD/);
+});

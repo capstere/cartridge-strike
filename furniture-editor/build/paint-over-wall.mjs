@@ -2,7 +2,7 @@
  * Paint an opening, glass wall or window over part of an existing wall,
  * replacing the painted span rather than overlapping solid geometry.
  */
-import {isWall,isDoor,makeEntry,getNextId,validateEntry,roundPosition,entryLength,pointToSegmentDistance,cloneEntry} from './architecture.mjs';
+import {isWall,isDoor,makeEntry,getNextId,validateEntry,roundPosition,entryLength,pointToSegmentDistance,cloneEntry,STANDARD_PASSAGE_WIDTH} from './architecture.mjs';
 import {architecturalFinish} from '../appearance.mjs';
 import {validatePoster} from './posters.mjs';
 
@@ -37,6 +37,20 @@ export function planPaintOverWall(entries,wallId,start,end,kind,{posters=[]}={})
  if(!a||!b||a.distance>.28||b.distance>.28)throw Error('Rita från och till samma vägglinje. Försök närmare väggen.');
  const length=entryLength(wall);
  let left=Math.min(a.t,b.t)*length,right=Math.max(a.t,b.t)*length;
+ if(isDoor(kind)){
+  // Smart paint uses the pointer gesture to POSITION a standard opening,
+  // not to arbitrarily stretch its width. Short walls cannot silently
+  // generate narrower door markers or 10-cm uneditable wall slivers.
+  const width=STANDARD_PASSAGE_WIDTH,center=(left+right)/2;
+  if(length<width-1e-6)throw Error('Väggen är kortare än STANDARD-öppningen 1,20.');
+  if(length<width+.5-1e-6){
+   if(Math.abs(length-width)>.001)throw Error('För STANDARD 1,20 behövs minst 25 cm vägg på varje sida.');
+   left=0;right=length;
+  }else{
+   left=Math.max(.25,Math.min(length-.25-width,center-width/2));
+   right=left+width;
+  }
+ }
  // Absorb tiny < 25 cm edge slivers; never create short uneditable fragments.
  if(left<.25)left=0;
  if(length-right<.25)right=length;

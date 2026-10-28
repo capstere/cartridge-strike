@@ -16,7 +16,7 @@ import {makeZip,readZip,PROJECT_ZIP_MAX_BYTES} from './library/zip.mjs';
 import {readModelBundleZip} from './library/model-bundle.mjs';
 import {assetHash} from './library/glb-utils.mjs';
 import {createBuildMode} from './build/build-mode.mjs';
-import {parseArchitecture} from './build/architecture.mjs';
+import {parseArchitecture,standardDoorMarkerSpan} from './build/architecture.mjs';
 import {parsePosters} from './build/posters.mjs';
 import {parseTreatments} from './build/treatments.mjs';
 import {findCameraPlacement} from './placement.mjs';
@@ -64,7 +64,7 @@ function makeGround(){
  }
  // Door openings are visual markers only — no new physical barriers.
  const doorMat=new T.LineBasicMaterial({color:0x9a795e,transparent:true,opacity:.75});originMaterials.push(doorMat);
- const segments=[];for(const d of data.doors.filter(d=>!d.blocked)){segments.push(d.a[0],.022,d.a[1],d.b[0],.022,d.b[1]);}
+ const segments=[];for(const door of data.doors.filter(d=>!d.blocked)){const marker=standardDoorMarkerSpan(door);segments.push(marker.a[0],.022,marker.a[1],marker.b[0],.022,marker.b[1]);}
  const lines=new T.BufferGeometry();lines.setAttribute('position',new T.Float32BufferAttribute(segments,3));scene.add(new T.LineSegments(lines,doorMat));
  // Fixed benches, kitchen counters and closets provide context and collision feedback.
  const staticObstacles=data.obstacles.filter(o=>!EDITABLE_KINDS[o.kind]&&o.kind!=='uncertain-area');

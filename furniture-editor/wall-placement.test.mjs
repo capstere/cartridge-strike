@@ -23,7 +23,7 @@ test('quick door draws exactly on selected wall and carves preview opening',()=>
  const wall=makeEntry('BYGG-V-0001','wall',[0,0],[6,0]);
  const door=doorOnWallSegment(wall,'BYGG-D-0001');
  assert.equal(door.kind,'door');assert.equal(door.id,'BYGG-D-0001');
- assert(Math.abs(entryLength(door)-.9)<.001);
+ assert(Math.abs(entryLength(door)-1.2)<.001);
  assert.equal(door.a[1],0);assert.equal(door.b[1],0);
  assert.equal(wallPieces([wall,door]).length,2);
  assert.throws(()=>doorOnWallSegment(makeEntry('BYGG-V-0002','wall',[0,0],[.4,0]),'BYGG-D-0002'),/kort/);
