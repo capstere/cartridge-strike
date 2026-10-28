@@ -26,11 +26,13 @@ try{
  await page.mouse.move(planBox.x+planBox.width*.65,planBox.y+planBox.height*.55);await page.mouse.down({button:'right'});
  await page.mouse.move(planBox.x+planBox.width*.72,planBox.y+planBox.height*.55,{steps:5});await page.mouse.up({button:'right'});
  assert((await page.evaluate(()=>__levelStudio.viewState.planCenter.x))<beforePan,'Right drag pans the plan without moving a building part');
+ assert.equal(await page.evaluate(()=>__levelStudio.viewState.panActive),false,'Right drag releases plan camera control');
  assert.equal(await page.evaluate(()=>JSON.stringify(__levelStudio.project)),authoredBeforeMove,'Camera movement never changes the authored project');
  await page.locator('#fit').click();
  await page.locator('[data-tool="door"]').click();
  let at=await page.evaluate(()=>__levelStudio.screenWorldPoint(5,2));await page.mouse.click(at.x,at.y);
- assert.equal(await page.evaluate(()=>__levelStudio.project.architecture.added.filter(e=>e.kind==='door').length),1);
+ assert.equal(await page.evaluate(()=>__levelStudio.project.architecture.added.filter(e=>e.kind==='door').length),1,
+  JSON.stringify({status:await page.locator('#status').innerText(),camera:await page.evaluate(()=>__levelStudio.viewState),click:at}));
  await page.locator('[data-tool="window"]').click();at=await page.evaluate(()=>__levelStudio.screenWorldPoint(8,5));await page.mouse.click(at.x,at.y);
  assert.equal(await page.evaluate(()=>__levelStudio.project.architecture.added.filter(e=>e.kind==='window').length),1);
  await page.locator('[data-tab="furnish"]').click();
