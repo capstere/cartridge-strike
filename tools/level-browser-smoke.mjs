@@ -31,15 +31,16 @@ try{
  await page.locator('#fit').click();
  await page.locator('#threeView').click();
  await page.locator('[data-tool="wall"]').click();
- let at3=await page.evaluate(()=>__levelStudio.screen3DPoint(9,0,5));await page.mouse.click(at3.x,at3.y);
+ let at3=await page.evaluate(()=>__levelStudio.screen3DPoint(4,0,4));await page.mouse.click(at3.x,at3.y);
  assert.match(await page.locator('#status').innerText(),/Startpunkt vald/);
  await page.keyboard.press('Escape');
  assert.equal(await page.locator('#tool').inputValue(),'select','Esc returns to selection from a half-drawn 3D wall');
  assert.equal(await page.evaluate(()=>__levelStudio.project.architecture.added.length),4);
  await page.locator('[data-tool="wall"]').click();
- at3=await page.evaluate(()=>__levelStudio.screen3DPoint(9,0,5));await page.mouse.click(at3.x,at3.y);
- at3=await page.evaluate(()=>__levelStudio.screen3DPoint(11,0,5));await page.mouse.click(at3.x,at3.y);
- assert.equal(await page.evaluate(()=>__levelStudio.project.architecture.added.filter(e=>e.kind==='wall').length),5,'3D clicks build an actual wall');
+ at3=await page.evaluate(()=>__levelStudio.screen3DPoint(4,0,4));await page.mouse.click(at3.x,at3.y);
+ at3=await page.evaluate(()=>__levelStudio.screen3DPoint(6,0,4));await page.mouse.click(at3.x,at3.y);
+ assert.equal(await page.evaluate(()=>__levelStudio.project.architecture.added.filter(e=>e.kind==='wall').length),5,
+  JSON.stringify({reason:'3D clicks build an actual wall',click:at3,status:await page.locator('#status').innerText(),canvas:await page.locator('#scene3d').boundingBox(),selected:await page.evaluate(()=>__levelStudio.selected)}));
  await page.keyboard.press('Delete');
  assert.equal(await page.evaluate(()=>__levelStudio.project.architecture.added.filter(e=>e.kind==='wall').length),4,'Delete removes the selected 3D wall');
  await page.locator('[data-tool="window"]').click();
