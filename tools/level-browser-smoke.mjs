@@ -32,7 +32,9 @@ try{
  assert(walk, 'Real FPS walk view opened inside the editor');
  assert(await walk.evaluate(()=>__walk.world.data.__custom&&__walk.renderer.projectFurniture.children.length===1));
  const beforeWalk=await walk.evaluate(()=>({x:__walk.actor.x,z:__walk.actor.z}));
- await walk.locator('#game').focus();await page.keyboard.down('d');await page.waitForTimeout(350);await page.keyboard.up('d');
+ await walk.locator('#game').focus();assert(await walk.evaluate(()=>document.activeElement?.id==='game'));
+ await page.keyboard.down('d');assert(await walk.evaluate(()=>__walk.keys.has('KeyD')));
+ await page.waitForTimeout(500);await page.keyboard.up('d');
  const afterWalk=await walk.evaluate(()=>({x:__walk.actor.x,z:__walk.actor.z}));
  assert.notDeepEqual(afterWalk,beforeWalk);
  await walk.locator('#exit').click();assert(await page.locator('#plan').isVisible());

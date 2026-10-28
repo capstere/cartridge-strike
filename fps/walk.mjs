@@ -4,16 +4,16 @@ import {findWalkStart} from '../src/fps/walk-start.mjs';
 import {Renderer} from '../src/fps/render.mjs';
 
 const canvas=document.getElementById('game'),message=document.getElementById('message'),hint=document.getElementById('hint');
-let world,renderer,actor,yaw=0,pitch=0,last=0,time=0,raf=0;const keys=new Set();
+let world,renderer,actor,yaw=0,pitch=0,last=0,time=0,raf=0,frames=0;const keys=new Set();
 const show=text=>{message.hidden=false;message.textContent=text;};
 document.getElementById('exit').onclick=()=>{if(document.pointerLockElement)document.exitPointerLock();
  if(window.parent!==window)window.parent.postMessage({type:'cartridge-walk-close'},location.origin);else history.back();};
 document.addEventListener('keydown',e=>{if(['KeyW','KeyA','KeyS','KeyD','ArrowUp','ArrowDown','ArrowLeft','ArrowRight','Escape'].includes(e.code))e.preventDefault();keys.add(e.code);});
 document.addEventListener('keyup',e=>keys.delete(e.code));window.addEventListener('blur',()=>keys.clear());
 document.addEventListener('mousemove',e=>{if(document.pointerLockElement!==canvas)return;yaw-=e.movementX*.0022;pitch=Math.max(-1.45,Math.min(1.45,pitch-e.movementY*.0022));});
-canvas.addEventListener('click',()=>canvas.requestPointerLock?.().catch(()=>{hint.textContent='Muslås saknas; använd piltangenter för att se dig omkring.';}));
+canvas.addEventListener('click',()=>{canvas.focus();Promise.resolve(canvas.requestPointerLock?.()).catch(()=>{hint.textContent='Muslås saknas; använd piltangenter för att se dig omkring.';});});
 document.addEventListener('pointerlockchange',()=>{hint.textContent=document.pointerLockElement===canvas?'W A S D: gå · mus: titta · Esc: släpp musen':'W A S D: gå · klicka i vyn för musstyrning · Esc: släpp musen';});
-function frame(now){
+function frame(now){frames++;
  const dt=Math.min(.05,Math.max(0,(now-last)/1000));last=now;time+=dt;
  if(keys.has('ArrowLeft'))yaw+=dt*1.8;if(keys.has('ArrowRight'))yaw-=dt*1.8;
  const forward=Number(keys.has('KeyW')||keys.has('ArrowUp'))-Number(keys.has('KeyS')||keys.has('ArrowDown'));
@@ -35,6 +35,6 @@ try{
  for(const kind of ['bomb','rescue'])if(!world.anchors[kind])world.anchors[kind]={x:1000,z:1000,radius:1};
  renderer=new Renderer(canvas,world,{graphics:'standard',mobile:false,reducedMotion:true});await renderer.assetsReady;
  message.hidden=true;last=performance.now();raf=requestAnimationFrame(frame);
- if(new URLSearchParams(location.search).has('test'))window.__walk={world,renderer,actor,step:frame};
+ if(new URLSearchParams(location.search).has('test'))window.__walk={world,renderer,actor,keys,get frames(){return frames;}};
 }catch(error){show('Promenadvyn kunde inte öppnas: '+error.message);}
 window.addEventListener('pagehide',()=>{cancelAnimationFrame(raf);renderer?.dispose();});

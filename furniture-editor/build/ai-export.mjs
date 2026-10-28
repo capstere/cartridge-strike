@@ -31,6 +31,7 @@ export function aiAgentBrief(p){
   'New doors and leafless passages start at 1.20 units (minimum allowed 1.10).',
   'Leafless opening: never collides. Door: dynamic door-leaf collision and navigable open state.',
   'Solid furniture blocks movement; collision=none remains visually rendered but nonblocking.',
+  'Keep every authored object, even one placed temporarily in collision or outside floor. Report and correct validation errors before claiming the level is playable; do not discard draft work.',
   'Generate navigation and collision from the actual geometry; validate spawn-to-objective paths.',
   'Validate WebGL startup, both teams of spawns, game interaction and Floor 5 regression.',
   'Verify GLB ownership; do not automatically publish private or unlicensed models.',
