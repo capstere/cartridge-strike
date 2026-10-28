@@ -3,6 +3,7 @@
  * and no storage or network side effects. The exported JSON is review-only.
  */
 import {LIBRARY_MAP} from './library/catalog.mjs';
+import {editableDimensions,isChair,chairRole,validateDimensions,CHAIR_ROLES} from './appearance.mjs';
 export const EDITOR_VERSION = '2.0.0';
 export const GAME_VERSION = '0.17.0';
 export const BASE_COMMIT = '7b99da56c9cc7f7e5bdbc626a174c8db9a9e33bc';
@@ -58,7 +59,7 @@ export function catalog(data,furnishings){
  const ids=new Set();for(const x of objects){if(ids.has(x.id))throw new Error('Duplicated furniture id: '+x.id);ids.add(x.id);}
  return objects.sort((a,b)=>a.roomId.localeCompare(b.roomId)||a.kind.localeCompare(b.kind)||a.id.localeCompare(b.id));
 }
-export function isChanged(current,baseline){return Math.hypot(current.x-baseline.x,current.z-baseline.z)>1e-4||Math.abs(normalizeAngle(current.yaw-baseline.yaw))>1e-4;}
+export function isChanged(current,baseline){return Math.hypot(current.x-baseline.x,current.z-baseline.z)>1e-4||Math.abs(normalizeAngle(current.yaw-baseline.yaw))>1e-4||Math.abs(current.w-baseline.w)>1e-4||Math.abs(current.d-baseline.d)>1e-4||(isChair(current)&&chairRole(current)!==chairRole(baseline));}
 export function validate(item,objects,data,original=null){
  const room=data.rooms.find(r=>r.id===item.roomId&&r.status==='included');
  if(!room)return 'Rummet är inte godkänt för möblering.';
@@ -118,8 +119,12 @@ export function exportPatch(objects,baseline,{createdAt=new Date().toISOString()
  const base=new Map(baseline.map(o=>[o.id,o]));const placements=[],added=[],removed=[];
  for(const o of objects){const old=base.get(o.id);if(o.deleted){if(old)removed.push(o.id);continue;}
   const payload={id:o.id,roomId:o.roomId,kind:o.kind,x:round(o.x),z:round(o.z),yaw:round(normalizeAngle(o.yaw),6)};
-  if(!old)added.push({...payload,w:round(o.w),d:round(o.d),height:round(o.height),...(o.assetId?{assetId:o.assetId,assetName:String(o.assetName||'3D-objekt').slice(0,90)}:{})});
-  else if(isChanged(o,old))placements.push(payload);
+  if(!old)added.push({...payload,w:round(o.w),d:round(o.d),height:round(o.height),
+   ...(isChair(o)?{chairRole:chairRole(o)}:{}),
+   ...(o.assetId?{assetId:o.assetId,assetName:String(o.assetName||'3D-objekt').slice(0,90)}:{})});
+  else if(isChanged(o,old))placements.push({...payload,
+   ...(editableDimensions(o)&& (Math.abs(o.w-old.w)>1e-4||Math.abs(o.d-old.d)>1e-4)?{w:round(o.w),d:round(o.d)}:{}),
+   ...(isChair(o)&&chairRole(o)!==chairRole(old)?{chairRole:chairRole(o)}:{})});
  }
  for(const old of baseline)if(!objects.some(o=>o.id===old.id))removed.push(old.id);
  const sorted=(a,b)=>a.id.localeCompare(b.id);
@@ -146,11 +151,22 @@ export function parsePatch(document,baseline){
    const classic=/^NY-(STOL|BORD|SOFFA)-\d{1,5}$/.test(p.id)&&['chair','table','sofa'].includes(p.kind)&&!p.assetId;
    const curated=/^NY-OBJ-\d{1,5}$/.test(p.id)&&p.kind==='prop'&&typeof p.assetId==='string'&&
      (LIBRARY_MAP.has(p.assetId)||/^local:[a-f0-9]{64}$/.test(p.assetId));
-   if((!classic&&!curated)||![p.w,p.d,p.height].every(v=>typeof v==='number'&&Number.isFinite(v)&&v>.05&&v<4))
+   if((!classic&&!curated)||![p.w,p.d,p.height].every(v=>typeof v==='number'&&Number.isFinite(v)&&v>.05&&v<=8))
      throw Error('Ogiltig ny möbel eller okänd 3D-modell.');
-   const obj={...p,assetName:curated?String(p.assetName||LIBRARY_MAP.get(p.assetId)?.name||'Egen 3D-modell').slice(0,90):undefined,source:'added'};get.set(obj.id,obj);items.push(obj);
+   const obj={...p,assetName:curated?String(p.assetName||LIBRARY_MAP.get(p.assetId)?.name||'Egen 3D-modell').slice(0,90):undefined,source:'added'};
+   if(p.chairRole!==undefined&&(!isChair(obj)||!CHAIR_ROLES.includes(p.chairRole)))throw Error('Ogiltig stolskategori.');
+   if(isChair(obj))obj.chairRole=chairRole(obj);
+   get.set(obj.id,obj);items.push(obj);
   }else{
    const obj=get.get(p.id);if(!obj||obj.kind!==p.kind||obj.roomId!==p.roomId)throw Error('Möbeln matchar inte aktuell spelplan: '+p.id);
+   if(p.w!==undefined||p.d!==undefined){
+    if(p.w===undefined||p.d===undefined)throw Error('Både längd och bredd måste anges.');
+    Object.assign(obj,validateDimensions(p.w,p.d,obj));
+   }
+   if(p.chairRole!==undefined){
+    if(!isChair(obj)||!CHAIR_ROLES.includes(p.chairRole))throw Error('Ogiltig stolskategori.');
+    obj.chairRole=p.chairRole;
+   }
    Object.assign(obj,{x:p.x,z:p.z,yaw:normalizeAngle(p.yaw)});
   }
  }
