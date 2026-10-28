@@ -30,7 +30,9 @@ try{
  assert.equal(await page.evaluate(()=>JSON.stringify(__levelStudio.project)),authoredBeforeMove,'Camera movement never changes the authored project');
  await page.locator('#fit').click();
  await page.locator('[data-tool="door"]').click();
- let at=await page.evaluate(()=>__levelStudio.screenWorldPoint(5,2));await page.mouse.click(at.x,at.y);
+ let at=await page.evaluate(()=>__levelStudio.screenWorldPoint(5,2));await page.mouse.move(at.x,at.y);
+ assert.deepEqual(await page.evaluate(at=>__levelStudio.worldAtScreen(at.x,at.y),at),{x:5,z:2},'Updating coordinates never shifts the drawing surface');
+ await page.mouse.click(at.x,at.y);
  assert.equal(await page.evaluate(()=>__levelStudio.project.architecture.added.filter(e=>e.kind==='door').length),1,
   JSON.stringify({status:await page.locator('#status').innerText(),camera:await page.evaluate(()=>__levelStudio.viewState),click:at,
    world:await page.evaluate(at=>__levelStudio.worldAtScreen(at.x,at.y),at),walls:await page.evaluate(()=>__levelStudio.scene.entries.map(e=>({kind:e.kind,a:e.a,b:e.b})))}));

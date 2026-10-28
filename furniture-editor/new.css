@@ -17,3 +17,5 @@
 .move-pad button{padding:0;margin:0;width:36px;height:36px;font-size:1.3rem;line-height:1;touch-action:none;background:#2a6968;border-color:#94cebf}
 .move-pad button:active{background:#3ba68b}.move-pad [data-move="forward"]{grid-area:forward}.move-pad [data-move="backward"]{grid-area:backward}.move-pad [data-move="left"]{grid-area:left}.move-pad [data-move="right"]{grid-area:right}
 .catalog-image{position:relative}.catalog-color-badge{position:absolute;right:3px;top:3px;background:#d76b28;color:#1c2626;border:1px solid #a34d17;border-radius:3px;padding:1px 3px;font-size:.55rem;font-weight:800;letter-spacing:.02em}
+/* Keep the canvas still when the live coordinate label grows from dashes to numbers. */
+#coordinates{flex:0 0 155px;min-width:155px;white-space:nowrap;text-align:right}
