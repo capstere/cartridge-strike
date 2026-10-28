@@ -252,7 +252,7 @@ async function addCustom(file,{place=true}={}){if(!file)return;const entry=await
  return place?await addPreset(entry.id):entry.id;
 }
 async function importCustomBatch(files){
- const list=[...files].filter(file=>/\\.glb$/i.test(file.name));
+ const list=[...files].filter(file=>/\.glb$/i.test(file.name));
  if(!list.length)throw Error('Välj minst en .glb-fil.');
  if(list.length>20)throw Error('Välj högst 20 GLB-filer åt gången. Dela upp importen.');
  let ok=0,failed=[];
@@ -264,7 +264,7 @@ async function importCustomBatch(files){
  return {ok,failed};
 }
 async function importCustomZip(file){
- if(!file || !/\\.zip$/i.test(file.name))throw Error('Välj en ZIP-fil med .glb-modeller.');
+ if(!file || !/\.zip$/i.test(file.name))throw Error('Välj en ZIP-fil med .glb-modeller.');
  if(file.size>96*1024*1024)throw Error('ZIP-filen får vara högst 96 MB.');
  const {files,rejected}=await readModelBundleZip(await file.arrayBuffer());
  const batch=files.length?await importCustomBatch(files.map(x=>new File([x.bytes],x.name,{type:'model/gltf-binary'}))):{ok:0,failed:[]};
