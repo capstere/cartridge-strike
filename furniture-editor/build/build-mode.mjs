@@ -18,7 +18,7 @@ const DIST=1e-5;
 const floorKind='floor',roomKind='room-rect',posterKind='poster',paintKind='paint',curtainKind='curtain',blindKind='blind';
 const palette={wall:0xc31421,glazed:0x22b14c,window:0x00a2e8,
  door:0x99d9ea,'card-door':0x99d9ea,'elevator-door':0x99d9ea,'terrace-door':0x99d9ea,
- opening:0x899796,frame:0x72888c,selected:0xffd16a};
+ opening:0x899796,frame:0x72888c,curtain:0xf8fbfa,blind:0x41494c,selected:0xffd16a};
 const copyFloors=a=>a.map(x=>({...x}));
 const cloneAll=a=>a.map(cloneEntry);
 const clamp=(x,a,b)=>Math.max(a,Math.min(b,x));
@@ -36,6 +36,8 @@ export function createBuildMode({data,scene,canvas,camera,getZoom,getView,rayAt,
   const [base,finish]=name.split(':');
   const color=finish&&getView()==='3d'&&FINISH_COLORS[finish]?FINISH_COLORS[finish]:(palette[base]??palette.wall);
   const material=new THREE.MeshBasicMaterial({color,transparent:true,opacity:name==='wall'?.48:name==='frame'?.60:.55,depthWrite:false,side:THREE.DoubleSide});
+  if(name==='curtain')material.opacity=.36;
+  if(name==='blind')material.opacity=.94;
   materials.set(name,material);return material;};
  const selectionMat=new THREE.MeshBasicMaterial({color:palette.selected,depthTest:false});
  const selectLineMat=new THREE.LineBasicMaterial({color:palette.selected,depthTest:false});
@@ -171,6 +173,34 @@ export function createBuildMode({data,scene,canvas,camera,getZoom,getView,rayAt,
    addSegmentBox(queue,'frame',id,seg,lintel,seg.height-lintel/2,.08);
   }
  }
+ function drawTreatments(queue,full){
+  for(const decor of treatments){
+   const place=treatmentPosition(decor,entries);if(!place)continue;
+   const {wall,width,center,angle}=place;
+   if(!full){
+    addBox(queue,decor.type,decor.id,center[0],.34,center[1],width,.22,.065,angle);
+    continue;
+   }
+   if(decor.type==='curtain'){
+    const count=Math.min(36,Math.max(4,Math.round(width/.115))),step=width/count;
+    // Semi-translucent vertical panels run from ceiling to just above the floor.
+    for(let i=0;i<count;i++){
+     const off=-width/2+(i+.5)*step;
+     addBox(queue,'curtain',decor.id,center[0]+Math.cos(-angle)*off,wall.height/2,center[1]+Math.sin(-angle)*off,
+      Math.min(.055,step*.72),wall.height-.04,.035,angle);
+    }
+    addBox(queue,'frame',decor.id,center[0],wall.height-.022,center[1],width,.038,.055,angle);
+   }else{
+    const top=wall.height-.10,bottom=wall.kind==='window'?wall.sill||.9:.15;
+    const n=Math.min(28,Math.max(5,Math.round((top-bottom)/.10)));
+    for(let i=0;i<n;i++){
+     const y=bottom+(i+.5)*(top-bottom)/n;
+     addBox(queue,'blind',decor.id,center[0],y,center[1],width*.985,.028,.045,angle);
+    }
+    addBox(queue,'frame',decor.id,center[0],top,center[1],width,.045,.058,angle);
+   }
+  }
+ }
  function drawDoor(queue,seg,full){const id=seg.id;
   if(!full){const m=seg.kind==='opening'?'opening':seg.kind;addSegmentBox(queue,m,id,seg,.30,.15,.10);return;}
   const L=entryLength(seg),dx=seg.b[0]-seg.a[0],dz=seg.b[1]-seg.a[1],ux=dx/L,uz=dz/L;
@@ -205,6 +235,29 @@ export function createBuildMode({data,scene,canvas,camera,getZoom,getView,rayAt,
     marker.userData.posterId=p.id;root.add(marker);posterPick.push(marker);
    }
   }
+ }
+ function createTreatmentAt(event){
+  const point=paintEndpoint(event);if(!point)return false;
+  if(mode===blindKind){
+   const hit=wallAtPoint(entries,point,{radius:.32});
+   try{const fresh=createBlind(entries,treatments,hit?.wall.id);
+    const before=capture();treatments.push(fresh);selection=fresh.id;record(before);
+    notify?.('Mörkgrå persienn monterad på fönstret. Rita/klicka nästa utan att byta verktyg.');return true;
+   }catch(error){notify?.(error.message);return false;}
+  }
+  if(mode!==curtainKind)return false;
+  if(!first){
+   const wall=wallAtPoint(entries,point,{radius:.3});
+   if(!wall){notify?.('Börja på en vägg- eller fönsterlinje.');return false;}
+   curtainWallId=wall.wall.id;first=wall.point;hover=wall.point;render();
+   notify?.('Startpunkt för gardin markerad. Dra eller klicka på slutpunkten längs samma vägg.');
+   return true;
+  }
+  try{
+   const fresh=createCurtain(entries,treatments,curtainWallId,first,point);
+   const before=capture();treatments.push(fresh);selection=fresh.id;first=null;hover=null;curtainWallId=null;
+   record(before);notify?.('Vit genomskinlig tak-till-golv-gardin klar! Fortsätt rita fler linjer.');return true;
+  }catch(error){notify?.(error.message);return false;}
  }
  function tryPosterOnWall(event){
   let wall=null,t=.5,side=1;
@@ -281,6 +334,7 @@ export function createBuildMode({data,scene,canvas,camera,getZoom,getView,rayAt,
   }
   for(const w of wallPieces(entries))drawEntry(queue,w,full);
   for(const d of entries.filter(e=>!e.deleted&&isDoor(e.kind)))drawDoor(queue,d,full);
+  drawTreatments(queue,full);
   for(const [name,list] of queue){const im=new THREE.InstancedMesh(geo,mat(name),list.length),tmp=new THREE.Object3D();
    for(let i=0;i<list.length;i++){const b=list[i];tmp.position.set(b.x,b.y,b.z);tmp.rotation.set(0,b.ang,0);
     tmp.scale.set(b.w,b.h,b.d);tmp.updateMatrix();im.setMatrixAt(i,tmp.matrix);}
@@ -294,6 +348,11 @@ export function createBuildMode({data,scene,canvas,camera,getZoom,getView,rayAt,
   renderPosters(full);drawSelection();drawFirst();syncVisibility();scheduleRender();
  }
  function nearSegment(point,includeFloors=false){const cutoff=clamp(getZoom()/Math.max(200,canvas.clientHeight)*14,.12,.85);let selectedId=null,least=cutoff;
+  for(const t of treatments){const at=treatmentPosition(t,entries);
+   if(at&&pointToSegmentDistance(point,at.wall.a,at.wall.b)<least&&Math.hypot(at.center[0]-point[0],at.center[1]-point[1])<at.width/2+.12){
+    least=pointToSegmentDistance(point,at.wall.a,at.wall.b);selectedId=t.id;
+   }
+  }
   for(const poster of posters){const at=locatePoster(poster,entries);
    if(at&&Math.hypot(at.x-point[0],at.z-point[1])<least){least=Math.hypot(at.x-point[0],at.z-point[1]);selectedId=poster.id;}}
   for(const e of entries){if(e.deleted)continue;const d=pointToSegmentDistance(point,e.a,e.b);
