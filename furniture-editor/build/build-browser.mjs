@@ -127,7 +127,7 @@ try{
  const edges=newRoom.added.filter(x=>!priorRoomIds.has(x.id));
  check('room geometry has exact shared corners',edges.length===4&&edges.every((edge,i)=>JSON.stringify(edge.b)===JSON.stringify(edges[(i+1)%4].a)));
  await page.locator('#buildUndo').click();
- check('single undo removes the entire room',await page.evaluate(n=>{const p=__furnitureEditor.getPatch().architecture;return p.added.length===n.added&&p.floors.length===n.floors;},roomBefore));
+ check('single undo removes the entire room',await page.evaluate(n=>{const p=__furnitureEditor.getPatch().architecture;return p.added.length===n.added.length&&p.floors.length===n.floors.length;},roomBefore));
  await page.locator('#buildTool').selectOption('room-rect');
  await page.locator('#buildRoomWidth').fill('2.4');await page.locator('#buildRoomDepth').fill('1.6');
  await page.locator('#buildRoomHeight').fill('3.2');await page.locator('#buildRoomName').fill('Testlokal');
@@ -147,7 +147,7 @@ try{
  await page.locator('#buildUndo').click();
  check('single undo restores room name',await page.evaluate(()=>__furnitureEditor.getPatch().architecture.floors.at(-1)?.name==='Testlokal'));
  await page.locator('#buildUndo').click();
- check('exact room creation undo is atomic',await page.evaluate(n=>{const p=__furnitureEditor.getPatch().architecture;return p.added.length===n.added&&p.floors.length===n.floors;},roomBefore));
+ check('exact room creation undo is atomic',await page.evaluate(n=>{const p=__furnitureEditor.getPatch().architecture;return p.added.length===n.added.length&&p.floors.length===n.floors.length;},roomBefore));
  // Prototype: wall and door color options persist without touching gameplay.
  await page.evaluate(()=>__furnitureEditor.build.select('WALL-001'));
  await page.locator('#buildFinish').selectOption('gray');
