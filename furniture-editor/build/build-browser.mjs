@@ -166,6 +166,28 @@ try{
  const buildDupBefore=await page.evaluate(()=>__furnitureEditor.build.export().added.length);
  await page.keyboard.press('Control+d');
  check('Ctrl+D duplicates selected architecture part',await page.evaluate(n=>__furnitureEditor.build.export().added.length===n+1,buildDupBefore));
+ // Value posters must be editable on a wall and survive version-1 architecture JSON.
+ await page.evaluate(()=>{
+  const wall=__furnitureEditor.build.getBaseline().find(w=>w.kind==='wall'&&Math.hypot(w.a[0]-w.b[0],w.a[1]-w.b[1])>2&&w.height>2);
+  if(!wall)throw Error('No valid wall for test poster');
+  __furnitureEditor.build.addPoster(wall.id);
+ });
+ check('poster properties appear for selected wall artwork',await page.locator('#posterFields').isVisible());
+ await page.locator('#posterText').fill('SAMARBETE');
+ await page.locator('#posterText').press('Tab');
+ check('custom value word saved to design architecture',await page.evaluate(()=>
+  __furnitureEditor.getPatch().architecture.posters.some(p=>p.text==='SAMARBETE')));
+ const posterCount=await page.evaluate(()=>__furnitureEditor.getPatch().architecture.posters.length);
+ await page.keyboard.press('Control+d');
+ check('Ctrl+D duplicates selected wall poster',await page.evaluate(count=>
+  __furnitureEditor.getPatch().architecture.posters.length===count+1,posterCount));
+ const posterSaved=await page.evaluate(()=>__furnitureEditor.getPatch().architecture);
+ await page.evaluate(p=>__furnitureEditor.build.load(p),posterSaved);
+ check('poster list survives load in project editor',await page.evaluate(count=>
+  __furnitureEditor.build.posters().length===count,posterSaved.posters.length));
+ await page.locator('#buildTool').selectOption('poster');
+ check('poster tool can be selected in build toolbar',await page.evaluate(()=>
+  __furnitureEditor.build.getTool()==='poster'));
  check('no FPS boot, JS/shader errors, external resources or HTTP failures',!report.errors.length&&!report.httpFailures.length&&!report.external.length&&await page.evaluate(()=>!window.__fps));
  report.status='PASS';
 }catch(e){report.status='FAIL';report.errors.push(e.stack||String(e));console.error(e);}
