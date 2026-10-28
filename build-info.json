@@ -546,8 +546,8 @@
     },
     {
       "path": "furniture-editor/library/zip.mjs",
-      "bytes": 5141,
-      "sha256": "a4bb47eb76afd0f88a226af3fb04600bf312fc5322de3cd499b445cbc60457d9"
+      "bytes": 5162,
+      "sha256": "902974e6eba6ef4f80acd1fe4a07d51d9a4b64e7633e475e528eeb1051091871"
     },
     {
       "path": "furniture-editor/new.css",
