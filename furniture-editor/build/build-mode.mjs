@@ -7,9 +7,10 @@ import {ARCHITECTURE_TYPES,ARCHITECTURE_NAMES,ARCHITECTURE_COLORS,readBaseline,
  exportArchitecture,parseArchitecture,makeEntry,getNextId,doorOnWallSegment,floorRect,wallPieces,warningsForLayout,
  isDoor,isWall} from './architecture.mjs';
 import {snapDraftPoint,dimensionsFromWall,joinNearbyEnds,straightenEntry} from './precision.mjs';
+import {createRectangleRoom,rectangleFromDimensions} from './rectangle-room.mjs';
 const $=id=>document.getElementById(id);
 const DIST=1e-5;
-const floorKind='floor';
+const floorKind='floor',roomKind='room-rect';
 const palette={wall:0xc31421,glazed:0x22b14c,window:0x00a2e8,
  door:0x99d9ea,'card-door':0x99d9ea,'elevator-door':0x99d9ea,'terrace-door':0x99d9ea,
  opening:0x899796,frame:0x72888c,selected:0xffd16a};
@@ -58,23 +59,30 @@ export function createBuildMode({data,scene,canvas,camera,getZoom,getView,rayAt,
   $('viewport').style.cursor=active?'crosshair':'auto';
   if(active){$('buildRoom').value=$('room').value;setTool('select');notify?.('Byggläge: välj en vägg eller välj ett ritverktyg. Två klick ritar en ny del.');}
   syncVisibility();render();showProperties();renderList();}
- function setTool(next){if(!['select',...ARCHITECTURE_TYPES,floorKind].includes(next))return;
+ function setTool(next){if(!['select',...ARCHITECTURE_TYPES,floorKind,roomKind].includes(next))return;
   mode=next;first=null;hover=null;
   $('buildTool').value=next;
+  $('buildRoomSettings').hidden=next!==roomKind;
+  $('buildRoomCreateExact').disabled=!first;
   for(const b of document.querySelectorAll('[data-build-tool]')){
     const is=b.dataset.buildTool===next;b.classList.toggle('active',is);b.setAttribute('aria-pressed',String(is));}
   $('buildInstructions').textContent=next==='select'?'Klicka för att välja. Dra en ändpunkt för att justera, eller dra mitt på för att flytta hela delen.':
-   next==='floor'?'Klicka två hörn för att rita en ny golvrektangel.':`Klicka en startpunkt och därefter en slutpunkt: ${ARCHITECTURE_NAMES[next]}.`;
+   next==='floor'?'Klicka två hörn för att rita en ny golvrektangel.':
+   next===roomKind?'Klicka första och motsatta hörnet i planvyn. Fyra väggar och valfritt golv skapas tillsammans. Eller ange exakta mått efter första klicket.':
+   `Klicka en startpunkt och därefter en slutpunkt: ${ARCHITECTURE_NAMES[next]}.`;
   render();}
  function smartEnabled(ev){return $('buildSmartSnap').checked&&!ev.altKey;}
  function point(ev,excludeId=null){
   const pt=planePoint(ev);if(!pt)return null;
-  const draft=first&&mode!=='select'&&mode!==floorKind?first:null;
+  const draft=first&&mode!=='select'&&mode!==floorKind&&mode!==roomKind?first:null;
   const result=snapDraftPoint([pt.x,pt.z],entries,{start:draft,
    excludeId,grid:mode==='select'?0:(($('snap').checked&&!ev.altKey)?0.1:0),
    snapToGeometry:mode!=='select'&&smartEnabled(ev),
    axisLock:$('buildRightAngles').checked&&!ev.altKey&&!!draft});
-  if(result && draft){
+  if(result && first&&mode===roomKind){
+   const w=Math.abs(result.point[0]-first[0]),d=Math.abs(result.point[1]-first[1]);
+   $('buildSnapFeedback').textContent='Rum: '+w.toFixed(2)+' × '+d.toFixed(2)+' m · '+$('buildRoomHeight').value+' m högt';
+  }else if(result && draft){
    const length=Math.hypot(result.point[0]-draft[0],result.point[1]-draft[1]);
    $('buildSnapFeedback').textContent=result.kind+' · '+length.toFixed(2)+' m · Alt = rita fritt';
   }else if(result && mode!==floorKind){
@@ -127,7 +135,10 @@ export function createBuildMode({data,scene,canvas,camera,getZoom,getView,rayAt,
   }
  }
  function drawFirst(){if(!first)return;
-  const endpoint=hover||first,pos=[first,endpoint];
+  const endpoint=hover||first;
+  const pos=mode===roomKind?
+   [[first[0],first[1]],[endpoint[0],first[1]],endpoint,[first[0],endpoint[1]],[first[0],first[1]]]:
+   [first,endpoint];
   const preview=new THREE.Line(new THREE.BufferGeometry().setFromPoints(pos.map(p=>new THREE.Vector3(p[0],.20,p[1]))),selectLineMat);
   preview.renderOrder=7;root.add(preview);
  }
@@ -254,9 +265,27 @@ export function createBuildMode({data,scene,canvas,camera,getZoom,getView,rayAt,
    floors.push(item);selection=item.id;
   }
   record(before);notify?.('Byggdelen duplicerad.');}
+ function commitRectangle(start,end){
+  const before=capture();
+  // Pure generator validates all four walls + floor before any editor state is mutated.
+  try{
+   const made=createRectangleRoom(entries,floors,start,end,{
+    height:Number($('buildRoomHeight').value),thickness:Number($('buildRoomThickness').value),
+    withFloor:$('buildRoomFloor').checked,name:$('buildRoomName').value
+   });
+   entries.push(...made.walls);if(made.floor)floors.push(made.floor);
+   selection=made.floor?.id||made.walls[0].id;
+   setTool('select');record(before);
+   notify?.('Rummet är klart: '+made.width+' × '+made.depth+' m, '+made.height+' m högt. Fyra väggar'+(made.floor?' och golv':'')+'. Ångra tar bort hela rummet.');
+   return true;
+  }catch(error){notify?.(error.message);render();return false;}
+ }
  function choosePoint(ev){const p=point(ev);if(!p)return;
-  if(!first){first=p;hover=p;render();notify?.('Startpunkt vald. Klicka nu på slutpunkten. Escape avbryter.');return;}
-  const start=first;first=null;hover=null;const before=capture();
+  if(!first){first=p;hover=p;$('buildRoomCreateExact').disabled=mode!==roomKind;render();
+   notify?.(mode===roomKind?'Första rumshörnet valt. Klicka diagonalt mittemot, eller välj SKAPA MED EXAKTA MÅTT.':'Startpunkt vald. Klicka nu på slutpunkten. Escape avbryter.');return;}
+  const start=first;
+  if(mode===roomKind){if(commitRectangle(start,p)){first=null;hover=null;}return;}
+  first=null;hover=null;const before=capture();
   try{
    if(mode==='floor'){const f=floorRect(getNextId(entries,floors,'floor'),start,p);validateFloorRect(f);floors.push(f);selection=f.id;}
    else{const e=makeEntry(getNextId(entries,floors,mode),mode,start,p);
@@ -318,6 +347,13 @@ export function createBuildMode({data,scene,canvas,camera,getZoom,getView,rayAt,
   $('buildStraighten').onclick=()=>precisionAction('straight');
   $('buildJoinEnds').onclick=()=>precisionAction('join');
   $('buildMatchHeight').onclick=()=>precisionAction('height');
+  $('buildRoomCreateExact').onclick=()=>{
+   if(mode!==roomKind||!first){notify?.('Välj RUM och klicka ett första hörn på kartan.');return;}
+   try{const end=rectangleFromDimensions(first,$('buildRoomWidth').value,$('buildRoomDepth').value);
+    if(commitRectangle(first,end)){first=null;hover=null;}
+   }catch(error){notify?.(error.message);}
+  };
+  for(const id of ['buildRoomHeight','buildRoomThickness'])$(id).onchange=()=>{if(first)render();};
   for(const id of ['buildSmartSnap','buildRightAngles'])$(id).onchange=()=>{if(first)render();};
   document.querySelectorAll('[data-build-tool]').forEach(button=>{button.onclick=()=>setTool(button.dataset.buildTool);});
   $('buildSearch').oninput=renderList;
@@ -358,6 +394,11 @@ export function createBuildMode({data,scene,canvas,camera,getZoom,getView,rayAt,
  return {get active(){return active;},enable,getBaseline:()=>cloneAll(baseline),getEntries:()=>cloneAll(entries),getFloors:()=>copyFloors(floors),
   export:()=>exportArchitecture(entries,baseline,floors),load,reset:resetWithoutConfirm,hasSketch,
   setView:()=>render(),select,setTool,undo,redo,count,quickChange,quickDoor,
+  createRectangle:(a,b,options)=>{
+   const before=capture(),made=createRectangleRoom(entries,floors,a,b,options);
+   entries.push(...made.walls);if(made.floor)floors.push(made.floor);selection=made.floor?.id||made.walls[0].id;
+   record(before);return made;
+  },
   getSelected:()=>selection,getTool:()=>mode,getDrawingState:()=>({mode,first:first?[...first]:null,selected:selection}),
   testCreate:(kind,a,b)=>{const before=capture();const e=makeEntry(getNextId(entries,floors,kind),kind,a,b);validateEntry(e);entries.push(e);selection=e.id;record(before);return e.id;},
   testChange:(id,delta)=>changeEntry(id,delta)};
