@@ -148,7 +148,7 @@ export function parsePatch(document,baseline){
    throw Error('Ogiltiga koordinater eller rotationer.');
   if(typeof p.roomId!=='string'||p.roomId.length>20||typeof p.kind!=='string')throw Error('Felaktig möbeltyp.');
   if(isNew){
-   const classic=/^NY-(STOL|BORD|SOFFA)-\d{1,5}$/.test(p.id)&&['chair','table','sofa'].includes(p.kind)&&!p.assetId;
+   const classic=/^NY-(STOL|BORD|SOFFA)-\d{1,5}$/.test(p.id)&&['chair','table','coffee-table','desk','sofa'].includes(p.kind)&&!p.assetId;
    const curated=/^NY-OBJ-\d{1,5}$/.test(p.id)&&p.kind==='prop'&&typeof p.assetId==='string'&&
      (LIBRARY_MAP.has(p.assetId)||/^local:[a-f0-9]{64}$/.test(p.assetId));
    if((!classic&&!curated)||![p.w,p.d,p.height].every(v=>typeof v==='number'&&Number.isFinite(v)&&v>.05&&v<=8))
