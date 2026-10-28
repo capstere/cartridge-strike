@@ -93,3 +93,15 @@
 .camera-navigation-hint{font-size:11px;padding:7px 13px;background:#e5eee9;color:#335b55;border-bottom:1px solid #bdcfc6;line-height:1.6}
 .camera-navigation-hint kbd{font:inherit;font-weight:850;border:1px solid #bacac1;background:#fff;padding:1px 4px;border-radius:3px}
 @media(max-width:600px){.camera-navigation-hint{font-size:10px;padding:5px 8px}}
+
+/* Navigation follows the camera instead of the last room dropdown. */
+.area-status{margin:7px 0 8px;border-radius:5px;background:#deede8;color:#1b655a;padding:11px;font-size:12px;font-weight:900;border-left:4px solid #2b877b}
+.area-tip{font-size:11px;line-height:1.5;margin:4px 0 9px}
+.build-palette [data-build-tool="poster"]{border-left-color:#d08a41;background:#fff5e6}
+.poster-properties{display:grid;gap:8px;background:#fff9ed;border:1px solid #d8c8a4;border-radius:7px;padding:12px;margin:12px 0;color:#354e4e}
+.poster-properties strong{font-size:12px;letter-spacing:.3px;color:#59452c}
+.poster-properties label{font-size:11px;font-weight:850;display:block}
+.poster-properties input:not([type="file"]),.poster-properties select{display:block;width:100%;min-width:0;margin-top:4px;border:1px solid #bfc9c4;background:white;color:#27433d;padding:8px;border-radius:4px;font-size:12px;min-height:39px}
+.poster-properties input[type="file"]{display:block;width:100%;font-size:10px;margin-top:5px;max-width:100%;overflow-wrap:anywhere}
+.poster-properties small{font-size:11px;color:#71664d;line-height:1.5}
+.poster-properties .poster-upload{padding:9px;background:#f3ebdb;border-radius:5px}
