@@ -18,7 +18,9 @@
   <aside class="sidebar">
     <div id="furnitureSidebar">
     <div class="section-heading"><span>01 / HITTA MÖBEL</span><small>Våning 5</small></div>
-    <label for="room">Visa rum</label><select id="room" aria-label="Välj rum"></select>
+    <div class="area-status" id="areaHere" role="status" aria-live="polite">DU ÄR VID: –</div>
+    <p class="helper area-tip">Flytta fritt med musen. När du väljer <b>+ LÄGG TILL OBJEKT</b> placeras objektet där kameran är – inte i ett tidigare valt rum.</p>
+    <label for="room">Hoppa till rum (valfritt)</label><select id="room" aria-label="Välj rum för att hoppa dit"></select>
     <label for="search">Hitta en stol eller möbel</label><input id="search" type="search" placeholder="Sök t.ex. stol, I09 ..." autocomplete="off">
     <div class="filter"><label for="chairsOnly"><input type="checkbox" id="chairsOnly" checked> Bara stolar</label><span id="listCount">—</span></div>
     <div id="furnitureList" class="furniture-list" role="listbox" aria-label="Välj möbel"></div>
@@ -74,7 +76,7 @@
         <option value="window">Fönster med bröstning</option><option value="door">Vanlig dörr</option>
         <option value="card-door">Passerkortsdörr</option><option value="elevator-door">Hissdörr</option>
         <option value="terrace-door">Terrassdörr</option><option value="opening">Öppen passage</option>
-        <option value="floor">Ny golvyta</option><option value="room-rect">RUM – rektangel (4 väggar)</option>
+        <option value="floor">Ny golvyta</option><option value="room-rect">RUM – rektangel (4 väggar)</option><option value="poster">AFFISCH · placera på vägg</option>
       </select>
       <div class="build-palette" aria-label="Byggverktyg">
         <button data-build-tool="select" class="active" type="button">↖ VÄLJ</button>
@@ -85,6 +87,7 @@
         <button data-build-tool="opening" type="button">ÖPPNING</button>
         <button data-build-tool="floor" type="button">GOLVYTA</button>
         <button data-build-tool="room-rect" type="button" class="room-tool">▣ RUM · REKTANGEL</button>
+        <button data-build-tool="poster" type="button" class="room-tool">▣ AFFISCH PÅ VÄGG</button>
       </div>
       <div id="buildRoomSettings" class="build-room-settings" hidden>
         <strong>SKAPA REKTANGULÄRT RUM</strong>
@@ -112,13 +115,36 @@
       <div class="section-heading"><span>02 / VALD BYGGDEL</span><small id="buildSelectionId">Ingen vald</small></div>
       <p id="buildNoSelection" class="helper">Välj en vägg eller dörr, eller rita något nytt med två klick.</p>
       <div id="buildSelected" hidden>
-        <label for="buildKind">Typ</label><select id="buildKind" aria-label="Ändra byggdelens typ">
+        <div id="buildKindFields"><label for="buildKind">Typ</label><select id="buildKind" aria-label="Ändra byggdelens typ">
           <option value="wall">Vägg</option><option value="glazed">Fönstervägg</option>
           <option value="window">Fönster</option><option value="door">Vanlig dörr</option>
           <option value="card-door">Passerkortsdörr</option><option value="elevator-door">Hissdörr</option>
           <option value="terrace-door">Terrassdörr</option><option value="opening">Öppen passage</option>
           <option value="floor">Egen golvyta</option>
-        </select>
+        </select></div>
+        <div id="posterFields" class="poster-properties" hidden>
+          <strong>VÄRDEORDSAFFISCH</strong>
+          <label for="posterText">Rubrik / värdeord</label>
+          <input id="posterText" type="text" maxlength="140" placeholder="Exempel: Tillsammans">
+          <label for="posterSubtitle">Underrad</label>
+          <input id="posterSubtitle" type="text" maxlength="140" placeholder="Valfri kort mening">
+          <label for="posterColor">Affischens bakgrund</label>
+          <select id="posterColor"><option value="navy">Mörkblå</option><option value="white">Vit</option>
+            <option value="blue">Blå</option><option value="orange">Orange</option></select>
+          <div class="build-coordinate-grid">
+            <label>Bredd (m)<input id="posterWidth" type="number" min="0.2" max="2.5" step="0.05"></label>
+            <label>Höjd (m)<input id="posterHeight" type="number" min="0.2" max="3" step="0.05"></label>
+            <label>Höjd till mitten (m)<input id="posterY" type="number" min="0.3" max="5.9" step="0.05"></label>
+            <label>Position längs vägg (%)<input id="posterT" type="number" min="0" max="100" step="1"></label>
+          </div>
+          <label for="posterSide">Affischens sida av väggen</label>
+          <select id="posterSide"><option value="1">Sida A</option><option value="-1">Sida B</option></select>
+          <label for="posterImage" class="poster-upload">Egen affischbild (PNG/JPG/WebP)
+            <input id="posterImage" type="file" accept="image/png,image/jpeg,image/webp">
+          </label>
+          <button type="button" id="posterRemoveImage" class="subtle">Ta bort bilden · visa textaffisch</button>
+          <small>Bilderna komprimeras lokalt och följer med i designfilen. Ingen extern uppladdning. Textaffischer fungerar även utan bild.</small>
+        </div>
         <div id="buildFinishFields" class="build-finish-fields">
           <label for="buildFinish">YTFÄRG</label><select id="buildFinish" aria-label="Vägg- eller dörrfärg">
             <option value="white">Vit</option><option value="gray">Grå</option>
