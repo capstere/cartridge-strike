@@ -486,8 +486,8 @@
     },
     {
       "path": "fps/walk.mjs",
-      "bytes": 4163,
-      "sha256": "52c2828687eda5ab8149c3d871469af034d4d1cadcb037d0d024d30e809521ff"
+      "bytes": 4171,
+      "sha256": "a6a109c6eaf0d06a5e6845c5525f6a0bbed7b77050e31295f09b2e6e5fba2401"
     },
     {
       "path": "furniture-editor/appearance.mjs",
@@ -551,8 +551,8 @@
     },
     {
       "path": "furniture-editor/build/validate-level.mjs",
-      "bytes": 10185,
-      "sha256": "cd122465173b16de57f28a984e83eb0602b0ff2e0e26b4c8817cc856b4051e2c"
+      "bytes": 10193,
+      "sha256": "74a3d7053491a10b138373883f13ed0ba29fe8b7de7eb19a6cd88ef403b88117"
     },
     {
       "path": "furniture-editor/core.mjs",
@@ -606,8 +606,8 @@
     },
     {
       "path": "furniture-editor/new.mjs",
-      "bytes": 42351,
-      "sha256": "635460049e3950ec8765f775bf646ce0d1d98bb9ba344867f0d1220c3b5c2537"
+      "bytes": 42359,
+      "sha256": "bd8bde1ebd4b4146fc49d0393cfb3a69465d87a3367a20c5e076c68dde3d07fe"
     },
     {
       "path": "furniture-editor/smart-placement.mjs",
@@ -886,8 +886,8 @@
     },
     {
       "path": "src/fps/level-adapter.mjs",
-      "bytes": 3843,
-      "sha256": "e9241bcce48e6467919c4ad5fe852b561455ae9a3689f8efe492503ce96ec297"
+      "bytes": 3851,
+      "sha256": "e87aeed6c6e97d500de653009d8fff909eb79a37d18685503406c332bea3b19e"
     },
     {
       "path": "src/fps/living-floor-art.mjs",
@@ -1086,8 +1086,8 @@
     },
     {
       "path": "src/fps/world.mjs",
-      "bytes": 8646,
-      "sha256": "eee00b08e38cd460b49888320caa7fea4cf917edf29446e1c2345a151eb62f9c"
+      "bytes": 8654,
+      "sha256": "281c6d6c6886c76690ae8ef68e721dfe94d7a2ca267a198a0716b50c36727ddb"
     },
     {
       "path": "src/world.js",

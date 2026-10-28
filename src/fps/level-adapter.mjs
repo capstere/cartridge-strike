@@ -1,5 +1,5 @@
 /** Pure conversion into the existing world/physics/navigation data contract. */
-import {parseProject} from '../../furniture-editor/build/level-project.mjs';
+import {parseProject} from '../../furniture-editor/build/level-project.mjs?v=3.3.1';
 import {wallPieces} from '../../furniture-editor/build/architecture.mjs';
 import {corners} from '../../furniture-editor/core.mjs';
 import {resolveProjectScene,floor5Baseline,projectWallPieces} from '../../furniture-editor/build/project-scene.mjs';

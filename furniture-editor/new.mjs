@@ -2,7 +2,7 @@ import {makePoster,locatePoster} from './build/posters.mjs';
 import {createCurtain,createBlind,treatmentPosition} from './build/treatments.mjs';
 import {buildProjectFurniture,buildProjectDecorations} from './build/project-visuals.mjs';
 import {resolveProjectScene,writeProjectScene,floor5Baseline,projectWallPieces} from './build/project-scene.mjs';
-import {inheritFloor5Gameplay} from '../src/fps/world.mjs';
+import {inheritFloor5Gameplay} from '../src/fps/world.mjs?v=3.3.1';
 import {wallAtPoint,planPaintOverWall} from './build/paint-over-wall.mjs';
 import * as T from '../vendor/three/three.module.js';
 import {exportProject,parseProject,parseProjectZip,exportProjectZip} from './build/level-project.mjs?v=3.3.1';
