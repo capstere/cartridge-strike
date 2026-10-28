@@ -7,7 +7,14 @@ const canvas=document.getElementById('game'),message=document.getElementById('me
 let world,renderer,actor,yaw=0,pitch=0,last=0,time=0,raf=0,frames=0;const keys=new Set();
 const show=text=>{message.hidden=false;message.textContent=text;};
 document.getElementById('exit').onclick=()=>{if(document.pointerLockElement)document.exitPointerLock();
- if(window.parent!==window)window.parent.postMessage({type:'cartridge-walk-close'},location.origin);else history.back();};
+ if(window.parent===window){history.back();return;}
+ // Both documents are same-origin. Leave synchronously so a busy WebGL frame
+ // cannot delay or drop the button's exit message during iframe teardown.
+ try{if(window.parent.location.origin===location.origin&&typeof window.parent.__levelStudio?.leaveWalk==='function'){
+  window.parent.__levelStudio.leaveWalk();return;
+ }}catch{}
+ window.parent.postMessage({type:'cartridge-walk-close'},location.origin);
+};
 document.addEventListener('keydown',e=>{if(['KeyW','KeyA','KeyS','KeyD','ArrowUp','ArrowDown','ArrowLeft','ArrowRight','Escape'].includes(e.code))e.preventDefault();keys.add(e.code);});
 document.addEventListener('keyup',e=>keys.delete(e.code));window.addEventListener('blur',()=>keys.clear());
 document.addEventListener('mousemove',e=>{if(document.pointerLockElement!==canvas)return;yaw-=e.movementX*.0022;pitch=Math.max(-1.45,Math.min(1.45,pitch-e.movementY*.0022));});

@@ -250,5 +250,5 @@ $('scene3d').addEventListener('pointerup',()=>{pan=null;if(drag3d){commit(drag3d
 new ResizeObserver(redraw).observe(canvas.parentElement);
 $('name').value=p().name;$('width').value=p().ground.bounds.x1-p().ground.bounds.x0;$('depth').value=p().ground.bounds.z1-p().ground.bounds.z0;
 localCatalog=await localLibrary().catch(()=>[]);for(const entry of localCatalog)entry.size=(await getLocalFile(entry.id))?.size;renderCatalog();redraw();
-window.__levelStudio={get scene(){return model()},get project(){return p()},get validation(){return validateLevel(p(),{engine:true})},select:id=>{selected=id;redraw();},
+window.__levelStudio={get scene(){return model()},get project(){return p()},get validation(){return validateLevel(p(),{engine:true})},select:id=>{selected=id;redraw();},leaveWalk,
  screenWorldPoint:(x,z)=>{const [sx,sz]=screen(x,z),r=canvas.getBoundingClientRect();return {x:r.left+sx*r.width/canvas.width,y:r.top+sz*r.height/canvas.height};},redraw};

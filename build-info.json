@@ -486,8 +486,8 @@
     },
     {
       "path": "fps/walk.mjs",
-      "bytes": 3816,
-      "sha256": "641ac5d4c539f9b00d5a7272dac8bcc7d5af1dbdc793d6eaab530af27490b146"
+      "bytes": 4155,
+      "sha256": "8e333abcebae1d2455a7efff261150ae90686fbdffca5534222069c58a8eb03b"
     },
     {
       "path": "furniture-editor/appearance.mjs",
@@ -606,8 +606,8 @@
     },
     {
       "path": "furniture-editor/new.mjs",
-      "bytes": 42215,
-      "sha256": "e114fc3f5ed4caa74ac73f41674d52668156d0f48d7be9a3420b43238296e3e7"
+      "bytes": 42225,
+      "sha256": "bea1c9a3a4a1214e8ff3c744353ee0b3580fd8df44341c2d82add0986ffe5735"
     },
     {
       "path": "furniture-editor/smart-placement.mjs",
