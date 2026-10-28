@@ -71,7 +71,7 @@ export function createBuildMode({data,scene,canvas,camera,getZoom,getView,rayAt,
   const pt=planePoint(ev);if(!pt)return null;
   const draft=first&&mode!=='select'&&mode!==floorKind?first:null;
   const result=snapDraftPoint([pt.x,pt.z],entries,{start:draft,
-   excludeId,grid:$('snap').checked&&!ev.altKey?.1:0,
+   excludeId,grid:($('snap').checked&&!ev.altKey)?0.1:0,
    snapToGeometry:smartEnabled(ev),
    axisLock:$('buildRightAngles').checked&&!ev.altKey&&!!draft});
   if(result && draft){
@@ -297,7 +297,7 @@ export function createBuildMode({data,scene,canvas,camera,getZoom,getView,rayAt,
   const next='a' in e?{...drag.orig,a:[...drag.orig.a],b:[...drag.orig.b]}:{...drag.orig};
   if(drag.type==='a'||drag.type==='b'){
    const dest=[drag.orig[drag.type][0]+off[0],drag.orig[drag.type][1]+off[1]];
-   next[drag.type]=snapDraftPoint(dest,entries,{excludeId:drag.id,grid:$('snap').checked&&!ev.altKey?.1:0,
+   next[drag.type]=snapDraftPoint(dest,entries,{excludeId:drag.id,grid:($('snap').checked&&!ev.altKey)?0.1:0,
     snapToGeometry:smartEnabled(ev),axisLock:false})?.point||dest;
   }
   else if(drag.type==='move'){next.a=[drag.orig.a[0]+off[0],drag.orig.a[1]+off[1]];next.b=[drag.orig.b[0]+off[0],drag.orig.b[1]+off[1]];}
