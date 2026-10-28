@@ -4,6 +4,25 @@
 
 Designstudion är ett **helt separat verktyg**. Du kan ändra möbler, väggar, fönster, glasväggar, dörrar och skissa nya golvytor. Dina ändringar är ett **förslag**, inte en ändring av live-spelet. Spelets befintliga kollision, botarnas navigation, gisslan, dörrar, spawns och regler ligger kvar exakt som i version 0.17.0.
 
+## Smarta ritverktyg (28 oktober 2026)
+
+**BYGG · VÄGGAR & DÖRRAR** har två val som är påslagna från början:
+
+- **Fäst exakt mot väggar och hörn:** ändpunkter ansluts till redan ritade/befintliga byggdelar (även om koordinaterna inte är jämna 10 cm). Du kan också fästa på en vägglinje. Förhandsvisningen visar vilken typ av fästning som används.
+- **Hjälp mig rita helt raka linjer:** om slutpunkten nästan ligger vågrätt eller lodrätt från starten blir linjen exakt rak. Håll **Alt** för frihand under ett drag eller klick. Rutnätet fungerar separat.
+
+När du startar en ny vägg nära en befintlig vägg ärver den höjd och tjocklek därifrån. En dörr skapad med **+ DÖRR I VÄGGEN** ligger automatiskt i samma linje som den valda väggen.
+
+Efter ritning: markera en **egen nyritad** byggdel och använd **RÄTA UPP 90°** (rätar ut relativt första ändpunkten), **STÄNG GLIPOR** (fäster ändar till väggar/hörn i närheten) eller **MATCHA HÖJD** (hämtar höjd och tjocklek från närliggande vägg). Dessa snabbknappar ändrar inte originalväggarna. Alla ändringar kan ångras. Inga nya passager blir automatiskt traverserbara i live-spelet.
+
+**Gräns:** automatiska fästningar sker bara inom små toleranser; de ersätter inte geometrisk och kollisionsmässig validering före spelpublicering. Man kan fortfarande rita avsiktligt diagonalt eller med egna höjder. För större ombyggnader behövs separat kontroll av skott, navmesh, dörrar och kollisionsytor.
+
+### Om sparfilens storlek och optimering
+
+JSON innehåller främst möblerings- och arkitekturändringarna. Har du placerat egna GLB-filer medföljer dessa i ZIP-projektet; bara **använda** egna modeller tas med, inte hela privata katalogen. Projekt-ZIP har begränsningen 96 MiB och högst 49 egna modeller. Detta är en **lagrings-/överföringsgräns**, inte ett FPS-mått.
+
+Den framtida spelversionen kan optimeras separat (instanser för likadana objekt, sammanfogning av lämplig statisk geometri, texturer, LOD, enkla kollisionsformer, culling), men alla modeller kan inte garanteras fungera i 60 FPS eller på mobil bara för att de får plats i en ZIP. Spara originalprojektet; render-, minnes-, kollisions- och botprover måste göras på målplattformen. En exporterad designfil uppdaterar aldrig live-spelet automatiskt.
+
 ## Så här använder du byggläget
 
 1. Öppna Designstudion och välj **BYGG · VÄGGAR & DÖRRAR** längst upp. Välj gärna ett rum i **Hoppa till rum**.
