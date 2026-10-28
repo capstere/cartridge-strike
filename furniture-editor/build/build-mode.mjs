@@ -302,6 +302,12 @@ export function createBuildMode({data,scene,canvas,camera,getZoom,getView,rayAt,
  }
  function drawSelection(){if(!selection)return;
   const e=entryById(selection);if(!e||e.deleted)return;
+  if(e.type){
+   const at=treatmentPosition(e,entries);if(!at)return;
+   const marker=new THREE.Mesh(sphere,selectionMat);
+   marker.position.set(at.center[0],.55,at.center[1]);marker.scale.setScalar(.75);
+   marker.renderOrder=8;root.add(marker);return;
+  }
   if(posterById(selection)){
    const at=locatePoster(e,entries);if(!at)return;
    const marker=new THREE.Mesh(sphere,selectionMat);marker.position.set(at.x,.55,at.z);
@@ -425,7 +431,7 @@ export function createBuildMode({data,scene,canvas,camera,getZoom,getView,rayAt,
    const button=document.createElement('button');button.type='button';button.className='build-list-item';button.classList.toggle('active',e.id===selection);
    const swatch=document.createElement('span');swatch.className='arch-swatch';swatch.style.background=ARCHITECTURE_COLORS[e.kind]||'#7ec7b4';
    const name=document.createElement('span');name.textContent=label;const id=document.createElement('small');id.textContent=e.id;
-   button.append(swatch,name,id);button.onclick=()=>{setTool('select');select(e.id);const at=e.wallId?locatePoster(e,entries):null;
+   button.append(swatch,name,id);button.onclick=()=>{setTool('select');select(e.id);const at=e.wallId&&!e.type?locatePoster(e,entries):null;
     const tr=e.type?treatmentPosition(e,entries):null;
     onGoPoint?.(tr?.center[0]??at?.x??('a' in e?(e.a[0]+e.b[0])/2:(e.x0+e.x1)/2),tr?.center[1]??at?.z??('a' in e?(e.a[1]+e.b[1])/2:(e.z0+e.z1)/2));};list.append(button);seen++;
   }
@@ -707,7 +713,7 @@ export function createBuildMode({data,scene,canvas,camera,getZoom,getView,rayAt,
    const e=entryById(selection);if(!e)return;
    const step=ev.shiftKey?.5:.1;const pos=ev.key==='ArrowLeft'?[-step,0]:ev.key==='ArrowRight'?[step,0]:
     ev.key==='ArrowUp'?[0,-step]:ev.key==='ArrowDown'?[0,step]:null;
-   if(pos){ev.preventDefault();if('a' in e)changeEntry(e.id,{a:[e.a[0]+pos[0],e.a[1]+pos[1]],b:[e.b[0]+pos[0],e.b[1]+pos[1]]});
+   if(pos){if(e.type||e.wallId)return;ev.preventDefault();if('a' in e)changeEntry(e.id,{a:[e.a[0]+pos[0],e.a[1]+pos[1]],b:[e.b[0]+pos[0],e.b[1]+pos[1]]});
     else changeEntry(e.id,{x0:e.x0+pos[0],x1:e.x1+pos[0],z0:e.z0+pos[1],z1:e.z1+pos[1]});}
   });
  }
