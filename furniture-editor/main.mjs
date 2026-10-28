@@ -324,6 +324,7 @@ function setUpEvents(){
  $('#assetRole').onchange=e=>{const o=items.find(x=>x.id===chosen&&!x.deleted);if(o)changeAssetRole(o.id,e.target.value);};
  $('#duplicate').onclick=createDuplicate;$('#remove').onclick=removeSelection;$('#download').onclick=download;$('#downloadTop').onclick=download;$('#undo').onclick=undo;$('#redo').onclick=redo;
  $('#openLibrary').onclick=()=>{$('#libraryDialog').showModal();renderLibrary();$('#librarySearch').focus();};
+ $('#openPosters').onclick=()=>{building.enable(true);building.setTool('poster');notify('Klicka på en vägg för att placera din affisch. Skriv text eller välj en lokal bild.');};
  $('#closeLibrary').onclick=()=>$('#libraryDialog').close();
  $('#librarySearch').oninput=renderLibrary;$('#libraryCategory').onchange=renderLibrary;
  $('#customGLB').onchange=async e=>{try{const files=[...e.target.files];if(files.length===1)await addCustom(files[0]);else await importCustomBatch(files);}catch(err){$('#libraryImportStatus').textContent=err.message;notify('GLB-import: '+err.message);}finally{e.target.value='';}};
