@@ -6,6 +6,7 @@ import {ARCHITECTURE_TYPES,ARCHITECTURE_NAMES,ARCHITECTURE_COLORS,readBaseline,
  cloneEntry,roundPosition,entryLength,validateEntry,validateFloorRect,pointToSegmentDistance,
  exportArchitecture,parseArchitecture,makeEntry,getNextId,doorOnWallSegment,floorRect,wallPieces,warningsForLayout,
  isDoor,isWall} from './architecture.mjs';
+import {snapDraftPoint,dimensionsFromWall,joinNearbyEnds,straightenEntry} from './precision.mjs';
 const $=id=>document.getElementById(id);
 const DIST=1e-5;
 const floorKind='floor';
@@ -65,14 +66,21 @@ export function createBuildMode({data,scene,canvas,camera,getZoom,getView,rayAt,
   $('buildInstructions').textContent=next==='select'?'Klicka för att välja. Dra en ändpunkt för att justera, eller dra mitt på för att flytta hela delen.':
    next==='floor'?'Klicka två hörn för att rita en ny golvrektangel.':`Klicka en startpunkt och därefter en slutpunkt: ${ARCHITECTURE_NAMES[next]}.`;
   render();}
- function point(ev){const pt=planePoint(ev);if(!pt)return null;
-  const target=[pt.x,pt.z],snapped=$('snap').checked&&!ev.altKey;
-  if(snapped){target[0]=roundPosition(Math.round(target[0]*10)/10);target[1]=roundPosition(Math.round(target[1]*10)/10);
-   // Snap to nearby existing join points if closer than a small fixed world limit.
-   let nearest=null,min=.18;
-   for(const e of entries)if(!e.deleted){for(const p of [e.a,e.b]){const d=Math.hypot(target[0]-p[0],target[1]-p[1]);if(d<min){nearest=p;min=d;}}}
-   if(nearest){target[0]=nearest[0];target[1]=nearest[1];}
-  }return target;
+ function smartEnabled(ev){return $('buildSmartSnap').checked&&!ev.altKey;}
+ function point(ev,excludeId=null){
+  const pt=planePoint(ev);if(!pt)return null;
+  const draft=first&&mode!=='select'&&mode!==floorKind?first:null;
+  const result=snapDraftPoint([pt.x,pt.z],entries,{start:draft,
+   excludeId,grid:mode==='select'?0:(($('snap').checked&&!ev.altKey)?0.1:0),
+   snapToGeometry:mode!=='select'&&smartEnabled(ev),
+   axisLock:$('buildRightAngles').checked&&!ev.altKey&&!!draft});
+  if(result && draft){
+   const length=Math.hypot(result.point[0]-draft[0],result.point[1]-draft[1]);
+   $('buildSnapFeedback').textContent=result.kind+' · '+length.toFixed(2)+' m · Alt = rita fritt';
+  }else if(result && mode!==floorKind){
+   $('buildSnapFeedback').textContent=result.kind==='fri'?'Fri placering':result.kind==='rutnät'?'Rutnät 10 cm':'Fäster till '+result.kind;
+  }
+  return result?.point||null;
  }
  function addBox(queue,name,id,x,y,z,w,h,d,ang=0){if(w<.001||h<.001||d<.001)return;
   const list=queue.get(name)||[];list.push({id,x,y,z,w,h,d,ang});queue.set(name,list);}
@@ -166,6 +174,8 @@ export function createBuildMode({data,scene,canvas,camera,getZoom,getView,rayAt,
   const wallSelected=!!e&&'a' in e&&isWall(e.kind);
   for(const btn of document.querySelectorAll('[data-quick-kind]'))btn.disabled=!wallSelected;
   $('buildDoorInWall').disabled=!wallSelected;
+  const editable=!!e&&'a' in e&&!e.source;
+  for(const id of ['buildStraighten','buildJoinEnds','buildMatchHeight'])$(id).disabled=!editable;
   $('buildSimpleHelp').textContent=e?('Markerad: '+(ARCHITECTURE_NAMES[e.kind]||'Golv')+' · '+e.id+' — välj en åtgärd nedan'):'Klicka först på en vägg på kartan. Välj sedan Fönster, Glasvägg eller Lägg till dörr.';
   reportWarnings();
  }
@@ -214,6 +224,22 @@ export function createBuildMode({data,scene,canvas,camera,getZoom,getView,rayAt,
   notify?.('En 90 cm dörr har satts mitt på väggen. Dra den längs väggen eller ändra måtten nedan.');
   return door.id;
  }
+ function precisionAction(action){
+  const e=entryById(selection);
+  if(!e||e.source||!('a' in e)){notify?.('Välj en nyritad byggdel först. Originalväggar ändras inte av snabbjustering.');return;}
+  if(action==='height'){
+   const wall=dimensionsFromWall(e.a,entries.filter(x=>x.id!==e.id))||dimensionsFromWall(e.b,entries.filter(x=>x.id!==e.id));
+   if(!wall){notify?.('Ingen närliggande vägg hittades för att matcha höjden.');return;}
+   if(changeEntry(e.id,{height:isDoor(e.kind)?Math.min(2.4,wall.height):wall.height,thickness:wall.thickness}))notify?.('Höjd och tjocklek matchade mot '+wall.sourceId+'.');
+   return;
+  }
+  const fixed=action==='straight'?straightenEntry(e):joinNearbyEnds(e,entries);
+  if(!fixed){notify?.('Ingen giltig justering kunde göras.');return;}
+  if(fixed.a[0]===e.a[0]&&fixed.a[1]===e.a[1]&&fixed.b[0]===e.b[0]&&fixed.b[1]===e.b[1]){
+   notify?.('Byggdelen är redan korrekt eller saknar en närliggande anslutning.');return;
+  }
+  if(changeEntry(e.id,{a:fixed.a,b:fixed.b}))notify?.(action==='straight'?'Byggdelen är nu helt vågrät eller lodrät i planvyn.':'Ändpunkterna har kopplats till närliggande väggar.');
+ }
  function removeSelected(){if(!selection)return;const before=capture();const e=entryById(selection);if(!e)return;
   if('a' in e){if(e.source)e.deleted=true;else entries=entries.filter(x=>x.id!==selection);}
   else floors=floors.filter(x=>x.id!==selection);
@@ -233,7 +259,10 @@ export function createBuildMode({data,scene,canvas,camera,getZoom,getView,rayAt,
   const start=first;first=null;hover=null;const before=capture();
   try{
    if(mode==='floor'){const f=floorRect(getNextId(entries,floors,'floor'),start,p);validateFloorRect(f);floors.push(f);selection=f.id;}
-   else{const e=makeEntry(getNextId(entries,floors,mode),mode,start,p);validateEntry(e,{isNew:true});entries.push(e);selection=e.id;}
+   else{const e=makeEntry(getNextId(entries,floors,mode),mode,start,p);
+    const neighbor=dimensionsFromWall(start,entries);
+    if(neighbor){e.height=isDoor(e.kind)?Math.min(2.4,neighbor.height):neighbor.height;e.thickness=neighbor.thickness;}
+    validateEntry(e,{isNew:true});entries.push(e);selection=e.id;}
    setTool('select');record(before);notify?.('Byggdel ritad! Dra dess ändpunkter eller ändra måtten i sidopanelen.');
   }catch(err){notify?.(err.message);render();}
  }
@@ -262,11 +291,15 @@ export function createBuildMode({data,scene,canvas,camera,getZoom,getView,rayAt,
   if(!drag)return;const dx=ev.clientX-drag.mx,dy=ev.clientY-drag.my;drag.mx=ev.clientX;drag.my=ev.clientY;
   if(drag.type==='pan'){onPan(dx,dy);return;}
   if(drag.type==='orbit'){onOrbit(dx,dy);return;}
-  const p=point(ev);if(!p||!drag.start)return;
+  const p=point(ev,drag.id);if(!p||!drag.start)return;
   const e=entryById(drag.id);if(!e)return;
   const off=[p[0]-drag.start[0],p[1]-drag.start[1]];
   const next='a' in e?{...drag.orig,a:[...drag.orig.a],b:[...drag.orig.b]}:{...drag.orig};
-  if(drag.type==='a'||drag.type==='b')next[drag.type]=[drag.orig[drag.type][0]+off[0],drag.orig[drag.type][1]+off[1]];
+  if(drag.type==='a'||drag.type==='b'){
+   const dest=[drag.orig[drag.type][0]+off[0],drag.orig[drag.type][1]+off[1]];
+   next[drag.type]=snapDraftPoint(dest,entries,{excludeId:drag.id,grid:($('snap').checked&&!ev.altKey)?0.1:0,
+    snapToGeometry:smartEnabled(ev),axisLock:false})?.point||dest;
+  }
   else if(drag.type==='move'){next.a=[drag.orig.a[0]+off[0],drag.orig.a[1]+off[1]];next.b=[drag.orig.b[0]+off[0],drag.orig.b[1]+off[1]];}
   else if(drag.type==='moveFloor'){next.x0+=off[0];next.z0+=off[1];next.x1+=off[0];next.z1+=off[1];}
   try{if('a' in e)validateEntry(next);else validateFloorRect(next);}catch{return;}
@@ -282,6 +315,10 @@ export function createBuildMode({data,scene,canvas,camera,getZoom,getView,rayAt,
   $('buildTool').onchange=e=>setTool(e.target.value);
   for(const btn of document.querySelectorAll('[data-quick-kind]'))btn.onclick=()=>quickChange(btn.dataset.quickKind);
   $('buildDoorInWall').onclick=quickDoor;
+  $('buildStraighten').onclick=()=>precisionAction('straight');
+  $('buildJoinEnds').onclick=()=>precisionAction('join');
+  $('buildMatchHeight').onclick=()=>precisionAction('height');
+  for(const id of ['buildSmartSnap','buildRightAngles'])$(id).onchange=()=>{if(first)render();};
   document.querySelectorAll('[data-build-tool]').forEach(button=>{button.onclick=()=>setTool(button.dataset.buildTool);});
   $('buildSearch').oninput=renderList;
   $('buildKind').onchange=e=>{const s=entryById(selection);if(s&&'a' in s)changeEntry(s.id,{kind:e.target.value});};

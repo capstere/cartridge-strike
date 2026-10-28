@@ -46,6 +46,20 @@ try{
  await page.locator('#modeBuild').click();
  check('build mode is active; furniture controls hidden',await page.evaluate(()=>__furnitureEditor.build.active)&&await page.locator('#buildSidebar').isVisible()&&await page.locator('#furnitureSidebar').isHidden());
  check('exact source walls and doors loaded as editable preview',await page.evaluate(()=>{const e=__furnitureEditor.build.getEntries();return e.some(x=>x.id==='WALL-001')&&e.some(x=>x.id==='D08')&&e.length>390}));
+ check('smart snap and right angle assistance enabled by default',
+   await page.locator('#buildSmartSnap').isChecked()&&await page.locator('#buildRightAngles').isChecked());
+ check('precision helpers are disabled for unselected geometry',
+   await page.locator('#buildStraighten').isDisabled()&&await page.locator('#buildJoinEnds').isDisabled());
+ const temporary=await page.evaluate(()=>__furnitureEditor.build.testCreate('wall',[20,20],[23,20.12]));
+ check('new construction permits one-click precision repair',await page.locator('#buildStraighten').isEnabled());
+ await page.locator('#buildStraighten').click();
+ check('straighten turns slightly skewed wall into exact axis alignment',
+  await page.evaluate(id=>{const e=__furnitureEditor.build.getEntries().find(x=>x.id===id);return e.a[1]===e.b[1];},temporary));
+ await page.locator('#buildUndo').click();
+ check('precision repair can be undone without changing base geometry',
+  await page.evaluate(id=>Math.abs(__furnitureEditor.build.getEntries().find(x=>x.id===id).b[1]-20.12)<.001,temporary));
+ await page.evaluate(()=>__furnitureEditor.build.load(undefined));
+
  await page.locator('#buildSearch').fill('WALL-001');await page.locator('.build-list-item').first().click();
  check('existing wall selected and endpoint coordinates populated',(await page.locator('#buildSelectionId').textContent())==='WALL-001'&&!!(await page.locator('#buildA_X').inputValue()));
  await page.locator('#buildKind').selectOption('window');
