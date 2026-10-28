@@ -168,7 +168,7 @@ try{
  check('Ctrl+D duplicates selected architecture part',await page.evaluate(n=>__furnitureEditor.build.export().added.length===n+1,buildDupBefore));
  // Value posters must be editable on a wall and survive version-1 architecture JSON.
  await page.evaluate(()=>{
-  const wall=__furnitureEditor.build.getBaseline().find(w=>w.kind==='wall'&&Math.hypot(w.a[0]-w.b[0],w.a[1]-w.b[1])>2&&w.height>2);
+  const wall=__furnitureEditor.build.getBaseline().find(w=>w.kind==='wall'&&Math.hypot(w.a[0]-w.b[0],w.a[1]-w.b[1])>4&&w.height>2);
   if(!wall)throw Error('No valid wall for test poster');
   __furnitureEditor.build.addPoster(wall.id);
  });
