@@ -23,3 +23,16 @@
 .work-guide strong{color:#f4bd65;white-space:nowrap}.work-guide span{max-width:360px}.work-guide button{padding:5px 7px;font-size:.7rem;white-space:nowrap;margin:0}.work-guide button:disabled{opacity:.48;cursor:default}
 .catalog-image svg{height:100%;width:100%;max-width:85px}
 @media(max-width:1000px){.work-guide{top:115px;flex-wrap:wrap;max-width:calc(100% - 24px)}}
+.first-build{margin:15px 0;padding:11px;border:1px solid #70bba5;border-radius:9px;background:#204943}
+.first-build strong{font-size:.79rem;letter-spacing:.05em;color:#ffcf82}.first-build span{float:right;font-size:.69rem;color:#bce8cf}
+.first-build p{margin:8px 0;color:#e5f6e9}.first-build button{font-size:.7rem;padding:5px 8px}
+.workspace.game-look #scene3d{width:57%;align-self:flex-start}
+#gameLookPanel{position:absolute;right:0;top:56px;bottom:34px;width:43%;z-index:2;background:#142a30;color:#e8f5ed;border-left:2px solid #69bb9f;display:flex;flex-direction:column}
+#gameLookPanel>div{display:flex;align-items:center;justify-content:space-between;padding:5px 9px;font-size:.72rem}
+#gameLookPanel button{font-size:.66rem;padding:4px 7px;margin:0}
+#gameLookFrame{display:block;flex:1;width:100%;border:0;min-height:0;background:#152b30}
+#gameLookPanel small{padding:6px 9px;font-size:.65rem;color:#b1d1c5}
+.workspace.game-look .move-pad{right:calc(43% + 10px)}
+.workspace.game-look .work-guide{max-width:calc(57% - 20px)}
+#gameLook.active{background:#278a70;border-color:#a3dfb9}
+@media(max-width:1000px){#gameLookPanel{top:94px}.workspace.game-look .work-guide{max-width:calc(57% - 20px)}}

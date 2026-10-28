@@ -6,6 +6,7 @@ on:
       - 'src/**'
       - 'levels/**'
       - 'tools/level-*'
+      - 'tools/direct-*'
       - '.github/workflows/level-project.yml'
   workflow_dispatch:
 permissions:
@@ -13,7 +14,7 @@ permissions:
 jobs:
   level:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 35
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -38,3 +39,4 @@ jobs:
           timeout 220s xvfb-run -a node furniture-editor/editor-browser.mjs
           timeout 220s xvfb-run -a node furniture-editor/build/build-browser.mjs
           timeout 360s xvfb-run -a node tools/level-browser-smoke.mjs
+          timeout 420s xvfb-run -a node tools/direct-browser-smoke.mjs

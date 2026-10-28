@@ -11,7 +11,7 @@ import {parseTreatments} from './treatments.mjs';
 import {collisionExport,aiAgentBrief} from './ai-export.mjs?v=3.3.1';
 
 export const LEVEL_FORMAT='cartridge-strike-level-project',LEVEL_SCHEMA=2;
-export const LEVEL_GAME_VERSION='0.18.0',LEVEL_BASE_COMMIT='f5c63a22483feeeb29583853dab0c0911af5c09a',LEVEL_EDITOR_VERSION='3.5.0';
+export const LEVEL_GAME_VERSION='0.18.0',LEVEL_BASE_COMMIT='f5c63a22483feeeb29583853dab0c0911af5c09a',LEVEL_EDITOR_VERSION='3.6.0';
 const emptyArchitecture=()=>({schemaVersion:1,edits:[],added:[],removed:[],floors:[],posters:[],treatments:[]});
 const within=n=>typeof n==='number'&&Number.isFinite(n)&&Math.abs(n)<=100;
 const rect=r=>r&&[r.x0,r.z0,r.x1,r.z1].every(within)&&r.x1>r.x0&&r.z1>r.z0;

@@ -1,10 +1,12 @@
-import {parseProject} from '../furniture-editor/build/level-project.mjs?v=3.5.0';
+import {parseProject} from '../furniture-editor/build/level-project.mjs?v=3.6.0';
 import {createWorld} from '../src/fps/world.mjs?v=3.5.0';
 import {findWalkStart} from '../src/fps/walk-start.mjs';
 import {Renderer} from '../src/fps/render.mjs?v=3.5.0';
 
 const canvas=document.getElementById('game'),message=document.getElementById('message'),hint=document.getElementById('hint');
+const params=new URLSearchParams(location.search);document.body.classList.toggle('embedded',params.has('embed'));
 let world,renderer,actor,yaw=0,pitch=0,last=0,time=0,raf=0,frames=0;const keys=new Set();
+window.studioWalkPose=()=>actor?{x:actor.x,z:actor.z,yaw,pitch}:null;
 const show=text=>{message.hidden=false;message.textContent=text;};
 document.getElementById('exit').onclick=()=>{if(document.pointerLockElement)document.exitPointerLock();
  if(window.parent===window){history.back();return;}
@@ -34,7 +36,11 @@ function frame(now){frames++;
 }
 try{
  const saved=localStorage.getItem('cartridge-level-walk');if(!saved)throw Error('Ingen bana finns att utforska. Öppna promenadvyn från Designstudion.');
- const project=parseProject(saved),levelWorld=createWorld({levelProject:project,fresh:true}),start=findWalkStart(levelWorld);
+ const project=parseProject(saved),levelWorld=createWorld({levelProject:project,fresh:true});
+ let start=findWalkStart(levelWorld);
+ const x=Number(params.get('x')),z=Number(params.get('z')),angle=Number(params.get('yaw'));
+ if(params.has('x')&&params.has('z')&&[x,z].every(v=>Number.isFinite(v)&&Math.abs(v)<=100)&&
+  levelWorld.canOccupy(x,z,.22))start={x,z,yaw:Number.isFinite(angle)&&Math.abs(angle)<=Math.PI?angle:0};
  if(!start)throw Error('Ingen fri plats att stå på. Flytta ett föremål eller rita mer golv och prova igen.');
  world=levelWorld;actor={x:start.x,z:start.z,y:0,vy:0,radius:.22,height:1.7,alive:true};yaw=start.yaw;
  // Missing objectives are normal in a draft. Keep their visual markers off-map;
@@ -42,6 +48,7 @@ try{
  for(const kind of ['bomb','rescue'])if(!world.anchors[kind])world.anchors[kind]={x:1000,z:1000,radius:1};
  renderer=new Renderer(canvas,world,{graphics:'standard',mobile:false,reducedMotion:true});await renderer.assetsReady;
  message.hidden=true;last=performance.now();raf=requestAnimationFrame(frame);
- if(new URLSearchParams(location.search).has('test'))window.__walk={world,renderer,actor,keys,get frames(){return frames;}};
+ if(window.parent!==window)window.parent.postMessage({type:'cartridge-walk-ready'},location.origin);
+ if(params.has('test'))window.__walk={world,renderer,actor,keys,get frames(){return frames;}};
 }catch(error){show('Promenadvyn kunde inte öppnas: '+error.message);}
 window.addEventListener('pagehide',()=>{cancelAnimationFrame(raf);renderer?.dispose();});

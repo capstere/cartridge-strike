@@ -173,3 +173,11 @@ Nya modeller i privata `asset-portfolio/custom/optimized/` kan **provas i Design
 **Gränser:** 8 MiB per GLB (och ytterligare mesh-/nodbegränsningar), högst 20 GLB per import, högst 96 MiB för en import-ZIP. Skadade GLB-filer, externa resurslänkar, krypterade arkiv och komprimeringsformat som inte stöds av webbläsaren avvisas. En privat GitHub-repo kan inte automatiskt hämtas av en offentlig GitHub Pages-sida utan autentisering. Använd lokala original/optimerade filer; klistra inte in GitHub-token i sidan.
 
 Ingen uppladdad ZIP eller modell gör automatiskt förändringar i FPS-spelet, kollisionssystemet, navigering eller offentlig asset-katalog. Rättigheter, optimering och speltest prövas separat.
+
+## NY BANA och REDIGERA FLOOR 5 · direkt bygge (3.6.0)
+
+Öppna `new.html` för en tom bana eller `new.html?mode=edit-floor5` för Floor 5. Skapa ett rum med **Rum** och dra en rektangel i plan eller 3D. Klicka på rummet och dra ett orange hörn för att ändra storleken; dess väggar och öppningar följer med. Dra **Dörr**, **Fönster**, **Glas** eller **Öppning** från byggknapparna till en vägg, eller välj knappen och klicka på väggen. Markera sedan öppningen och dra den längs väggen. Den gamla luckan fylls igen av väggen automatiskt. Dra en orange ändpunkt för att ändra en fristående vägg.
+
+**SPELUTSEENDE** visar den riktiga FPS-renderaren bredvid den redigerbara 3D-vyn och uppdateras efter varje slutförd ändring. **GÅ RUNT I BANAN** öppnar helskärm nära ditt nuvarande fokus när platsen är fri och återvänder till samma byggvy. Den lilla guiden på vänster sida visar ett första femstegsbygge; den kan döljas eller öppnas igen. Esc avslutar verktyg och Delete/Backspace tar bort vald del. Ångra återställer en hel dragning, även väggarnas anslutningar.
+
+Originalgolven i Floor 5 är fortfarande legacy-polygonytor och har inga dragbara rektangelhörn; nya rum där kan storleksändras. Delade rumsväggar och tvetydiga korsningar skyddas med tydliga fel i stället för att skapa en osynlig glipa. Placering av möbler är fri även vid varning; **KONTROLLERA SPELBARHET** avgör när en bana är redo för match.

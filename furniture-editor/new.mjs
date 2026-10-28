@@ -4,8 +4,11 @@ import {buildProjectFurniture,buildProjectDecorations} from './build/project-vis
 import {resolveProjectScene,writeProjectScene,floor5Baseline,projectWallPieces} from './build/project-scene.mjs';
 import {inheritFloor5Gameplay} from '../src/fps/world.mjs?v=3.5.0';
 import {wallAtPoint,planPaintOverWall} from './build/paint-over-wall.mjs';
+import {planResizeFloor,planSlideInsert,planMoveWallEnd,roomBoundaryIds} from './build/direct-manipulation.mjs?v=3.6.0';
+import {parsePosters} from './build/posters.mjs';
+import {parseTreatments} from './build/treatments.mjs';
 import * as T from '../vendor/three/three.module.js';
-import {exportProject,parseProject,parseProjectZip,exportProjectZip} from './build/level-project.mjs?v=3.5.0';
+import {exportProject,parseProject,parseProjectZip,exportProjectZip} from './build/level-project.mjs?v=3.6.0';
 import {validateLevel} from './build/validate-level.mjs?v=3.5.0';
 import {validate,corners,inside,segmentIntersectsRectangle,intersects} from './core.mjs';
 import {wallPieces,standardPassageSpan,standardDoorMarkerSpan,isDoor} from './build/architecture.mjs';
@@ -23,23 +26,80 @@ const STORAGE=mode==='edit-floor5'?'cartridge-floor5-level-v2':'cartridge-new-le
 try{project=parseProject(localStorage.getItem(STORAGE)||'');if(project.mode!==mode)throw Error('mode');project=inheritFloor5Gameplay(correctOldOrangeChair(project));}catch{project=inheritFloor5Gameplay(exportProject({mode,name:mode==='edit-floor5'?'Floor 5 – min version':'Min bana',projectId:'lvl-'+crypto.randomUUID().slice(0,12)}));if(mode==='edit-floor5'){try{const old=localStorage.getItem('cartridge-furniture-studio-0.17.0-v1');if(old)project=inheritFloor5Gameplay(parseProject(old));}catch{}}}
 if(project.mode==='edit-floor5')project.ground.bounds={x0:-48,z0:-33,x1:52,z1:40};
 let pendingFurniture=null,pendingTemplate=null,pendingYaw=0,drawGesture=null,planPan=null,spaceHeld=false,view3dZoom=1,view3dCenter=null;
+let gameLook=false,gameLookTimer=0,walkReturnView='plan',walkReturnLook=false,walkPose=null;
 let sceneModel,sceneProject;function model(){if(sceneProject!==project){sceneProject=project;sceneModel=resolveProjectScene(project);}return sceneModel;}
 const p=()=>project,arch=()=>model().entries,floors=()=>p().mode==='new-level'?p().ground.floors:model().floors,objects=()=>model().items,markers=()=>[...p().gameplay.spawns,...[p().gameplay.objectives.bomb,p().gameplay.objectives.rescue,...p().gameplay.objectives.hostages].filter(Boolean)];
 const snap=n=>Math.round(n*10)/10,clamp=(n,a,b)=>Math.max(a,Math.min(b,n));
 const status=s=>$('status').textContent=s;
+const guideKey=part=>`cartridge-studio-${part}-${p().projectId}`;
+function updateFirstBuild(){
+ const panel=$('firstBuild'),hidden=p().mode!=='new-level'||localStorage.getItem(guideKey('guide-hidden'))==='1';
+ panel.hidden=hidden;$('showGuide').hidden=p().mode!=='new-level'||!hidden;if(hidden)return;
+ const steps=[
+  {done:floors().length>0,text:'Dra ut ett rum i planen eller 3D. Fyra väggar byggs automatiskt.',button:'VÄLJ RUM'},
+  {done:arch().some(e=>['door','card-door','opening'].includes(e.kind)),text:'Klicka på en vägg för att sätta dit en dörr. Dra den sedan längs väggen.',button:'VÄLJ DÖRR'},
+  {done:objects().length>0,text:'Välj en möbelbild och klicka där möbeln ska stå.',button:'VISA MÖBLER'},
+  {done:localStorage.getItem(guideKey('walked'))==='1',text:'Gå runt i banan med FPS-spelets modeller och fysik.',button:'GÅ RUNT'},
+  {done:localStorage.getItem(guideKey('saved'))==='1',text:'Spara ZIP och öppna den igen när du vill fortsätta.',button:'SPARA ZIP'}
+ ];
+ const index=steps.findIndex(s=>!s.done),step=steps[index]||{text:'Din första byggresa är klar. Fortsätt bygga fritt.',button:'BYGG VIDARE'};
+ $('firstBuildProgress').textContent=index<0?'5 av 5 klara':`Steg ${index+1} av 5`;
+ $('firstBuildText').textContent=step.text;$('firstBuildNext').textContent=step.button;
+ panel.dataset.step=String(index);
+}
 const floorAt=(x,z)=>floors().find(f=>inside(x,z,f.polygon||[[f.x0,f.z0],[f.x1,f.z0],[f.x1,f.z1],[f.x0,f.z1]]));
 const nextId=prefix=>{let i=1;const ids=new Set([...floors(),...arch(),...objects()].map(o=>o.id));while(ids.has(prefix+String(i).padStart(4,'0')))i++;return prefix+String(i).padStart(4,'0');};
-function commit(before){if(p().mode==='edit-floor5')writeProjectScene(p(),model());if(before===JSON.stringify(p()))return;if(view==='walk')leaveWalk();history.push(before);if(history.length>60)history.shift();future=[];persist();redraw();}
+function commit(before){if(p().mode==='edit-floor5')writeProjectScene(p(),model());if(before===JSON.stringify(p()))return;if(view==='walk')leaveWalk();history.push(before);if(history.length>60)history.shift();future=[];persist();redraw();queueGameLook();}
 function persist(){try{localStorage.setItem(p().mode==='edit-floor5'?'cartridge-floor5-level-v2':'cartridge-new-level-v2',JSON.stringify(p()));$('autosave').textContent='Ändringar sparade lokalt.';}catch{$('autosave').textContent='Lokal lagring är full. Spara ZIP nu.';}}
 function point(e){const r=canvas.getBoundingClientRect(),b=p().ground.bounds,scale=Math.min(canvas.width/(b.x1-b.x0),canvas.height/(b.z1-b.z0))*zoom;
  return {x:snap(((e.clientX-r.left)*canvas.width/r.width-canvas.width/2)/scale+(b.x0+b.x1)/2-offset.x),z:snap(((e.clientY-r.top)*canvas.height/r.height-canvas.height/2)/scale+(b.z0+b.z1)/2-offset.z)};}
 function screen(x,z){const b=p().ground.bounds,scale=Math.min(canvas.width/(b.x1-b.x0),canvas.height/(b.z1-b.z0))*zoom;
  return [canvas.width/2+(x-(b.x0+b.x1)/2+offset.x)*scale,canvas.height/2+(z-(b.z0+b.z1)/2+offset.z)*scale];}
 const dist=(a,b)=>Math.hypot(a.x-b.x,a.z-b.z);
+const rectCorners=f=>({nw:{x:f.x0,z:f.z0},ne:{x:f.x1,z:f.z0},se:{x:f.x1,z:f.z1},sw:{x:f.x0,z:f.z1}});
+const insertCenter=o=>({x:(o.a[0]+o.b[0])/2,z:(o.a[1]+o.b[1])/2});
+const directInsert=o=>['door','card-door','opening','window','glazed'].includes(o?.kind);
+function editHandleAt(e){
+ const item=lookup(),r=canvas.getBoundingClientRect(),dpr=canvas.width/r.width;
+ const x=(e.clientX-r.left)*dpr,z=(e.clientY-r.top)*canvas.height/r.height;
+ const candidates=item&&!item.source&&floors().includes(item)?Object.entries(rectCorners(item)).map(([handle,q])=>({handle,q})):
+  item?.kind==='wall'&&arch().includes(item)?['a','b'].map(handle=>({handle,q:{x:item[handle][0],z:item[handle][1]}})):[];
+ return candidates.find(({q})=>{const [sx,sz]=screen(q.x,q.z);return Math.hypot(x-sx,z-sz)<13*dpr;})?.handle||null;
+}
+function beginDirectDrag(item,q,handle=null){
+ const type=handle&&floors().includes(item)?'resize':handle&&item.kind==='wall'?'endpoint':directInsert(item)?'slide':null;
+ if(!type)return null;
+ const center=type==='slide'?insertCenter(item):null;
+ return {direct:true,type,id:item.id,handle,initialEntries:structuredClone(arch()),
+  initialFloor:type==='resize'?structuredClone(item):null,before:JSON.stringify(p()),
+  dx:center?q.x-center.x:0,dz:center?q.z-center.z:0};
+}
+function applyDirectDrag(info,q){
+ try{
+  let planned;
+  if(info.type==='resize')planned=planResizeFloor(info.initialFloor,info.initialEntries,info.handle,q,
+   {bounds:p().ground.bounds,otherFloors:floors().filter(f=>f.id!==info.id)});
+  else if(info.type==='endpoint')planned=planMoveWallEnd(info.initialEntries,info.id,info.handle,q,
+   {bounds:p().ground.bounds,posters:p().architecture.posters,treatments:p().architecture.treatments});
+  else planned=planSlideInsert(info.initialEntries,info.id,{x:q.x-info.dx,z:q.z-info.dz},
+   {posters:p().architecture.posters,treatments:p().architecture.treatments});
+  parsePosters(p().architecture.posters||[],planned.entries);
+  parseTreatments(p().architecture.treatments||[],planned.entries);
+  arch().splice(0,arch().length,...planned.entries);
+  if(planned.floor){const stored=p().ground.floors.find(f=>f.id===info.id);Object.assign(stored,planned.floor);
+   const displayed=model().floors.find(f=>f.id===info.id);
+   if(displayed&&displayed!==stored)Object.assign(displayed,planned.floor,
+    {polygon:[[planned.floor.x0,planned.floor.z0],[planned.floor.x1,planned.floor.z0],
+     [planned.floor.x1,planned.floor.z1],[planned.floor.x0,planned.floor.z1]]});}
+  status(info.type==='resize'?'Rummets storlek ändrad. Väggar och öppningar följer med.':
+   info.type==='slide'?'Öppningen sitter kvar i väggen. Fysiken följer med.':'Väggänden flyttad.');
+  redraw();return true;
+ }catch(err){status(err.message);return false;}
+}
 function find(x,z){for(const d of decorations()){const at=decorationAt(d);if(at&&Math.hypot(x-at.x,z-at.z)<.3)return d;}for(const m of markers())if(dist(m,{x,z})<.35)return m;
  // Small and narrow objects must still be easy to pick at Floor 5 scale.
  for(const o of objects())if(inside(x,z,corners(o,.15)))return o;
- for(const a of arch()){
+ for(const a of [...arch().filter(directInsert),...arch().filter(a=>!directInsert(a))]){
   const dx=a.b[0]-a.a[0],dz=a.b[1]-a.a[1],len=Math.hypot(dx,dz),t=clamp(((x-a.a[0])*dx+(z-a.a[1])*dz)/len**2,0,1);
   if(Math.hypot(x-a.a[0]-dx*t,z-a.a[1]-dz*t)<.18)return a;
  }
@@ -90,7 +150,12 @@ function updateProps(){const o=lookup();$('selection').hidden=!o;$('posterText')
  for(const id of ['x','z','w','d','remove','rotate','duplicate'])$(id).disabled=!o;
 }
 function rotateWithChildren(o,delta){const c=Math.cos(delta),s=Math.sin(delta);for(const child of objects().filter(v=>v.mountId===o.id)){const dx=child.x-o.x,dz=child.z-o.z;child.x=o.x+c*dx+s*dz;child.z=o.z-s*dx+c*dz;child.yaw+=delta;}o.yaw=((o.yaw+delta+Math.PI)%(2*Math.PI)+2*Math.PI)%(2*Math.PI)-Math.PI;if(objects().includes(o))placementStatus(o);return true;}
-function moveObject(o,x,z){if(arch().includes(o)){const dx=snap(x-o.a[0]),dz=snap(z-o.a[1]);o.a=[snap(o.a[0]+dx),snap(o.a[1]+dz)];o.b=[snap(o.b[0]+dx),snap(o.b[1]+dz)];return true;}const floor=floorAt(x,z);
+function moveObject(o,x,z){if(arch().includes(o)){
+  if(o.kind==='wall'&&floors().some(f=>roomBoundaryIds(f,[o]).includes(o.id))){
+   status('Dra rummets orange hörn för att flytta dess väggar tillsammans.');return false;}
+  if(p().mode==='new-level'&&o.kind==='wall'&&arch().some(e=>e!==o&&[e.a,e.b].some(v=>[o.a,o.b].some(w=>dist({x:v[0],z:v[1]},{x:w[0],z:w[1]})<.02)))){
+   status('Väggen sitter ihop med en annan byggdel. Flytta hörnet eller öppningen.');return false;}
+  const dx=snap(x-o.a[0]),dz=snap(z-o.a[1]);o.a=[snap(o.a[0]+dx),snap(o.a[1]+dz)];o.b=[snap(o.b[0]+dx),snap(o.b[1]+dz)];return true;}const floor=floorAt(x,z);
  if(o.kind&&objects().includes(o)){
   let candidate={...o,x,z,roomId:floor?.id||'',...proposeSmartPose(o,{x,z},objects())};
   const dx=candidate.x-o.x,dz=candidate.z-o.z;Object.assign(o,candidate);
@@ -104,19 +169,22 @@ function finishBuild(a,q,tool){try{const before=JSON.stringify(p());
  }catch(err){first=null;drawGesture=null;status(err.message);redraw();}}
 function handleBuild(q,tool,gesture){try{
  if(['poster','curtain','blind'].includes(tool)){const hit=wallAtPoint(arch(),[q.x,q.z],{radius:.4});if(!hit)throw Error('Klicka på en vägg eller ett fönster för att fästa tillbehöret.');const before=JSON.stringify(p());p().architecture.posters||=[];p().architecture.treatments||=[];let fresh;if(tool==='poster'){fresh=makePoster(hit.wall,p().architecture.posters,hit.t);p().architecture.posters.push(fresh);}else if(tool==='blind'){fresh=createBlind(arch(),p().architecture.treatments,hit.wall.id);p().architecture.treatments.push(fresh);}else{const w=hit.wall,L=hit.length,half=Math.min(.45,3/L),t=clamp(hit.t,half,1-half),pt=v=>w.a.map((n,i)=>n+(w.b[i]-n)*v);fresh=createCurtain(arch(),p().architecture.treatments,w.id,pt(t-half),pt(t+half));p().architecture.treatments.push(fresh);}selected=fresh.id;commit(before);return;}
- if(!first&&['door','card-door','opening','window','glazed'].includes(tool)){const nearest=wallAtPoint(arch(),[q.x,q.z],{radius:.4});if(nearest){if((p().architecture.treatments||[]).some(t=>t.wallId===nearest.wall.id))throw Error('Ta bort gardinen eller persiennen innan du delar väggen. Ångra återställer båda.');const before=JSON.stringify(p()),w=nearest.wall,len=nearest.length,width=isDoor(tool)?1.2:Math.min(1.6,len),t=clamp(nearest.t,width/2/len,1-width/2/len),span=(v)=>w.a.map((n,i)=>n+(w.b[i]-n)*v);const plan=planPaintOverWall(arch(),w.id,span(t-width/2/len),span(t+width/2/len),tool,{posters:p().architecture.posters||[]});arch().splice(0,arch().length,...plan.entries.filter(e=>!e.deleted));p().architecture.posters=plan.posters;selected=plan.paintedId;const part=lookup();if(part&&tool==='window')part.sill=Number($('sill').value);commit(before);status('Infäst i väggen. Öppningen och fysiken uppdateras automatiskt.');return;}}
+ if(!first&&['door','card-door','opening','window','glazed'].includes(tool)){const nearest=wallAtPoint(arch(),[q.x,q.z],{radius:.4});if(nearest){if((p().architecture.treatments||[]).some(t=>t.wallId===nearest.wall.id))throw Error('Ta bort gardinen eller persiennen innan du delar väggen. Ångra återställer båda.');const before=JSON.stringify(p()),w=nearest.wall,len=nearest.length,width=isDoor(tool)?1.2:Math.min(1.6,len),t=clamp(nearest.t,width/2/len,1-width/2/len),span=(v)=>w.a.map((n,i)=>n+(w.b[i]-n)*v);const plan=planPaintOverWall(arch(),w.id,span(t-width/2/len),span(t+width/2/len),tool,{posters:p().architecture.posters||[]});arch().splice(0,arch().length,...plan.entries.filter(e=>!e.deleted));p().architecture.posters=plan.posters;selected=plan.paintedId;const part=lookup();if(part&&tool==='window')part.sill=Number($('sill').value);commit(before);status('Infäst i väggen. Öppningen och fysiken uppdateras automatiskt.');return;}
+  if(tool!=='glazed')throw Error('Klicka på en synlig vägg först. Dörr och fönster skapar öppningen automatiskt.');}
  if(!first){first=q;drawGesture=gesture;status('Startpunkt vald. Klicka slutpunkt eller dra. Esc avbryter.');redraw();return;}
  finishBuild(first,q,tool);
  }catch(err){first=null;drawGesture=null;status(err.message);redraw();}}
 canvas.addEventListener('pointerdown',e=>{if(view!=='plan')return;if(e.button===1||e.button===2||(e.button===0&&spaceHeld)){e.preventDefault();canvas.setPointerCapture(e.pointerId);planPan={x:e.clientX,y:e.clientY,startX:e.clientX,startY:e.clientY,button:e.button,moved:false};return;}if(e.button!==0)return;canvas.setPointerCapture(e.pointerId);const q=point(e),tool=tab==='build'?$('tool').value:tab==='play'?$('gameTool').value:'furnish';
  if(pendingFurniture){try{const before=JSON.stringify(p());addFurniture(pendingFurniture,q.x,q.z);commit(before);}catch(err){status(err.message);}return;}
- if(tool==='select'||tool==='furnish'){const hit=find(q.x,q.z);if(hit){selected=hit.id;drag={before:JSON.stringify(p()),start:q,hit,dx:q.x-(hit.x??hit.a?.[0]??q.x),dz:q.z-(hit.z??hit.a?.[1]??q.z)};redraw();return;}if(tool==='furnish'){status('Välj ett objekt i listan och klicka PLACERA.');return;}selected=null;redraw();return;}
+ if(tool==='select'||tool==='furnish'){const handle=editHandleAt(e),hit=handle?lookup():find(q.x,q.z);if(hit){selected=hit.id;drag=beginDirectDrag(hit,q,handle)||
+  {before:JSON.stringify(p()),start:q,hit,dx:q.x-(hit.x??hit.a?.[0]??q.x),dz:q.z-(hit.z??hit.a?.[1]??q.z)};redraw();return;}if(tool==='furnish'){status('Välj ett objekt i listan och klicka PLACERA.');return;}selected=null;redraw();return;}
  if(tab==='play'){try{const found=markers().find(m=>dist(m,q)<.35);if(found){selected=found.id;drag={before:JSON.stringify(p()),start:q,hit:found,dx:q.x-found.x,dz:q.z-found.z};redraw();return;}const before=JSON.stringify(p());placeMarker(tool,q.x,q.z);commit(before);}catch(err){status(err.message);}return;}
  handleBuild(q,tool,{x:e.clientX,y:e.clientY,tool,view:'plan'});});
 canvas.addEventListener('pointermove',e=>{if(view!=='plan')return;if(planPan){const r=canvas.getBoundingClientRect(),b=p().ground.bounds,scale=Math.min(canvas.width/(b.x1-b.x0),canvas.height/(b.z1-b.z0))*zoom;offset.x+=(e.clientX-planPan.x)*canvas.width/r.width/scale;offset.z+=(e.clientY-planPan.y)*canvas.height/r.height/scale;planPan.moved ||= Math.hypot(e.clientX-planPan.startX,e.clientY-planPan.startY)>6;planPan.x=e.clientX;planPan.y=e.clientY;drawPlan();return;}const q=point(e);$('coordinates').textContent=`X ${q.x.toFixed(1)} · Z ${q.z.toFixed(1)}`;
- if(drag){if(moveObject(drag.hit,snap(q.x-drag.dx),snap(q.z-drag.dz)))redraw();return;}hover=q;if(first||pendingFurniture)redraw();});
+ if(drag){if(drag.direct)applyDirectDrag(drag,q);else if(moveObject(drag.hit,snap(q.x-drag.dx),snap(q.z-drag.dz)))redraw();return;}
+ hover=q;if(first||pendingFurniture||tab==='build'&&['door','window','glazed','opening','card-door'].includes($('tool').value))redraw();});
 canvas.addEventListener('pointerup',e=>{if(planPan){const rotate=planPan.button===2&&!planPan.moved;planPan=null;if(rotate){const o=lookup();if(o?.yaw!==undefined){const before=JSON.stringify(p());rotateWithChildren(o,Math.PI/12);commit(before);}}return;}if(drawGesture?.view==='plan'&&first&&Math.hypot(e.clientX-drawGesture.x,e.clientY-drawGesture.y)>6)finishBuild(first,point(e),drawGesture.tool);drawGesture=null;if(drag){commit(drag.before);drag=null;}});
-canvas.addEventListener('pointercancel',()=>{planPan=null;drag=null;drawGesture=null;});
+canvas.addEventListener('pointercancel',()=>{planPan=null;if(drag?.before){project=JSON.parse(drag.before);redraw();}drag=null;drawGesture=null;});
 canvas.addEventListener('contextmenu',e=>e.preventDefault());
 function drawPlan(){const r=canvas.getBoundingClientRect(),dpr=Math.min(devicePixelRatio||1,2);canvas.width=Math.round(r.width*dpr);canvas.height=Math.round(r.height*dpr);ctx.clearRect(0,0,canvas.width,canvas.height);ctx.fillStyle='#e6efea';ctx.fillRect(0,0,canvas.width,canvas.height);
  const b=p().ground.bounds;ctx.strokeStyle='#bfd1ca';ctx.lineWidth=1;for(let x=b.x0;x<=b.x1;x++)for(let z=b.z0;z<=b.z1;z++){const [sx,sz]=screen(x,z);if(sx>=0&&sx<canvas.width&&sz>=0&&sz<canvas.height)ctx.fillRect(sx,sz,1,1);}
@@ -125,8 +193,17 @@ function drawPlan(){const r=canvas.getBoundingClientRect(),dpr=Math.min(devicePi
  for(const o of objects()){const pts=corners(o).map(v=>screen(...v));ctx.beginPath();pts.forEach((v,i)=>i?ctx.lineTo(...v):ctx.moveTo(...v));ctx.closePath();ctx.fillStyle=selected===o.id?'#ffc874':'#5a7e88';ctx.fill();ctx.strokeStyle='#233e4a';ctx.stroke();}
  for(const m of markers()){const [x,z]=screen(m.x,m.z);ctx.beginPath();ctx.arc(x,z,selected===m.id?12*dpr:9*dpr,0,Math.PI*2);ctx.fillStyle=m.team==='analysts'?'#298bb7':m.team==='counterAnalysts'?'#d5684d':m.id.includes('BOMB')?'#dfb03e':m.id.includes('RESCUE')?'#41b89a':'#bf78b5';ctx.fill();ctx.strokeStyle='#fff';ctx.lineWidth=2;ctx.stroke();ctx.fillStyle='#16343b';ctx.font=`bold ${10*dpr}px system-ui`;ctx.fillText(m.team?String(m.index+1):m.id.includes('H')?'H':m.id.includes('BOMB')?'B':'R',x+11*dpr,z);}
  for(const d of decorations()){const at=decorationAt(d);if(!at)continue;const [x,z]=screen(at.x,at.z);ctx.fillStyle=selected===d.id?'#f0ae4a':d.type?'#7987a9':'#bb78a2';ctx.fillRect(x-5*dpr,z-5*dpr,10*dpr,10*dpr);}
+ const chosen=lookup(),handles=chosen&&!chosen.source&&floors().includes(chosen)?Object.values(rectCorners(chosen)):
+  chosen?.kind==='wall'&&arch().includes(chosen)?[chosen.a,chosen.b].map(([x,z])=>({x,z})):[];
+ for(const q of handles){const [x,z]=screen(q.x,q.z);ctx.fillStyle='#f6aa42';ctx.strokeStyle='#12383d';ctx.lineWidth=2*dpr;ctx.fillRect(x-6*dpr,z-6*dpr,12*dpr,12*dpr);ctx.strokeRect(x-6*dpr,z-6*dpr,12*dpr,12*dpr);}
  if($('showPhysics').checked){ctx.save();ctx.strokeStyle='#d42f52';ctx.lineWidth=3*dpr;ctx.setLineDash([5,3]);for(const w of projectWallPieces(arch())){ctx.beginPath();ctx.moveTo(...screen(...w.a));ctx.lineTo(...screen(...w.b));ctx.stroke();}for(const o of objects().filter(o=>o.collision!=='none')){const pts=corners(o).map(v=>screen(...v));ctx.beginPath();pts.forEach((v,i)=>i?ctx.lineTo(...v):ctx.moveTo(...v));ctx.closePath();ctx.stroke();}ctx.restore();}
  if(pendingFurniture&&hover){let ghost={id:'ghost',kind:'prop',assetId:pendingFurniture.id,x:hover.x,z:hover.z,yaw:pendingYaw,w:pendingFurniture.width,d:pendingFurniture.depth,height:pendingFurniture.height,roomId:floorAt(hover.x,hover.z)?.id};ghost={...ghost,...proposeSmartPose(ghost,hover,objects())};const issue=placementIssue(ghost),pts=corners(ghost).map(v=>screen(...v));ctx.beginPath();pts.forEach((v,i)=>i?ctx.lineTo(...v):ctx.moveTo(...v));ctx.closePath();ctx.fillStyle=issue?'#db526677':'#36b98b88';ctx.fill();ctx.strokeStyle=issue?'#bd3048':'#14785b';ctx.lineWidth=2*dpr;ctx.stroke();}
+ if(hover&&tab==='build'&&!first&&['door','card-door','opening','window','glazed'].includes($('tool').value)){
+  const hit=wallAtPoint(arch(),[hover.x,hover.z],{radius:.4});if(hit){const width=isDoor($('tool').value)?1.2:Math.min(1.6,hit.length),fraction=clamp(hit.t,width/2/hit.length,1-width/2/hit.length);
+   const x=hit.wall.a[0]+(hit.wall.b[0]-hit.wall.a[0])*fraction,z=hit.wall.a[1]+(hit.wall.b[1]-hit.wall.a[1])*fraction;
+   const vx=(hit.wall.b[0]-hit.wall.a[0])/hit.length,vz=(hit.wall.b[1]-hit.wall.a[1])/hit.length;
+   ctx.beginPath();ctx.moveTo(...screen(x-vx*width/2,z-vz*width/2));ctx.lineTo(...screen(x+vx*width/2,z+vz*width/2));
+   ctx.strokeStyle='#f4ad42';ctx.lineWidth=9*dpr;ctx.globalAlpha=.7;ctx.stroke();ctx.globalAlpha=1;}}
  if(first&&hover){const a=screen(first.x,first.z),b=screen(hover.x,hover.z);ctx.beginPath();if(['room','corridor'].includes($('tool').value))ctx.rect(a[0],a[1],b[0]-a[0],b[1]-a[1]);else{ctx.moveTo(...a);ctx.lineTo(...b);}ctx.setLineDash([7,5]);ctx.lineWidth=2;ctx.strokeStyle='#106f79';ctx.stroke();ctx.setLineDash([]);}
 }
 const scene=new T.Scene();scene.background=new T.Color(0xd9e8e4);const camera=new T.PerspectiveCamera(55,1,.1,250);let renderer=null;
@@ -191,20 +268,41 @@ function draw3D(){if(!ensureRenderer())return;group.traverse(o=>{if(o.isMesh){o.
  }
  for(const d of arch().filter(e=>isDoor(e.kind)&&e.kind!=='opening')){const len=Math.hypot(d.b[0]-d.a[0],d.b[1]-d.a[1]),angle=-Math.atan2(d.b[1]-d.a[1],d.b[0]-d.a[0])+Math.PI/5;box(d.a[0]+Math.cos(angle)*len/2,.45,d.a[1]-Math.sin(angle)*len/2,len,.9,.06,selected===d.id?0xf4ad42:0xcc9d61,angle,1,d.id);}
  for(const m of markers())box(m.x,.25,m.z,.34,.5,.34,selected===m.id?0xf4ad42:m.team==='analysts'?0x298bb7:m.team==='counterAnalysts'?0xd5684d:m.id.includes('BOMB')?0xdfb03e:m.id.includes('RESCUE')?0x41b89a:0xbf78b5,0,1,m.id);
+ const chosen=lookup();
+ if(chosen&&!chosen.source&&floors().includes(chosen))for(const [handle,q] of Object.entries(rectCorners(chosen))){
+  const mesh=box(q.x,.18,q.z,.34,.34,.34,0xf8a849,0,1,chosen.id);mesh.userData.editHandle=handle;
+ }
+ if(chosen?.kind==='wall'&&arch().includes(chosen))for(const handle of ['a','b']){
+  const q=chosen[handle],mesh=box(q[0],.22,q[1],.34,.44,.34,0xf8a849,0,1,chosen.id);
+  mesh.userData.editHandle=handle;
+ }
  refreshFurnitureVisuals();
  buildProjectDecorations(p(),arch(),group,()=>renderer.render(scene,camera));
  position3DCamera();
  const r=$('scene3d').getBoundingClientRect();renderer.setSize(Math.max(1,r.width),Math.max(1,r.height),false);camera.aspect=r.width/r.height;camera.updateProjectionMatrix();update3DPreview();
 }
 const toolLabels={select:'VÄLJ',room:'RUM',corridor:'GOLV',wall:'VÄGG',door:'DÖRR','card-door':'KORTDÖRR',opening:'ÖPPNING',window:'FÖNSTER',glazed:'GLAS',poster:'AFFISCH',curtain:'GARDIN',blind:'PERSIENN'};
-function updateGuide(){const tool=$('tool').value,active=tab==='build'&&tool!=='select',placing=!!pendingFurniture;
+function updateGuide(){const tool=$('tool').value,active=tab==='build'&&tool!=='select',placing=!!pendingFurniture,chosen=lookup();
  $('activeMode').textContent=placing?'PLACERA '+pendingFurniture.name:tab==='build'?toolLabels[tool]||'BYGG':tab==='play'?'SPEL':'MÖBLERA';
- $('activeHelp').textContent=placing?'Klicka i planen eller 3D. Placera även vid varning; flytta senare.':first?'Klicka slutpunkten eller dra från start.':active?['room','corridor','wall'].includes(tool)?'Klicka två punkter eller dra i planen eller 3D.':'Klicka direkt på en vägg i planen eller 3D.':'Klicka för att välja. Dra för att flytta.';
+ $('activeHelp').textContent=placing?'Klicka i planen eller 3D. Placera även vid varning; flytta senare.':first?'Klicka slutpunkten eller dra från start.':active?['room','corridor','wall'].includes(tool)?'Klicka två punkter eller dra i planen eller 3D.':'Klicka direkt på en vägg i planen eller 3D.':
+  chosen&&!chosen.source&&floors().includes(chosen)?'Dra ett orange hörn för att ändra rummet. Dörrar och fönster följer med.':
+  directInsert(chosen)?'Dra öppningen längs väggen. Den gamla luckan stängs automatiskt.':
+  chosen?.kind==='wall'?'Dra en orange ändpunkt för att ändra en fri vägg.':'Klicka för att välja. Dra för att flytta.';
  $('cancelAction').hidden=!active&&!placing&&!first;$('deleteAction').disabled=!lookup();
 }
-function redraw(){$('modeLabel').textContent=p().mode==='edit-floor5'?'DESIGNSTUDION / FLOOR 5':'DESIGNSTUDION / NY BANA';updateProps();updateGuide();$('undo').disabled=!history.length;$('redo').disabled=!future.length;if(view==='plan')drawPlan();else if(view==='3d')draw3D();}
+function redraw(){$('modeLabel').textContent=p().mode==='edit-floor5'?'DESIGNSTUDION / FLOOR 5':'DESIGNSTUDION / NY BANA';updateProps();updateGuide();updateFirstBuild();$('undo').disabled=!history.length;$('redo').disabled=!future.length;if(view==='plan')drawPlan();else if(view==='3d')draw3D();}
 function switchTab(t){if(view==='walk')leaveWalk();tab=t;pendingFurniture=null;pendingTemplate=null;for(const b of document.querySelectorAll('[data-tab]'))b.classList.toggle('active',b.dataset.tab===t);for(const s of document.querySelectorAll('[data-panel]'))s.hidden=s.dataset.panel!==t;first=null;redraw();}
 document.querySelectorAll('[data-tab]').forEach(b=>b.onclick=()=>switchTab(b.dataset.tab));
+$('firstBuildDismiss').onclick=()=>{localStorage.setItem(guideKey('guide-hidden'),'1');updateFirstBuild();};
+$('showGuide').onclick=()=>{localStorage.removeItem(guideKey('guide-hidden'));updateFirstBuild();};
+$('firstBuildNext').onclick=()=>{switch(Number($('firstBuild').dataset.step)){
+ case 0:switchTab('build');setBuildTool('room');$('planView').click();break;
+ case 1:switchTab('build');setBuildTool('door');break;
+ case 2:switchTab('furnish');$('catalogSearch').focus();break;
+ case 3:$('walkView').click();break;
+ case 4:$('save').click();break;
+ default:switchTab('build');setBuildTool('select');
+ }};
 function armFurniture(entry){pendingTemplate=null;pendingFurniture=entry;pendingYaw=0;first=null;$('catalog').value=entry.id;
  document.querySelectorAll('.catalog-card').forEach(card=>card.classList.toggle('active',card.dataset.asset===entry.id));
  status(`Klicka där ${entry.name} ska stå. Även en röd varning går att placera och flytta senare. R vrider · Esc avbryter.`);redraw();}
@@ -225,6 +323,17 @@ $('catalogSearch').oninput=renderCatalog;
 $('catalogCategory').onchange=renderCatalog;
 function setBuildTool(tool){$('tool').value=tool;first=null;drawGesture=null;pendingFurniture=null;pendingTemplate=null;for(const b of document.querySelectorAll('[data-tool]'))b.classList.toggle('active',b.dataset.tool===tool);renderCatalog();redraw();}
 for(const button of document.querySelectorAll('[data-tool]'))button.onclick=()=>{const tool=$('tool').value===button.dataset.tool&&button.dataset.tool!=='select'?'select':button.dataset.tool;setBuildTool(tool);status(tool==='select'?'Välj en byggdel eller möbel. Delete tar bort den markerade delen.':button.title+' · Esc avslutar verktyget.');};
+for(const button of document.querySelectorAll('[data-tool="door"],[data-tool="window"],[data-tool="glazed"],[data-tool="opening"]')){
+ button.draggable=true;
+ button.addEventListener('dragstart',e=>{setBuildTool(button.dataset.tool);e.dataTransfer.setData('text/plain',button.dataset.tool);e.dataTransfer.effectAllowed='copy';});
+}
+for(const surface of [canvas,$('scene3d')]){
+ surface.addEventListener('dragover',e=>{if(!['door','window','glazed','opening'].includes($('tool').value))return;e.preventDefault();e.dataTransfer.dropEffect='copy';
+  if(surface===canvas){hover=point(e);drawPlan();}else{const pick=pick3d(e);hover3d=pick.surface||pick.ground;update3DPreview();}});
+ surface.addEventListener('drop',e=>{const tool=e.dataTransfer.getData('text/plain');if(!['door','window','glazed','opening'].includes(tool))return;e.preventDefault();
+  const q=surface===canvas?point(e):(()=>{const hit=pick3d(e);return hit.surface||hit.ground;})();
+  if(q)handleBuild(q,tool,null);});
+}
 $('tool').onchange=()=>{const tool=$('tool').value;setBuildTool(tool);status('Valt: '+(toolLabels[tool]||tool)+'. Klicka i planen eller 3D. Esc avslutar.');};
 $('cancelAction').onclick=()=>cancelTool();$('deleteAction').onclick=()=>$('remove').click();
 $('placeFurniture').onclick=()=>{const entry=[...catalogEntries,...localCatalog].find(e=>e.id===$('catalog').value);if(entry)armFurniture(entry);};
@@ -236,11 +345,16 @@ $('collisionMode').onchange=()=>{const o=lookup();if(!o||!objects().includes(o))
  status(o.collision==='none'?'Möbeln är dekorativ: ingen gångkollision i FPS.':'Möbeln blockerar spelare i FPS.');};
 $('newBlank').onclick=()=>{if(!window.confirm('Töm hela NY BANA? Ångra med Ctrl+Z innan du laddar om sidan.'))return;
  const before=JSON.stringify(p()),v=p();
+ localStorage.removeItem(guideKey('walked'));localStorage.removeItem(guideKey('saved'));
  project=exportProject({projectId:v.projectId,name:v.name,ground:{...v.ground,floors:[]},createdAt:v.createdAt});
  selected=null;first=null;hover=null;drag=null;offset={x:0,z:0};zoom=1;view3dCenter=null;view3dZoom=1;commit(before);
  status('Tom värld. Rita golv, väggar och öppningar. Kollision skapas automatiskt.');};
-$('remove').onclick=()=>{const o=lookup();if(!o)return;if(o.source&&o.polygon){status('Floor 5:s ursprungliga golv bevaras. Ändra väggar eller lägg till nya golvytor.');return;}const before=JSON.stringify(p());for(const list of [p().ground.floors,arch(),objects(),p().gameplay.spawns,p().gameplay.objectives.hostages,p().architecture.posters||[],p().architecture.treatments||[]]){const i=list.indexOf(o);if(i>=0)list.splice(i,1);}
- p().architecture.posters=(p().architecture.posters||[]).filter(d=>d.wallId!==o.id);p().architecture.treatments=(p().architecture.treatments||[]).filter(d=>d.wallId!==o.id);
+$('remove').onclick=()=>{const o=lookup();if(!o)return;if(o.source&&o.polygon){status('Floor 5:s ursprungliga golv bevaras. Ändra väggar eller lägg till nya golvytor.');return;}const before=JSON.stringify(p());
+ const removedIds=new Set([o.id,...(floors().includes(o)?roomBoundaryIds(o,arch(),floors().filter(f=>f.id!==o.id)):[])]);
+ for(const list of [p().ground.floors,arch(),objects(),p().gameplay.spawns,p().gameplay.objectives.hostages,p().architecture.posters||[],p().architecture.treatments||[]]){
+  for(let i=list.length-1;i>=0;i--)if(removedIds.has(list[i].id))list.splice(i,1);
+ }
+ p().architecture.posters=(p().architecture.posters||[]).filter(d=>!removedIds.has(d.wallId));p().architecture.treatments=(p().architecture.treatments||[]).filter(d=>!removedIds.has(d.wallId));
  for(const key of ['bomb','rescue'])if(p().gameplay.objectives[key]===o)p().gameplay.objectives[key]=null;
  if(objects().includes(o)===false)for(const child of objects().filter(x=>x.mountId===o.id)){child.mountId=null;child.elevation=0;}
  p().assets.local=p().assets.local.filter(a=>objects().some(item=>item.assetId===a.assetId));
@@ -250,17 +364,30 @@ $('rotate').onclick=()=>{const o=lookup();if(o?.yaw===undefined)return;const bef
 for(const id of ['x','z','w','d'])$(id).onchange=()=>{const o=lookup(),value=Number($(id).value);if(!o||!Number.isFinite(value))return;const before=JSON.stringify(p());
  if(objects().includes(o)){if(id==='x'||id==='z'){if(Math.abs(value)>100){status('Koordinaten måste ligga inom ±100 modellenheter.');redraw();return;}moveObject(o,id==='x'?value:o.x,id==='z'?value:o.z);}else{if(value<=0||value>8){status('Ange ett mått mellan 0 och 8.');redraw();return;}o[id]=value;placementStatus(o);}}
  else if(markers().includes(o)){if(id==='x'||id==='z')moveObject(o,id==='x'?value:o.x,id==='z'?value:o.z);}
- else if(floors().includes(o)&&['w','d'].includes(id)){o[id==='w'?'x1':'z1']=o[id==='w'?'x0':'z0']+value;}
- else if(arch().includes(o)&&['x','z'].includes(id)){const axis=id==='x'?0:1,delta=value-o.a[axis];o.a[axis]+=delta;o.b[axis]+=delta;}
- else if(arch().includes(o)&&id==='w'&&isDoor(o.kind)){
-  try{const span=standardPassageSpan(o.a,o.b,value);o.a=span.a;o.b=span.b;}
-  catch(e){status(e.message);redraw();return;}
+ else if(floors().includes(o)&&['w','d'].includes(id)){
+  const info=beginDirectDrag(o,{x:o.x1,z:o.z1},'se'),q={x:id==='w'?o.x0+value:o.x1,z:id==='d'?o.z0+value:o.z1};
+  if(!info||!applyDirectDrag(info,q)){redraw();return;}
+ }
+ else if(arch().includes(o)&&['x','z'].includes(id)&&directInsert(o)){
+  const center=insertCenter(o),info=beginDirectDrag(o,center),q={...center,[id]:center[id]+value-o.a[id==='x'?0:1]};
+  if(!applyDirectDrag(info,q)){redraw();return;}
+ }
+ else if(arch().includes(o)&&['x','z'].includes(id)){
+  status('Dra väggens ändpunkt eller rummets hörn i vyn så att anslutningarna följer med.');redraw();return;
+ }
+ else if(arch().includes(o)&&id==='w'&&directInsert(o)){
+  try{const center=insertCenter(o),planned=planSlideInsert(arch(),o.id,center,
+   {width:value,posters:p().architecture.posters,treatments:p().architecture.treatments});
+   parsePosters(p().architecture.posters||[],planned.entries);parseTreatments(p().architecture.treatments||[],planned.entries);
+   arch().splice(0,arch().length,...planned.entries);
+  }catch(e){status(e.message);redraw();return;}
  }
  commit(before);};
-$('undo').onclick=()=>{if(!history.length)return;if(view==='walk')leaveWalk();future.push(JSON.stringify(p()));project=JSON.parse(history.pop());persist();redraw();};
-$('redo').onclick=()=>{if(!future.length)return;if(view==='walk')leaveWalk();history.push(JSON.stringify(p()));project=JSON.parse(future.pop());persist();redraw();};
+$('undo').onclick=()=>{if(!history.length)return;if(view==='walk')leaveWalk();future.push(JSON.stringify(p()));project=JSON.parse(history.pop());persist();redraw();queueGameLook();};
+$('redo').onclick=()=>{if(!future.length)return;if(view==='walk')leaveWalk();history.push(JSON.stringify(p()));project=JSON.parse(future.pop());persist();redraw();queueGameLook();};
 document.addEventListener('keyup',e=>{if(e.code==='Space')spaceHeld=false;heldMovement.delete(e.code);});
-function cancelTool(){const wasActive=$('tool').value!=='select'||pendingFurniture||first;if(!wasActive){selected=null;status('Markeringen borttagen.');}else status('Verktyget avslutat. Välj en del eller ett nytt byggverktyg.');setBuildTool('select');hover=null;hover3d=null;drag=null;drag3d=null;}
+function cancelTool(){if(drag?.before||drag3d?.before)project=JSON.parse((drag||drag3d).before);
+ const wasActive=$('tool').value!=='select'||pendingFurniture||first;if(!wasActive){selected=null;status('Markeringen borttagen.');}else status('Verktyget avslutat. Välj en del eller ett nytt byggverktyg.');setBuildTool('select');hover=null;hover3d=null;drag=null;drag3d=null;}
 document.addEventListener('keydown',e=>{const typing=['INPUT','SELECT','TEXTAREA'].includes(e.target.tagName)||e.target.isContentEditable;
  if(e.key==='Escape'&&view!=='walk'){e.preventDefault();if(typing)e.target.blur();cancelTool();return;}
  if(typing)return;
@@ -281,25 +408,68 @@ $('save').onclick=async()=>{try{const files=new Map(),local=[];for(const id of n
   const row=await getLocalFile(id);if(!row?.data)throw Error('Egen GLB saknas: '+id);const bytes=new Uint8Array(row.data),file=`assets/models/${id.slice(6)}.glb`;
   if(await assetHash(bytes)!==id.slice(6))throw Error('GLB-hash stämmer inte.');files.set(file,bytes);local.push({assetId:id,file,bytes:bytes.length,license:'private, unverified'});
  }p().assets.local=local;const report=validateLevel(p(),{engine:true});p().validation=report;const bytes=await exportProjectZip(p(),files);
-  download(bytes,p().projectId+'.zip','application/zip');persist();status('ZIP sparad med projekt och lokala tillgångar. '+(report.summary.playable?'Banan är spelbar.':'Banan har ännu fel.'));
+  download(bytes,p().projectId+'.zip','application/zip');persist();
+  localStorage.setItem(guideKey('saved'),'1');updateFirstBuild();
+  status('ZIP sparad med projekt och lokala tillgångar. '+(report.summary.playable?'Banan är spelbar.':'Banan har ännu fel.'));
  }catch(e){status('Kunde inte spara: '+e.message);}};
 $('open').onchange=async e=>{const file=e.target.files?.[0];if(!file)return;try{let incoming,files=new Map();if(file.name.toLowerCase().endsWith('.zip'))({project:incoming,files}=await parseProjectZip(await file.arrayBuffer()));else incoming=parseProject(await file.text());
   for(const [path,bytes] of files)if(path.endsWith('.glb'))await importLocalGLB(new File([bytes],path.split('/').at(-1),{type:'model/gltf-binary'}));
   for(const asset of incoming.assets.local)if(!await getLocalFile(asset.assetId))throw Error('Egen GLB saknas. Öppna ZIP-filen i stället.');
   if(view==='walk')leaveWalk();project=inheritFloor5Gameplay(correctOldOrangeChair(incoming));history=[];future=[];selected=null;first=null;view3dCenter=null;view3dZoom=1;zoom=1;offset={x:0,z:0};$('name').value=p().name;$('width').value=p().ground.bounds.x1-p().ground.bounds.x0;$('depth').value=p().ground.bounds.z1-p().ground.bounds.z0;
-  localCatalog=await localLibrary();for(const entry of localCatalog)entry.size=(await getLocalFile(entry.id))?.size;renderCatalog();persist();redraw();status('Projektet öppnat. Kontrollera spelbarhet före provspelning.');
+  localCatalog=await localLibrary();for(const entry of localCatalog)entry.size=(await getLocalFile(entry.id))?.size;renderCatalog();persist();redraw();queueGameLook();status('Projektet öppnat. Kontrollera spelbarhet före provspelning.');
  }catch(err){status('Kunde inte öppna: '+err.message);}e.target.value='';};
 $('preview').onclick=()=>{try{const report=validateLevel(p(),{engine:true});p().validation=report;if(!report.summary.playable)throw Error('Åtgärda '+report.summary.errors+' fel innan provspelning.');localStorage.setItem('cartridge-level-preview',JSON.stringify(p()));window.open('../fps/?level=preview','_blank','noopener');status('Privat provspelning öppnad från aktuellt projekt.');}catch(e){status(e.message);}};
+function walkURL({embed=false,pose=null}={}){
+ const params=new URLSearchParams({draft:String(Date.now())});
+ if(embed)params.set('embed','1');
+ if(new URLSearchParams(location.search).has('test'))params.set('test','1');
+ if(pose&&[pose.x,pose.z,pose.yaw].every(Number.isFinite)){
+  params.set('x',String(pose.x));params.set('z',String(pose.z));params.set('yaw',String(pose.yaw));}
+ return '../fps/walk.html?'+params;
+}
+function preferredWalkPose(){const framePose=$('gameLookFrame').contentWindow?.studioWalkPose?.();
+ if(framePose)return framePose;
+ const focus=view3dCenter??frameBuiltFloors();return {x:focus.x,z:focus.z,yaw:orbit};
+}
+function closeGameLook({render=true}={}){
+ clearTimeout(gameLookTimer);gameLookTimer=0;if(!gameLook)return;
+ gameLook=false;$('gameLookPanel').hidden=true;$('gameLookFrame').src='about:blank';
+ $('gameLook').classList.remove('active');$('gameLook').setAttribute('aria-pressed','false');
+ $('scene3d').parentElement.classList.remove('game-look');if(render&&view==='3d')redraw();
+}
+function queueGameLook(){
+ if(!gameLook)return;if(!floors().length){closeGameLook();return;}
+ clearTimeout(gameLookTimer);gameLookTimer=setTimeout(()=>{
+  if(!gameLook||view!=='3d')return;
+  try{const pose=preferredWalkPose();localStorage.setItem('cartridge-level-walk',JSON.stringify(parseProject(p())));
+   $('gameLookFrame').src=walkURL({embed:true,pose});
+  }catch(err){status('Spelutseendet kunde inte uppdateras: '+err.message);}
+ },450);
+}
+$('gameLook').onclick=()=>{if(gameLook){closeGameLook();return;}
+ if(!floors().length){status('Rita ett golv först, sedan kan du visa banan som i spelet.');return;}
+ if(view!=='3d')$('threeView').click();if(view!=='3d')return;
+ gameLook=true;$('gameLookPanel').hidden=false;$('scene3d').parentElement.classList.add('game-look');
+ $('gameLook').classList.add('active');$('gameLook').setAttribute('aria-pressed','true');
+ redraw();queueGameLook();status('Spelutseendet visar spelets riktiga renderare. Bygg vidare i 3D till vänster.');};
+$('gameLookClose').onclick=()=>closeGameLook();
 $('walkView').onclick=()=>{try{if(view==='walk')return;if(!floors().length)throw Error('Rita ett golv först, sedan kan du gå runt direkt – spelmål behövs inte.');
- localStorage.setItem('cartridge-level-walk',JSON.stringify(parseProject(p())));if(view==='3d'&&renderer){renderer.dispose();renderer=null;}
- stopMovement();first=null;drawGesture=null;view='walk';canvas.hidden=true;$('scene3d').hidden=true;$('movePad').hidden=true;$('workGuide').hidden=true;$('walkFrame').hidden=false;$('walkFrame').src='../fps/walk.html?'+(new URLSearchParams(location.search).has('test')?'test=1&':'')+'draft='+Date.now();
+ localStorage.setItem('cartridge-level-walk',JSON.stringify(parseProject(p())));
+ walkReturnView=view;walkReturnLook=gameLook;walkPose=preferredWalkPose();if(gameLook)closeGameLook({render:false});
+ if(view==='3d'&&renderer){renderer.dispose();renderer=null;}
+ stopMovement();first=null;drawGesture=null;view='walk';canvas.hidden=true;$('scene3d').hidden=true;$('movePad').hidden=true;$('workGuide').hidden=true;$('walkFrame').hidden=false;$('walkFrame').src=walkURL({pose:walkPose});
  for(const id of ['planView','threeView','walkView'])$(id).classList.toggle('active',id==='walkView');status('Promenadvy: samma renderare och kollision som FPS. W A S D för att gå, musen för att se dig omkring.');
  }catch(e){status(e.message);}};
-function leaveWalk(){if(view!=='walk')return;$('walkFrame').src='about:blank';$('walkFrame').hidden=true;$('movePad').hidden=false;$('workGuide').hidden=false;view='plan';canvas.hidden=false;
- for(const id of ['planView','threeView','walkView'])$(id).classList.toggle('active',id==='planView');redraw();}
-window.addEventListener('message',e=>{if(e.origin===location.origin&&e.source===$('walkFrame').contentWindow&&e.data?.type==='cartridge-walk-close')leaveWalk();});
+function leaveWalk(){if(view!=='walk')return;$('walkFrame').src='about:blank';$('walkFrame').hidden=true;$('movePad').hidden=false;$('workGuide').hidden=false;
+ view=walkReturnView==='3d'?'3d':'plan';canvas.hidden=view!=='plan';$('scene3d').hidden=view!=='3d';if(view==='3d')ensureRenderer();
+ for(const id of ['planView','threeView','walkView'])$(id).classList.toggle('active',id===(view==='3d'?'threeView':'planView'));redraw();
+ if(view==='3d'&&walkReturnLook)$('gameLook').click();walkReturnLook=false;}
+window.addEventListener('message',e=>{if(e.origin!==location.origin||![ $('walkFrame').contentWindow,$('gameLookFrame').contentWindow].includes(e.source))return;
+ if(e.data?.type==='cartridge-walk-close'&&e.source===$('walkFrame').contentWindow)leaveWalk();
+ if(e.data?.type==='cartridge-walk-ready'){localStorage.setItem(guideKey('walked'),'1');updateFirstBuild();}
+});
 $('demo').onclick=async()=>{try{const response=await fetch('../levels/synthetic-demo.json');if(!response.ok)throw Error('Demobanan saknas.');const before=JSON.stringify(p());project=parseProject(await response.text());offset={x:0,z:0};zoom=1;view3dCenter=null;view3dZoom=1;$('name').value=p().name;commit(before);status('Syntetisk testbana öppnad. Den är separat från ditt sparade projekt.');}catch(e){status(e.message);}};
-$('planView').onclick=()=>{if(view==='walk')leaveWalk();first=null;drawGesture=null;view='plan';canvas.hidden=false;$('scene3d').hidden=true;$('planView').classList.add('active');$('threeView').classList.remove('active');redraw();};
+$('planView').onclick=()=>{if(view==='walk')leaveWalk();closeGameLook({render:false});first=null;drawGesture=null;view='plan';canvas.hidden=false;$('scene3d').hidden=true;$('planView').classList.add('active');$('threeView').classList.remove('active');redraw();};
 $('threeView').onclick=()=>{if(view==='walk')leaveWalk();if(!ensureRenderer())return;first=null;drawGesture=null;view3dCenter??=frameBuiltFloors();view='3d';canvas.hidden=true;$('scene3d').hidden=false;$('threeView').classList.add('active');$('planView').classList.remove('active');redraw();};
 $('fit').onclick=()=>{zoom=1;view3dZoom=1;view3dCenter=frameBuiltFloors();offset={x:0,z:0};redraw();};
 let repeatDelay=0,repeatTimer=0,repeated=false;
@@ -319,7 +489,8 @@ const ray3d=new T.Raycaster(),groundPlane=new T.Plane(new T.Vector3(0,1,0),0);
 function hit3d(e){const r=$('scene3d').getBoundingClientRect();ray3d.setFromCamera(new T.Vector2((e.clientX-r.left)/r.width*2-1,-(e.clientY-r.top)/r.height*2+1),camera);const v=new T.Vector3();return ray3d.ray.intersectPlane(groundPlane,v)?{x:snap(v.x),z:snap(v.z)}:null;}
 function pick3d(e){const ground=hit3d(e);const hit=ray3d.intersectObjects([...group.children,...(furnitureRoot?.children||[])],true).find(h=>{let node=h.object;while(node&&!node.userData.editId)node=node.parent;return !!node?.userData.editId;});
  let node=hit?.object;while(node&&!node.userData.editId)node=node.parent;
- return {ground,id:node?.userData.editId||null,surface:hit?{x:snap(hit.point.x),z:snap(hit.point.z)}:null};}
+ return {ground,id:node?.userData.editId||null,handle:node?.userData.editHandle||null,
+  surface:hit?{x:snap(hit.point.x),z:snap(hit.point.z)}:null};}
 $('scene3d').addEventListener('pointerdown',e=>{if(e.button===1||e.button===2||(e.button===0&&spaceHeld)){e.preventDefault();$('scene3d').setPointerCapture(e.pointerId);pan3d={x:e.clientX,y:e.clientY};return;}if(e.button!==0)return;
  $('scene3d').setPointerCapture(e.pointerId);if(e.altKey){orbitDrag={x:e.clientX};return;}
  const pick=pick3d(e),tool=tab==='build'?$('tool').value:tab==='play'?$('gameTool').value:'furnish';
@@ -330,11 +501,14 @@ $('scene3d').addEventListener('pointerdown',e=>{if(e.button===1||e.button===2||(
  if(tab==='play'){const marker=markers().find(m=>m.id===pick.id);if(marker){selected=marker.id;drag3d={item:marker,before:JSON.stringify(p()),dx:pick.ground.x-marker.x,dz:pick.ground.z-marker.z};redraw();}else try{const before=JSON.stringify(p());placeMarker(tool,q.x,q.z);commit(before);}catch(err){status(err.message);}return;}
  if(tab==='build'&&tool!=='select'){handleBuild(q,tool,{x:e.clientX,y:e.clientY,tool,view:'3d'});return;}
  if(pick.id){selected=pick.id;const item=lookup(),anchor=item?.a?{x:item.a[0],z:item.a[1]}:item;
-  if(item&&(objects().includes(item)||arch().includes(item))&&pick.ground)drag3d={item,before:JSON.stringify(p()),dx:pick.ground.x-anchor.x,dz:pick.ground.z-anchor.z};
+  drag3d=item&&pick.ground?beginDirectDrag(item,pick.ground,pick.handle):null;
+  if(!drag3d&&item&&(objects().includes(item)||arch().includes(item))&&pick.ground)drag3d={item,before:JSON.stringify(p()),dx:pick.ground.x-anchor.x,dz:pick.ground.z-anchor.z};
   else orbitDrag={x:e.clientX};redraw();return;}
  if(tab==='furnish'){status('Välj en möbel i listan; klicka sedan i 3D för att placera den.');return;}
  selected=null;orbitDrag={x:e.clientX};redraw();});
-$('scene3d').addEventListener('pointermove',e=>{if(drag3d){const q=hit3d(e);if(q&&moveObject(drag3d.item,snap(q.x-drag3d.dx),snap(q.z-drag3d.dz)))redraw();return;}
+$('scene3d').addEventListener('pointermove',e=>{if(drag3d){const q=hit3d(e);
+  if(q){if(drag3d.direct)applyDirectDrag(drag3d,q);else if(moveObject(drag3d.item,snap(q.x-drag3d.dx),snap(q.z-drag3d.dz)))redraw();}
+  return;}
  if(pan3d){const dx=e.clientX-pan3d.x,dy=e.clientY-pan3d.y;pan3d={x:e.clientX,y:e.clientY};const scale=visibleSpan()/Math.max(1,$('scene3d').clientHeight)*1.4;
   const right={x:Math.cos(orbit),z:-Math.sin(orbit)},forward={x:-Math.sin(orbit),z:-Math.cos(orbit)},focus=view3dCenter??=frameBuiltFloors();
   focus.x+=(-dx*right.x+dy*forward.x)*scale;focus.z+=(-dx*right.z+dy*forward.z)*scale;position3DCamera();renderer.render(scene,camera);return;}
@@ -344,7 +518,7 @@ $('scene3d').addEventListener('pointermove',e=>{if(drag3d){const q=hit3d(e);if(q
  hover3d=onWall&&attachesToWall&&pick.surface?pick.surface:pick.ground;
  if(hover3d)$('coordinates').textContent=`X ${hover3d.x.toFixed(1)} · Z ${hover3d.z.toFixed(1)}`;update3DPreview();});
 $('scene3d').addEventListener('pointerup',e=>{if(drawGesture?.view==='3d'&&first&&Math.hypot(e.clientX-drawGesture.x,e.clientY-drawGesture.y)>6){const q=hit3d(e);if(q)finishBuild(first,q,drawGesture.tool);}drawGesture=null;orbitDrag=null;pan3d=null;if(drag3d){commit(drag3d.before);drag3d=null;}});
-$('scene3d').addEventListener('pointercancel',()=>{orbitDrag=null;pan3d=null;drag3d=null;drawGesture=null;});
+$('scene3d').addEventListener('pointercancel',()=>{orbitDrag=null;pan3d=null;if(drag3d?.before){project=JSON.parse(drag3d.before);redraw();}drag3d=null;drawGesture=null;});
 $('scene3d').addEventListener('contextmenu',e=>e.preventDefault());
 new ResizeObserver(redraw).observe(canvas.parentElement);
 $('name').value=p().name;$('width').value=p().ground.bounds.x1-p().ground.bounds.x0;$('depth').value=p().ground.bounds.z1-p().ground.bounds.z0;
