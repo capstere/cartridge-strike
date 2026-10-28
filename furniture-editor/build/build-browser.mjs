@@ -113,6 +113,39 @@ try{
  await shot('03-imported-sketch');
  await page.locator('#modeFurniture').click();
  check('furniture mode still works after loading a building project',await page.locator('#furnitureSidebar').isVisible()&&await page.evaluate(()=>__furnitureEditor.getState().chairs>=50));
+ await page.locator('#modeBuild').click();
+ await page.locator('#topView').click();
+ await page.locator('#buildRoom').selectOption('I09');await page.locator('#focus').click();
+ await page.locator('#buildTool').selectOption('room-rect');
+ check('new room tool shows settings in two-click mode',await page.locator('#buildRoomSettings').isVisible());
+ check('exact room button needs a first corner',await page.locator('#buildRoomCreateExact').isDisabled());
+ const roomBefore=await page.evaluate(()=>__furnitureEditor.getPatch().architecture);
+ await clickWorld(7.1,10.1);await clickWorld(9.3,12.3);
+ const newRoom=await page.evaluate(()=>__furnitureEditor.getPatch().architecture);
+ check('two clicks create four connected walls and one floor',newRoom.added.length===roomBefore.added.length+4&&newRoom.floors.length===roomBefore.floors.length+1);
+ const edges=newRoom.added.slice(-4);
+ check('room geometry has exact shared corners',edges.every((edge,i)=>JSON.stringify(edge.b)===JSON.stringify(edges[(i+1)%4].a)));
+ await page.locator('#buildUndo').click();
+ check('single undo removes the entire room',await page.evaluate(n=>{const p=__furnitureEditor.getPatch().architecture;return p.added.length===n.added&&p.floors.length===n.floors;},roomBefore));
+ await page.locator('#buildTool').selectOption('room-rect');
+ await page.locator('#buildRoomWidth').fill('2.4');await page.locator('#buildRoomDepth').fill('1.6');
+ await page.locator('#buildRoomHeight').fill('3.2');await page.locator('#buildRoomName').fill('Testlokal');
+ await clickWorld(7.1,10.1);
+ check('exact room button activates after choosing start corner',await page.locator('#buildRoomCreateExact').isEnabled());
+ await page.locator('#buildRoomCreateExact').click();
+ check('exact dimensions, height and floor name survive export',await page.evaluate(n=>{
+  const p=__furnitureEditor.getPatch().architecture,edges=p.added.slice(-4),f=p.floors.at(-1);
+  return p.added.length===n.added+4&&p.floors.length===n.floors+1&&
+   edges.every(w=>w.height===3.2)&&f?.name==='Testlokal'&&
+   Math.abs(f.x1-f.x0-2.4)<.002&&Math.abs(f.z1-f.z0-1.6)<.002;
+ },roomBefore));
+ await page.locator('#buildFloorName').fill('Namn efter redigering');
+ await page.locator('#buildFloorName').press('Tab');
+ check('room floor can be renamed through properties',await page.evaluate(()=>__furnitureEditor.getPatch().architecture.floors.at(-1)?.name==='Namn efter redigering'));
+ await page.locator('#buildUndo').click();
+ check('single undo restores room name',await page.evaluate(()=>__furnitureEditor.getPatch().architecture.floors.at(-1)?.name==='Testlokal'));
+ await page.locator('#buildUndo').click();
+ check('exact room creation undo is atomic',await page.evaluate(n=>{const p=__furnitureEditor.getPatch().architecture;return p.added.length===n.added&&p.floors.length===n.floors;},roomBefore));
  check('no FPS boot, JS/shader errors, external resources or HTTP failures',!report.errors.length&&!report.httpFailures.length&&!report.external.length&&await page.evaluate(()=>!window.__fps));
  report.status='PASS';
 }catch(e){report.status='FAIL';report.errors.push(e.stack||String(e));console.error(e);}

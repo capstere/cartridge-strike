@@ -55,7 +55,7 @@
         <option value="window">Fönster med bröstning</option><option value="door">Vanlig dörr</option>
         <option value="card-door">Passerkortsdörr</option><option value="elevator-door">Hissdörr</option>
         <option value="terrace-door">Terrassdörr</option><option value="opening">Öppen passage</option>
-        <option value="floor">Ny golvyta</option>
+        <option value="floor">Ny golvyta</option><option value="room-rect">RUM – rektangel (4 väggar)</option>
       </select>
       <div class="build-palette" aria-label="Byggverktyg">
         <button data-build-tool="select" class="active" type="button">↖ VÄLJ</button>
@@ -65,6 +65,19 @@
         <button data-build-tool="door" class="type-door" type="button">DÖRR</button>
         <button data-build-tool="opening" type="button">ÖPPNING</button>
         <button data-build-tool="floor" type="button">GOLVYTA</button>
+        <button data-build-tool="room-rect" type="button" class="room-tool">▣ RUM · REKTANGEL</button>
+      </div>
+      <div id="buildRoomSettings" class="build-room-settings" hidden>
+        <strong>SKAPA REKTANGULÄRT RUM</strong>
+        <p>Rita med två klick, eller klicka ett hörn och välj exakta mått. Alla fyra väggar får samma höjd, och hörnen möts utan glipor.</p>
+        <div class="build-coordinate-grid"><label>Längd X (m)<input id="buildRoomWidth" type="number" min="0.5" max="50" step="0.1" value="6"></label>
+        <label>Bredd / djup Z (m)<input id="buildRoomDepth" type="number" min="0.5" max="50" step="0.1" value="4"></label></div>
+        <div class="build-coordinate-grid"><label>Vägghöjd (m)<input id="buildRoomHeight" type="number" min="0.45" max="6" step="0.05" value="2.85"></label>
+        <label>Väggtjocklek (m)<input id="buildRoomThickness" type="number" min="0.025" max="0.7" step="0.01" value="0.11"></label></div>
+        <label>Rumsnamn<input id="buildRoomName" type="text" maxlength="60" value="Mitt rum"></label>
+        <label class="build-room-floor"><input id="buildRoomFloor" type="checkbox" checked> Skapa golv samtidigt</label>
+        <button id="buildRoomCreateExact" type="button" disabled>SKAPA MED EXAKTA MÅTT</button>
+        <small>Exakta mått räknas från första hörnet i +X/+Z-riktning. Rita två hörn för att välja annan riktning. Varje vägg går att redigera separat efteråt.</small>
       </div>
       <div class="build-precision" role="group" aria-label="Smarta rithjälpmedel">
         <strong>SMART RITNING</strong>
