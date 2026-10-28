@@ -1,7 +1,7 @@
 /** Smart attachment decisions are pure and editor-only. No map/physics mutation. */
 import {placementRole,proceduralOf} from './library/procedural.mjs';
 import {round} from './core.mjs';
-const isSurface=o=>!o.deleted&&(proceduralOf(o)?.shape==='counter'||['desk','table','coffee-table'].includes(o.kind)||/counter|bench|worktop|table|desk/i.test(o.assetName||''));
+const isSurface=o=>!o.deleted&&(['counter','desk','table','round'].includes(proceduralOf(o)?.shape)||['desk','table','coffee-table'].includes(o.kind)||/counter|bench|worktop|table|desk|skrivbord|bänk/i.test(o.assetName||''));
 const near=(a,b)=>Math.hypot(a.x-b.x,a.z-b.z);
 const global=(parent,lx,lz)=>{
  const c=Math.cos(parent.yaw),s=Math.sin(parent.yaw);
