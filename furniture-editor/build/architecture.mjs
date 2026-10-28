@@ -4,6 +4,15 @@
  */
 import {architecturalFinish,WALL_FINISHES,DOOR_FINISHES} from '../appearance.mjs';
 export const ARCHITECTURE_SCHEMA=1;
+export const STANDARD_PASSAGE_WIDTH=1.20;
+export function standardPassageSpan(a,b,width=STANDARD_PASSAGE_WIDTH){
+ const dx=b[0]-a[0],dz=b[1]-a[1],len=Math.hypot(dx,dz);
+ if(!Number.isFinite(len)||len<.20)throw Error('Ange två olika punkter för öppningens riktning.');
+ if(!Number.isFinite(width)||width<1.10||width>8)throw Error('Passagens bredd måste vara 1,10–8,00 modellenheter.');
+ const cx=(a[0]+b[0])/2,cz=(a[1]+b[1])/2,ux=dx/len,uz=dz/len;
+ return {a:[roundPosition(cx-ux*width/2),roundPosition(cz-uz*width/2)],
+         b:[roundPosition(cx+ux*width/2),roundPosition(cz+uz*width/2)]};
+}
 export const ARCHITECTURE_TYPES=Object.freeze(['wall','glazed','window','door','card-door','elevator-door','terrace-door','opening']);
 export const ARCHITECTURE_NAMES=Object.freeze({
  wall:'Vägg',glazed:'Fönstervägg · golv till tak',window:'Fönster med bröstning',
