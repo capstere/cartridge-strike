@@ -255,7 +255,15 @@ export function createBuildMode({data,scene,canvas,camera,getZoom,getView,rayAt,
   $('buildCount').textContent=count()+' byggändringar';}
  function showProperties(){const e=entryById(selection);$('buildNoSelection').hidden=!!e;$('buildSelected').hidden=!e;
   $('buildSelectionId').textContent=e?.id||'Ingen vald';
-  if(e){$('buildKind').value=e.kind||'floor';const isFloor='x0' in e;$('buildKind').disabled=isFloor;
+  const poster=!!e?.wallId;
+  $('posterFields').hidden=!poster;$('buildKindFields').hidden=poster;
+  if(poster){
+   $('buildEndpointFields').hidden=true;$('buildFloorFields').hidden=true;$('buildFinishFields').hidden=true;
+   $('posterText').value=e.text;$('posterSubtitle').value=e.subtitle;$('posterColor').value=e.color;
+   $('posterWidth').value=e.width;$('posterHeight').value=e.height;$('posterY').value=e.y;
+   $('posterT').value=Math.round(e.t*100);$('posterSide').value=String(e.side);
+   $('posterRemoveImage').disabled=!e.image;$('buildDelete').textContent='Ta bort affisch';
+  }else if(e){$('buildKind').value=e.kind||'floor';const isFloor='x0' in e;$('buildKind').disabled=isFloor;
    $('buildEndpointFields').hidden=isFloor;$('buildFloorFields').hidden=!isFloor;
    const colorable=!isFloor&&e.kind!=='opening';
    $('buildFinishFields').hidden=!colorable;
@@ -277,7 +285,8 @@ export function createBuildMode({data,scene,canvas,camera,getZoom,getView,rayAt,
   $('buildDoorInWall').disabled=!wallSelected;
   const editable=!!e&&'a' in e&&!e.source;
   for(const id of ['buildStraighten','buildJoinEnds','buildMatchHeight'])$(id).disabled=!editable;
-  $('buildSimpleHelp').textContent=e?('Markerad: '+(ARCHITECTURE_NAMES[e.kind]||'Golv')+' · '+e.id+' — välj en åtgärd nedan'):'Klicka först på en vägg på kartan. Välj sedan Fönster, Glasvägg eller Lägg till dörr.';
+  $('buildSimpleHelp').textContent=poster?'Affischen är kopplad till sin vägg. Ändra värdeord, storlek eller välj en lokal bild.':
+   e?('Markerad: '+(ARCHITECTURE_NAMES[e.kind]||'Golv')+' · '+e.id+' — välj en åtgärd nedan'):'Välj en vägg eller klicka AFFISCH PÅ VÄGG för att skapa en värdeordsaffisch.';
   reportWarnings();
  }
  function renderList(){const list=$('buildList');list.replaceChildren();const filter=$('buildSearch').value.trim().toLowerCase();
@@ -467,6 +476,26 @@ export function createBuildMode({data,scene,canvas,camera,getZoom,getView,rayAt,
   $('buildSearch').oninput=renderList;
   $('buildKind').onchange=e=>{const s=entryById(selection);if(s&&'a' in s)changeEntry(s.id,{kind:e.target.value});};
   $('buildFinish').onchange=e=>{const s=entryById(selection);if(s&&'a' in s)changeEntry(s.id,{finish:e.target.value});};
+  for(const [id,key] of [['posterText','text'],['posterSubtitle','subtitle'],['posterColor','color']]){
+   $(id).onchange=e=>changePoster({[key]:e.target.value});
+  }
+  for(const [id,key] of [['posterWidth','width'],['posterHeight','height'],['posterY','y']]){
+   $(id).onchange=e=>{const value=Number(e.target.value);
+    if(Number.isFinite(value))changePoster({[key]:value});showProperties();};
+  }
+  $('posterT').onchange=e=>{const value=Number(e.target.value);
+   if(Number.isFinite(value))changePoster({t:roundPosition(value/100)});showProperties();};
+  $('posterSide').onchange=e=>{changePoster({side:Number(e.target.value)});showProperties();};
+  $('posterImage').onchange=async e=>{
+   const id=selection,p=posterById(id),file=e.target.files?.[0];e.target.value='';
+   if(!p||!file)return;
+   try{
+    const image=await compressPosterImage(file);
+    if(selection!==id||!posterById(id))throw Error('Affischen har ändrats. Välj den igen.');
+    changePoster({image});notify?.('Affischbilden är komprimerad och sparas i JSON/ZIP-projektet.');
+   }catch(err){notify?.('Bildimport: '+err.message);}
+  };
+  $('posterRemoveImage').onclick=()=>{if(changePoster({image:''}))notify?.('Textaffischen visas igen.');};
   const kmap={buildA_X:['a',0],buildA_Z:['a',1],buildB_X:['b',0],buildB_Z:['b',1]};
   for(const [id,[end,index]] of Object.entries(kmap))$(id).onchange=e=>{const s=entryById(selection);if(!s||!('a' in s))return;
    const value=Number(e.target.value),p=[...s[end]];p[index]=value;if(!Number.isFinite(value))return;
@@ -479,8 +508,8 @@ export function createBuildMode({data,scene,canvas,camera,getZoom,getView,rayAt,
    if(key==='name'||Number.isFinite(value))changeEntry(s.id,{[key]:value});showProperties();};
   $('buildDelete').onclick=removeSelected;$('buildDuplicate').onclick=duplicate;
   $('buildUndo').onclick=undo;$('buildRedo').onclick=redo;
-  $('buildReset').onclick=()=>{if(!confirm('Återställa alla vägg-/dörr-/golvändringar i skissen? Möblerna påverkas inte.'))return;
-   const before=capture();entries=cloneAll(baseline);floors=[];selection=null;record(before);notify?.('Byggskissen återställd. Originalspelet har aldrig ändrats.');};
+  $('buildReset').onclick=()=>{if(!confirm('Återställa alla vägg-/dörr-/golv-/affischändringar i skissen? Möblerna påverkas inte.'))return;
+   const before=capture();entries=cloneAll(baseline);floors=[];posters=[];resetPosterCache();selection=null;record(before);notify?.('Byggskissen återställd. Originalspelet har aldrig ändrats.');};
   canvas.addEventListener('pointerdown',handlePointerDown);
   canvas.addEventListener('pointermove',handlePointerMove);
   canvas.addEventListener('pointerup',handlePointerEnd);canvas.addEventListener('pointercancel',handlePointerEnd);
@@ -497,12 +526,15 @@ export function createBuildMode({data,scene,canvas,camera,getZoom,getView,rayAt,
     else changeEntry(e.id,{x0:e.x0+pos[0],x1:e.x1+pos[0],z0:e.z0+pos[1],z1:e.z1+pos[1]});}
   });
  }
- function load(patch){const read=parseArchitecture(patch,baseline);entries=read.entries;floors=read.floors;history=[];future=[];
+ function load(patch){const read=parseArchitecture(patch,baseline),loadedPosters=parsePosters(patch?.posters,read.entries);
+  entries=read.entries;floors=read.floors;posters=loadedPosters;resetPosterCache();history=[];future=[];
   selection=null;first=null;hover=null;dirty=hasSketch();render();showProperties();renderList();}
- function resetWithoutConfirm(){entries=cloneAll(baseline);floors=[];history=[];future=[];selection=null;render();showProperties();renderList();}
+ function resetWithoutConfirm(){entries=cloneAll(baseline);floors=[];posters=[];resetPosterCache();history=[];future=[];selection=null;render();showProperties();renderList();}
  bind();render();showProperties();renderList();syncVisibility();
  return {get active(){return active;},enable,getBaseline:()=>cloneAll(baseline),getEntries:()=>cloneAll(entries),getFloors:()=>copyFloors(floors),
-  export:()=>exportArchitecture(entries,baseline,floors),load,reset:resetWithoutConfirm,hasSketch,
+  export:exportAll,load,reset:resetWithoutConfirm,hasSketch,posters:()=>copyPosters(posters),
+  addPoster:(wallId,options)=>{const wall=entries.find(e=>e.id===wallId);const poster=makePoster(wall,posters,.5,1,options);const before=capture();posters.push(poster);selection=poster.id;record(before);return poster.id;},
+  updatePoster:(id,delta)=>{selection=id;return changePoster(delta);},
   setView:()=>render(),select,setTool,undo,redo,count,quickChange,quickDoor,
   createRectangle:(a,b,options)=>{
    const before=capture(),made=createRectangleRoom(entries,floors,a,b,options);
