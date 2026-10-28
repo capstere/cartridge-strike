@@ -108,3 +108,20 @@
 
 .poster-entry{width:100%;border:1px solid #bd995b;border-radius:6px;background:#fff1dc;color:#5a452c;padding:12px;text-align:left;font-size:12px;font-weight:900;letter-spacing:.2px;display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:7px;cursor:pointer}
 .poster-entry span{font-size:10px;font-weight:600;color:#795b34}.poster-entry:hover{background:#ffdfae}
+
+/* Smart wall painting: primary workflow, no tool switching needed between strokes. */
+.build-smart-paint-entry{width:100%;border:2px solid #348c81;border-radius:8px;background:#e5f6ee;color:#164f49;padding:13px 11px;margin:10px 0 8px;text-align:left;font-weight:900;display:flex;flex-direction:column;gap:4px;cursor:pointer;letter-spacing:.2px}
+.build-smart-paint-entry small{font-size:11px;font-weight:650;color:#42746a}
+.build-smart-paint-entry.active,.build-smart-paint-entry:hover{background:#237d70;color:#fff}
+.build-smart-paint-entry.active small,.build-smart-paint-entry:hover small{color:#eefcf7}
+.build-paint-settings{padding:13px;background:#e9f6f1;border:1px solid #a8cec0;border-radius:9px;margin:8px 0 12px;display:grid;gap:10px;color:#214d43}
+.build-paint-settings strong{font-size:12px;letter-spacing:.5px}
+.build-paint-settings label{font-size:11px;font-weight:800}
+.build-paint-settings select{width:100%;min-height:39px;border:1px solid #aecac0;border-radius:5px;background:#fff;color:#225147;padding:8px}
+.build-paint-settings p{margin:0;font-size:11px;line-height:1.55;color:#3c655c}
+.build-paint-palette{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}
+.build-paint-palette button{min-width:0;border:1px solid #adcbc2;border-radius:5px;background:white;color:#245147;padding:10px 7px;font-size:11px;font-weight:850;cursor:pointer}
+.build-paint-palette button.active{border-color:#1d8273;background:#167768;color:white;box-shadow:0 0 0 1px #167768 inset}
+.build-paint-palette button:hover{border-color:#167768}
+.build-palette .smart-paint-palette-button{grid-column:1/-1;border:2px solid #32897c;background:#e6f7ef;color:#1a7164;font-weight:900}
+.build-palette .smart-paint-palette-button.active{background:#167768;color:#fff}
