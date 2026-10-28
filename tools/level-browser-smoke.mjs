@@ -37,7 +37,7 @@ try{
  await page.waitForTimeout(500);await page.keyboard.up('d');
  const afterWalk=await walk.evaluate(()=>({x:__walk.actor.x,z:__walk.actor.z}));
  assert.notDeepEqual(afterWalk,beforeWalk);
- await walk.locator('#exit').click();assert(await page.locator('#plan').isVisible());
+ await walk.locator('#exit').click();await page.locator('#plan').waitFor({state:'visible',timeout:5000});
  await page.keyboard.press('Escape');await page.locator('#undo').click();assert.equal(await page.evaluate(()=>__levelStudio.project.furniture.added.length),0);
  await page.locator('#redo').click();assert.equal(await page.evaluate(()=>__levelStudio.project.furniture.added.length),1);
  await page.locator('#duplicate').click();at=await page.evaluate(()=>__levelStudio.screenWorldPoint(6.8,6.8));await page.mouse.click(at.x,at.y);await page.keyboard.press('Escape');
