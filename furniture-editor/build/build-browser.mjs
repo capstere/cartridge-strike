@@ -178,6 +178,7 @@ try{
  check('custom value word saved to design architecture',await page.evaluate(()=>
   __furnitureEditor.getPatch().architecture.posters.some(p=>p.text==='SAMARBETE')));
  const posterCount=await page.evaluate(()=>__furnitureEditor.getPatch().architecture.posters.length);
+ await page.locator('#viewport').focus();
  await page.keyboard.press('Control+d');
  check('Ctrl+D duplicates selected wall poster',await page.evaluate(count=>
   __furnitureEditor.getPatch().architecture.posters.length===count+1,posterCount));
