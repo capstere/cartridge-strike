@@ -23,6 +23,22 @@ JSON innehåller främst möblerings- och arkitekturändringarna. Har du placera
 
 Den framtida spelversionen kan optimeras separat (instanser för likadana objekt, sammanfogning av lämplig statisk geometri, texturer, LOD, enkla kollisionsformer, culling), men alla modeller kan inte garanteras fungera i 60 FPS eller på mobil bara för att de får plats i en ZIP. Spara originalprojektet; render-, minnes-, kollisions- och botprover måste göras på målplattformen. En exporterad designfil uppdaterar aldrig live-spelet automatiskt.
 
+## Rumsverktyget: RUM · REKTANGEL
+
+1. Välj **BYGG · VÄGGAR & DÖRRAR** → **▣ RUM · REKTANGEL**.
+2. **Rita fritt:** klicka ett hörn, rör musen tills den synliga rektangeln är lagom stor, och klicka motsatt hörn. 4 axelräta, exakt sammanfogade väggar skapas som **en** ångringsbar operation.
+3. **Skapa med exakta mått:** välj rumsläge, skriv **Längd X**, **Bredd/djup Z**, **Vägghöjd**, **Väggtjocklek** och **Rumsnamn**. Klicka **ett första hörn** och sedan **SKAPA MED EXAKTA MÅTT**. Exakta mått byggs i positiv X/Z-riktning från hörnet; vill du vända riktningen använder du två klick.
+4. **Skapa golv samtidigt** är förvalt. Avmarkera om du bygger på en befintlig golvyta. Golvet och väggarna följer med i JSON/ZIP.
+5. **Ångra** tar bort samtliga fyra väggar och golvet i ett steg. Du kan därefter välja en enskild vägg och sätta in en dörr med **+ DÖRR I VÄGGEN**. Namnet lagras i golvytans namn.
+
+Rummets väggar är fyra separata redigerbara byggdelar efter skapandet, inte ett parametriskt sammanhållet rum. Att flytta ett enda hörn i efterhand flyttar alltså **inte** andra angränsande väggar automatiskt; skapa om rummet med nya mått eller använd smarta fästningen om du vill göra större ändringar. Skissen påverkar inte spelets befintliga kollisions- eller navigeringssystem.
+
+### Framtida projektläge: Ny bana från grunden (ännu ej implementerat)
+
+Detta kräver ett **fristående banprojekt** i stället för dagens *ändringsfil mot originalkartan*: tom eller egen grundyta med valfri längd och bredd i X/Z, vägg-/våningshöjd i Y, valfria golv och våningsplan, egen kamera och rutnät. Sparformatet behöver bära grundytan och all skapad geometri, material, modellreferenser och versionerat projekt-ID utan beroende av dagens fasta `data.walls`/`data.rooms`. Därefter behövs ett **separat validerat byggsteg** för renderinstanser, kollisioner, gångbara golv, navmesh, spawns, dörrlogik och mobila prestandabudgetar.
+
+Förslaget är att erbjuda två startval: **Redigera befintlig bana** (bakåtkompatibelt) eller **Ny tom bana**. Detta rumsverktyg är en återanvändbar byggsten men aktiverar inte ett blankt spelautomatiskt.
+
 ## Så här använder du byggläget
 
 1. Öppna Designstudion och välj **BYGG · VÄGGAR & DÖRRAR** längst upp. Välj gärna ett rum i **Hoppa till rum**.
