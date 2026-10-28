@@ -91,8 +91,10 @@ export function createPhysics(description,data){
   const touchesPolygon=(x,z,r,p)=>insidePolygon(x,z,p)||nearEdge(x,z,p,r-EPS);
   for(const p of data.floorPolygons)addPolygon(floorIndex,p);
   for(const r of [...data.excludedRooms,...data.rooms.filter(r=>r.status==='uncertain'),...data.obstacles.filter(o=>o.kind==='uncertain-area')])addPolygon(scopeIndex,r.polygon);
-  for(const o of data.obstacles)addPolygon(navObstacleIndex,o.polygon);
-  const staticBoxes=description.boxes.filter(b=>b.w>0&&b.h>0&&b.d>0).map(b=>({...b,cos:Math.cos(b.angle||0),sin:Math.sin(b.angle||0)}));
+  for(const o of data.obstacles)if(o.collision!=='none')addPolygon(navObstacleIndex,o.polygon);
+  // Decorative objects remain visible but never enter the physical broadphase.
+  const decorativeIds=data.__custom?new Set(data.obstacles.filter(o=>o.collision==='none').map(o=>o.id)):new Set();
+  const staticBoxes=description.boxes.filter(b=>b.w>0&&b.h>0&&b.d>0&&!decorativeIds.has(b.id)).map(b=>({...b,cos:Math.cos(b.angle||0),sin:Math.sin(b.angle||0)}));
   for(const b of staticBoxes)boxIndex.insert(b,boxBounds(b));
   let dynamicBoxes=[],dynamicIndex=new SpatialIndex();
   const dynamicScratch=[],motionScratch=[];

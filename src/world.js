@@ -1,6 +1,7 @@
 /* One geographical source: generated floor5-data.js, derived from the accepted review. */
 (function(root){'use strict';
- const D=typeof module==='object'&&module.exports?require('./floor5-data.js'):root.SpelFloor5;
+ const floor5=typeof module==='object'&&module.exports?require('./floor5-data.js'):root.SpelFloor5;
+ function createSource(D){
  const H=2.85,RADIUS=.20,doorsById=new Map(D.doors.map(d=>[d.id,d]));
  const PHOTO_GLAZING=new Set(['WALL-124']);
  // Photo-supported finishes only: these IDs retain their reviewed boundary and collider.
@@ -13,7 +14,7 @@
  const onFloor=(x,z)=>floorAreas.some(a=>x>=a.bounds[0]-1e-7&&x<=a.bounds[2]+1e-7&&z>=a.bounds[1]-1e-7&&z<=a.bounds[3]+1e-7&&(inside(x,z,a.polygon)||a.polygon.some((p,i)=>distanceSegment(x,z,p,a.polygon[(i+1)%a.polygon.length])<1e-6)));
  function zone(s){const r=D.rooms.find(r=>r.status!=='uncertain'&&inside(s.x,s.z,r.polygon));if(r)return r;const c=D.corridors.find(r=>inside(s.x,s.z,r.polygon));return c||{id:'corridor',name:'Korridor · våning 5'};}
  const labRoom=r=>['I01','I02','I03','I04','I29'].includes(r.id);
- const roomColor=r=>labRoom(r)?palette.lab:/RESTROOM|STÄD|PENTRY/.test(r.name)?[.49,.49,.46]:palette.floor;
+ const roomColor=r=>D.__custom?(r.surface==='vinyl'?palette.lab:palette.floor):labRoom(r)?palette.lab:/RESTROOM|STÄD|PENTRY/.test(r.name)?[.49,.49,.46]:palette.floor;
  let cachedKey='',cachedScene=null;
  const geometryKey=s=>D.doors.filter(d=>d.accessCardConfirmed).map(d=>`${d.id}:${!!s.doors[d.id]}`).join('|');
  function build(s){
@@ -22,7 +23,7 @@
   const box=(id,x,y,z,w,h,d,color,material='wall',angle=0)=>scene.boxes.push({id,x,y,z,w,h,d,color:palette[color]||color,material,angle});
   const segmentBox=(id,a,b,y,h,thickness,color,material='wall')=>{const dx=b[0]-a[0],dz=b[1]-a[1];box(id,(a[0]+b[0])/2,y,(a[1]+b[1])/2,Math.hypot(dx,dz),h,thickness,color,material,-Math.atan2(dz,dx));};
   D.floorPolygons.forEach((p,i)=>{scene.surfaces.push({id:'floor-'+i,polygon:p,y:0,color:palette.floor,material:'carpet'},{id:'ceiling-'+i,polygon:p,y:H,color:palette.ceiling,material:'ceiling'});});
-  D.rooms.filter(r=>r.status!=='uncertain').forEach(r=>scene.surfaces.push({id:'finish-'+r.id,polygon:r.polygon,y:.006,color:roomColor(r),material:labRoom(r)||/RESTROOM|STÄD|PENTRY/.test(r.name)?'vinyl':'carpet'}));
+  [...D.rooms.filter(r=>r.status!=='uncertain'),...(D.__custom?D.corridors:[])].forEach(r=>scene.surfaces.push({id:'finish-'+r.id,polygon:r.polygon,y:.006,color:roomColor(r),material:D.__custom?r.surface:labRoom(r)||/RESTROOM|STÄD|PENTRY/.test(r.name)?'vinyl':'carpet'}));
   function glazed(id,a,b,height=H){
    const length=Math.hypot(b[0]-a[0],b[1]-a[1]);
    segmentBox(id,a,b,height/2,height,.035,[.72,.81,.81],'glass');
@@ -38,13 +39,15 @@
     glazed(w.id,w.a,w.b,height);
    }else if(w.surfaceType==='window'){
     const a=w.a,b=w.b,dx=b[0]-a[0],dz=b[1]-a[1],length=Math.hypot(dx,dz);
-    segmentBox(w.id+'-sill-wall',a,b,.42,.84,thickness,'wall');
-    segmentBox(w.id+'-header',a,b,2.70,.30,thickness,'wall');
-    segmentBox(w.id+'-glass',a,b,1.695,1.71,.035,[.72,.81,.81],'glass');
-    segmentBox(w.id+'-sill',a,b,.85,.045,.18,'white','metal');
-    segmentBox(w.id+'-top',a,b,2.55,.055,.10,'white','metal');
+    const sill=D.__custom?w.sill??.9:.84,header=D.__custom?Math.min(.3,height-sill-.15):.30;
+    const glassHeight=D.__custom?height-sill-header:1.71,glassY=D.__custom?sill+glassHeight/2:1.695;
+    segmentBox(w.id+'-sill-wall',a,b,sill/2,sill,thickness,'wall');
+    segmentBox(w.id+'-header',a,b,D.__custom?height-header/2:2.70,header,thickness,'wall');
+    segmentBox(w.id+'-glass',a,b,glassY,glassHeight,.035,[.72,.81,.81],'glass');
+    segmentBox(w.id+'-sill',a,b,D.__custom?sill+.01:.85,.045,.18,'white','metal');
+    segmentBox(w.id+'-top',a,b,D.__custom?height-header-.01:2.55,.055,.10,'white','metal');
     const n=Math.max(1,Math.ceil(length/1.55));
-    for(let i=0;i<=n;i++)box(w.id+'-mullion'+i,a[0]+dx*i/n,1.70,a[1]+dz*i/n,.045,1.74,.045,'white','metal');
+    for(let i=0;i<=n;i++)box(w.id+'-mullion'+i,a[0]+dx*i/n,D.__custom?glassY:1.70,a[1]+dz*i/n,.045,D.__custom?glassHeight:1.74,.045,'white','metal');
    }else if(!w.surfaceType&&PHOTO_GLAZING.has(w.id)){glazed(w.id,w.a,w.b,height);
     const length=Math.hypot(w.b[0]-w.a[0],w.b[1]-w.a[1]),n=Math.max(1,Math.round(length/1.12));
     for(let i=0;i<n;i++)box(w.id+'-curtain'+i,w.a[0]+length*(i+.1)/n,1.43,w.a[1]+.16,.23,2.65,.045,[.79,.81,.77],'fabric');
@@ -79,8 +82,9 @@
    box(id+'-stand',x,y+.085,z,.045,.17,.06,'metal','metal');box(id+'-base',x,y+.017,z,.24,.034,.15,'dark');
   }
   for(const o of D.obstacles){
-   scene.blockedPolygons.push({id:o.id,polygon:o.polygon});
+   if(o.collision!=='none')scene.blockedPolygons.push({id:o.id,polygon:o.polygon});
    const [x0,z0,x1,z1]=bounds(o.polygon),cx=(x0+x1)/2,cz=(z0+z1)/2,w=x1-x0,d=z1-z0;
+   if(D.__custom){box(o.id,cx,(o.height||.8)/2,cz,w,o.height||.8,d,'wood','furniture',o.yaw||0);continue;}
    if(o.kind==='uncertain-area'){box(o.id,cx,.95,cz,w,1.9,d,'blocked');continue;}
    if(o.kind==='authored-dining-table'){
     box(o.id+'-top',cx,.755,cz,w,.055,d,'white','table');
@@ -237,6 +241,9 @@
  function nearest(s,scene=build(s)){
   return targets(s).filter(t=>{if(!canInteract(s,t,scene))return false;const dx=t.x-s.x,dz=t.z-s.z,n=Math.hypot(dx,dz);return n<.3||(dx*Math.sin(s.yaw)-dz*Math.cos(s.yaw))/n>.25;}).sort((a,b)=>Math.hypot(a.x-s.x,a.z-s.z)-Math.hypot(b.x-s.x,b.z-s.z))[0]||null;
  }
- const api={data:D,RADIUS,build,geometryKey,zone,rooms:()=>D.rooms,canOccupy,targets,canInteract,nearest,inside,distanceSegment,doorsById};
- root.SpelWorld=api;if(typeof module==='object'&&module.exports)module.exports=api;
+ return {data:D,RADIUS,build,geometryKey,zone,rooms:()=>D.rooms,canOccupy,targets,canInteract,nearest,inside,distanceSegment,doorsById};
+ }
+ const api=createSource(floor5);
+ root.SpelWorld=api;root.SpelWorldForLevel=createSource;
+ if(typeof module==='object'&&module.exports)module.exports=api;
 })(globalThis);

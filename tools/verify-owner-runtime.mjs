@@ -2,7 +2,7 @@ import {readFileSync,existsSync} from 'node:fs';
 import {createHash} from 'node:crypto';
 import assert from 'node:assert/strict';
 const info=JSON.parse(readFileSync('build-info.json','utf8'));
-assert.equal(info.gameVersion,'0.17.0');
+assert.equal(info.gameVersion,'0.18.0');
 const names=new Set();
 for(const f of info.files){
  assert(!names.has(f.path));names.add(f.path);

@@ -8,11 +8,40 @@ import { createTacticalMap } from './tactical-map.mjs';
 import { createLivingPlan } from './living-floor-plan.mjs';
 import {createFacilityDetails} from './facility-details.mjs';
 import {prepareGlass,createGlassState} from './destructible-glass.mjs';
+import {levelProjectToWorldData} from './level-adapter.mjs';
 
 let sharedWorld;
+let levelCacheKey='',levelCache;
 const flatPoint=p=>({x:p[0],y:0,z:p[1]});
 
-export function createWorld({fresh=false}={}){
+function createLevelWorld(project,{fresh=false}={}){
+ const key=JSON.stringify(project);
+ if(!fresh&&levelCacheKey===key&&levelCache)return levelCache;
+ const {data,anchors}=levelProjectToWorldData(project);
+ const source=globalThis.SpelWorldForLevel(data);
+ const description=source.build({doors:Object.fromEntries(data.doors.filter(d=>d.accessCardConfirmed).map(d=>[d.id,true]))});
+ const glassPlan=prepareGlass(description,data),physics=createPhysics(description,data),doors=createDoors(data,physics);
+ const doorClearance=new SpatialIndex(),scratch=[];
+ for(const door of doors.doors)for(const sign of [-1,1]){
+  doors.pose(door,Math.PI/2,sign);
+  for(const leaf of door.leaves){const b={...leaf.box},hx=(Math.abs(b.cos)*b.w+Math.abs(b.sin)*b.d)/2,hz=(Math.abs(b.sin)*b.w+Math.abs(b.cos)*b.d)/2;
+   doorClearance.insert(b,{minX:b.x-hx,maxX:b.x+hx,minZ:b.z-hz,maxZ:b.z+hz});}
+ }
+ doors.reset();
+ const navPhysics={...physics,canOccupy:(x,z,r=ACTOR_RADIUS,h=1.7,y=0)=>physics.staticCanOccupy(x,z,r,h,y)&&
+  !doorClearance.query(x,z,r,scratch).some(b=>circleHitsBox(x,z,r,b))};
+ const navigation=createNavigation(data,navPhysics),roomAt=(x,z)=>[...data.rooms,...data.corridors].find(r=>insidePolygon(x,z,r.polygon))||null;
+ physics.setDynamicBoxes(doors.boxes);
+ const glass=createGlassState(glassPlan,physics,()=>navigation.invalidate());
+ const world={newLevel:true,description,data,anchors,doors,glass,details:null,living:null,furnishings:{instances:[],boxes:[]},tactical:null,
+  roomAt,materialAt:(x,z)=>roomAt(x,z)?.surface||'carpet',...physics,findPath:navigation.findPath,navigation,
+  statistics:{...physics.statistics,navigation:navigation.statistics,furnishings:0}};
+ if(!fresh){levelCacheKey=key;levelCache=world;}
+ return world;
+}
+
+export function createWorld({fresh=false,levelProject=null}={}){
+ if(levelProject)return createLevelWorld(levelProject,{fresh});
   if(sharedWorld&&!fresh)return sharedWorld;
   const source=globalThis.SpelWorld,data=source.data;
   const inherited=source.build({doors:Object.fromEntries(data.doors.filter(d=>d.accessCardConfirmed).map(d=>[d.id,true]))});

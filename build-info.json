@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "gameVersion": "0.17.0",
+  "gameVersion": "0.18.0",
   "entrypoint": "fps/index.html",
   "release": {
     "mode": "owner-approved-facility-details-glass",
@@ -165,14 +165,14 @@
       "sha256": "ac4071825b15d6c612791ccbf1d6588e89384e83706b5214137a2d01ec0f4be8"
     },
     {
-      "path": "assets/fps/audio/riposte-f_knife-1.mp3",
-      "bytes": 2517,
-      "sha256": "0619b408af2f73a7d88920c677f27e4926aa23fbe10ae3bb01a71606cc542ac7"
-    },
-    {
       "path": "assets/fps/audio/riposte-f_knife_hit-1.mp3",
       "bytes": 3453,
       "sha256": "23262da97855db49c7b447ef452a1831f52c493c38099809ae61921e26a4d536"
+    },
+    {
+      "path": "assets/fps/audio/riposte-f_knife-1.mp3",
+      "bytes": 2517,
+      "sha256": "0619b408af2f73a7d88920c677f27e4926aa23fbe10ae3bb01a71606cc542ac7"
     },
     {
       "path": "assets/fps/audio/riposte-f_pickup-1.mp3",
@@ -310,36 +310,6 @@
       "sha256": "33f128a7adca7e9f42c9b95790ce31a5611e0ec1b831778bd4290c1fff4fddaf"
     },
     {
-      "path": "assets/fps/materials/WhitePlaster02/WhitePlaster02_1K-JPG_Color.jpg",
-      "bytes": 527219,
-      "sha256": "a1ebbe091bd1ae93d2abd5de8d69f9003a8d0ee6532bcf9a87c2492c97051f23"
-    },
-    {
-      "path": "assets/fps/materials/WhitePlaster02/WhitePlaster02_1K-JPG_NormalGL.jpg",
-      "bytes": 652310,
-      "sha256": "eb572ca3630d5bfde72e2601b1f02412da23ca005cd19384dced8690be4cb783"
-    },
-    {
-      "path": "assets/fps/materials/WhitePlaster02/WhitePlaster02_1K-JPG_Roughness.jpg",
-      "bytes": 295900,
-      "sha256": "4ff1fe957cd161b07f721fe6c28a9459c8c2e8ec65627a26c16e483a07c80d85"
-    },
-    {
-      "path": "assets/fps/materials/Wood051/Wood051_1K-JPG_Color.jpg",
-      "bytes": 871537,
-      "sha256": "f3c6c5456457e8d05c1fee4d2f186f41d0aea2b8a06859b69ce2934e11aa8798"
-    },
-    {
-      "path": "assets/fps/materials/Wood051/Wood051_1K-JPG_NormalGL.jpg",
-      "bytes": 1583401,
-      "sha256": "9078dc50c43b55831ae322460fc96b62df68c7a148400bd7755ab2788fec1708"
-    },
-    {
-      "path": "assets/fps/materials/Wood051/Wood051_1K-JPG_Roughness.jpg",
-      "bytes": 680793,
-      "sha256": "b5736b940d721b49922cb14eebd52fd34f134b7ef99331ecf28565ce40358098"
-    },
-    {
       "path": "assets/fps/materials/riposte/paintwood/map.webp",
       "bytes": 10220,
       "sha256": "fde5a948c16580f30fc4a603854cd333c75f7297e2b57eecf58ebecc3eeec496"
@@ -383,6 +353,36 @@
       "path": "assets/fps/materials/riposte/timber/rough.webp",
       "bytes": 7486,
       "sha256": "c39dac1088336d7f94af5c06e233d0efd7a377eebf9096e0893a02f023b4f312"
+    },
+    {
+      "path": "assets/fps/materials/WhitePlaster02/WhitePlaster02_1K-JPG_Color.jpg",
+      "bytes": 527219,
+      "sha256": "a1ebbe091bd1ae93d2abd5de8d69f9003a8d0ee6532bcf9a87c2492c97051f23"
+    },
+    {
+      "path": "assets/fps/materials/WhitePlaster02/WhitePlaster02_1K-JPG_NormalGL.jpg",
+      "bytes": 652310,
+      "sha256": "eb572ca3630d5bfde72e2601b1f02412da23ca005cd19384dced8690be4cb783"
+    },
+    {
+      "path": "assets/fps/materials/WhitePlaster02/WhitePlaster02_1K-JPG_Roughness.jpg",
+      "bytes": 295900,
+      "sha256": "4ff1fe957cd161b07f721fe6c28a9459c8c2e8ec65627a26c16e483a07c80d85"
+    },
+    {
+      "path": "assets/fps/materials/Wood051/Wood051_1K-JPG_Color.jpg",
+      "bytes": 871537,
+      "sha256": "f3c6c5456457e8d05c1fee4d2f186f41d0aea2b8a06859b69ce2934e11aa8798"
+    },
+    {
+      "path": "assets/fps/materials/Wood051/Wood051_1K-JPG_NormalGL.jpg",
+      "bytes": 1583401,
+      "sha256": "9078dc50c43b55831ae322460fc96b62df68c7a148400bd7755ab2788fec1708"
+    },
+    {
+      "path": "assets/fps/materials/Wood051/Wood051_1K-JPG_Roughness.jpg",
+      "bytes": 680793,
+      "sha256": "b5736b940d721b49922cb14eebd52fd34f134b7ef99331ecf28565ce40358098"
     },
     {
       "path": "assets/fps/models/bookcaseClosedDoors.glb",
@@ -472,7 +472,7 @@
     {
       "path": "fps/index.html",
       "bytes": 10356,
-      "sha256": "05b222c856ca49af925c6a933d4cf7e47121fbd74effa42f762b776ab1445f78"
+      "sha256": "8b7d123572b13aa0c3d423c4c58f9731796c622951ec21c1db2b5ae2c878af21"
     },
     {
       "path": "fps/style.css",
@@ -480,9 +480,109 @@
       "sha256": "b257d3585567e1367a7d69b2e815e32535d0ae3e62d71431de99ec50df575cc5"
     },
     {
+      "path": "furniture-editor/appearance.mjs",
+      "bytes": 3462,
+      "sha256": "7b002b11298725eb846921fb14d3307b46bd419b882c6feff0e290cda2ed851f"
+    },
+    {
+      "path": "furniture-editor/build/ai-export.mjs",
+      "bytes": 3345,
+      "sha256": "8ef3c39a2855ec2fcf90b0745b93f28138203a1d321e204c54092bda95441347"
+    },
+    {
+      "path": "furniture-editor/build/architecture.mjs",
+      "bytes": 12279,
+      "sha256": "f3704cb954f5d0946498eb0ae51bb4962341f86f5f448ecaebec6bbbb430d518"
+    },
+    {
+      "path": "furniture-editor/build/level-project.mjs",
+      "bytes": 10903,
+      "sha256": "c335ca411fae111ce5c22bee49db05cfd7f430b26941c5442d7646db3f7e6e10"
+    },
+    {
+      "path": "furniture-editor/build/level-project.schema.json",
+      "bytes": 7021,
+      "sha256": "ea51a6b6511b39af77d4b47a83a88b9fe930a9c254e06fff904df1da986cbeab"
+    },
+    {
+      "path": "furniture-editor/build/validate-level.mjs",
+      "bytes": 8768,
+      "sha256": "0bd1c88ebe231e41f037a40a389ee9fcd077b813d12886ef33895793a46254ed"
+    },
+    {
+      "path": "furniture-editor/core.mjs",
+      "bytes": 13511,
+      "sha256": "0237320972ce46b4cc9fa07ddbfddb1f259d7e12b2a86ed5389e08b25b253467"
+    },
+    {
+      "path": "furniture-editor/index.html",
+      "bytes": 25710,
+      "sha256": "98defdb84740f19b5d32872923c604c5d9e05d5b46c8c86186e517100a978bd1"
+    },
+    {
+      "path": "furniture-editor/library/catalog.mjs",
+      "bytes": 47690,
+      "sha256": "59449beb150a42fdc4b259283c50171563a31c3f723efd4f928724c113d34a40"
+    },
+    {
+      "path": "furniture-editor/library/glb-utils.mjs",
+      "bytes": 3886,
+      "sha256": "de67282165c33c21f7029b8482ee9cb55062e35cb7de68fa95e653c0c0a453d6"
+    },
+    {
+      "path": "furniture-editor/library/models.mjs",
+      "bytes": 6210,
+      "sha256": "2a35479a85d658f92688cfd23b2729b153bb84cee7b91c0671c3ab8870fc7ddf"
+    },
+    {
+      "path": "furniture-editor/library/procedural-mesh.mjs",
+      "bytes": 3128,
+      "sha256": "b9b57293aca45a23d1eef7081dac18d3f2df8d0aef93d89cf106ed448386ac19"
+    },
+    {
+      "path": "furniture-editor/library/procedural.mjs",
+      "bytes": 3506,
+      "sha256": "36886ec4483d055ebef18663e817e704691f7b3e066f4667a8a0bfd2e581415f"
+    },
+    {
+      "path": "furniture-editor/library/zip.mjs",
+      "bytes": 5162,
+      "sha256": "902974e6eba6ef4f80acd1fe4a07d51d9a4b64e7633e475e528eeb1051091871"
+    },
+    {
+      "path": "furniture-editor/new.css",
+      "bytes": 2619,
+      "sha256": "243c539eae238aa162f32fd209d0ece69b7f0953ae1ea8d66df2f4cbbe6385ab"
+    },
+    {
+      "path": "furniture-editor/new.html",
+      "bytes": 5922,
+      "sha256": "f144cfa7ae2ce99add313c8a4e5cabae6a54275ef5fe6dad16b1728fd995f223"
+    },
+    {
+      "path": "furniture-editor/new.mjs",
+      "bytes": 25947,
+      "sha256": "12e4cf8a1ac50734594c3dac1b41f51f0182ab070fe0e8a8fe14196ff9185e6d"
+    },
+    {
+      "path": "furniture-editor/smart-placement.mjs",
+      "bytes": 2435,
+      "sha256": "d1cabc328c6584b130b3623c15650ca6477e02a595d1cfd410bf4a51f14a4e8b"
+    },
+    {
       "path": "index.html",
       "bytes": 619,
       "sha256": "851822b26e7424b066fc99d2f2ccca16ea4a5bba09b963d152a0cd714c268dda"
+    },
+    {
+      "path": "levels/manifest.json",
+      "bytes": 157,
+      "sha256": "c3761949b66ccf0a7b4e6055434ad9a170fdb92cdfbe5551ce09a3bdd1fdf0a9"
+    },
+    {
+      "path": "levels/synthetic-demo.json",
+      "bytes": 8045,
+      "sha256": "d7d3d7f136cb9b334d371b8b7d9fc97bac4e0fd3bec1d0954efd3cc1b9637b62"
     },
     {
       "path": "licenses/action-audio.txt",
@@ -586,8 +686,8 @@
     },
     {
       "path": "src/fps/app.mjs",
-      "bytes": 27949,
-      "sha256": "c79fabf1c4359fdb4dec94f7c12f490010ed085e1b8dd086e12870b646ebc4e8"
+      "bytes": 29304,
+      "sha256": "0a49feb2bd1ea43a656eadd31a5dfc1bbaff83a9c31135cef691895dec31b764"
     },
     {
       "path": "src/fps/audio.mjs",
@@ -740,6 +840,11 @@
       "sha256": "c11965f87a2f0da16543209f2093d6067fdd0c2941c6752612cdb84d63654db5"
     },
     {
+      "path": "src/fps/level-adapter.mjs",
+      "bytes": 3493,
+      "sha256": "e182ea12eeaefa4594b60684a69daa7c3e9af91099a0d2d4a539cc71b075d028"
+    },
+    {
       "path": "src/fps/living-floor-art.mjs",
       "bytes": 8469,
       "sha256": "a70c83a4f6723c8a8ed42911e397f3f69cdb0a0e8c23755bc69523b9abcbf21a"
@@ -786,8 +891,8 @@
     },
     {
       "path": "src/fps/physics.mjs",
-      "bytes": 19246,
-      "sha256": "59e544deb4fd29858ea2f80ca7ae8e3300fa82a477627c7b9dfb162dcad46d4c"
+      "bytes": 19492,
+      "sha256": "675c00ae03691ae82796e36f76adfe51cc2483815b5a46a3d5f8ca6d40832669"
     },
     {
       "path": "src/fps/presentation-hands.mjs",
@@ -811,13 +916,13 @@
     },
     {
       "path": "src/fps/render-engine.mjs",
-      "bytes": 29810,
-      "sha256": "cda29394d72a75c14135200b1f01b175f236dcdedbd0fbf60d72f6a354fe152c"
+      "bytes": 30056,
+      "sha256": "0668024c553b635c86020b3ba459593b54f151c61cfb8c75e2e07c117a3124c6"
     },
     {
       "path": "src/fps/render.mjs",
-      "bytes": 14170,
-      "sha256": "15a122e4e85d62e178a6954dfe2dad051d4560048347b53988aae151ee8bb255"
+      "bytes": 14352,
+      "sha256": "301518e0ad5e1c8ba81362cabffabc1afc0a1d2c3d95cde99da04ec74587456a"
     },
     {
       "path": "src/fps/riposte-audio.mjs",
@@ -931,13 +1036,13 @@
     },
     {
       "path": "src/fps/world.mjs",
-      "bytes": 6095,
-      "sha256": "88d4707cc6dde4d7bb1efb4d564adcd58f431ae638a0d15657c50e805052e210"
+      "bytes": 8016,
+      "sha256": "dd6fec3b7cef0e5956e9fab5760a34345f288afbc2709d496992dc3206126ce8"
     },
     {
       "path": "src/world.js",
-      "bytes": 17783,
-      "sha256": "a6bfcfcd35c426808bc67c8de705801c8ee3ee96930c38737fa046ebcdfbc676"
+      "bytes": 18459,
+      "sha256": "e10fcdee26c54587241f799e899acdf24907efb7bdfc3472ec9eef198216292f"
     },
     {
       "path": "vendor/package.json",
@@ -1366,5 +1471,17 @@
       "Excluded volumes and exterior floor boundaries stay inaccessible after breaking glazing.",
       "No appliance simulation or lift/terrace access."
     ]
+  },
+  "levelRelease": {
+    "schemaVersion": 2,
+    "compatibleWith": [
+      "0.18.0"
+    ],
+    "defaultLevel": "floor5",
+    "publicLevels": [
+      "synthetic-demo"
+    ],
+    "modelUnitsVerifiedAsMetres": false,
+    "privatePreview": "browser-local"
   }
 }
