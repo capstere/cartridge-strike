@@ -29,7 +29,8 @@ export function createBuildMode({data,scene,canvas,camera,getZoom,getView,rayAt,
  const root=new THREE.Group();root.name='architectural-sketch-not-physics';scene.add(root);
  const geo=new THREE.BoxGeometry(1,1,1),sphere=new THREE.SphereGeometry(.13,12,8),materials=new Map();
  const mat=(name)=>{if(materials.has(name))return materials.get(name);
-  const color=palette[name.split(':')[0]]??palette.wall;
+  const [base,finish]=name.split(':');
+  const color=finish&&getView()==='3d'&&FINISH_COLORS[finish]?FINISH_COLORS[finish]:(palette[base]??palette.wall);
   const material=new THREE.MeshBasicMaterial({color,transparent:true,opacity:name==='wall'?.48:name==='frame'?.60:.55,depthWrite:false,side:THREE.DoubleSide});
   materials.set(name,material);return material;};
  const selectionMat=new THREE.MeshBasicMaterial({color:palette.selected,depthTest:false});
