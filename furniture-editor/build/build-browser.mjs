@@ -139,8 +139,13 @@ try{
    edges.every(w=>w.height===3.2)&&f?.name==='Testlokal'&&
    Math.abs(f.x1-f.x0-2.4)<.002&&Math.abs(f.z1-f.z0-1.6)<.002;
  },roomBefore));
+ await page.locator('#buildFloorName').fill('Namn efter redigering');
+ await page.locator('#buildFloorName').press('Tab');
+ check('room floor can be renamed through properties',await page.evaluate(()=>__furnitureEditor.getPatch().architecture.floors.at(-1)?.name==='Namn efter redigering'));
  await page.locator('#buildUndo').click();
- check('exact room undo is atomic',await page.evaluate(n=>{const p=__furnitureEditor.getPatch().architecture;return p.added.length===n.added&&p.floors.length===n.floors;},roomBefore));
+ check('single undo restores room name',await page.evaluate(()=>__furnitureEditor.getPatch().architecture.floors.at(-1)?.name==='Testlokal'));
+ await page.locator('#buildUndo').click();
+ check('exact room creation undo is atomic',await page.evaluate(n=>{const p=__furnitureEditor.getPatch().architecture;return p.added.length===n.added&&p.floors.length===n.floors;},roomBefore));
  check('no FPS boot, JS/shader errors, external resources or HTTP failures',!report.errors.length&&!report.httpFailures.length&&!report.external.length&&await page.evaluate(()=>!window.__fps));
  report.status='PASS';
 }catch(e){report.status='FAIL';report.errors.push(e.stack||String(e));console.error(e);}
