@@ -15,6 +15,7 @@ import {assetHash} from './library/glb-utils.mjs';
 import {createBuildMode} from './build/build-mode.mjs';
 import {parseArchitecture} from './build/architecture.mjs';
 import {parsePosters} from './build/posters.mjs';
+import {findCameraPlacement} from './placement.mjs';
 import {isTable,isChair,chairRole,chairColors,validateDimensions,FINISH_COLORS,cameraPanVector} from './appearance.mjs';
 const $=s=>document.querySelector(s),data=globalThis.SpelFloor5,worldSource=globalThis.SpelWorld;
 if(!data||!worldSource||!T.WebGLRenderer)throw new Error('Spelplanen eller Three.js saknas.');
@@ -269,28 +270,7 @@ function renderLibrary(){const query=$('#librarySearch').value.trim().toLocaleLo
 }
 /** Place at the camera's CURRENT location; never jump to the room dropdown's center. */
 function findPlacement(entry){
- const focusRoom=roomAt(target.x,target.z);
- if(!focusRoom)return null;
- const used=items.filter(o=>!o.deleted),radiusMax=2.6;
- let attempts=0;
- const tryAt=(x,z)=>{
-  const test={id:'temporary',kind:'prop',roomId:focusRoom.id,x:round(x),z:round(z),yaw:0,
-   w:entry.width,d:entry.depth,height:entry.height};
-  attempts++;
-  return !validate(test,used,data)?{x:test.x,z:test.z,roomId:focusRoom.id}:null;
- };
- const center=tryAt(target.x,target.z);if(center)return center;
- // Spiral only around the visible camera center, with a strict local maximum radius.
- for(let radius=.2;radius<=radiusMax;radius+=.2){
-  const n=Math.max(12,Math.ceil(radius*18));
-  for(let i=0;i<n;i++){
-   const angle=2*Math.PI*i/n;
-   const found=tryAt(target.x+radius*Math.cos(angle),target.z+radius*Math.sin(angle));
-   if(found)return found;
-   if(attempts>950)return null;
-  }
- }
- return null;
+ return findCameraPlacement(entry,target,data.rooms,items.filter(o=>!o.deleted),data,{inside,round,validate});
 }
 async function addPreset(id){const entry=LIBRARY_MAP.get(id)||localEntries.find(e=>e.id===id);
  if(!entry){notify('Okänt objekt.');return null;}
