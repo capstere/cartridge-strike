@@ -55,7 +55,7 @@ try{
  await page.waitForFunction(()=>__furnitureEditor.getState().changed>=1);
  check('saved JSON can be imported and edited again',await page.evaluate(()=>__furnitureEditor.getState().changed>=1));
  // New V2 model library: real Kenney thumbnail + GLB must be served locally.
- check('catalog contains 104 audited models including 28 Hissrum12 assets',await page.evaluate(()=>__furnitureEditor.catalogCount===104));
+ check('original 104 GLB assets retained plus 21 optimized furniture/equipment models',await page.evaluate(()=>__furnitureEditor.catalogCount===125));
  await page.locator('#openLibrary').click();
  check('library opens without loading FPS runtime',await page.locator('#libraryDialog').evaluate(e=>e.open));
  await page.locator('#librarySearch').fill('Liten växt');
@@ -149,6 +149,24 @@ try{
    const item=__furnitureEditor.getItem(id);
    return item.roomId===__furnitureEditor.roomAt(focus.x,focus.z);
   },{id:newId,focus}));
+ // Start a truly furniture-free editor, with source models untouched.
+ const beforeClear=await page.evaluate(()=>__furnitureEditor.getPatch());
+ await page.evaluate(()=>__furnitureEditor.emptyRooms());
+ check('clear all areas removes source chairs and hides fixed furniture without changing gameplay',
+  await page.evaluate(()=>__furnitureEditor.getEmptyFixed()&&__furnitureEditor.getState().chairs===0&&
+   __furnitureEditor.getPatch().removed.length>40));
+ const kitchen=await page.evaluate(()=>__furnitureEditor.addPreset('studio:counter-180'));
+ check('low-poly white counter can be added on a cleared floor',
+  await page.evaluate(id=>!!id&&__furnitureEditor.getItem(id)?.assetId==='studio:counter-180',kitchen));
+ const microwave=await page.evaluate(()=>__furnitureEditor.addPreset('studio:microwave'));
+ check('microwave magnetically attaches ON TOP of counter, never on the floor',
+  await page.evaluate(({microwave,kitchen})=>{
+    const item=__furnitureEditor.getItem(microwave),bench=__furnitureEditor.getItem(kitchen);
+    return !!item&&item.mountId===kitchen&&item.elevation>bench.height-.05;
+  },{microwave,kitchen}));
+ check('portable JSON saves cleared areas, procedural assets and countertop mount',
+  await page.evaluate(()=>{const d=__furnitureEditor.getPatch();return d.emptyFixed===true&&
+   d.added.some(x=>x.assetId==='studio:microwave'&&x.elevation>0&&x.mountId);}));
  check('no external requests, runtime boot, script/shader or HTTP errors',!report.externalRequests.length&&!report.httpFailures.length&&!report.errors.length&&await page.evaluate(()=>!window.__fps));
  report.status='PASS';
 }catch(err){report.status='FAIL';report.errors.push(err.stack||String(err));console.error(err);}
