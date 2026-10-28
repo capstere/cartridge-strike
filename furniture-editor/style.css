@@ -125,3 +125,15 @@
 .build-paint-palette button:hover{border-color:#167768}
 .build-palette .smart-paint-palette-button{grid-column:1/-1;border:2px solid #32897c;background:#e6f7ef;color:#1a7164;font-weight:900}
 .build-palette .smart-paint-palette-button.active{background:#167768;color:#fff}
+
+/* Workspace-first, reversible blank furnishings layout */
+.clear-interior{width:100%;background:#fff7e8;color:#674122;border:1px solid #b88d54;border-radius:7px;padding:11px 12px;display:flex;align-items:center;justify-content:space-between;font-size:12px;font-weight:900;cursor:pointer;gap:8px}
+.clear-interior small{font-weight:600;font-size:10px;color:#866f52}.clear-interior:hover{background:#ffe8c1}
+.clear-interior:disabled{cursor:default;background:#ebf4eb;color:#326c58;border-color:#aad0bd}
+.empty-layout-info{font-size:10px;font-weight:800;color:#346b65;margin:6px 0 8px}
+.smart-attach-toggle{display:flex!important;align-items:center;gap:7px;font-size:11px;font-weight:700;color:#355e50;margin:9px 0 11px;line-height:1.35}
+.smart-attach-toggle input{accent-color:#187e6e;width:17px;height:17px;flex-shrink:0}
+.treatment-fields{display:grid;gap:9px;padding:12px;background:#edf5f5;color:#254e59;border:1px solid #b3ccd3;border-radius:7px}
+.treatment-fields strong{font-size:12px}.treatment-fields p,.treatment-fields small{margin:0;font-size:11px;line-height:1.5}
+.treatment-fields label{font-size:11px;font-weight:800}
+.treatment-fields select{width:100%;padding:8px;border:1px solid #abc2cb;border-radius:5px;background:white}
