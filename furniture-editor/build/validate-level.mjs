@@ -5,12 +5,16 @@ import {resolveProjectScene,projectWallPieces} from './project-scene.mjs';
 import {corners,inside,intersects,segmentIntersectsRectangle} from '../core.mjs';
 import {wallPieces} from './architecture.mjs';
 import {testDoorTraversal} from './door-traversal.mjs';
+import {parsePosters} from './posters.mjs';
+import {parseTreatments} from './treatments.mjs';
 
 /** Validation never labels a structural-only result playable. */
 export function validateLevel(input,{engine=false}={}){
  const results=[];const add=(check,status,detail,id,fix)=>results.push({check,status,detail,...(id?{id}:{}),...(fix?{fix}:{})});
  let p;try{p=parseProject(input);}catch(e){add('V14','fail',e.message,null,'Rätta filformatet och öppna projektet igen.');return report(false,results);}
  p=inheritFloor5Gameplay(p);const scene=resolveProjectScene(p),g=p.ground,play=p.gameplay,entries=scene.entries;
+ try{parsePosters(p.architecture.posters,entries);parseTreatments(p.architecture.treatments,entries);}
+ catch(e){add('V08','fail','Fästfel: '+e.message,null,'Fäst tillbehöret på en befintlig vägg eller ta bort det.');}
  const onFloor=(x,z)=>scene.floors.some(f=>inside(x,z,f.polygon));
  const edited=e=>p.mode==='new-level'||!e.source||p.architecture.edits.some(a=>a.id===e.id);
  const points=[...play.spawns,...[play.objectives.bomb,play.objectives.rescue,...play.objectives.hostages].filter(Boolean)];
