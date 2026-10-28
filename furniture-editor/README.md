@@ -2,7 +2,17 @@
 
 **[Öppna Designstudion](https://capstere.github.io/cartridge-strike/furniture-editor/)** (dator och mus rekommenderas).
 
-Designstudion är ett **helt separat verktyg**. Du kan ändra möbler, väggar, fönster, glasväggar, dörrar och skissa nya golvytor. Dina ändringar är ett **förslag**, inte en ändring av live-spelet. Spelets befintliga kollision, botarnas navigation, gisslan, dörrar, spawns och regler ligger kvar exakt som i version 0.17.0.
+Det äldre läget **REDIGERA FLOOR 5** är fortfarande en fristående skissredigerare mot spelversion 0.17.0. Dess v1-patch och ursprungskarta är oförändrade. **NY BANA** (`new.html`) använder banprojekt schema 2 och spelversion 0.18.0; en separat banadapter kör nya projekt genom samma fysik, navigering, dörrar och matchregler.
+
+### Bygg en ny bana
+
+1. Öppna `furniture-editor/new.html` och välj banans storlek i modellenheter.
+2. Rita RUM med två hörnklick. Rita en KORRIDOR som ansluter till nästa rum; rita dörr över den befintliga vägglinjen eller använd **DÖRR I MARKERAD VÄGG**. Dörren behöver 1,10 modellenheter och korridoren bör vara minst 2,0 fri bredd.
+3. Öppna MÖBLERA och välj ur biblioteket eller importera egna GLB lokalt. Flytta med musen; smarta fästen följer med sin möbel.
+4. Öppna SPEL. Placera fem spawns per lag, bomb, två gisslan och rescue på golvet. Klicka **KONTROLLERA BANAN** för faktisk kapsel- och navigeringskontroll.
+5. Spara ZIP och öppna den igen för att fortsätta. **PROVSPELA MIN BANA** startar en privat lokal FPS från det aktuella projektet. Publicering kräver en separat rättighetsgranskad nivå i `levels/manifest.json` via `tools/apply-level-project.mjs`.
+
+Version 1 JSON/ZIP kan fortfarande öppnas i Floor 5-läget. Ny projektversion 2 är dokumenterad i `build/level-project.schema.json`; tekniska avvikelser från schemaförslaget finns i `docs/level-project-decisions.md`.
 
 
 ## Designstudion: tomma ytor, smart inredning, gardiner och persienner (28 oktober 2026)
@@ -122,7 +132,7 @@ Filerna är lokala för din webbläsare tills du laddar ned ett projekt; varken 
 
 Byggläget ligger endast under `furniture-editor/build/` och importeras aldrig av FPS-runtime. Sparformatet behåller det äldre schemat `cartridge-strike-furniture-studio` med ett valfritt fält `architecture` som bara innehåller ändrade/nya/borttagna byggdelar och egna golv. Den gamla JSON-strukturen för möbler fungerar fortfarande.
 
-Den ursprungliga `fps/`, `src/`, `assets/`, `vendor/`, `build-info.json`, `frontline/`, `index.html`, den aktiva Google/GitHub-konfigurationen, matcher, resurser och publiceringsmanifestet ska vara **byte-identiska** med version 0.17.0. Den här leveransen får inte lägga till ett runtime-bryggsystem som automatiskt läser och applicerar sparade väggar på spelet.
+Ovanstående avgränsning gällde den fristående 0.17.0-studion. Nya nivåer i 0.18.0 är uttryckligen opt-in via `?level=<manifest-id>` eller privat `?level=preview`; utan parameter startar Floor 5 genom sitt gamla världsspår.
 
 ## Testning
 

@@ -1,0 +1,121 @@
+/** Versioned level document. Parsing is deliberately independent of the renderer. */
+import {BASE_COMMIT,GAME_VERSION,PATCH_FORMAT,PATCH_SCHEMA} from '../core.mjs';
+import {validateEntry,validateFloorRect} from './architecture.mjs';
+import {assetHash} from '../library/glb-utils.mjs';
+import {makeZip,readZip,PROJECT_ZIP_MAX_BYTES} from '../library/zip.mjs';
+
+export const LEVEL_FORMAT='cartridge-strike-level-project',LEVEL_SCHEMA=2;
+export const LEVEL_GAME_VERSION='0.18.0',LEVEL_BASE_COMMIT='f5c63a22483feeeb29583853dab0c0911af5c09a',LEVEL_EDITOR_VERSION='3.1.0';
+const emptyArchitecture=()=>({schemaVersion:1,edits:[],added:[],removed:[],floors:[],posters:[],treatments:[]});
+const within=n=>typeof n==='number'&&Number.isFinite(n)&&Math.abs(n)<=100;
+const rect=r=>r&&[r.x0,r.z0,r.x1,r.z1].every(within)&&r.x1>r.x0&&r.z1>r.z0;
+const idPattern=/^lvl-[a-z0-9-]{4,60}$/;
+const safeName=n=>typeof n==='string'&&n.length>0&&n.length<=80&&!/[\u0000-\u001f]/.test(n);
+const fail=m=>{throw Error('Ogiltigt banprojekt: '+m);};
+const clone=o=>structuredClone(o);
+const counts=()=>({analysts:5,counterAnalysts:5});
+
+export function exportProject({mode='new-level',projectId='lvl-new-level',name='Min bana',ground,
+ architecture=emptyArchitecture(),furniture={placements:[],added:[],removed:[]},gameplay,
+ navHints=[],intent={},validation={},assets={library:[],local:[],posters:[]},agentBrief={},legacyPatch,
+ createdAt=new Date().toISOString(),migrationNotes=[]}={}){
+ const project={format:LEVEL_FORMAT,schemaVersion:LEVEL_SCHEMA,editorVersion:LEVEL_EDITOR_VERSION,createdAt,
+  projectId,name,game:{repository:'capstere/cartridge-strike',version:LEVEL_GAME_VERSION,
+   baseCommit:LEVEL_BASE_COMMIT,compatibleWith:[LEVEL_GAME_VERSION]},mode,
+  units:{linear:'model-unit',metricScaleVerified:false,planAxes:['x','z'],upAxis:'y',playerRadius:.22,actorRadius:.20,gridStep:.1},
+  rules:{minDoorWidth:1.10,minCorridorWidth:2,doorWidthAppliesTo:mode==='new-level'?'all':'new-and-edited'},
+  ground:ground||{bounds:{x0:-40,z0:-40,x1:40,z1:40},wallHeightDefault:2.85,floors:[]},
+  architecture,furniture,gameplay:gameplay||{mode:'classic',counts:counts(),spawns:[],objectives:{bomb:null,rescue:null,hostages:[]}},
+  navHints,intent,validation,assets,agentBrief};
+ if(legacyPatch)project.legacyPatch=legacyPatch;
+ if(migrationNotes.length)project.migrationNotes=migrationNotes;
+ return parseProject(project,{allowLegacy:false});
+}
+
+export function migrateV1(input){
+ if(!input||input.format!==PATCH_FORMAT||input.schemaVersion!==PATCH_SCHEMA)fail('okänt äldre format');
+ if(input.source?.repository!=='capstere/cartridge-strike'||input.source?.commit!==BASE_COMMIT||input.source?.version!==GAME_VERSION)
+  fail('äldre projektet har en annan källa');
+ if(!Array.isArray(input.placements)||!Array.isArray(input.added)||!Array.isArray(input.removed))fail('möbeländringar saknas');
+ const original=clone(input),notes=['Schema 1 öppnades i REDIGERA FLOOR 5.',
+  'Spawns och mål ärvs från oförändrad Floor 5-runtime.',
+  'Automatisk dörrsväng används; modellenheter är inte verifierade meter.'];
+ const architecture={...emptyArchitecture(),...(input.architecture||{})};
+ const local=[...new Set(input.added.map(x=>x.assetId).filter(x=>typeof x==='string'&&/^local:[a-f0-9]{64}$/.test(x)))].map(assetId=>({assetId,file:`assets/models/${assetId.slice(6)}.glb`,bytes:0,license:'private, unverified'}));
+ // A legacy JSON has no bundled binary size. Zero is a marker until ZIP import supplies bytes.
+ const migrated=exportProject({mode:'edit-floor5',projectId:'lvl-floor5-migrated',name:'Floor 5 – migrerat projekt',
+  architecture,furniture:{placements:clone(input.placements),added:clone(input.added),removed:clone(input.removed)},
+  assets:{library:[],local,posters:[]},legacyPatch:original,migrationNotes:notes,createdAt:input.createdAt||new Date().toISOString()});
+ migrated.game.baseCommit=BASE_COMMIT;return migrated;
+}
+
+export function parseProject(input,{allowLegacy=true}={}){
+ if(typeof input==='string'){
+  if(input.length>5*1024*1024)fail('JSON över 5 MiB');
+  input=JSON.parse(input);
+ }
+ if(!input||typeof input!=='object'||Array.isArray(input))fail('rotobjekt saknas');
+ if(allowLegacy&&input.format===PATCH_FORMAT)return migrateV1(input);
+ if(input.format!==LEVEL_FORMAT||input.schemaVersion!==LEVEL_SCHEMA)fail('format eller schemaversion');
+ if(!idPattern.test(input.projectId)||!safeName(input.name)||!['new-level','edit-floor5'].includes(input.mode))fail('ID, namn eller läge');
+ if(input.game?.repository!=='capstere/cartridge-strike'||input.game?.version!==LEVEL_GAME_VERSION||
+  !/^[a-f0-9]{40}$/.test(input.game?.baseCommit)||!input.game?.compatibleWith?.includes(LEVEL_GAME_VERSION))fail('spelkompatibilitet');
+ if(input.units?.linear!=='model-unit'||input.units?.metricScaleVerified!==false||
+  input.units?.playerRadius!==.22||input.units?.actorRadius!==.20||input.units?.gridStep!==.1)fail('enheter');
+ if(input.rules?.minDoorWidth!==1.1||input.rules?.minCorridorWidth!==2||
+  input.rules?.doorWidthAppliesTo!==(input.mode==='new-level'?'all':'new-and-edited'))fail('breddregler');
+ const g=input.ground;if(!rect(g?.bounds)||!Number.isFinite(g.wallHeightDefault)||g.wallHeightDefault<.45||g.wallHeightDefault>6||!Array.isArray(g.floors)||g.floors.length>100)fail('grundyta');
+ const ids=new Set();const unique=id=>{if(ids.has(id))fail('dubbelt ID: '+id);ids.add(id);};
+ for(const f of g.floors){validateFloorRect(f);if(!['room','corridor'].includes(f.role)||!['carpet','vinyl'].includes(f.surface)||
+  f.x0<g.bounds.x0||f.x1>g.bounds.x1||f.z0<g.bounds.z0||f.z1>g.bounds.z1)fail('golvyta '+f.id);unique(f.id);}
+ const a=input.architecture;if(a?.schemaVersion!==1||!['edits','added','removed','floors'].every(k=>Array.isArray(a[k]))||
+  a.edits.length>600||a.added.length>250||a.removed.length>600||a.floors.length>100)fail('arkitektur');
+ if(input.mode==='new-level'&&(a.edits.length||a.removed.length||a.floors.length))fail('ny bana får inte ärva Floor 5');
+ for(const e of a.added){validateEntry(e,{isNew:true});unique(e.id);}
+ if(input.mode==='new-level'&&g.floors.length>0){for(const e of a.added){if(![e.a,e.b].every(([x,z])=>x>=g.bounds.x0&&x<=g.bounds.x1&&z>=g.bounds.z0&&z<=g.bounds.z1))fail('byggdel utanför grundytan');}}
+ const f=input.furniture;if(!f||!['placements','added','removed'].every(k=>Array.isArray(f[k]))||
+  f.placements.length+f.added.length+f.removed.length>350)fail('möbler');
+ if(input.mode==='new-level'&&(f.placements.length||f.removed.length))fail('ny bana får inte ärva möbler');
+ for(const o of f.added){if(!/^NY-(OBJ|STOL|BORD|SOFFA)-\d{1,5}$/.test(o.id)||!
+  [o.x,o.z,o.yaw,o.w,o.d,o.height].every(Number.isFinite)||!within(o.x)||!within(o.z)||o.w<=0||o.d<=0||o.w>8||o.d>8)fail('möbel');
+  unique(o.id);if(input.mode==='new-level'&&!g.floors.some(r=>o.x>=r.x0&&o.x<=r.x1&&o.z>=r.z0&&o.z<=r.z1))fail('möbel utan golv');}
+ const play=input.gameplay;if(play?.mode!=='classic'||!play.counts||!Array.isArray(play.spawns)||play.spawns.length>10||
+  !play.objectives||!Array.isArray(play.objectives.hostages))fail('spelregler');
+ for(const team of ['analysts','counterAnalysts'])if(!Number.isInteger(play.counts[team])||play.counts[team]<1||play.counts[team]>5)fail('lagstorlek');
+ for(const p of play.spawns){if(!/^SP-[AC]-\d{2}$/.test(p.id)||!['analysts','counterAnalysts'].includes(p.team)||
+  !Number.isInteger(p.index)||p.index<0||p.index>4||![p.x,p.z,p.yaw].every(Number.isFinite)||!within(p.x)||!within(p.z)||Math.abs(p.yaw)>Math.PI+.001)fail('spawn');unique(p.id);}
+ if(!Array.isArray(input.navHints)||input.navHints.length>250||typeof input.intent!=='object'||typeof input.validation!=='object'||typeof input.agentBrief!=='object')fail('metadata');
+ const assets=input.assets;if(!assets||!Array.isArray(assets.library)||!Array.isArray(assets.local)||!Array.isArray(assets.posters)||assets.local.length>49||assets.posters.length>100)fail('tillgångar');
+ for(const row of assets.local){if(!/^local:[a-f0-9]{64}$/.test(row.assetId)||row.file!==`assets/models/${row.assetId.slice(6)}.glb`||
+  !Number.isInteger(row.bytes)||row.bytes<0||row.bytes>20e6)fail('modellfil');}
+ for(const row of assets.posters){if(!/^[A-Za-z0-9_-]{1,64}$/.test(row.id)||row.file!==`assets/posters/${row.id}.webp`||
+  !/^[a-f0-9]{64}$/.test(row.sha256)||!Number.isInteger(row.bytes)||row.bytes<1||row.bytes>5e6)fail('affischfil');}
+ if(input.mode==='new-level')for(const o of f.added){if(o.assetId?.startsWith('local:')&&!assets.local.some(row=>row.assetId===o.assetId&&row.bytes>0))fail('saknad lokal modell för '+o.id);}
+ if(JSON.stringify(input).length>5*1024*1024)fail('JSON över 5 MiB');
+ return clone(input);
+}
+
+const utf8=new TextDecoder('utf-8',{fatal:true});
+export async function exportProjectZip(project,files=new Map()){
+ project=parseProject(project);
+ const expected=[...project.assets.local,...project.assets.posters];
+ const entries=[{name:'project.json',data:JSON.stringify(project,null,2)+'\n'}];
+ for(const asset of expected){const bytes=files.get(asset.file);if(!(bytes instanceof Uint8Array)||bytes.length!==asset.bytes||
+  await assetHash(bytes)!==(asset.assetId?.slice(6)||asset.sha256))fail('saknad eller ändrad fil '+asset.file);
+  entries.push({name:asset.file,data:bytes});}
+ if(files.size!==expected.length)fail('oväntade filer');
+ entries.push({name:'AGENT_BRIEF.md',data:'# '+project.name+'\n\n'+(project.agentBrief.goal||'Level project')+'\n'});
+ return makeZip(entries);
+}
+export async function parseProjectZip(bytes){
+ if(bytes.byteLength>PROJECT_ZIP_MAX_BYTES)fail('ZIP över 96 MiB');
+ const files=readZip(bytes),legacy=files.has('projekt.json');
+ const project=parseProject(utf8.decode(files.get(legacy?'projekt.json':'project.json')));
+ const expected=[...project.assets.local,...project.assets.posters],out=new Map();
+ for(const asset of expected){const path=legacy?asset.file.replace('assets/',''):asset.file,data=files.get(path);
+  if(!data||data.length!==asset.bytes&&!(legacy&&asset.bytes===0)||await assetHash(data)!==(asset.assetId?.slice(6)||asset.sha256))fail('saknad eller ändrad fil '+path);
+  out.set(asset.file,data);if(legacy&&asset.bytes===0)asset.bytes=data.length;}
+ const allowed=new Set([legacy?'projekt.json':'project.json',...expected.map(x=>legacy?x.file.replace('assets/',''):x.file),...(!legacy?['AGENT_BRIEF.md']:[])]);
+ for(const path of files.keys())if(!allowed.has(path))fail('oväntad ZIP-fil '+path);
+ return {project:parseProject(project),files:out};
+}
