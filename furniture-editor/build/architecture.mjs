@@ -13,6 +13,15 @@ export function standardPassageSpan(a,b,width=STANDARD_PASSAGE_WIDTH){
  return {a:[roundPosition(cx-ux*width/2),roundPosition(cz-uz*width/2)],
          b:[roundPosition(cx+ux*width/2),roundPosition(cz+uz*width/2)]};
 }
+/** Consistent 1.20-unit visual glyph, independent of the actual source-door
+ * width. Do not use this for collision, serialization or wall clipping. */
+export function standardDoorMarkerSpan(door){
+ const {a,b}=door||{},dx=b?.[0]-a?.[0],dz=b?.[1]-a?.[1],len=Math.hypot(dx,dz);
+ if(!Number.isFinite(len)||len<1e-6)return {a,b};
+ const cx=(a[0]+b[0])/2,cz=(a[1]+b[1])/2,ux=dx/len,uz=dz/len;
+ return {a:[cx-ux*STANDARD_PASSAGE_WIDTH/2,cz-uz*STANDARD_PASSAGE_WIDTH/2],
+         b:[cx+ux*STANDARD_PASSAGE_WIDTH/2,cz+uz*STANDARD_PASSAGE_WIDTH/2]};
+}
 export const ARCHITECTURE_TYPES=Object.freeze(['wall','glazed','window','door','card-door','elevator-door','terrace-door','opening']);
 export const ARCHITECTURE_NAMES=Object.freeze({
  wall:'Vägg',glazed:'Fönstervägg · golv till tak',window:'Fönster med bröstning',
@@ -124,16 +133,17 @@ export function makeEntry(id,kind,a,b){return {id,source:false,sourceKind:'new',
 /** Place a correctly aligned default door in a selected straight wall.
  * This is a sketch aperture only; runtime door mechanics stay unchanged.
  */
-export function doorOnWallSegment(wall,id,{kind='door',width=.9,fraction=.5}={}){
+export function doorOnWallSegment(wall,id,{kind='door',width=STANDARD_PASSAGE_WIDTH,fraction=.5}={}){
  if(!isWall(wall.kind))throw Error('Välj först en vägg eller glasvägg.');
  const length=entryLength(wall),minEnds=.12;
- if(length<.80)throw Error('Den valda väggen är för kort för en dörr.');
- const useWidth=Math.min(width,length-2*minEnds);
- if(useWidth<.55)throw Error('Väggen är för kort för en säker dörröppning.');
- const along=Math.max(useWidth/2+minEnds,Math.min(length-useWidth/2-minEnds,length*fraction));
+ if(!Number.isFinite(width)||width<1.1||width>8)throw Error('Dörrens bredd måste vara 1,10–8,00 modellenheter.');
+ // Never silently shrink a standard door to fit: that creates inconsistent
+ // door markers and openings. The user can draw a longer wall instead.
+ if(length+1e-9<width+2*minEnds)throw Error('Väggen är för kort för en STANDARD-dörr på 1,20. Rita en längre vägg.');
+ const along=Math.max(width/2+minEnds,Math.min(length-width/2-minEnds,length*fraction));
  const dx=(wall.b[0]-wall.a[0])/length,dz=(wall.b[1]-wall.a[1])/length;
  const point=t=>[roundPosition(wall.a[0]+t*dx),roundPosition(wall.a[1]+t*dz)];
- const door=makeEntry(id,kind,point(along-useWidth/2),point(along+useWidth/2));
+ const door=makeEntry(id,kind,point(along-width/2),point(along+width/2));
  door.height=Math.min(2.4,wall.height);validateEntry(door,{isNew:true});return door;
 }
 export function floorRect(id,a,b){return {id,x0:Math.min(a[0],b[0]),z0:Math.min(a[1],b[1]),x1:Math.max(a[0],b[0]),z1:Math.max(a[1],b[1]),name:'Egen golvyta'};}
