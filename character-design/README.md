@@ -1,8 +1,24 @@
-# Character Design Studio 2.0 — skapa karaktärer & egna 3D-objekt
+# Character Design Studio 3.0 — skapa karaktärer & egna 3D-objekt
 
 **Öppna:** https://capstere.github.io/cartridge-strike/character-design/
 
 En enkel, fristående kreativ studio. Spelets FPS-runtime, botar och animationer ändras inte av redigeringarna i studion.
+
+## Nya enkla kreativa funktioner i 3.0
+
+**Kläder & tryck:** välj originaluniform, T-shirt, hoodie, jacka, piké, labbrock eller skyddsväst. Förhandsvisningens riggfästa kläder är en förenklad designprototyp; AI:n behöver skapa riktiga skinnade textilmeshar och material.
+
+Skriv valfri text på tröjan, välj teckensnitt, färg och framsida eller rygg. Importera en **egen PNG** som tryck/logotyp eller upprepat mönster. Originalfilen måste vara PNG, högst 5 MB och högst 8 megapixlar. Studion skalar ner till 384×384 för responsiv förhandsvisning. Den optimerade bilden bevaras i projektets JSON och exporteras som **SHIRT_ARTWORK.png** i AI-paketet. Behåll din högupplösta originalfil separat om AI:n behöver den för slutlig texturkvalitet. Den enkla dekalen är inte färdigt UV-mappad tyggeometri.
+
+**Ansikte & hår:** testa frisyrer i 3D och specificera ögonform, ögonfärg, ögonbryn, näsa, mun, ansiktsform, skägg och fräknar. Bortsett från enklare hårprototyper är dessa val **AI-designkrav**, inte automatisk skulptering av originalansiktet.
+
+**Rita i närbild:** använd porträttstudion med riktiga 1024×1024-vyer av originalmodellens huvud – fram, vänster och höger. Rita med finger, penna eller mus; zooma 100–400 %, panorera med ”Flytta bilden” och ångra streck separat per vinkel. Tre bilder exporteras som **FACE_FRONT.png**, **FACE_LEFT.png**, **FACE_RIGHT.png**. Du kan också ladda ner aktuell närbild separat.
+
+**Fler animationer:** uppspelningsmenyn byggs direkt från alla clipnamn i den laddade GLB-filen. Ändra uppspelningshastighet och spola. Du kan dessutom **önska** vinka, dansa, fira, klättra, hoppa hukande med mera, men dessa animationer finns inte i den ursprungliga GLB:n och måste skapas på samma skelett och sedan integreras i spelkoden av AI:n.
+
+### Så enkelt är arbetsflödet
+
+Välj karaktär → testa kläder → lägg till eget tryck → beskriv ansiktet → zooma och rita → exportera **AI-paket (.zip)**. Du behöver inte Blender. Gamla projektformatet v2 stöds fortfarande; nya kreativa fält är bakåtkompatibla. Projekt/ritningar försöker sparas automatiskt i webbläsaren. För säker återupptagning på en annan enhet: välj **Spara projekt (.json)**.
 
 ## Så här gör du
 
@@ -30,6 +46,8 @@ I **Bygg eget objekt** skapar du statiska 3D-prylar av former. Namnge dem, flytt
 | --- | --- |
 | `PROJECT.json` | Redigerbart projekt v2: färger, material, längd, kroppsbredd, delar, millimeterprecision i meter, skissbild-data och anteckningar |
 | `DESIGN_SHEET.png` | Fyra faktiska 3D-vyer med ritmarkeringar |
+| `FACE_FRONT.png`, `FACE_LEFT.png`, `FACE_RIGHT.png` | Detaljerade ansiktsvyer med ritningar |
+| `SHIRT_ARTWORK.png` | Optimerad PNG med tröjtryck/mönster om uppladdad |
 | `AI_INSTRUCTIONS.md` | Dina önskemål och exakta mått/fästpunkter samt krav för färdig spelmodell |
 | `ANIMATION_CONTRACT.json` | Aktuellt originalrigg-/animationskontrakt, clipnamn och kända ben |
 | `BASE_RIG.glb` | Endast karaktärer: **orörd** manlig/kvinnlig original-GLB med riktiga animationsklipp |
