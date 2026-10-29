@@ -39,6 +39,7 @@ try{
  assert.equal(await page.locator('.part-item').count(),1);
  await page.locator('#pos-x').evaluate(el=>{el.value='9';el.dispatchEvent(new Event('input',{bubbles:true}));});
  await page.locator('#part-note').fill('Make a soft helmet with fabric lining.');
+ await page.locator('#rot-x').evaluate(el=>{el.value='12';el.dispatchEvent(new Event('input',{bubbles:true}));});
  await page.locator('#pose').selectOption('Crouch_Idle_Loop');
  await page.locator('#play').click();
  await page.waitForTimeout(500);
@@ -47,7 +48,7 @@ try{
  const jsonDownload=page.waitForEvent('download');
  await page.locator('#save-json').click();
  const json=JSON.parse((await readFile(await (await jsonDownload).path())).toString());
- assert.equal(json.parts.length,1);assert.equal(json.parts[0].note,'Make a soft helmet with fabric lining.');
+ assert.equal(json.parts.length,1);assert.equal(json.parts[0].rotation[0],12);assert.equal(json.parts[0].note,'Make a soft helmet with fabric lining.');
  assert.equal(json.base.original_glb,'quaternius-operator-male.glb');
  log('editable JSON project downloaded');
  const zipDownload=page.waitForEvent('download');
