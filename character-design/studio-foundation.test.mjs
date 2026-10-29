@@ -18,6 +18,8 @@ for(const gender of ['male','female'])test('studio cut and jacket use real '+gen
  const hair=makeStudioHair(avatar.a,'#352922',donor,Float32Array.from(avatar.a.skin.geometry.attributes.position.array));let triangles=0;
  hair.traverse(m=>{if(!m.isMesh)return;const p=m.geometry.attributes.position;assert.ok(p.array.every(Number.isFinite));triangles+=(m.geometry.index?.count||p.count)/3;assert.ok(p.count>100);});
  assert.ok(triangles<14000);assert.ok(hair.getObjectByName('studio-swept-scalp'));assert.ok(hair.getObjectByName('studio-swept-locks'));
+ const scalp=hair.getObjectByName('studio-swept-scalp').geometry.attributes.position;
+ for(let i=0;i<scalp.count;i++)if(Math.abs(scalp.getX(i))>avatar.a.width*.43)assert.ok(scalp.getY(i)>avatar.a.top-.071,'scalp underlayer must exclude the outer ear surface');
  assert.ok(scalpLine(avatar.a,new T.Vector3(.09,avatar.a.top-.1,avatar.a.centerZ))>avatar.a.top-.10,'temples clear the ear tops');
  const parts=makeStudioJacket(avatar,'#465e68','#8faaa7');assert.equal(parts.length,2);
  for(const m of parts){assert.ok(m.isSkinnedMesh);const p=m.geometry.attributes.position,w=m.geometry.attributes.skinWeight;assert.ok(p.array.every(Number.isFinite));for(let i=0;i<w.count;i++)assert.ok(Math.abs([0,1,2,3].reduce((s,k)=>s+w.getComponent(i,k),0)-1)<1e-6);}

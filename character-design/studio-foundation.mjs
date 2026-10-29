@@ -7,7 +7,9 @@ const clamp=T.MathUtils.clamp,TAU=Math.PI*2;
 export function scalpLine(a,p){
  const phi=Math.atan2(p.x,p.z-a.centerZ),front=Math.max(0,Math.cos(phi)),back=Math.max(0,-Math.cos(phi));
  // Clear the ear tops at the temples, lower the nape, and soften the frontal M.
- return a.top-.084+.010*front+.10*front**4-.065*back+.008*Math.exp(-(((Math.abs(phi)-.65)/.30)**2));
+ const line=a.top-.084+.010*front+.10*front**4-.065*back+.008*Math.exp(-(((Math.abs(phi)-.65)/.30)**2));
+ const ear=clamp((Math.abs(p.x)/a.width-.34)/.08,0,1);
+ return Math.max(line,a.top-.15+.085*ear);
 }
 function lift(a,p,n){
  const crown=clamp((p.y-a.top+.13)/.13,0,1),front=clamp((p.z-a.centerZ+.01)/.09,0,1);
