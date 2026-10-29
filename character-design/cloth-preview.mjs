@@ -1,8 +1,8 @@
 import * as T from '../vendor/three/three.module.js';
-import {heightNormal} from './surface-textures.mjs?v=52';
-import {ClothSolver} from './cloth-solver.mjs?v=52';
-import {skinMatrix} from './sculpt-engine.mjs?v=52';
-import {FABRICS} from './realism-schema.mjs?v=52';
+import {heightNormal} from './surface-textures.mjs?v=53';
+import {ClothSolver} from './cloth-solver.mjs?v=53';
+import {skinMatrix} from './sculpt-engine.mjs?v=53';
+import {FABRICS} from './realism-schema.mjs?v=53';
 export function fabricMaterial(color,type='cotton'){
  const f=FABRICS[type],canvas=document.createElement('canvas');canvas.width=canvas.height=128;const c=canvas.getContext('2d');c.fillStyle='#808080';c.fillRect(0,0,128,128);for(let y=0;y<128;y+=4)for(let x=0;x<128;x+=4){c.fillStyle=(x+y)%8?'#929292':'#696969';c.fillRect(x,y,type==='denim'?3:2,3);}
  const map=heightNormal(canvas,1);map.wrapS=map.wrapT=T.RepeatWrapping;map.repeat.set(24,24);

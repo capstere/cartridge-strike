@@ -6,13 +6,13 @@
 <meta name="color-scheme" content="light">
 <title>Character Design Studio 5 · Cartridge Strike</title>
 <meta name="description" content="Skapa personliga animerade FPS-karaktärer och egna 3D-objekt med enkla verktyg. Exportera AI-redo designprojekt.">
-<link rel="icon" href="data:,"><link rel="stylesheet" href="style.css?v=52">
+<link rel="icon" href="data:,"><link rel="stylesheet" href="style.css?v=53">
 <script type="importmap">{"imports":{"three":"../vendor/three/three.module.js","three/addons/":"../vendor/three/addons/"}}</script>
 </head>
 <body>
 <header class="masthead">
  <div><a class="back" href="../fps/">← Till spelet</a><p class="eyebrow">CARTRIDGE STRIKE / CREATIVE STUDIO</p>
- <h1>Character Design Studio <span class="edition">5.2</span></h1>
+ <h1>Character Design Studio <span class="edition">5.3</span></h1>
  <p class="lead">Välj en grund. Forma din stil. Lämna över en exakt design till AI:n för att göra karaktären spelklar.</p></div>
  <div class="stamp">INGA 3D-KUNSKAPER<br><strong>BEHÖVS</strong></div>
 </header>
@@ -99,7 +99,7 @@
     <div id="tab-sculpt" class="editor-tab">
      <p class="eyebrow">DITT ANSIKTE / DINA HÄNDER</p>
      <h2>Ta tag. Dra. Gör den personlig.</h2>
-     <p class="hint">Forma kinderna, näsan, hakan och pannan direkt på huden. Dina ändringar följer karaktären genom sparning och animation.</p>
+     <p class="hint">Börja med <strong>Skapa ny karaktär</strong> för studiogrunden: sidokammat hår och en sammanhängande jacka. Forma sedan kinderna, näsan, hakan och pannan direkt på huden. Allt sparas med din design.</p>
      <button id="sculpt-focus" type="button" class="primary hero-button">Börja forma ansiktet</button>
      <div class="sculpt-tools" role="group" aria-label="Forma direkt">
       <button type="button" data-sculpt-tool="rotate" class="active" aria-pressed="true">Rotera</button>
@@ -125,12 +125,12 @@
      <fieldset class="realism-panel"><legend>Material, hår &amp; tygfall</legend>
       <label>Huvudmodell<select id="realism-head"><option value="original">Spelets original (bevarar din design)</option><option value="scan">Fototexturerat, skannat huvud – slutna ögon</option></select></label>
       <p class="hint">Skanningen är ett vuxet mansporträtt av Lee Perry-Smith, CC BY 3.0. Kroppen behåller originalmodellen. Skanningens fotograferade ögon och ögonbryn använder direkt formning; originalmodellens ögonreglage är avstängda. Ansiktsformning sparas separat för varje huvudmodell.</p>
-      <label><input type="checkbox" id="realism-fiberHair"> Tunna hårstråk med anisotropisk glans</label>
+      <label><input type="checkbox" id="realism-fiberHair"> Tunna hårstråk (byter från studioklippningen)</label>
       <div class="print-grid"><label>Tyg<select id="realism-fabric"><option value="original">Befintligt tyg</option><option value="cotton">Bomull</option><option value="denim">Denim</option><option value="silk">Siden</option><option value="leather">Läder</option></select></label>
       <label>Plagg med fysisk drapering<select id="realism-garment"><option value="none">Inget extra plagg</option><option value="cape">Axelkappa</option><option value="coat">Öppen långväst</option></select></label></div>
       <div class="print-grid"><label>Hårlängd <output id="hair-length-value">100 %</output><input id="realism-hairLength" type="range" min="50" max="160" step="5" value="100"></label><label>Hårvolym <output id="hair-volume-value">100 %</output><input id="realism-hairVolume" type="range" min="50" max="150" step="5" value="100"></label></div>
       <label>Plagglängd <output id="garment-length-value">100 %</output><input id="realism-garmentLength" type="range" min="50" max="130" step="5" value="100"></label>
-      <p class="hint">Hårreglagen formar hårstråken. Plagglängden ändrar kappans eller västens skärning före simuleringen. 100 % är grundformen.</p>
+      <p class="hint">Hårreglagen formar de tunna hårstråken. Studioklippningen har en fast, formgiven silhuett. Plagglängden ändrar kappans eller västens skärning före simuleringen. 100 % är grundformen.</p>
       <label>Vind <input id="realism-wind" type="range" min="0" max="100" value="15"></label>
       <button id="settle-cloth" type="button">Låt tyget falla</button>
       <p class="hint">Spela en rörelse för att se tyget följa kroppen. Fysiken omfattar sträckning, böjning, gravitation och kroppskollisioner. Självkollision och sömnad stöds ännu inte. Exporten behåller draperingen och fysikinställningarna; spelmotorn behöver egen tygfysik.</p>
@@ -158,7 +158,7 @@
       <option value="original">Originaluniform</option><option value="tshirt">T-shirt</option>
       <option value="hoodie">Hoodie</option><option value="jacket">Jacka med dragkedja</option>
       <option value="polo">Pikétröja</option><option value="labcoat">Labbrock</option>
-      <option value="vest">Skyddsväst</option>
+      <option value="vest">Skyddsväst</option><option value="fieldjacket">Studiojacka · följsam krage</option>
      </select></label>
      <div class="print-grid">
       <label>Skor<select id="shoe-style"><option value="boots">Kängor</option><option value="sneakers">Sneakers</option></select></label>
@@ -194,7 +194,7 @@
     <div id="tab-face" class="editor-tab" hidden>
      <p class="hint">Välj ett ungefärligt utseende och rita sedan exakt hur du vill att personen ska se ut i den stora närbilden längre ned på sidan.</p>
      <label>Frisyr<select id="hair-style"><option value="bald">Rakat / inget hår</option>
-      <option value="original">Originalfrisyr</option><option value="buzz">Snaggat</option><option value="short">Kort</option>
+      <option value="swept">Kort, sidokammad · studiogrund</option><option value="original">Originalfrisyr</option><option value="buzz">Snaggat</option><option value="short">Kort</option>
       <option value="curly">Lockigt</option><option value="bob">Page</option><option value="long">Långt</option>
       <option value="ponytail">Hästsvans</option><option value="mohawk">Mohawk</option>
      </select></label>
@@ -336,6 +336,6 @@
   <p class="credits">Quaternius originalkaraktärer och animationer: CC0 1.0 · <a href="../licenses/quaternius-characters-CC0.txt">Licens</a>. Designen ligger lokalt i webbläsaren tills du exporterar. Inga filer laddas upp av studion.</p>
  </section>
 </main>
-<script type="module" src="app.mjs?v=52"></script>
+<script type="module" src="app.mjs?v=53"></script>
 </body>
 </html>

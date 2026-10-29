@@ -1,6 +1,22 @@
-# Character Design Studio 5.2
+# Character Design Studio 5.3
 
 Open [the studio](https://capstere.github.io/cartridge-strike/character-design/). The game and its existing characters are unchanged.
+
+## 5.3: a coherent studio foundation
+
+Choose **Skapa ny karaktär** for the new starting point on either original body: **Kort, sidokammad**, **Studiojacka**, cotton, restrained colours and the original open-eyed face. Sculpting switches both the visible preview and saved pose to Idle, preventing a jump back to crouch on release. Existing saved projects keep their chosen head, hair, clothes, proportions, references and sculpt data. Select these two styles individually when improving an older project. The legacy jacket also receives the new deforming collar/zipper.
+
+The short cut retains the Quaternius male haircut’s artist-authored asymmetric volumes, tightens their silhouette, transfers scalp edits and adds shallow tapered combed locks. It has opaque coverage and clears the ears; it is an intentionally stylized rigid Head attachment. Its silhouette is fixed. The same short source is fitted to both head shapes; a female project includes the unmodified male donor GLB as `HAIR_SOURCE_MALE.glb` in the ZIP. Enabling thin hair strands selects the older procedural hair system, whose length/volume controls remain separate.
+
+The studio jacket integrates the original weighted torso shell instead of hiding it, with a small standing collar and a zipper projected onto the actual edited garment. Both details have normalized transferred skin weights and use the existing skeleton. This fixes the old rigid collar pieces that appeared on the chest during crouching. The original vest-shell is part of the body surface; the vest option colours that region and is **not** a newly tailored independent vest. The jacket is skinned geometry, **not** simulated cloth. Optional cape/long-vest physics retains the frozen-drape export limitations described below.
+
+Repeated appearance updates now retain eyebrows, the selected torso colour, untinted PNG artwork, glove colours and sneaker visibility. Previously the base-palette pass could overwrite the cached fashion result. This was a code problem, separate from the source assets' stylized anatomy, mitten-like gloves, coarse suit topology and simplified boots.
+
+Face dragging saturates smoothly relative to brush radius. A whole brush step is backed off before a face triangle reverses or loses more than 75% of its projected area relative to the stroke's starting surface; eyes/brows share that backoff. UVs, seam welding, topology signatures and old sparse offsets are unchanged. This is a local fold guard, **not** a guarantee against distant self-intersections, eyelid separation or extreme cumulative edits. Undo and local restore remain available.
+
+The new foundation browser suite covers create → real desktop/touch face drag → undo/redo → hair/clothes/fit → original PNG → animation → named save → reload → portable JSON import → ZIP → independently parsed GLB, including normalized collar/zipper weights and three times in all 13 clips. It also checks the repeated-update colour/brow/shoe regression. Existing suites still cover legacy options, accessory/reference bytes, scan, fabric and XPBD export. Numeric passes complement rendered front/profile/back and animation inspection; they do not certify production/gameplay readiness or physical iPhone/Safari support.
+
+Next asset step: an artist-authored open-eyed head with eyelid/expression topology, a real ungloved hand mesh, and separately tailored weighted clothing. The bundled closed-eye scan and the locally available onboard operator pair do not supply those replacements. No private source files or game runtime files are copied or changed in this release.
 
 ## 5.2: custom proportions and collision refinement
 
@@ -68,6 +84,7 @@ node character-design/browser-smoke.mjs
 node character-design/studio4-browser.mjs
 node character-design/accessory-quality-browser.mjs
 node character-design/sculpt-browser.mjs
+node character-design/foundation-browser.mjs
 node tools/verify-owner-runtime.mjs
 ```
 

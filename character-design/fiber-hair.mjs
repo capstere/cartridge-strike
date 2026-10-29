@@ -1,7 +1,7 @@
 /** Thin, tapered hair ribbons with an authored strand alpha texture, not tube locks. */
 import * as T from '../vendor/three/three.module.js';
-import {heightNormal} from './surface-textures.mjs?v=52';
-import {anatomy,hairGeometry} from './anatomy-accessories.mjs?v=52';
+import {heightNormal} from './surface-textures.mjs?v=53';
+import {anatomy,hairGeometry} from './anatomy-accessories.mjs?v=53';
 export function makeFiberHair(avatar,style,color,settings={}){
  const lengthScale=(settings.hairLength??100)/100,volumeScale=(settings.hairVolume??100)/100;
  const a=anatomy(avatar),group=new T.Group(),cap=hairGeometry(a,style),pos=cap.attributes.position,normal=cap.attributes.normal;

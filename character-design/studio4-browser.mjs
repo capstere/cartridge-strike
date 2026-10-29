@@ -23,7 +23,7 @@ try{
   const settle=()=>page.waitForTimeout(140);
   const download=async id=>{const event=page.waitForEvent('download');await text(id).click();return readFile(await(await event).path());};
   const slider=async(id,value)=>{await text(id).fill(String(value));await text(id).dispatchEvent('input');await settle();};
-  await page.goto(origin+'/character-design/?studio=5.2',{waitUntil:'domcontentloaded'});
+  await page.goto(origin+'/character-design/?studio=5.3',{waitUntil:'domcontentloaded'});
   await page.waitForFunction(()=>document.querySelector('#status').textContent.includes('redo!'));
   assert.equal(await page.title(),'Character Design Studio 5 · Cartridge Strike');
   if(mobile)await text('viewer-tools').locator(':scope > summary').click();

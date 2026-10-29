@@ -21,7 +21,7 @@ export function installSculptControls({getProject,workbench,persist,visualChange
   document.querySelector('.preview-hint').textContent=mode==='rotate'?'Dra: rotera · Nyp: zooma · Två fingrar: flytta':mode==='grab'?'Dra i huden · Profil ändrar djup · Två fingrar styr vyn':'För penseln över huden · Ångra tar tillbaka steget';
   canvas.style.cursor=mode==='rotate'?'grab':'crosshair';cursor.hidden=true;
   $('sculpt-feedback').textContent={rotate:'Dra för att rotera. Välj ett verktyg för att forma.',grab:'Ta tag i huden och dra. Byt till profil för att ändra djup.',inflate:'Dra penseln över huden för att bygga mjuk volym.',deflate:'Dra penseln över huden för att trycka in formen.',smooth:'Mjukar upp de ändringar du har gjort.',paint:'Dra penseln över huden för att måla din valda färg.',restore:'Sudda lokalt bort din formning och målning.'}[mode];
-  if(mode!=='rotate'&&workbench.initialized){workbench.playing=false;workbench.pose('Idle_Loop');workbench.focus='head';workbench.zoom=1;workbench.pan.set(0,0);workbench.renderPreview();$('play').textContent='▶ Spela rörelsen';$('play').setAttribute('aria-pressed','false');}
+  if(mode!=='rotate'&&workbench.initialized){if(getProject().pose!=='Idle_Loop'){getProject().pose='Idle_Loop';$('pose').value='Idle_Loop';persist();}workbench.playing=false;workbench.pose('Idle_Loop');workbench.focus='head';workbench.zoom=1;workbench.pan.set(0,0);workbench.renderPreview();$('play').textContent='▶ Spela rörelsen';$('play').setAttribute('aria-pressed','false');}
  }
  function begin(e){
   if(mode==='rotate'||e.button===2||e.altKey)return false;
@@ -69,4 +69,4 @@ export function installSculptControls({getProject,workbench,persist,visualChange
  function sync(){cursor.hidden=true;if(getProject().kind==='object')select('rotate');}
  return {select,begin,move,end,cancel,hover,sync,get editing(){return mode!=='rotate';},get active(){return active;}};
 }
-import {skinMatrix} from './sculpt-engine.mjs?v=52';
+import {skinMatrix} from './sculpt-engine.mjs?v=53';

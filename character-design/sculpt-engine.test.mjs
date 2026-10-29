@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import * as T from '../vendor/three/three.module.js';
-import {subdivideSkin,skinMatrix,SculptEngine} from './sculpt-engine.mjs';
+import {subdivideSkin,skinMatrix,SculptEngine,safeSurfaceStep} from './sculpt-engine.mjs';
 import {newSculpt,validateSculpt,brushWeight} from './sculpt-schema.mjs';
 function fixture(){
  const geometry=new T.PlaneGeometry(.16,.24,8,12).toNonIndexed();geometry.translate(0,1.67,.09);
@@ -48,3 +48,20 @@ test('symmetry produces mirrored displacements and reset restores authored norma
 });
 
 test('legacy portrait annotations retain their original camera framing',async()=>{const {newProject}=await import('./project-schema.mjs');const {ensureCreative}=await import('./creative-schema.mjs');const p=newProject();p.studioVersion='4.1';p.artwork={faceViews:{front:'data:image/png;base64,example'}};ensureCreative(p);assert.equal(p.artwork.portraitFraming,'legacy-headbone-v4');const modern=newProject();modern.studioVersion='5.0';modern.artwork={faceViews:{}};ensureCreative(modern);assert.equal(modern.artwork.portraitFraming,undefined);});
+
+test('an inverted triangle is backed off before it can fold or collapse',()=>{
+ const f=fixture(),e=f.engine.entries[0],original=e.offsets.slice(),candidate=original.slice();
+ const i=e.vertexGroups[0],j=e.vertexGroups[1],k=e.vertexGroups[2],a=e.groups[i].p,b=e.groups[j].p,c=e.groups[k].p;
+ // Reflect one corner through the opposite edge: a definite inversion.
+ const midpoint=b.map((v,n)=>(v+c[n])/2);for(let n=0;n<3;n++)candidate[i*3+n]=2*(midpoint[n]-a[n]);
+ const mix=safeSurfaceStep(e,original,original,candidate);assert.ok(mix>0&&mix<.5,'inverted step is reduced before the zero-area midpoint');
+ for(let n=0;n<candidate.length;n++)candidate[n]*=mix;
+ assert.equal(safeSurfaceStep(e,original,original,candidate),1,'accepted surface has retained projected triangle area');
+});
+
+test('large drags saturate smoothly and retain exact UVs and seam welding',()=>{
+ const f=fixture(),uv=f.mesh.geometry.attributes.uv.array.slice();begin(f);f.engine.brush(f.project,{delta:new T.Vector3(3,2,1)});f.engine.finish(f.project);
+ assert.deepEqual(f.mesh.geometry.attributes.uv.array,uv);
+ for(const e of f.engine.entries)for(const g of e.groups){const first=g.indices[0];for(const i of g.indices)for(let n=0;n<3;n++)assert.equal(e.mesh.geometry.attributes.position.getComponent(i,n),e.mesh.geometry.attributes.position.getComponent(first,n));}
+ assert.ok(Math.max(...f.engine.entries[0].offsets.map(Math.abs))<.031,'stroke movement remains bounded relative to brush radius');
+});

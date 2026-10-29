@@ -63,6 +63,25 @@ function sparse(entry){
  }
  return {count:entry.groups.length,topology:entry.topology,deltas,paint};
 }
+/** Backtrack an entire brush step together, including eyes/brows. Compare each
+ * triangle with the stroke's starting surface, retaining its orientation and
+ * at least 25% projected area. UV and logical seam topology never changes.
+ * This guards local folding, not distant surface self-intersections.
+ */
+export function safeSurfaceStep(e,reference,previous,candidate){
+ const ix=e.mesh.geometry.index,pos=e.mesh.geometry.attributes.position,count=ix?ix.count:pos.count;
+ const a=new T.Vector3(),b=new T.Vector3(),c=new T.Vector3(),oldNormal=new T.Vector3(),nextNormal=new T.Vector3();
+ const point=(target,i,offsets,mix=1)=>{const id=e.vertexGroups[i]*3;return target.set(e.base[i*3]+previous[id]+(offsets[id]-previous[id])*mix,e.base[i*3+1]+previous[id+1]+(offsets[id+1]-previous[id+1])*mix,e.base[i*3+2]+previous[id+2]+(offsets[id+2]-previous[id+2])*mix);};
+ const valid=t=>{
+  for(let k=0;k<count;k+=3){
+   const ids=[0,1,2].map(j=>ix?ix.getX(k+j):k+j);
+   point(a,ids[0],reference);point(b,ids[1],reference);point(c,ids[2],reference);oldNormal.subVectors(b,a).cross(c.sub(a));const area=oldNormal.lengthSq();if(area<1e-18)continue;
+   point(a,ids[0],candidate,t);point(b,ids[1],candidate,t);point(c,ids[2],candidate,t);nextNormal.subVectors(b,a).cross(c.sub(a));
+   if(nextNormal.dot(oldNormal)<area*.25)return false;
+  }return true;
+ };
+ let t=1;for(let attempt=0;attempt<9;attempt++,t*=.5)if(valid(t))return t;return 0;
+}
 export class SculptEngine{
  constructor(){this.avatar=null;this.entries=[];this.dirty=false;this.stroke=null;}
  apply(project,avatar,sources){
@@ -141,7 +160,8 @@ export class SculptEngine{
  }
  brush(project,{center=this.stroke?.center,delta=null,amount=1}={}){
   const s=this.stroke;if(!s)return false;const {radius,strength,symmetry,mode,color}=s.options;
-  let changed=false;
+  let changed=false;const previous=this.entries.map(e=>e.offsets.slice());
+  if(delta){delta=delta.clone();const length=delta.length(),limit=radius*.55;if(length>0)delta.multiplyScalar(limit*Math.tanh(length/limit)/length);}
   for(let k=0;k<this.entries.length;k++){
    const e=this.entries[k];if(mode!=='grab'&&e.key!=='face-skin')continue;
    const old=s.snapshot[k],sourceOffsets=mode==='grab'?old.offsets:e.offsets.slice(),paintBefore=mode==='grab'?old.paint:e.paint;
@@ -177,8 +197,12 @@ export class SculptEngine{
     if(offset.length()>SCULPT_MAX_OFFSET)offset.setLength(SCULPT_MAX_OFFSET);
     if(!offset.equals(new T.Vector3().fromArray(e.offsets,at))||mode==='paint'||mode==='restore'&&beforeAlpha!==e.paint[i*4+3]){offset.toArray(e.offsets,at);changed=true;}
    }
-   this.updateEntry(e,project,false,false,mode==='paint'||mode==='restore');
   }
+  if(!['paint','restore'].includes(mode)){
+   let mix=1;for(let k=0;k<this.entries.length;k++){const e=this.entries[k];if(e.key==='face-skin')mix=Math.min(mix,safeSurfaceStep(e,s.snapshot[k].offsets,previous[k],e.offsets));}
+   if(mix<1)for(let k=0;k<this.entries.length;k++){const e=this.entries[k];for(let i=0;i<e.offsets.length;i++)e.offsets[i]=previous[k][i]+mix*(e.offsets[i]-previous[k][i]);}
+  }
+  for(const e of this.entries)this.updateEntry(e,project,false,false,mode==='paint'||mode==='restore');
   if(changed){this.dirty=true;s.changed=true;}return changed;
  }
  store(project,finish=false){

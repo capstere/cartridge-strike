@@ -1,10 +1,12 @@
 /** Studio-only edits to cloned skinned geometry. Original assets/runtime stay untouched. */
 import * as T from '../vendor/three/three.module.js';
-import {makeHair,makeBeard} from './anatomy-accessories.mjs?v=52';
-import {makeFiberHair} from './fiber-hair.mjs?v=52';
-import {fabricMaterial} from './cloth-preview.mjs?v=52';
-import {FABRICS} from './realism-schema.mjs?v=52';
-import {makeCreative} from './creative-schema.mjs?v=52';
+import {makeHair,makeBeard} from './anatomy-accessories.mjs?v=53';
+import {anatomy} from './anatomy-accessories.mjs?v=53';
+import {makeStudioHair,makeStudioJacket} from './studio-foundation.mjs?v=53';
+import {makeFiberHair} from './fiber-hair.mjs?v=53';
+import {fabricMaterial} from './cloth-preview.mjs?v=53';
+import {FABRICS} from './realism-schema.mjs?v=53';
+import {makeCreative} from './creative-schema.mjs?v=53';
 const clamp=T.MathUtils.clamp;
 export class FashionPreview{
  constructor(onRedraw=()=>{}){this.onRedraw=onRedraw;this.parts=[];this.textures=[];this.avatar=null;this.signature='';this.generation=0;this.sources=new Map();this.pendingImages=[];}
@@ -109,16 +111,32 @@ export class FashionPreview{
    if(m.name.startsWith('boot-sole'))m.material.color.set(c.shoes==='sneakers'?p.accent:'#161e24');
   }
   const attach=(group,name)=>{group.name=name;avatar.root.add(group);avatar.root.updateWorldMatrix(true,true);head.attach(group);this.parts.push(group);};
-  if(!['original','bald'].includes(c.hair)&&!headgear)attach(c.realism?.fiberHair?makeFiberHair(avatar,c.hair,p.hair,c.realism):makeHair(avatar,c.hair,p.hair),'creative-fitted-hair');
+  if(!['original','bald'].includes(c.hair)&&!headgear)attach(c.hair==='swept'?makeStudioHair(anatomy(avatar),p.hair,avatar.studioHairSource,avatar.anatomyPositions):c.realism?.fiberHair?makeFiberHair(avatar,c.hair,p.hair,c.realism):makeHair(avatar,c.hair,p.hair),'creative-fitted-hair');
+  if(['fieldjacket','jacket'].includes(c.outfit))for(const mesh of makeStudioJacket(avatar,p.jacket,p.accent)){avatar.root.add(mesh);this.parts.push(mesh);}
   if(c.face.facialHair!=='Ingen'&&!project.parts.some(part=>part.visible&&part.preset==='beard'))attach(makeBeard(avatar,c.face.facialHair,p.hair),'creative-fitted-beard');
   if(c.face.freckles!=='Nej')for(const side of [-1,1])for(let i=0;i<(c.face.freckles==='Tydliga'?9:4);i++)solid(new T.SphereGeometry(.0019,5,4),'#86543d','freckle',[side*(.027+(i%3)*.013),1.653+Math.floor(i/3)*.008,.095-(i%3)*.004]);
   if(c.outfit==='hoodie'){
    solid(new T.TorusGeometry(.116,.032,8,24),p.jacket,'hood',[0,1.49,-.045],[1,.7,1],chest,[Math.PI/2,0,0]);
    for(const x of [-.036,.036])solid(new T.CylinderGeometry(.003,.003,.13,5),p.accent,'drawstring',[x,1.40,.134],null,chest);
   }
-  if(['polo','jacket'].includes(c.outfit))for(const x of [-.055,.055])solid(new T.SphereGeometry(1,10,6),p.accent,'collar',[x,1.50,.066],[.06,.025,.065],chest);
-  if(c.outfit==='jacket')solid(new T.CylinderGeometry(.004,.004,.44,5),p.accent,'zipper',[0,1.24,.135],null,chest);
+  if(c.outfit==='polo')for(const x of [-.055,.055])solid(new T.SphereGeometry(1,10,6),p.accent,'collar',[x,1.50,.066],[.06,.025,.065],chest);
   for(const shirt of shirts){if(shirt.material.name==='vest-shell'&&(c.vest||c.outfit==='vest')){shirt.material.map=null;shirt.material.color.set(p.vest);shirt.material.needsUpdate=true;}else this.makeArtwork(project,avatar,shirt,token);}
+ }
+ syncAppearance(project,avatar){
+  // Geometry is cached, appearance is not. Workbench may update twice when
+  // rebuilding attachments; reapply these choices after its base palette pass.
+  const c=project.creative,p=project.palette;
+  for(const mesh of avatar.meshes){
+   const m=mesh.material,name=m?.name;if(!m?.color)continue;
+   if(name==='jacket-fabric'||name==='vest-shell'){
+    const vest=name==='vest-shell'&&(c.vest||c.outfit==='vest');
+    m.color.set(vest?p.vest:m.map?'#ffffff':p.jacket);
+   }
+   if(name==='hair'&&/eyebrow/i.test(mesh.name))mesh.visible=!mesh.userData.sculptDisabled;
+   if(name==='gloves-leather')m.color.set(c.gloves==='skin'?p.skin:c.outfit==='fieldjacket'?p.boots:p.accent);
+   if(mesh.name.startsWith('boot-shaft'))mesh.visible=c.shoes!=='sneakers';
+   if(mesh.name.startsWith('boot-sole'))m.color.set(c.shoes==='sneakers'?p.accent:'#161e24');
+  }
  }
  makeArtwork(project,avatar,shirt,token){
   const c=project.creative,p=c.print,t=c.printTransform||{x:0,y:0,rotation:0,scale:100};

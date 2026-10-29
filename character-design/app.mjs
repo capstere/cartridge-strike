@@ -1,12 +1,12 @@
 /** Easy UI for revising the FPS skeleton, authoring character props and independent 3D objects. */
-import {saveProject,loadProject,listProjects,bytesToData,dataToBytes} from './project-store.mjs?v=52';
-import {installStudioControls} from './studio-controls.mjs?v=52';
-import {DesignWorkbench} from './workbench.mjs?v=52';
-import {newProject,validateProject,PALETTES,PRESETS,SHAPES,addPart,clonePart,mirrorPart,aiBrief,animationContract,filename} from './project-schema.mjs?v=52';
-import {packZip} from './zip-export.mjs?v=52';
+import {saveProject,loadProject,listProjects,bytesToData,dataToBytes} from './project-store.mjs?v=53';
+import {installStudioControls} from './studio-controls.mjs?v=53';
+import {DesignWorkbench} from './workbench.mjs?v=53';
+import {newProject,validateProject,PALETTES,PRESETS,SHAPES,addPart,clonePart,mirrorPart,aiBrief,animationContract,filename} from './project-schema.mjs?v=53';
+import {packZip} from './zip-export.mjs?v=53';
 import {inspectGLB} from '../furniture-editor/library/glb-utils.mjs';
-import {installCreativeControls} from './creative-controls.mjs?v=52';
-import {ensureCreative} from './creative-schema.mjs?v=52';
+import {installCreativeControls} from './creative-controls.mjs?v=53';
+import {ensureCreative,applyStudioFoundation} from './creative-schema.mjs?v=53';
 
 const W=480,H=680,STORE='cartridge-strike-character-studio-v2';
 const byId=id=>document.getElementById(id);
@@ -61,7 +61,7 @@ function download(data,name,type='application/octet-stream'){
  document.body.appendChild(link);link.click();link.remove();
  setTimeout(()=>URL.revokeObjectURL(url),2000);
 }
-function projectSnapshot(){workbench.sculpt.store(project);return {...project,studioVersion:'5.2',artwork:ready?{...captureArtwork(),faceViews:creativeControls?.captureFaces()||{},portraitFraming:project.artwork?.portraitFraming||'anatomical-v5'}:project.artwork};}
+function projectSnapshot(){workbench.sculpt.store(project);return {...project,studioVersion:'5.3',artwork:ready?{...captureArtwork(),faceViews:creativeControls?.captureFaces()||{},portraitFraming:project.artwork?.portraitFraming||'anatomical-v5'}:project.artwork};}
 function refreshPrompt(){
  try{$('ai-prompt').textContent=aiBrief(project,workbench.getClips(),workbench.getBones());}
  catch(e){status('Fel i projektet: '+e.message,true);}
@@ -198,6 +198,7 @@ function resetMode(mode){
  slotId=null;
  const isObject=mode==='object',isNew=mode==='create';
  project=newProject({kind:isObject?'object':'character',newCharacter:isNew,template:isNew?'blank':'analysts'});
+ if(isNew)applyStudioFoundation(project);
  if(isObject)addPart(project,'box');
  attachments.clear();dirty=false;selectedPart=null;workbench.playing=false;
  clearDrawing();creativeControls?.restoreFaces({});setTab(isObject?'parts':'sculpt');
@@ -303,9 +304,13 @@ async function writeZip(){
   const bytes=new Uint8Array(await res.arrayBuffer());
   if(bytes.length>6*1024*1024||bytes.length<1000)throw Error('Originalriggen har oväntad storlek.');
   files.push({name:'BASE_RIG.glb',data:bytes});
+  if(project.creative?.hair==='swept'&&project.base.gender==='female'){
+   const hairSource=await fetch(new URL('../assets/fps/models/quaternius-operator-male.glb',import.meta.url));if(!hairSource.ok)throw Error('Frisyrens originaltillgång saknas.');
+   files.push({name:'HAIR_SOURCE_MALE.glb',data:new Uint8Array(await hairSource.arrayBuffer())});
+  }
  }
  if(workbench.getPartInstances().length)files.push({name:'STATIC_PROTOTYPE.glb',data:new Uint8Array(await workbench.exportParts())});
- if(workbench.cloth.mesh){files.push({name:'CLOTH_SIMULATION.json',data:JSON.stringify(workbench.cloth.handoff())});const solver=await fetch(new URL('./cloth-solver.mjs?v=52',import.meta.url));if(!solver.ok)throw Error('Tygsimuleringens källkod saknas.');files.push({name:'CLOTH_SOLVER.mjs',data:await solver.text()});}
+ if(workbench.cloth.mesh){files.push({name:'CLOTH_SIMULATION.json',data:JSON.stringify(workbench.cloth.handoff())});const solver=await fetch(new URL('./cloth-solver.mjs?v=53',import.meta.url));if(!solver.ok)throw Error('Tygsimuleringens källkod saknas.');files.push({name:'CLOTH_SOLVER.mjs',data:await solver.text()});}
  if(project.creative?.realism?.head==='scan'){for(const name of ['LeePerrySmith.glb','Map-COL.jpg','Infinite-Level_02_Tangent_SmoothUV.jpg','LeePerrySmith_License.txt']){const response=await fetch(new URL('./assets/scan/'+name,import.meta.url));if(!response.ok)throw Error('Skanningens originalfil saknas: '+name);files.push({name:'SCAN_SOURCE_'+name,data:new Uint8Array(await response.arrayBuffer())});}}
  files.push({name:'PREVIEW.glb',data:new Uint8Array(await workbench.exportPreview())});
  if(project.kind==='character'&&creativeControls)files.push(...await creativeControls.exportEntries());

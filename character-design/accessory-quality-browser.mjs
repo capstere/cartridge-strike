@@ -10,9 +10,9 @@ try{
  await page.goto(origin+'/character-design/?quality=5.1');await page.waitForFunction(()=>document.querySelector('#status').textContent.includes('redo!'));
  const metrics=await page.evaluate(async()=>{
   const T=await import('../vendor/three/three.module.js');
-  const {DesignWorkbench}=await import('./workbench.mjs?v=52');
-  const {newProject,addPart,validateProject}=await import('./project-schema.mjs?v=52');
-  const {ACCESSORY_TYPES}=await import('./anatomy-accessories.mjs?v=52');
+  const {DesignWorkbench}=await import('./workbench.mjs?v=53');
+  const {newProject,addPart,validateProject}=await import('./project-schema.mjs?v=53');
+  const {ACCESSORY_TYPES}=await import('./anatomy-accessories.mjs?v=53');
   const results=[];
   const posedBox=mesh=>{const b=new T.Box3(),v=new T.Vector3();mesh.updateWorldMatrix(true,false);if(mesh.isSkinnedMesh)mesh.skeleton.update();for(let i=0;i<mesh.geometry.attributes.position.count;i++){mesh.getVertexPosition(i,v).applyMatrix4(mesh.matrixWorld);b.expandByPoint(v);}return b;};
   for(const gender of ['male','female']){
