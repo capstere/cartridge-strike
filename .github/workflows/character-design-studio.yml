@@ -25,7 +25,38 @@ concurrency:
 jobs:
   validate-editor:
     runs-on: ubuntu-latest
-    timeout-minutes: 35
+    name: Studio / ${{ matrix.suite }}
+    timeout-minutes: 12
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - suite: basic-workflow
+            script: browser-smoke.mjs
+            seconds: 220
+            device: all
+          - suite: design-desktop-touch
+            script: studio4-browser.mjs
+            seconds: 300
+            device: all
+          - suite: fitted-accessories
+            script: accessory-quality-browser.mjs
+            seconds: 180
+            device: all
+          - suite: direct-sculpt
+            script: sculpt-browser.mjs
+            seconds: 360
+            device: all
+          - suite: realism-desktop
+            script: realism-browser.mjs
+            seconds: 360
+            device: desktop
+          - suite: realism-touch
+            script: realism-browser.mjs
+            seconds: 360
+            device: mobile
+    env:
+      REALISM_TEST_DEVICE: ${{ matrix.device }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -53,11 +84,7 @@ jobs:
             if curl -fsS http://127.0.0.1:8765/character-design/ >/dev/null; then break; fi
             sleep 1
           done
-          timeout 220s xvfb-run -a node character-design/browser-smoke.mjs
-          timeout 300s xvfb-run -a node character-design/studio4-browser.mjs
-          timeout 180s xvfb-run -a node character-design/accessory-quality-browser.mjs
-          timeout 360s xvfb-run -a node character-design/sculpt-browser.mjs
-          timeout 360s xvfb-run -a node character-design/realism-browser.mjs
+          timeout ${{ matrix.seconds }}s xvfb-run -a node character-design/${{ matrix.script }}
       - name: Verify published Pages with real desktop and touch WebGL
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         env:
@@ -68,9 +95,5 @@ jobs:
             if curl -fsS "${CHARACTER_TEST_ORIGIN}/character-design/?verify=${GITHUB_SHA}" | grep -q 'class="edition">5.2'; then break; fi
             sleep 5
           done
-          timeout 220s xvfb-run -a node character-design/browser-smoke.mjs
-          timeout 300s xvfb-run -a node character-design/studio4-browser.mjs
-          timeout 180s xvfb-run -a node character-design/accessory-quality-browser.mjs
-          timeout 360s xvfb-run -a node character-design/sculpt-browser.mjs
-          timeout 360s xvfb-run -a node character-design/realism-browser.mjs
+          timeout ${{ matrix.seconds }}s xvfb-run -a node character-design/${{ matrix.script }}
       # Intentionally no upload-artifact action: preserve the repo's tiny Actions storage quota.
