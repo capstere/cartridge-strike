@@ -27,6 +27,7 @@ try{
   await page.waitForFunction(()=>document.querySelector('#status').textContent.includes('redo!'));
   assert.equal(await page.title(),'Character Design Studio 4 · Cartridge Strike');
   if(mobile)await text('viewer-tools').locator(':scope > summary').click();
+  if(mobile){await text('gender').selectOption('female');await settle();}
   const initial=await pixels();await tab('face').click();
   for(const [key,value]of [['jaw','Bred'],['eyes','Stora'],['nose','Bred'],['mouth','Brett leende'],['eyebrows','Tjocka'],['facialHair','Helskägg'],['freckles','Tydliga']]){
    const before=await pixels();await page.locator('[data-face-field="'+key+'"]').selectOption(value);await settle();assert.notEqual(await pixels(),before,key+' must visibly change actual WebGL rendering');

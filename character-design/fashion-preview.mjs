@@ -26,10 +26,14 @@ export class FashionPreview{
   this.clear();if(this.avatar!==avatar)this.sources.clear();
   this.avatar=avatar;this.signature=signature;
   const token=this.generation;
+  const faceMesh=avatar.meshes.find(m=>m.material?.name==='face-skin');
+  const faceSource=faceMesh?this.source(faceMesh,avatar):null;let top=-Infinity;
+  if(faceSource)for(let i=1;i<faceSource.length;i+=3)top=Math.max(top,faceSource[i]);
+  const headShift=Number.isFinite(top)?top-1.8100767135620117:0;this.headShift=headShift;
   const chest=avatar.bones.get('spine_03'),head=avatar.bones.get('Head');
   const standard=color=>new T.MeshStandardMaterial({color,roughness:(c.roughness??85)/100});
   const solid=(g,color,name,pos,scale,bone=head,rotation=null)=>{
-   const m=new T.Mesh(g,standard(color));m.name='creative-'+name;m.position.fromArray(pos);
+   const m=new T.Mesh(g,standard(color));m.name='creative-'+name;m.position.fromArray(pos);m.position.y+=headShift;
    if(scale)m.scale.fromArray(scale);if(rotation)m.rotation.set(...rotation);
    avatar.root.add(m);avatar.root.updateWorldMatrix(true,true);bone?.attach(m);this.parts.push(m);return m;
   };
@@ -62,14 +66,14 @@ export class FashionPreview{
    if(name==='face-skin'){
     const f=c.face;
     for(let i=0;i<pos.count;i++){
-     const x=source[i*3],y=source[i*3+1],z=source[i*3+2];
+     const x=source[i*3],y=source[i*3+1]-headShift,z=source[i*3+2];
      const jawWeight=clamp((y-1.54)/.04,0,1)*clamp((1.72-y)/.10,0,1);
      const widths={Naturlig:1,Rund:1.13,Kantig:1.20,Smal:.82,Bred:1.24};
      pos.setX(i,x*(1+((widths[f.jaw]||1)-1)*jawWeight));
      const nose=Math.exp(-((x/.034)**2+((y-1.673)/.035)**2))*clamp((z-.065)/.035,0,1);
      const n={Naturlig:0,Smal:-.013,Bred:.016,Uppåtvänd:.007,Rak:.011}[f.nose]||0;
      pos.setZ(i,z+n*nose);if(f.nose==='Bred'||f.nose==='Smal')pos.setX(i,pos.getX(i)*(1+(f.nose==='Bred'?.24:-.19)*nose));
-     if(f.nose==='Uppåtvänd')pos.setY(i,y+.012*nose);
+     if(f.nose==='Uppåtvänd')pos.setY(i,source[i*3+1]+.012*nose);
      const lips=Math.exp(-((x/.053)**2+((y-1.619)/.024)**2))*clamp((z-.05)/.04,0,1);
      if(f.mouth==='Fylligare läppar')pos.setZ(i,pos.getZ(i)+.012*lips);
      if(f.mouth.includes('leende'))pos.setY(i,pos.getY(i)+(.014*Math.abs(x)/.05-.003)*lips*(f.mouth==='Brett leende'?1.7:1));
@@ -79,12 +83,12 @@ export class FashionPreview{
    if(name==='eyes'){
     mesh.material.color.set(c.face.eyeColor);
     const scale={Naturliga:1,Stora:1.35,Smala:.62,Runda:1.2,Markerade:.8}[c.face.eyes]||1;
-    for(let i=0;i<pos.count;i++)pos.setY(i,1.699+(source[i*3+1]-1.699)*scale);
+    for(let i=0;i<pos.count;i++)pos.setY(i,1.699+headShift+(source[i*3+1]-headShift-1.699)*scale);
    }
    if(name==='hair'&&/eyebrow/i.test(mesh.name)){
     mesh.visible=true;
     const scale={Naturliga:1,Tjocka:1.8,Tunna:.5,Bågformade:1.3,Raka:.65}[c.face.eyebrows]||1;
-    for(let i=0;i<pos.count;i++)pos.setY(i,1.71+(source[i*3+1]-1.71)*scale);
+    for(let i=0;i<pos.count;i++)pos.setY(i,1.71+headShift+(source[i*3+1]-headShift-1.71)*scale);
    }
    if(name==='gloves-leather')mesh.material.color.set(c.gloves==='skin'?p.skin:p.accent);
    if(name==='boots-leather')mesh.material.color.set(p.boots);
@@ -132,7 +136,7 @@ export class FashionPreview{
    const x=source[i*3],y=source[i*3+1],z=source[i*3+2];
    const side=p.position==='front'?z>.025:z<-.025;
    uv[i*2]=side&&Math.abs(x)<.25?(p.position==='front'?x:-x)/.52+.5:.005;
-   uv[i*2+1]=side&&Math.abs(x)<.25?(y-.90)/.67:.005;
+   uv[i*2+1]=side&&Math.abs(x)<.25?(y-this.headShift-.90)/.67:.005;
   }
   const ix=g.index;for(let n=0;n<(ix?ix.count:uv.length/2);n+=3){const ids=[0,1,2].map(k=>ix?ix.getX(n+k):n+k);const valid=ids.every(i=>{const x=source[i*3],z=source[i*3+2];return Math.abs(x)<.25&&(p.position==='front'?z>.025:z<-.025);});if(!valid)for(const i of ids){uv[i*2]=.005;uv[i*2+1]=.005;}}
   g.setAttribute('uv',new T.BufferAttribute(uv,2));
