@@ -1,0 +1,12 @@
+# Local dependencies, browser artifacts and generated test output.
+node_modules/
+test-results/
+playwright-report/
+coverage/
+*.log
+.DS_Store
+
+# Private draft levels and imported source models are never public release inputs.
+local-levels/
+private-assets/
+*.blend1
