@@ -70,7 +70,7 @@ export class FashionPreview{
   // Three-dimensional hair guide; keep original facial topology/eyes untouched.
   // Hair is attached to head bone. It is intentionally low-poly, never an implicit final sculpt.
   if(c.hair!=='original'){
-   const point=head.getWorldPosition(new T.Vector3());
+   const point=avatar.root.worldToLocal(head.getWorldPosition(new T.Vector3()));
    const h=point.y;
    const hair=standard(p.hair,.92);
    if(c.hair!=='buzz'){
@@ -132,9 +132,9 @@ export class FashionPreview{
   mesh.renderOrder=2;
   this.parts.push(mesh);
   if(p.imageData){
-   const img=new Image();
+   const img=new Image(),currentSignature=this.signature;
    img.onload=()=>{
-    if(this.avatar!==avatar||this.signature!==JSON.stringify({c,p: this.lastPalette,gender:avatar.gender}))return;
+    if(this.avatar!==avatar||this.signature!==currentSignature)return;
     this.image=img;draw();
    };
    img.onerror=()=>{};img.src=p.imageData;
