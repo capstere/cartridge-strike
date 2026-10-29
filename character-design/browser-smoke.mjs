@@ -33,6 +33,42 @@ try{
  assert.ok(sheet>3,'front character preview is blank or uniform: '+sheet);
  log('four-angle 3D views contain rendered character pixels');
  await page.locator('[data-color="jacket"]').fill('#ed5566');
+ await page.locator('[data-tab="fashion"]').click();
+ await page.locator('#outfit-style').selectOption('hoodie');
+ await page.locator('#shirt-text').fill('QC TEAM 05');
+ await page.locator('#shirt-font').selectOption('mono');
+ await page.locator('#shirt-image-mode').selectOption('pattern');
+ // Produce a fresh, valid PNG in the browser; do not rely on a remote asset.
+ const pngBase64=await page.evaluate(()=>{
+  const c=document.createElement('canvas');c.width=c.height=16;
+  const ctx=c.getContext('2d');ctx.fillStyle='#ff8000';ctx.fillRect(0,0,16,16);
+  ctx.fillStyle='#0033ff';ctx.fillRect(2,2,8,8);
+  return c.toDataURL('image/png').split(',')[1];
+ });
+ await page.locator('#shirt-png').setInputFiles({name:'custom-shirt.png',mimeType:'image/png',buffer:Buffer.from(pngBase64,'base64')});
+ await page.waitForFunction(()=>!!document.querySelector('#shirt-preview').src?.startsWith('data:image/png'));
+ await page.locator('[data-tab="face"]').click();
+ await page.locator('#hair-style').selectOption('ponytail');
+ await page.locator('[data-face-field="jaw"]').selectOption('Kantig');
+ await page.locator('#face-zoom').evaluate(el=>{el.value='250';el.dispatchEvent(new Event('input',{bubbles:true}));});
+ assert.equal(await page.locator('#face-zoom-value').textContent(),'250 %');
+ await page.locator('#face-pan').click();
+ assert.equal(await page.locator('#face-pan').getAttribute('aria-pressed'),'true');
+ await page.locator('#face-pan').click();
+ await page.locator('#face-center').click();
+ await page.locator('[data-ink="face"]').scrollIntoViewIfNeeded();
+ const faceBounds=await page.locator('[data-ink="face"]').boundingBox();
+ assert.ok(faceBounds?.width>100);
+ const cx=faceBounds.x+faceBounds.width*.51,cy=faceBounds.y+faceBounds.height*.52;
+ await page.mouse.move(cx,cy);await page.mouse.down();await page.mouse.move(cx+30,cy+14,{steps:6});await page.mouse.up();
+ await page.locator('#face-angle').selectOption('left');
+ await page.locator('#face-angle').selectOption('front');
+ await page.locator('#animation-requests summary').click();
+ await page.locator('#requested-animations input[value="wave"]').check();
+ await page.locator('#focus-head').click();
+ assert.equal(await page.locator('#pose option').count()>=11,true);
+ log('clothing styles, shirt text+uploaded PNG, hair, face sketch zoom and requests');
+
  await page.locator('[data-tab="parts"]').click();
  await page.locator('#part-type').selectOption('helmet');
  await page.locator('#add-part').click();
@@ -50,12 +86,19 @@ try{
  const json=JSON.parse((await readFile(await (await jsonDownload).path())).toString());
  assert.equal(json.parts.length,1);assert.equal(json.parts[0].rotation[0],12);assert.equal(json.parts[0].note,'Make a soft helmet with fabric lining.');
  assert.equal(json.base.original_glb,'quaternius-operator-male.glb');
+ assert.equal(json.creative.outfit,'hoodie');
+ assert.equal(json.creative.hair,'ponytail');
+ assert.equal(json.creative.print.text,'QC TEAM 05');
+ assert.ok(json.creative.print.imageData.startsWith('data:image/png;base64,'));
+ assert.ok(json.creative.requestedAnimations.includes('wave'));
+ assert.ok(json.artwork.faceViews.front.startsWith('data:image/png;base64,'));
+
  log('editable JSON project downloaded');
  const zipDownload=page.waitForEvent('download');
  await page.locator('#export-zip').click();
  const zipBytes=await readFile(await (await zipDownload).path());
  assert.equal(zipBytes.readUInt32LE(0),0x04034b50);
- for(const name of ['BASE_RIG.glb','ANIMATION_CONTRACT.json','STATIC_PROTOTYPE.glb','DESIGN_SHEET.png','AI_INSTRUCTIONS.md','PROJECT.json'])
+ for(const name of ['BASE_RIG.glb','ANIMATION_CONTRACT.json','STATIC_PROTOTYPE.glb','DESIGN_SHEET.png','AI_INSTRUCTIONS.md','PROJECT.json','FACE_FRONT.png','FACE_LEFT.png','FACE_RIGHT.png','SHIRT_ARTWORK.png'])
   assert.ok(zipBytes.includes(Buffer.from(name)),name+' missing from ZIP');
  assert.ok(zipBytes.byteLength>100_000);
  log('self-contained AI ZIP contains original animated rig, geometry, orthographic sheet and handoff');

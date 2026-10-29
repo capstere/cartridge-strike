@@ -4,6 +4,8 @@ import {newProject,validateProject,PALETTES,PRESETS,SHAPES,addPart,clonePart,mir
 import {makePrototypeGLB} from './prototype-glb.mjs';
 import {packZip} from './zip-export.mjs';
 import {inspectGLB} from '../furniture-editor/library/glb-utils.mjs';
+import {installCreativeControls} from './creative-controls.mjs';
+import {ensureCreative} from './creative-schema.mjs';
 
 const W=480,H=680,STORE='cartridge-strike-character-studio-v2';
 const byId=id=>document.getElementById(id);
@@ -18,6 +20,7 @@ for(const name of ANGLES){
 const workbench=new DesignWorkbench($('preview3d'),bases);
 const attachments=new Map(),history=[];
 let project=restoreAutosave()||newProject(),selectedPart=null,artwork={},ready=false,dirty=false,activeTab='look';
+let creativeControls=null;
 
 function status(message,error=false){
  const node=$('status');node.textContent=message;node.classList.toggle('error',error);
@@ -27,7 +30,7 @@ function restoreAutosave(){
  try{
   const saved=localStorage.getItem(STORE);
   if(!saved||saved.length>3_000_000)return null;
-  const obj=JSON.parse(saved);validateProject(obj);
+  const obj=JSON.parse(saved);validateProject(obj);ensureCreative(obj);
   return obj;
  }catch{return null;}
 }
@@ -35,10 +38,19 @@ function captureArtwork(){
  const result={};for(const [n,c] of inks)result[n]=c.toDataURL('image/png');
  return result;
 }
+let autosaveTimer=null;
+function flushLocalSave(){
+ if(!ready)return;
+ if(autosaveTimer!==null){clearTimeout(autosaveTimer);autosaveTimer=null;}
+ try{artwork=captureArtwork();localStorage.setItem(STORE,JSON.stringify(projectSnapshot()));}
+ catch{status('Webbläsaren har inte plats att autospara. Hämta projektfilen (.json) innan du stänger.',true);}
+}
 function saveLocal(){
  if(!ready)return;
- try{artwork=captureArtwork();localStorage.setItem(STORE,JSON.stringify({...project,artwork}));}
- catch{status('Projektet visas som vanligt men webbläsaren kan inte autospara. Hämta projektfilen innan du stänger.',true);}
+ if(autosaveTimer!==null)clearTimeout(autosaveTimer);
+ // Drawing/export uses immediate captures; autosave can be throttled to keep
+ // touch/pen strokes and shirt text responsive even with a 1024px portrait.
+ autosaveTimer=setTimeout(flushLocalSave,500);
 }
 function download(data,name,type='application/octet-stream'){
  const b=data instanceof Blob?data:new Blob([data],{type});
@@ -46,7 +58,7 @@ function download(data,name,type='application/octet-stream'){
  document.body.appendChild(link);link.click();link.remove();
  setTimeout(()=>URL.revokeObjectURL(url),2000);
 }
-function projectSnapshot(){return {...project,artwork:captureArtwork()};}
+function projectSnapshot(){return {...project,artwork:{...captureArtwork(),faceViews:creativeControls?.captureFaces()||{}}};}
 function refreshPrompt(){
  try{$('ai-prompt').textContent=aiBrief(project,workbench.getClips(),workbench.getBones());}
  catch(e){status('Fel i projektet: '+e.message,true);}
@@ -130,10 +142,13 @@ function updateModeVisual(){
  $('template-wrap').hidden=project.kind==='object';
  $('team-wrap').hidden=project.kind==='object';
  $('animation-controls').hidden=project.kind==='object';
+ $('animation-requests').hidden=project.kind==='object';
+ $('face-detail-section').hidden=project.kind==='object';
  $('tab-look').hidden=project.kind==='object'||activeTab!=='look';
  const lookBtn=document.querySelector('[data-tab="look"]');
  lookBtn.hidden=project.kind==='object';
- if(project.kind==='object'&&activeTab==='look')setTab('parts');
+ for(const name of ['fashion','face'])document.querySelector('[data-tab="'+name+'"]').hidden=project.kind==='object';
+ if(project.kind==='object'&&['look','fashion','face'].includes(activeTab))setTab('parts');
  if(project.kind==='object'&&activeTab==='parts')setTab('parts');
  if(project.kind==='character'&&activeTab==='parts')setTab('parts');
  if(project.kind==='character'&&activeTab==='look')setTab('look');
@@ -156,7 +171,7 @@ function refreshUI(){
  for(const input of document.querySelectorAll('[data-note]'))input.value=project.notes[input.dataset.note];
  $('play').textContent='▶ Spela rörelsen';$('play').setAttribute('aria-pressed','false');
  selectedPart=project.parts.at(-1)?.id||null;
- updateModeVisual();partsSummary();referenceSummary();refreshPrompt();
+ updateModeVisual();partsSummary();referenceSummary();creativeControls?.refresh();refreshPrompt();
 }
 function persist(){
  dirty=true;refreshPrompt();saveLocal();
@@ -166,7 +181,7 @@ function visualChange({rebuild=false,recreate=false,save=true}={}){
  try{
   workbench.flipped=!!project.view_flip;
   workbench.update(project,{rebuild,recreate});
-  updateModeVisual();refreshPrompt();
+  creativeControls?.syncClips();updateModeVisual();refreshPrompt();
   if(save)saveLocal();
  }catch(e){console.error(e);status('Kunde inte uppdatera 3D-vyn: '+e.message,true);}
 }
@@ -177,7 +192,7 @@ function resetMode(mode){
  project=newProject({kind:isObject?'object':'character',newCharacter:isNew,template:isNew?'blank':'analysts'});
  if(isObject)addPart(project,'box');
  attachments.clear();dirty=false;selectedPart=null;workbench.playing=false;
- clearDrawing();setTab(isObject?'parts':'look');
+ clearDrawing();creativeControls?.restoreFaces({});setTab(isObject?'parts':'look');
  refreshUI();visualChange({recreate:true,rebuild:true});
  status('Nytt '+(isObject?'3D-objekt':isNew?'karaktärsprojekt':'karaktärsprojekt från originalet')+' skapat.');
 }
@@ -282,6 +297,7 @@ async function writeZip(){
   files.push({name:'BASE_RIG.glb',data:bytes});
  }
  if(workbench.getPartInstances().length)files.push({name:'STATIC_PROTOTYPE.glb',data:getPrototype()});
+ if(project.kind==='character'&&creativeControls)files.push(...await creativeControls.exportEntries());
  for(let i=0;i<project.references.length;i++){
   const ref=project.references[i],bytes=attachments.get(ref.name);
   if(!bytes)continue;
@@ -319,12 +335,12 @@ async function importProject(file){
  if(!file)return;
  try{
   if(file.size>3*1024*1024)throw Error('Projektfilen är för stor.');
-  const obj=JSON.parse(await file.text());validateProject(obj);
+  const obj=JSON.parse(await file.text());validateProject(obj);ensureCreative(obj);
   if(dirty&&!window.confirm('Ersätta ditt nuvarande projekt med den sparade versionen?'))return;
   attachments.clear();project=obj;dirty=false;selectedPart=null;
   setTab(obj.kind==='object'?'parts':'look');
   refreshUI();visualChange({recreate:true,rebuild:true,save:false});
-  await restoreArtwork(obj.artwork);saveLocal();
+  await restoreArtwork(obj.artwork);await creativeControls?.restoreFaces(obj.artwork?.faceViews);saveLocal();
   status('Projektet öppnades. Lägg till eventuella referensfiler igen innan du exporterar ZIP.');
  }catch(e){status('Kunde inte öppna projektet: '+e.message,true);}
 }
@@ -364,7 +380,7 @@ function installEvents(){
  });
  $('left-turn').addEventListener('click',()=>{workbench.yaw-=Math.PI/8;workbench.renderPreview();});
  $('right-turn').addEventListener('click',()=>{workbench.yaw+=Math.PI/8;workbench.renderPreview();});
- $('zoom-in').addEventListener('click',()=>{workbench.zoom=Math.min(2.5,workbench.zoom*1.2);workbench.renderPreview();});
+ $('zoom-in').addEventListener('click',()=>{workbench.zoom=Math.min(6,workbench.zoom*1.2);workbench.renderPreview();});
  $('zoom-out').addEventListener('click',()=>{workbench.zoom=Math.max(.5,workbench.zoom/1.2);workbench.renderPreview();});
  $('flip-views').addEventListener('click',()=>{project.view_flip=!project.view_flip;workbench.flipped=!!project.view_flip;workbench.renderSheet();persist();});
  const canvas=$('preview3d');let pointer=null,last=[0,0];
@@ -378,7 +394,7 @@ function installEvents(){
   last=[e.clientX,e.clientY];workbench.renderPreview();
  });
  for(const ev of ['pointerup','pointercancel','lostpointercapture'])canvas.addEventListener(ev,e=>{if(pointer===e.pointerId)pointer=null;});
- canvas.addEventListener('wheel',e=>{e.preventDefault();workbench.zoom=Math.min(2.5,Math.max(.5,workbench.zoom*(e.deltaY>0?.9:1.1)));workbench.renderPreview();},{passive:false});
+ canvas.addEventListener('wheel',e=>{e.preventDefault();workbench.zoom=Math.min(6,Math.max(.5,workbench.zoom*(e.deltaY>0?.9:1.1)));workbench.renderPreview();},{passive:false});
  $('part-type').addEventListener('change',()=>{});
  $('add-part').addEventListener('click',()=>{
   try{
@@ -442,17 +458,20 @@ function animateLoop(time){
  requestAnimationFrame(animateLoop);
 }
 async function start(){
+ workbench.faceCanvas=$('face-base');
+ creativeControls=installCreativeControls({getProject:()=>project,workbench,persist,visualChange,status,download});
  installEvents();initDrawing();
  try{
   await workbench.initialize();ready=true;
   refreshUI();
   workbench.flipped=!!project.view_flip;workbench.update(project,{recreate:true,rebuild:true});
-  await restoreArtwork(project.artwork);
+  creativeControls.syncClips();
+  await restoreArtwork(project.artwork);await creativeControls.restoreFaces(project.artwork?.faceViews);
   status('Studion är redo! Ändra en färg, lägg till en 3D-del eller skapa en helt ny karaktär.');
  }catch(error){
   console.error(error);status('Kunde inte starta WebGL eller ladda spelets originalmodeller: '+error.message,true);
   $('export-zip').disabled=true;$('save-glb').disabled=true;
  }
 }
-window.addEventListener('pagehide',()=>workbench.dispose());
+window.addEventListener('pagehide',()=>{flushLocalSave();workbench.dispose();});
 start();

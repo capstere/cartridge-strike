@@ -111,3 +111,33 @@ pre{white-space:pre-wrap;overflow-wrap:anywhere;max-height:370px;overflow:auto;f
 @media(max-width:640px){.masthead,main{padding-left:11px;padding-right:11px}.masthead{padding-top:21px}.panel{padding:15px}.choice-row{grid-template-columns:1fr;gap:8px}.choice{min-height:0;padding:13px}.setup-fields{grid-template-columns:1fr}.views{grid-template-columns:1fr}.view{width:100%;max-width:510px;margin:auto}.preview-hint{font-size:.69rem}.part-settings{grid-template-columns:1fr 1fr}.slider-grid{grid-template-columns:1fr}.color-grid{grid-template-columns:1fr}.animation-controls{display:block}.animation-controls button{width:100%;margin-top:10px}}
 @page{size:A3 landscape;margin:12mm}
 @media print{body{background:white;-webkit-print-color-adjust:exact;print-color-adjust:exact}.masthead,main{padding:0;max-width:none}.masthead{padding-bottom:8px}.back,.lead,.stamp,.setup,.workspace,.draw-toolbar,.downloads,.model-downloads,.export,pre,details{display:none!important}.sheet{border:0;box-shadow:none;padding:0}.views{grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}.view{break-inside:avoid;padding:8px}.view h3{font-size:11px}.panel{margin:0}h1{font-size:21px}h2{font-size:18px}}
+
+/* Creative v3: keep major actions obvious, advanced options inside native details. */
+.tab-row{display:flex;overflow-x:auto;scrollbar-width:thin;gap:5px;white-space:nowrap}
+.tab-row button{flex:1 0 auto;padding:11px 10px}
+.print-grid,.face-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:14px 0}
+.print-grid label,.face-grid label{min-width:0}
+.print-grid input[type=color],.face-grid input[type=color]{margin-top:8px}
+.design-separator{height:1px;background:#d6e5e3;margin:20px 0}
+.shirt-picture{display:flex;align-items:center;gap:12px;padding:10px;background:white;border-radius:10px;border:1px solid #d1dfdc;margin-bottom:13px}
+.shirt-picture img{max-width:110px;max-height:100px;object-fit:contain;background:#e8eeee}
+.shirt-picture button{font-size:.8rem}
+.anim-speed,.anim-scrub{flex:1 1 185px;min-width:145px}
+.anim-speed output{float:right}
+.check-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;margin:13px 0}
+.check-grid label{font-size:.83rem;padding:10px;border:1px solid #d2e2dd;background:#f5faf8;border-radius:8px;display:flex;gap:9px;align-items:center}
+.check-grid input{accent-color:#136e7c}
+.face-detail-layout{display:grid;grid-template-columns:minmax(0,1fr) minmax(200px,.54fr);gap:20px;align-items:start}
+.face-photo{width:100%;max-width:670px;margin:0 auto}
+.face-canvas-wrap{position:relative;aspect-ratio:1;width:100%;overflow:hidden;border:1px solid #cadbd8;border-radius:13px;background:#eff5f2;touch-action:none}
+.face-image-layer{position:absolute;inset:0;transform-origin:center;will-change:transform}
+.face-image-layer canvas{width:100%;height:100%;display:block}
+.face-image-layer canvas.ink{position:absolute;inset:0;cursor:crosshair;touch-action:none}
+.face-side-tools{display:grid;gap:11px}
+.face-side-tools button{max-width:270px}
+.face-side-tools p{margin:0}
+.head-shortcut{background:#e5f6f2;border-color:#81bfc0}
+#face-pan[aria-pressed=true]{background:#145969;color:#fff}
+@media(max-width:800px){.face-detail-layout{grid-template-columns:1fr}.face-side-tools{grid-template-columns:repeat(2,minmax(0,1fr))}.face-side-tools p,.face-side-tools .design-separator{grid-column:1/-1}}
+@media(max-width:580px){.face-side-tools{grid-template-columns:1fr}.face-side-tools p,.face-side-tools .design-separator{grid-column:auto}.print-grid,.face-grid,.check-grid{grid-template-columns:1fr}}
+@media print{.face-detail{display:none!important}}
