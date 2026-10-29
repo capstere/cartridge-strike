@@ -2,6 +2,10 @@
 import * as T from '../vendor/three/three.module.js';
 import {loadCharacterLibrary,createAuthoredAvatar,disposeAvatar} from '../src/fps/character-library.mjs';
 import {REQUIRED_CLIPS} from './project-schema.mjs';
+import {GLTFLoader} from '../vendor/three/addons/loaders/GLTFLoader.js';
+import {GLTFExporter} from '../vendor/three/addons/exporters/GLTFExporter.js';
+import {inspectGLB} from '../furniture-editor/library/glb-utils.mjs';
+import {dataToBytes} from './project-store.mjs';
 import {FashionPreview} from './fashion-preview.mjs';
 const RAD=Math.PI/180,SW=480,SH=680,PW=720,PH=660;
 function characterId(gender){
@@ -16,9 +20,9 @@ export class DesignWorkbench{
  constructor(preview,bases){
   this.preview=preview;this.bases=bases;
   this.renderer=null;this.scene=null;this.avatar=null;this.project=null;
-  this.objectRoot=null;this.partMeshes=new Map();
-  this.fashion=new FashionPreview(()=>this.renderSheet());this.focus='body';this.faceView='front';this.faceCanvas=null;this.animationSpeed=1;
-  this.yaw=.44;this.pitch=.13;this.zoom=1;this.flipped=false;this.playing=false;
+  this.imports=new Map();this.importData=new Map();this.objectRoot=null;this.partMeshes=new Map();
+  this.fashion=new FashionPreview(()=>this.scheduleRender());this.focus='body';this.faceView='front';this.faceCanvas=null;this.animationSpeed=1;
+  this.pan=new T.Vector2();this.renderPending=false;this.yaw=.44;this.pitch=.13;this.zoom=1;this.flipped=false;this.playing=false;
   this.currentAction=null;this.initialized=false;this.lastFrame=0;this.frame=0;
  }
  async initialize(){
@@ -45,6 +49,7 @@ export class DesignWorkbench{
    this.clearParts();this.fashion.dispose();
    if(this.avatar){this.avatar.holder.removeFromParent();disposeAvatar(this.avatar);}
    this.avatar=createAuthoredAvatar(project.base.team==='hostage'?'analysts':project.base.team,characterId(project.base.gender),project.base.team==='hostage');
+   this.avatar.holder.rotation.y=0; // Studio canonical front is +Z (game actors face -Z).
    this.scene.add(this.avatar.holder);
    rebuild=true;
   }
@@ -52,10 +57,10 @@ export class DesignWorkbench{
   this.objectRoot.visible=project.kind==='object';
   // All fashion overlays attach in the same canonical idle rest pose.
   // This avoids misaligned decals after a user previously previewed crouching or death.
-  if(project.kind==='character'&&this.avatar)this.pose('Idle_Loop',false);
+  if(project.kind==='character'&&this.avatar)this.neutralRest();
   this.updateAppearance();
   if(rebuild||old?.kind!==project.kind)this.rebuildParts();
-  else if(project.kind==='character'&&this.avatar)this.pose(project.pose,false);
+  if(project.kind==='character'&&this.avatar)this.pose(project.pose,false);
   this.renderSheet();
  }
  updateAppearance(){
@@ -88,7 +93,28 @@ export class DesignWorkbench{
   if(this.project.kind==='character')this.fashion.create(this.project,this.avatar);
   else this.fashion.dispose();
  }
+ async prepareAssets(project){
+  for(const part of project.parts){
+   if(part.shape!=='glb')continue;
+   const data=project.embeddedReferences?.[part.asset];if(!data)throw Error('GLB-filen saknas: '+part.asset);
+   if(this.importData.get(part.asset)===data)continue;
+   const bytes=dataToBytes(data);inspectGLB(bytes);
+   const asset=await new GLTFLoader().parseAsync(bytes.buffer,'');
+   const old=this.imports.get(part.asset);old?.traverse(o=>{o.geometry?.dispose();for(const m of [o.material].flat()){if(!m)continue;for(const v of Object.values(m))if(v?.isTexture)v.dispose();m.dispose();}});
+   this.imports.set(part.asset,asset.scene);this.importData.set(part.asset,data);
+  }
+ }
  createPartMesh(part){
+  if(part.shape==='glb'){
+   const source=this.imports.get(part.asset);if(!source)throw Error('Tillbehöret har inte lästs in.');
+   const mesh=new T.Group(),model=source.clone(true),a=[],b=[];source.traverse(o=>a.push(o));model.traverse(o=>b.push(o));const map=new Map(a.map((o,i)=>[o,b[i]]));for(const [o,n]of map)if(o.isSkinnedMesh){n.skeleton=new T.Skeleton(o.skeleton.bones.map(v=>map.get(v)),o.skeleton.boneInverses.map(v=>v.clone()));n.bindMatrix.copy(o.bindMatrix);n.bindMatrixInverse.copy(o.bindMatrixInverse);}
+   mesh.add(model);
+   model.updateMatrixWorld(true);const box=new T.Box3().setFromObject(model),size=box.getSize(new T.Vector3()),center=box.getCenter(new T.Vector3());
+   model.position.sub(center);model.scale.set(1/Math.max(.001,size.x),1/Math.max(.001,size.y),1/Math.max(.001,size.z));model.position.multiply(model.scale);if(part.mirrored){model.scale.x*=-1;model.position.x*=-1;}
+   model.traverse(o=>{if(o.isMesh){o.geometry=o.geometry.clone();o.material=Array.isArray(o.material)?o.material.map(m=>m.clone()):o.material.clone();}});
+   mesh.name=part.name;mesh.userData.designId=part.id;mesh.position.fromArray(part.position);mesh.rotation.set(...part.rotation.map(x=>x*RAD));mesh.scale.fromArray(part.dimensions);mesh.visible=part.visible;return mesh;
+  }
+
   let g;
   switch(part.shape){
    case 'sphere':g=new T.SphereGeometry(.5,18,12);break;
@@ -102,13 +128,13 @@ export class DesignWorkbench{
   mesh.castShadow=false;mesh.receiveShadow=true;
   mesh.position.fromArray(part.position);
   mesh.rotation.set(...part.rotation.map(x=>x*RAD));
-  mesh.scale.fromArray(part.dimensions);
+  mesh.scale.fromArray(part.dimensions);if(part.mirrored)mesh.scale.x*=-1;
   mesh.visible=part.visible;
   return mesh;
  }
  clearParts(){
   for(const mesh of this.partMeshes.values()){
-   mesh.removeFromParent();mesh.geometry.dispose();mesh.material.dispose();
+   mesh.removeFromParent();mesh.traverse(o=>{o.geometry?.dispose();for(const m of [o.material].flat())m?.dispose();});
   }
   this.partMeshes.clear();
  }
@@ -119,7 +145,7 @@ export class DesignWorkbench{
    // Define attachments in the neutral character space, then parent to a named bone.
    // This preserves their rest placement while following existing motion clips.
    this.avatar.holder.scale.setScalar(this.avatar.scale);
-   this.pose('Idle_Loop',false);
+   this.neutralRest();
   }
   for(const part of p.parts){
    const mesh=this.createPartMesh(part);
@@ -142,6 +168,10 @@ export class DesignWorkbench{
   // Reparent whenever a neutral-space position changes: bone-local space is
   // not equal to the character coordinates displayed on the sliders.
   this.rebuildParts();
+ }
+ neutralRest(){
+  if(!this.avatar)return;this.avatar.mixer.stopAllAction();
+  this.avatar.root.traverse(o=>{if(o.isSkinnedMesh)o.skeleton.pose();});this.avatar.root.updateWorldMatrix(true,true);
  }
  pose(name,play=false){
   if(!this.avatar||!this.avatar.clips.has(name))return false;
@@ -171,10 +201,11 @@ export class DesignWorkbench{
   this.avatar.mixer.update(delta*this.animationSpeed);
   this.avatar.root.updateMatrixWorld(true);
   this.renderPreview();
-  if(++this.frame%12===0)this.renderSheet();
+  // Reference sheets are refreshed on pause/edit/export, not during playback.
  }
  getFraming(){
   if(this.project?.kind==='character'){
+   if(this.focus==='shoes')return {center:new T.Vector3(0,.16,0),span:.65};
    if(this.focus==='head'&&this.avatar){const v=this.avatar.bones.get('Head')?.getWorldPosition(new T.Vector3());if(v)return {center:v,span:.74};}
    return {center:new T.Vector3(0,.90,0),span:2.43};
   }
@@ -186,7 +217,7 @@ export class DesignWorkbench{
  }
  renderPreview(){
   if(!this.initialized||!this.project)return;
-  const {center,span}=this.getFraming();
+  const {center,span}=this.getFraming();center.x+=this.pan.x;center.y+=this.pan.y;
   this.grid.visible=true;
   this.renderer.setSize(PW,PH,false);
   const aspect=PW/PH;
@@ -200,7 +231,8 @@ export class DesignWorkbench{
  }
  renderSheet(){
   if(!this.initialized||!this.project)return;
-  const {center,span}=this.getFraming(),s=span/2,ratio=SW/SH,flip=this.flipped?-1:1;
+  const focus=this.focus;this.focus='body';
+  const {center,span}=this.getFraming();this.focus=focus;const s=span/2,ratio=SW/SH,flip=this.flipped?-1:1;
   const positions={front:[0,0,4*flip],back:[0,0,-4*flip],left:[-4*flip,0,0],right:[4*flip,0,0]};
   this.grid.visible=false;
   this.renderer.setSize(SW,SH,false);
@@ -232,6 +264,7 @@ export class DesignWorkbench{
   this.renderer.render(this.scene,this.faceCamera);
   const ctx=this.faceCanvas.getContext('2d');ctx.clearRect(0,0,size,size);
   ctx.drawImage(this.renderer.domElement,0,0,size,size);
+  this.renderPreview();
  }
  scrub(fraction){
   if(!this.avatar||!this.currentAction)return;
@@ -246,11 +279,37 @@ export class DesignWorkbench{
    id:part.id,name:part.name,anchor:part.anchor,mesh:this.partMeshes.get(part.id)
   }));
  }
+ scheduleRender(){
+  if(this.renderPending)return;this.renderPending=true;
+  requestAnimationFrame(()=>{this.renderPending=false;this.renderSheet();});
+ }
+ async exportParts(){
+  const group=new T.Group(),geometries=[];
+  this.scene.updateMatrixWorld(true);
+  for(const {mesh:root}of this.getPartInstances())root.traverseVisible(mesh=>{
+   if(!mesh.isMesh)return;
+   const geometry=mesh.geometry.clone();geometries.push(geometry);
+   if(mesh.isSkinnedMesh){const pos=geometry.attributes.position,v=new T.Vector3();for(let i=0;i<pos.count;i++){mesh.getVertexPosition(i,v);pos.setXYZ(i,v.x,v.y,v.z);}geometry.deleteAttribute('skinIndex');geometry.deleteAttribute('skinWeight');geometry.computeVertexNormals();}
+   const baked=new T.Mesh(geometry,mesh.material);baked.name=mesh.name;mesh.matrixWorld.decompose(baked.position,baked.quaternion,baked.scale);group.add(baked);
+  });
+  if(!group.children.length)throw Error('Lägg till minst en synlig del.');
+  try{return await new GLTFExporter().parseAsync(group,{binary:true});}finally{for(const g of geometries)g.dispose();}
+ }
+ async exportPreview(){
+  if(!this.project)throw Error('Projekt saknas.');
+  const playing=this.playing,time=this.avatar?.mixer.time||0;
+  this.playing=false;
+  if(this.project.kind==='character')this.pose('Idle_Loop',false);
+  try{
+   return await new GLTFExporter().parseAsync(this.project.kind==='character'?this.avatar.holder:this.objectRoot,{binary:true,onlyVisible:true,animations:this.project.kind==='character'?[...this.avatar.clips.values()]:[],maxTextureSize:4096});
+  }finally{if(this.avatar){this.pose(this.project.pose,false);this.avatar.mixer.setTime(time);}this.playing=playing;this.renderSheet();}
+ }
  getClips(){return this.avatar?[...this.avatar.clips.keys()]:[];}
  getBones(){return this.avatar?[...this.avatar.bones.keys()]:[];}
  dispose(){
   this.clearParts();this.fashion.dispose();
   if(this.avatar){this.avatar.holder.removeFromParent();disposeAvatar(this.avatar);}
+  for(const model of this.imports.values())model.traverse(o=>{o.geometry?.dispose();for(const m of [o.material].flat()){if(!m)continue;for(const v of Object.values(m))if(v?.isTexture)v.dispose();m.dispose();}});this.imports.clear();this.importData.clear();
   this.renderer?.dispose();
  }
 }

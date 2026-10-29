@@ -5,7 +5,7 @@ import {readFile} from 'node:fs/promises';
 const require=createRequire(import.meta.url);
 const {chromium}=require('../frontline/source/tools/dev/node_modules/playwright-core');
 const origin=process.env.CHARACTER_TEST_ORIGIN||'http://127.0.0.1:8765';
-const browser=await chromium.launch({headless:true,args:['--use-gl=angle','--use-angle=swiftshader','--enable-unsafe-swiftshader','--ignore-gpu-blocklist','--no-sandbox','--disable-gpu-sandbox']});
+const browser=await chromium.launch({executablePath:process.env.CHROMIUM_EXECUTABLE_PATH||undefined,headless:true,args:['--use-gl=angle','--use-angle=swiftshader','--enable-unsafe-swiftshader','--ignore-gpu-blocklist','--no-sandbox','--disable-gpu-sandbox']});
 const errors=[];
 const context=await browser.newContext({viewport:{width:1370,height:920},acceptDownloads:true});
 const page=await context.newPage();page.setDefaultTimeout(35000);

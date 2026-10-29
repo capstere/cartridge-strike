@@ -129,7 +129,7 @@ export function installCreativeControls({getProject,workbench,persist,visualChan
    input.replaceChildren(...choices.map(value=>{const o=document.createElement('option');o.value=o.textContent=value;return o;}));
   }
   input.addEventListener('change',()=>{
-   creative().face[field]=input.value;commit(false);
+   creative().face[field]=input.value;commit(true);
   });
  }
  $('hair-style').addEventListener('change',e=>{creative().hair=e.target.value;commit(true);});
@@ -158,16 +158,13 @@ export function installCreativeControls({getProject,workbench,persist,visualChan
    if(!bitmap.width||!bitmap.height||bitmap.width>4096||bitmap.height>4096||bitmap.width*bitmap.height>8e6){
     bitmap.close();throw Error('PNG-bilden har för hög upplösning (max 8 megapixlar).');
    }
-   const c=document.createElement('canvas');c.width=c.height=384;
-   const context=c.getContext('2d'),factor=Math.min(384/bitmap.width,384/bitmap.height);
-   const w=Math.round(bitmap.width*factor),h=Math.round(bitmap.height*factor);
-   context.clearRect(0,0,384,384);context.drawImage(bitmap,(384-w)/2,(384-h)/2,w,h);bitmap.close();
-   const imageData=c.toDataURL('image/png');
-   if(imageData.length>950000)throw Error('Mönstret är för detaljerat även efter optimering.');
+   bitmap.close();
+   const imageData=await new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(reader.result);reader.onerror=()=>reject(Error('Kunde inte läsa PNG'));reader.readAsDataURL(file);});
+   if(imageData.length>7_000_000)throw Error('PNG är för stor.');
    creative().print.imageData=imageData;
    creative().print.imageName=file.name.slice(0,100);
    refreshPrint();commit(true);
-   status('PNG-mönstret är inläst. Det sparas i projektet och bifogas som SHIRT_ARTWORK.png.');
+   status('Original-PNG är inläst utan omskalning. Det sparas i projektet och bifogas som SHIRT_ARTWORK.png.');
   }catch(error){status('Kunde inte läsa mönstret: '+error.message,true);}
  });
  $('remove-shirt-png').addEventListener('click',()=>{

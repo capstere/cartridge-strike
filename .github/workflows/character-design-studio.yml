@@ -6,11 +6,13 @@ on:
     paths:
       - 'character-design/**'
       - '.github/workflows/character-design-studio.yml'
+      - 'vendor/three/addons/exporters/GLTFExporter.js'
   push:
     branches: [main]
     paths:
       - 'character-design/**'
       - '.github/workflows/character-design-studio.yml'
+      - 'vendor/three/addons/exporters/GLTFExporter.js'
   workflow_dispatch:
 
 permissions:
@@ -51,4 +53,5 @@ jobs:
             sleep 1
           done
           timeout 220s xvfb-run -a node character-design/browser-smoke.mjs
+          timeout 300s xvfb-run -a node character-design/studio4-browser.mjs
       # Intentionally no upload-artifact action: preserve the repo's tiny Actions storage quota.

@@ -4,19 +4,24 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="color-scheme" content="light">
-<title>Character Design Studio 3 · Cartridge Strike</title>
+<title>Character Design Studio 4 · Cartridge Strike</title>
 <meta name="description" content="Skapa personliga animerade FPS-karaktärer och egna 3D-objekt med enkla verktyg. Exportera AI-redo designprojekt.">
-<link rel="icon" href="data:,"><link rel="stylesheet" href="style.css?v=3">
+<link rel="icon" href="data:,"><link rel="stylesheet" href="style.css?v=4">
 <script type="importmap">{"imports":{"three":"../vendor/three/three.module.js","three/addons/":"../vendor/three/addons/"}}</script>
 </head>
 <body>
 <header class="masthead">
  <div><a class="back" href="../fps/">← Till spelet</a><p class="eyebrow">CARTRIDGE STRIKE / CREATIVE STUDIO</p>
- <h1>Character Design Studio <span class="edition">3.0</span></h1>
- <p class="lead">Som The Sims – välj, ändra och skapa. Du designar, AI:n kan sedan bygga klart modellen med originalrigg och animationer.</p></div>
+ <h1>Character Design Studio <span class="edition">4.0</span></h1>
+ <p class="lead">Välj en grund. Forma din stil. Lämna över en exakt design till AI:n för att göra karaktären spelklar.</p></div>
  <div class="stamp">INGA 3D-KUNSKAPER<br><strong>BEHÖVS</strong></div>
 </header>
 <main>
+ <div class="studio-bar" aria-label="Projektverktyg">
+  <div><strong>Min ateljé</strong><span id="save-state" role="status">Öppnar projekt…</span></div>
+  <div class="bar-actions"><button id="undo-design" type="button" disabled>Ångra</button><button id="redo-design" type="button" disabled>Gör om</button>
+  <button id="save-slot" type="button">Spara i ateljén</button><select id="saved-projects" aria-label="Sparade karaktärer"><option value="">Öppna från ateljén…</option></select></div>
+ </div>
  <section class="panel setup">
   <div class="section-title"><div><p class="eyebrow">STEG 1 / VÄLJ VAD DU SKAPAR</p><h2>Vad vill du designa?</h2></div>
    <button id="open-project" class="plain" type="button">Öppna sparat projekt (.json)</button>
@@ -44,9 +49,9 @@
  <div class="workspace">
   <section class="panel viewport-panel">
    <div class="section-title"><div><p class="eyebrow">STEG 2 / FÖRHANDSGRANSKA</p><h2>Din design i 3D</h2></div><span class="tiny-chip" id="mode-label">Karaktär</span></div>
-   <div class="preview-frame">
+   <div class="preview-frame" id="model-drop-zone">
     <canvas id="preview3d" width="720" height="660" aria-label="Roterbar 3D-vy av din design" tabindex="0"></canvas>
-    <span class="preview-hint">Dra för att rotera · Skrolla eller använd knapparna för att zooma</span>
+    <span class="preview-hint">Dra: rotera · Nyp: zooma · Två fingrar: flytta · Släpp GLB här</span>
    </div>
    <div class="viewer-actions">
     <button id="left-turn" type="button" aria-label="Vrid åt vänster">↶ Vrid</button>
@@ -55,8 +60,10 @@
     <button id="zoom-out" type="button" aria-label="Zooma ut">− Zoom</button>
     <button id="focus-head" type="button" class="head-shortcut">Ansikte / närbild</button>
     <button id="focus-body" type="button">Hela kroppen</button>
+    <button id="focus-shoes" type="button">Skor / närbild</button><button id="pan-view" type="button" aria-pressed="false">Flytta vyn</button>
     <button id="flip-views" type="button" title="Byt riktning på referensbilderna">Vänd fram/bak</button>
    </div>
+   <div class="view-presets" role="group" aria-label="Kameravinklar"><button data-camera="front" type="button">Fram</button><button data-camera="back" type="button">Bak</button><button data-camera="left" type="button">Vänster</button><button data-camera="right" type="button">Höger</button></div>
    <div class="animation-controls" id="animation-controls">
     <label>Prova rörelser<select id="pose">
      <option value="Idle_Loop">Stå still</option><option value="Walk_Loop">Gå</option><option value="Jog_Fwd_Loop">Spring</option>
@@ -103,13 +110,20 @@
       </details>
     </div>
     <div id="tab-fashion" class="editor-tab" hidden>
-     <p class="hint">Välj kläder, skriv på tröjan eller lägg till en egen PNG som tryck eller mönster. Du ser en enkel 3D-prototyp direkt – AI:n gör slutligt tyg, UV och animerad passform.</p>
+     <p class="hint">Kläderna använder grundmodellens hudvikter och följer animationerna. Kombinera överdel, skor, handskar och väst. AI:n färdigställer din design för spelet.</p>
      <label>Välj klädesplagg<select id="outfit-style">
       <option value="original">Originaluniform</option><option value="tshirt">T-shirt</option>
       <option value="hoodie">Hoodie</option><option value="jacket">Jacka med dragkedja</option>
       <option value="polo">Pikétröja</option><option value="labcoat">Labbrock</option>
       <option value="vest">Skyddsväst</option>
      </select></label>
+     <div class="print-grid">
+      <label>Skor<select id="shoe-style"><option value="boots">Kängor</option><option value="sneakers">Sneakers</option></select></label>
+      <label>Händer<select id="glove-style"><option value="original">Handskar</option><option value="skin">Bara händer</option></select></label>
+      <label>Extra väst<input type="checkbox" id="vest-layer"></label>
+      <label>Passform <output id="fit-value">100 %</output><input id="garment-fit" type="range" min="85" max="120" value="100"></label>
+      <label>Material<select id="fabric-material"><option value="85">Matt tyg</option><option value="55">Läder</option><option value="20">Blankt</option></select></label>
+     </div>
      <div class="design-separator"></div>
      <h3>Eget tryck eller mönster</h3>
      <label>Text på tröjan<input id="shirt-text" maxlength="100" placeholder="T.ex. ANALYSTS, mitt namn, nr 05"></label>
@@ -121,13 +135,18 @@
      </div>
      <div class="reference-box">
       <label for="shirt-png"><strong>Välj egen PNG-bild</strong></label>
-      <p class="hint">Du kan använda en logotyp, ett tryck eller ett upprepat tygmönster. Bilden lagras i ditt projekt och följer med i AI-paketet.</p>
+      <p class="hint">Du kan använda en logotyp, ett tryck eller ett upprepat tygmönster. Originalbilden lagras i ditt projekt och följer med i AI-paketet.</p>
       <input type="file" accept="image/png,.png" id="shirt-png">
       <div class="shirt-picture" id="shirt-picture" hidden><img id="shirt-preview" alt="Valt tröjtryck"><button id="remove-shirt-png" type="button">Ta bort bild</button></div>
       <label>Hur ska bilden användas?<select id="shirt-image-mode"><option value="print">Tryck / logotyp</option><option value="pattern">Upprepat mönster</option></select></label>
       <label class="range-control">Bildstorlek <output id="shirt-image-scale-value">100 %</output><input id="shirt-image-scale" type="range" min="30" max="200" value="100" step="10"></label>
      </div>
-     <p class="hint">3D-visningen visar en plan konceptdekal på kroppen – inte ett färdigt, UV-mappat tyg. Original-PNG:ns utseende och placering dokumenteras i exporten.</p>
+     <details open class="simple-advanced"><summary>Placera trycket</summary>
+      <p class="hint">Välj Flytta tryck och dra direkt över tröjan. Reglagen ger exakt placering.</p>
+      <button id="drag-print" type="button" aria-pressed="false">Flytta tryck i 3D</button>
+      <div class="print-grid"><label>Sidled (cm)<input id="print-x" type="range" min="-20" max="20" value="0"></label><label>Höjd (cm)<input id="print-y" type="range" min="-20" max="20" value="0"></label><label>Rotation (°)<input id="print-rotation" type="range" min="-180" max="180" value="0"></label><label>Storlek (%)<input id="print-scale" type="range" min="25" max="200" value="100"></label></div>
+     </details>
+     <p class="hint">Trycket följer tröjans rigg. Exporten behåller din PNG i originalstorlek. Kläderna är en animerad designprototyp som behöver slutlig passformsgranskning.</p>
     </div>
     <div id="tab-face" class="editor-tab" hidden>
      <p class="hint">Välj ett ungefärligt utseende och rita sedan exakt hur du vill att personen ska se ut i den stora närbilden längre ned på sidan.</p>
@@ -146,11 +165,13 @@
       <label>Fräknar<select data-face-field="freckles"></select></label>
       <label>Ögonfärg<input type="color" data-face-field="eyeColor" value="#547a8d"></label>
      </div>
-     <p class="hint">Frisyrerna är enkla 3D-former. Ansiktsvalen är exakta instruktioner till AI:n, inte automatisk skulptering av originalmodellens ansikte.</p>
+     <p class="hint">Frisyrerna är enkla 3D-former. Ansiktsvalen ändrar den riggade förhandsvisningen. Resultatet är en stiliserad designprototyp; detaljer och ansiktsuttryck färdigställs av AI:n.</p>
      <button id="jump-to-face" type="button" class="primary">Rita ansiktet i närbild</button>
     </div>
     <div id="tab-parts" class="editor-tab" hidden>
      <p class="hint">Lägg till något färdigt eller bygg med kuber, kulor och cylindrar. Du kan flytta och forma varje del.</p>
+     <label class="reference-box">Importera GLB som redigerbart tillbehör<input id="accessory-file" type="file" accept=".glb"></label>
+     <p class="hint">Välj en del i listan eller tryck på den i 3D. Slå på Flytta del och dra. Fästet, måtten och originalfilen sparas.</p>
      <div class="add-row">
       <label class="grow">Vad vill du lägga till?<select id="part-type">
        <optgroup label="Karaktärsdetaljer" id="character-presets">
@@ -166,9 +187,10 @@
      <div class="part-list" id="part-list" aria-label="Mina 3D-delar"></div>
      <div id="part-editor" class="part-editor" hidden>
       <div class="part-editor-title"><strong>Redigera vald del</strong><div><button id="clone-part" class="plain" type="button">Kopiera</button><button id="mirror-part" class="plain" type="button">Spegelvänd kopia</button><button id="remove-part" class="danger" type="button">Ta bort</button></div></div>
+      <div class="viewer-actions"><button id="drag-part" type="button" aria-pressed="false">Flytta del i 3D</button><button id="toggle-part" type="button">Visa / dölj del</button><button id="reset-part" type="button">Återställ form</button></div>
       <label>Namn<input id="part-name" maxlength="80"></label>
       <div class="part-settings">
-       <label>Form<select id="part-shape"><option value="box">Kub</option><option value="sphere">Kula</option><option value="cylinder">Cylinder</option><option value="cone">Kon</option><option value="torus">Ring</option></select></label>
+       <label>Form<select id="part-shape"><option value="box">Kub</option><option value="sphere">Kula</option><option value="cylinder">Cylinder</option><option value="cone">Kon</option><option value="torus">Ring</option><option value="glb">Importerad GLB</option></select></label>
        <label id="part-anchor-wrap">Följ kroppsdel<select id="part-anchor">
         <option value="root">Kropp / fast</option><option value="Head">Huvud</option><option value="spine_03">Bröst / rygg</option>
         <option value="pelvis">Midja</option><option value="hand_l">Vänster hand</option><option value="hand_r">Höger hand</option>
@@ -250,7 +272,7 @@
  </section>
  <section class="panel export">
   <div class="section-title"><div><p class="eyebrow">STEG 5 / EXPORTERA TILL AI</p><h2>Ge AI:n allt den behöver</h2></div></div>
-  <p>Den stora exportknappen skapar en <strong>ZIP</strong> med originalets animerade GLB (för karaktärer), dina 3D-delar som prototyp-GLB, referensbilder, designprojekt och detaljerade instruktioner för en slutlig FPS-kompatibel karaktär.</p>
+  <p>Den stora exportknappen skapar en <strong>ZIP</strong> med hela den synliga, riggade designprototypen (PREVIEW.glb), filmanifest och originalets animerade GLB (för karaktärer), dina 3D-delar som prototyp-GLB, referensbilder, designprojekt och detaljerade instruktioner för en slutlig FPS-kompatibel karaktär.</p>
   <div class="downloads">
    <button id="export-zip" class="primary hero-button" type="button">Hämta AI-paket (.zip)</button>
    <button id="save-json" type="button">Spara projekt (.json)</button>
@@ -270,6 +292,6 @@
   <p class="credits">Quaternius originalkaraktärer och animationer: CC0 1.0 · <a href="../licenses/quaternius-characters-CC0.txt">Licens</a>. Designen ligger lokalt i webbläsaren tills du exporterar. Inga filer laddas upp av studion.</p>
  </section>
 </main>
-<script type="module" src="app.mjs?v=3"></script>
+<script type="module" src="app.mjs?v=4"></script>
 </body>
 </html>
