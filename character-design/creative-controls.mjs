@@ -1,5 +1,5 @@
 /** Optional beginner-friendly creative controls. Owns face drawing and PNG art, not game state. */
-import {makeCreative,ensureCreative,FACE_CHOICES,REQUEST_ANIMATIONS} from './creative-schema.mjs?v=5';
+import {makeCreative,ensureCreative,FACE_CHOICES,REQUEST_ANIMATIONS} from './creative-schema.mjs?v=51';
 const $=id=>document.getElementById(id);
 const VIEWS=['front','left','right'];
 const LABELS={front:'Framifrån',left:'Vänster profil',right:'Höger profil'};
@@ -132,6 +132,8 @@ export function installCreativeControls({getProject,workbench,persist,visualChan
    creative().face[field]=input.value;for(const peer of document.querySelectorAll('[data-face-field]'))if(peer.dataset.faceField===field)peer.value=input.value;commit(true);
   });
  }
+ for(const key of ['head','fiberHair','fabric','garment','wind'])$('realism-'+key).addEventListener('change',e=>{const r=creative().realism;workbench.playing=false;r[key]=key==='fiberHair'?e.target.checked:key==='wind'?Number(e.target.value):e.target.value;if(key==='head'&&r.head==='scan'){getProject().palette.skin='#ffffff';getProject().base.template='civilian';creative().hair='bald';for(const peer of document.querySelectorAll('[data-color=skin]'))peer.value='#ffffff';}if(r.fiberHair&&['original','bald'].includes(creative().hair))creative().hair='short';$('hair-style').value=creative().hair;$('fabric-material').closest('label').hidden=r.fabric!=='original';visualChange({recreate:key==='head',save:false});persist({force:true});status('Material och tygfall uppdaterade. Spela en rörelse för att se fysiken.');});
+ $('settle-cloth').addEventListener('click',()=>{workbench.cloth.reset();workbench.cloth.settle(240);workbench.renderSheet();status(workbench.cloth.mesh?'Tyget har draperats med gravitation och kroppskollisioner.':'Välj axelkappa eller långväst först.');});
  $('hair-style').addEventListener('change',e=>{creative().hair=e.target.value;commit(true);});
  $('outfit-style').addEventListener('change',e=>{creative().outfit=e.target.value;commit(true);});
  const printFields=[
@@ -220,6 +222,8 @@ export function installCreativeControls({getProject,workbench,persist,visualChan
  });
  function refresh(){
   const c=creative();
+  for(const key of ['head','fiberHair','fabric','garment','wind']){const input=$('realism-'+key);if(key==='fiberHair')input.checked=c.realism[key];else input.value=c.realism[key];}
+  $('fabric-material').closest('label').hidden=c.realism.fabric!=='original';
   $('outfit-style').value=c.outfit;$('hair-style').value=c.hair;
   for(const input of document.querySelectorAll('[data-face-field]'))input.value=c.face[input.dataset.faceField];
   for(const [id,key]of printFields)$(id).value=c.print[key];
