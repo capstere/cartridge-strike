@@ -49,7 +49,6 @@ export class DesignWorkbench{
   this.objectRoot.visible=project.kind==='object';
   this.updateAppearance();
   if(rebuild||old?.kind!==project.kind)this.rebuildParts();
-  else this.updatePartTransforms();
   this.renderSheet();
  }
  updateAppearance(){
