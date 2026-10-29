@@ -111,7 +111,7 @@ export class FashionPreview{
    if(m.name.startsWith('boot-sole'))m.material.color.set(c.shoes==='sneakers'?p.accent:'#161e24');
   }
   const attach=(group,name)=>{group.name=name;avatar.root.add(group);avatar.root.updateWorldMatrix(true,true);head.attach(group);this.parts.push(group);};
-  if(!['original','bald'].includes(c.hair)&&!headgear)attach(c.hair==='swept'?makeStudioHair(anatomy(avatar),p.hair,avatar.meshes.find(m=>m.material?.name==='hair'&&!/eyebrow/i.test(m.name)),avatar.anatomyPositions):c.realism?.fiberHair?makeFiberHair(avatar,c.hair,p.hair,c.realism):makeHair(avatar,c.hair,p.hair),'creative-fitted-hair');
+  if(!['original','bald'].includes(c.hair)&&!headgear)attach(c.hair==='swept'?makeStudioHair(anatomy(avatar),p.hair,avatar.studioHairSource,avatar.anatomyPositions):c.realism?.fiberHair?makeFiberHair(avatar,c.hair,p.hair,c.realism):makeHair(avatar,c.hair,p.hair),'creative-fitted-hair');
   if(['fieldjacket','jacket'].includes(c.outfit))for(const mesh of makeStudioJacket(avatar,p.jacket,p.accent)){avatar.root.add(mesh);this.parts.push(mesh);}
   if(c.face.facialHair!=='Ingen'&&!project.parts.some(part=>part.visible&&part.preset==='beard'))attach(makeBeard(avatar,c.face.facialHair,p.hair),'creative-fitted-beard');
   if(c.face.freckles!=='Nej')for(const side of [-1,1])for(let i=0;i<(c.face.freckles==='Tydliga'?9:4);i++)solid(new T.SphereGeometry(.0019,5,4),'#86543d','freckle',[side*(.027+(i%3)*.013),1.653+Math.floor(i/3)*.008,.095-(i%3)*.004]);
@@ -133,7 +133,7 @@ export class FashionPreview{
     m.color.set(vest?p.vest:m.map?'#ffffff':p.jacket);
    }
    if(name==='hair'&&/eyebrow/i.test(mesh.name))mesh.visible=!mesh.userData.sculptDisabled;
-   if(name==='gloves-leather')m.color.set(c.gloves==='skin'?p.skin:p.accent);
+   if(name==='gloves-leather')m.color.set(c.gloves==='skin'?p.skin:c.outfit==='fieldjacket'?p.boots:p.accent);
    if(mesh.name.startsWith('boot-shaft'))mesh.visible=c.shoes!=='sneakers';
    if(mesh.name.startsWith('boot-sole'))m.color.set(c.shoes==='sneakers'?p.accent:'#161e24');
   }

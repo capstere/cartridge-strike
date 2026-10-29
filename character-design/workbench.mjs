@@ -45,6 +45,12 @@ export class DesignWorkbench{
   this.sheetCamera=new T.OrthographicCamera(-1.17*SW/SH,1.17*SW/SH,1.17,-1.17,.01,100);
   this.faceCamera=new T.OrthographicCamera(-.38,.38,.38,-.38,.01,100);
   await loadCharacterLibrary();
+  // A shared artist-authored short silhouette, fitted to either target scalp.
+  // The female source hairstyle is longer and is kept for Originalfrisyr only.
+  const hairDonor=createAuthoredAvatar('analysts',characterId('male'));
+  const donorSkin=hairDonor.meshes.find(m=>m.material?.name==='face-skin'),bounds=new T.Box3().setFromBufferAttribute(donorSkin.geometry.attributes.position);
+  this.studioHairSource={geometry:hairDonor.meshes.find(m=>m.material?.name==='hair'&&!/eyebrow/i.test(m.name)).geometry.clone(),scalpBounds:{top:bounds.max.y,width:bounds.max.x-bounds.min.x,depth:bounds.max.z-bounds.min.z,centerZ:(bounds.max.z+bounds.min.z)/2}};
+  disposeAvatar(hairDonor);
   try{this.scan=await loadScan();}catch(e){this.scanError=e.message;}
   this.initialized=true;
  }
@@ -55,6 +61,7 @@ export class DesignWorkbench{
    this.clearParts();this.fashion.dispose();this.cloth.clear();
    if(this.avatar){this.avatar.holder.removeFromParent();disposeAvatar(this.avatar);}
    this.avatar=createAuthoredAvatar(project.base.team==='hostage'?'analysts':project.base.team,characterId(project.base.gender),project.base.team==='hostage');
+   this.avatar.studioHairSource=this.studioHairSource;
    this.headProfile=headProfile;if(headProfile==='scan'){if(!this.scan)throw Error('Det skannade huvudet kunde inte laddas: '+this.scanError);applyScanHead(this.avatar,this.scan);for(const m of this.avatar.meshes)if(m.material?.name==='eyes'||m.material?.name==='hair'&&/eyebrow/i.test(m.name))m.userData.sculptDisabled=true;}
    this.sculptRevision=-1;prepareSculptGeometry(this.avatar);
    this.avatar.holder.rotation.y=0; // Studio canonical front is +Z (game actors face -Z).
@@ -335,6 +342,6 @@ export class DesignWorkbench{
   this.clearParts();this.fashion.dispose();this.cloth.clear();
   if(this.avatar){this.avatar.holder.removeFromParent();disposeAvatar(this.avatar);}
   for(const model of this.imports.values())model.traverse(o=>{o.geometry?.dispose();for(const m of [o.material].flat()){if(!m)continue;for(const v of Object.values(m))if(v?.isTexture)v.dispose();m.dispose();}});this.imports.clear();this.importData.clear();
-  this.studioEnvironment?.dispose();this.renderer?.dispose();
+  this.studioHairSource?.geometry.dispose();this.studioEnvironment?.dispose();this.renderer?.dispose();
  }
 }

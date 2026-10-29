@@ -23,25 +23,27 @@ export function makeStudioHair(a,color,authored=null,restScalp=null){
   const clipped=[];
   for(let j=0;j<3;j++){const v=polygon[j],w=polygon[(j+1)%3];if(v.d>=0)clipped.push(v);if((v.d>=0)!==(w.d>=0)){const t=v.d/(v.d-w.d);clipped.push({p:v.p.clone().lerp(w.p,t),n:v.n.clone().lerp(w.n,t).normalize()});}}
   for(let j=1;j+1<clipped.length;j++)for(const v of [clipped[0],clipped[j],clipped[j+1]]){
-   const q=lift(a,v.p,v.n);vertices.push(...q.toArray());normals.push(...v.n.toArray());
+   const q=authored?v.p.clone().addScaledVector(v.n,.002):lift(a,v.p,v.n);vertices.push(...q.toArray());normals.push(...v.n.toArray());
    const shade=.91+.09*clamp((v.p.y-a.top+.12)/.12,0,1);colors.push(shade,shade,shade);
   }
  }
  const geometry=new T.BufferGeometry();geometry.setAttribute('position',new T.Float32BufferAttribute(vertices,3));geometry.setAttribute('normal',new T.Float32BufferAttribute(normals,3));geometry.setAttribute('color',new T.Float32BufferAttribute(colors,3));
  const material=new T.MeshStandardMaterial({color:tint,roughness:.74,vertexColors:true});material.name='studio-hair-mass';
- const cap=new T.Mesh(geometry,material);cap.name='studio-swept-scalp';group.add(cap);
+ const cap=new T.Mesh(geometry,material);cap.name='studio-swept-scalp';group.add(cap);const surfaces=[cap];
  if(authored&&restScalp){
   // Retain the source artist's asymmetric swept volumes, then tighten their
   // silhouette and transfer scalp edits.
   const shaped=authored.geometry.clone(),p=shaped.attributes.position,scalp=a.skin.geometry.attributes.position;
+  const from=authored.scalpBounds||a,sx=a.width/from.width,sy=a.depth/from.depth,sz=sy;
+  const normalMatrix=new T.Matrix3().getNormalMatrix(new T.Matrix4().makeScale(sx,sy,sz));shaped.attributes.normal.applyNormalMatrix(normalMatrix);
   for(let i=0;i<p.count;i++){
-   const point=new T.Vector3().fromBufferAttribute(p,i);let nearest=0,distance=Infinity;
+   const point=new T.Vector3(p.getX(i)*sx,a.top+(p.getY(i)-from.top)*sy,a.centerZ+(p.getZ(i)-from.centerZ)*sz);let nearest=0,distance=Infinity;
    for(let j=0;j<restScalp.length/3;j++){const d=(point.x-restScalp[j*3])**2+(point.y-restScalp[j*3+1])**2+(point.z-restScalp[j*3+2])**2;if(d<distance){distance=d;nearest=j;}}
    const old=new T.Vector3().fromArray(restScalp,nearest*3),now=new T.Vector3().fromBufferAttribute(scalp,nearest),q=point.clone().sub(old).multiplyScalar(.82).add(now);p.setXYZ(i,q.x,q.y,q.z);
   }
-  geometry.dispose();cap.geometry=shaped;cap.material.vertexColors=false;
+  const volumeMaterial=material.clone();volumeMaterial.vertexColors=false;const volume=new T.Mesh(shaped,volumeMaterial);volume.name='studio-swept-volume';group.add(volume);surfaces.push(volume);
  }
- cap.updateMatrixWorld(true);
+ group.updateMatrixWorld(true);
  // Broad, shallow tapered locks carry the comb direction without wiry tubes or
  // alpha gaps. Project every guide onto the fitted mass rather than an ellipsoid.
  const ray=new T.Raycaster(),center=new T.Vector3(0,a.top-.105,a.centerZ),v=[],ids=[],cs=[];
@@ -49,7 +51,7 @@ export function makeStudioHair(a,color,authored=null,restScalp=null){
   const phi=(strand+.5)/88*TAU,points=[],across=strand<56,side=strand<43?1:-1,z=-.095+(strand%43)/42*.166;
   for(let step=0;step<=32;step++){
    const t=step/32,theta=.10+t*2.1,angle=phi+.38*Math.sin(t*Math.PI/2),d=across?new T.Vector3(-.025+side*.14*t,.105-.125*t*t,z-.025*Math.sin(Math.PI*t)).normalize():new T.Vector3(Math.sin(theta)*Math.sin(angle),Math.cos(theta),Math.sin(theta)*Math.cos(angle));
-   ray.set(center.clone().addScaledVector(d,.45),d.clone().negate());const hit=ray.intersectObject(cap)[0];
+   ray.set(center.clone().addScaledVector(d,.45),d.clone().negate());const hit=ray.intersectObjects(surfaces)[0];
    if(hit)points.push({p:hit.point,n:hit.normal||hit.face.normal});else if(points.length>2)break;
   }
   if(points.length<4)continue;
@@ -82,11 +84,14 @@ export function skinDetail(geometry,source,material,name){
 }
 export function makeStudioJacket(avatar,color,accent){
  const source=avatar.meshes.find(m=>m.material?.name==='jacket-fabric'),parts=[],positions=[],indices=[],shift=(avatar.rigHeadTop??1.8100767135620117)-1.8100767135620117;
+ const top=1.8100767135620117+shift,neck=new T.Box3(),skin=avatar.anatomySkin?.geometry.attributes.position||avatar.meshes.find(m=>m.material?.name==='face-skin').geometry.attributes.position;
+ for(let i=0;i<skin.count;i++){const y=skin.getY(i);if(y>top-.274&&y<top-.241)neck.expandByPoint(new T.Vector3(skin.getX(i),y,skin.getZ(i)));}
+ const neckX=neck.isEmpty()?.062:Math.max(Math.abs(neck.min.x),Math.abs(neck.max.x))+.003,neckZ=neck.isEmpty()?-.029:(neck.min.z+neck.max.z)/2,depth=neck.isEmpty()?.068:(neck.max.z-neck.min.z)/2+.003;
  // Small standing collar, open at the throat. Four rings give a real rounded
  // rim and inside surface, avoiding the old two spheres on the chest.
  for(let ring=0;ring<4;ring++)for(let col=0;col<=48;col++){
   const phi=.36+col/48*(TAU-.72),front=Math.max(0,Math.cos(phi)),inner=ring>=2,r=(inner?-.0015:.0015),upper=ring===1||ring===2;
-  positions.push(Math.sin(phi)*(.062+r),1.532+shift+(upper?.025:0)-front*.022,-.029+Math.cos(phi)*(.068+r));
+  positions.push(Math.sin(phi)*(neckX+r),top-.270+(upper?.025:0)-front*.022,neckZ+Math.cos(phi)*(depth+r));
  }
  for(let ring=0;ring<3;ring++)for(let col=0;col<48;col++){const k=ring*49+col;indices.push(k,k+1,k+49,k+1,k+50,k+49);}
  const collar=new T.BufferGeometry();collar.setAttribute('position',new T.Float32BufferAttribute(positions,3));collar.setIndex(indices);
@@ -95,7 +100,7 @@ export function makeStudioJacket(avatar,color,accent){
  const donor=avatar.meshes.find(m=>m.material?.name==='vest-shell')||source;
  const proxies=[source,donor].map(m=>{const p=new T.Mesh(m.geometry,new T.MeshBasicMaterial({side:T.DoubleSide}));p.updateMatrixWorld(true);return p;}),ray=new T.Raycaster(),v=[],idx=[];
  for(let row=0;row<=48;row++){
-  const y=1.015+shift+row/48*.475;ray.set(new T.Vector3(0,y,.4),new T.Vector3(0,0,-1));const hit=ray.intersectObjects(proxies)[0],z=(hit?.point.z??.10)+.002;
+  const y=1.015+row/48*(top-.294-1.015);ray.set(new T.Vector3(0,y,.4),new T.Vector3(0,0,-1));const hit=ray.intersectObjects(proxies)[0],z=(hit?.point.z??.10)+.002;
   for(const x of [-.002,.002])v.push(x,y,z);
   if(row<48){const k=row*2;idx.push(k,k+1,k+2,k+1,k+3,k+2);}
  }

@@ -14,7 +14,8 @@ async function sourceAvatar(gender){
  const skin=meshes.find(m=>m.material.name==='face-skin'),box=new T.Box3().setFromBufferAttribute(skin.geometry.attributes.position),a={skin,top:box.max.y,width:box.max.x-box.min.x,depth:box.max.z-box.min.z,centerZ:(box.max.z+box.min.z)/2};return {meshes,rigHeadTop:a.top,a};
 }
 for(const gender of ['male','female'])test('studio cut and jacket use real '+gender+' anatomy with bounded geometry and normalized weights',async()=>{
- const avatar=await sourceAvatar(gender),hair=makeStudioHair(avatar.a,'#352922',avatar.meshes.find(m=>m.material.name==='hair'&&!/eyebrow/i.test(m.name)),Float32Array.from(avatar.a.skin.geometry.attributes.position.array));let triangles=0;
+ const avatar=await sourceAvatar(gender),male=await sourceAvatar('male'),donor=male.meshes.find(m=>m.material.name==='hair'&&!/eyebrow/i.test(m.name));donor.scalpBounds=male.a;
+ const hair=makeStudioHair(avatar.a,'#352922',donor,Float32Array.from(avatar.a.skin.geometry.attributes.position.array));let triangles=0;
  hair.traverse(m=>{if(!m.isMesh)return;const p=m.geometry.attributes.position;assert.ok(p.array.every(Number.isFinite));triangles+=(m.geometry.index?.count||p.count)/3;assert.ok(p.count>100);});
  assert.ok(triangles<14000);assert.ok(hair.getObjectByName('studio-swept-scalp'));assert.ok(hair.getObjectByName('studio-swept-locks'));
  assert.ok(scalpLine(avatar.a,new T.Vector3(.09,avatar.a.top-.1,avatar.a.centerZ))>avatar.a.top-.10,'temples clear the ear tops');

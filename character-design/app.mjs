@@ -304,6 +304,10 @@ async function writeZip(){
   const bytes=new Uint8Array(await res.arrayBuffer());
   if(bytes.length>6*1024*1024||bytes.length<1000)throw Error('Originalriggen har oväntad storlek.');
   files.push({name:'BASE_RIG.glb',data:bytes});
+  if(project.creative?.hair==='swept'&&project.base.gender==='female'){
+   const hairSource=await fetch(new URL('../assets/fps/models/quaternius-operator-male.glb',import.meta.url));if(!hairSource.ok)throw Error('Frisyrens originaltillgång saknas.');
+   files.push({name:'HAIR_SOURCE_MALE.glb',data:new Uint8Array(await hairSource.arrayBuffer())});
+  }
  }
  if(workbench.getPartInstances().length)files.push({name:'STATIC_PROTOTYPE.glb',data:new Uint8Array(await workbench.exportParts())});
  if(workbench.cloth.mesh){files.push({name:'CLOTH_SIMULATION.json',data:JSON.stringify(workbench.cloth.handoff())});const solver=await fetch(new URL('./cloth-solver.mjs?v=53',import.meta.url));if(!solver.ok)throw Error('Tygsimuleringens källkod saknas.');files.push({name:'CLOTH_SOLVER.mjs',data:await solver.text()});}
