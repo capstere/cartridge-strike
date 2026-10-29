@@ -63,6 +63,7 @@ try{
  await page.mouse.move(cx,cy);await page.mouse.down();await page.mouse.move(cx+30,cy+14,{steps:6});await page.mouse.up();
  await page.locator('#face-angle').selectOption('left');
  await page.locator('#face-angle').selectOption('front');
+ await page.locator('#animation-requests summary').click();
  await page.locator('#requested-animations input[value="wave"]').check();
  await page.locator('#focus-head').click();
  assert.equal(await page.locator('#pose option').count()>=11,true);
