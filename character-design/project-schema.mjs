@@ -1,4 +1,4 @@
-import {makeCreative,validateCreative,creativeBrief} from './creative-schema.mjs?v=51';
+import {makeCreative,validateCreative,creativeBrief} from './creative-schema.mjs?v=52';
 /** Portable, deterministic v2 concept format. No browser or 3D dependencies. */
 export const FORMAT='cartridge-strike-character-project';
 export const VERSION=2;

@@ -7,3 +7,10 @@ test('XPBD hanging sheet retains pinned positions and bounded stretch under grav
 });
 test('capsule collision projects free particles outside the body and protects ground',()=>{const c=new ClothSolver([.02,.5,0,0,-.02,0],[],[]);c.step(1/120,c.rest,[{a:[0,.2,0],b:[0,.8,0],r:.1}]);assert.ok(Math.hypot(c.positions[0],c.positions[2])>=.0999);assert.ok(c.positions[4]>=.012);assert.throws(()=>c.step(1,c.rest));});
 test('realism settings reject unbounded and unknown solver choices',()=>{assert.equal(validateRealism(newRealism()).head,'original');for(const patch of [{wind:NaN},{wind:101},{garment:'dress'},{head:'fake'},{fiberHair:'true'}])assert.throws(()=>validateRealism({...newRealism(),...patch}));});
+test('capsule-axis and degenerate capsules cannot trap a free cloth particle',()=>{
+ for(const [a,b] of [[[0,.2,0],[0,.8,0]],[[0,.5,0],[0,.5,0]]]){const c=new ClothSolver([0,.5,0],[],[]);c.step(1/120,c.rest,[{a,b,r:.1}]);const y=Math.max(a[1],Math.min(b[1],c.positions[1]));assert.ok(Math.hypot(c.positions[0],c.positions[1]-y,c.positions[2])>=.0999);assert.ok(c.positions.every(Number.isFinite));}
+});
+test('custom proportions accept old projects and reject malformed new settings',()=>{
+ const old={head:'original',fiberHair:false,fabric:'original',garment:'none',wind:15};assert.equal(validateRealism(old),old);
+ for(const patch of [{hairLength:49},{hairVolume:151},{garmentLength:NaN},{hairLength:'100'},{garmentLength:131}])assert.throws(()=>validateRealism({...newRealism(),...patch}));
+});

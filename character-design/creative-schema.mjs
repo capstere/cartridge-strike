@@ -1,5 +1,5 @@
-import {newRealism,validateRealism} from './realism-schema.mjs?v=51';
-import {newSculpt,validateSculpt} from './sculpt-schema.mjs?v=51';
+import {newRealism,validateRealism} from './realism-schema.mjs?v=52';
+import {newSculpt,validateSculpt} from './sculpt-schema.mjs?v=52';
 /** Extra creative options, backward-compatible with saved v2 design projects. */
 export const OUTFITS=Object.freeze({
  original:'Originaluniform',tshirt:'T-shirt',hoodie:'Hoodie',jacket:'Jacka med dragkedja',
@@ -40,6 +40,7 @@ export function ensureCreative(project){
  if(!project.creative)project.creative=makeCreative();
  const defaults=makeCreative();
  for(const key of ['fit','roughness','shoes','gloves','vest','printTransform','sculpt','realism'])if(project.creative[key]===undefined)project.creative[key]=defaults[key];
+ for(const key of ['hairLength','hairVolume','garmentLength'])if(project.creative.realism[key]===undefined)project.creative.realism[key]=100;
  return project.creative;
 }
 const hex=v=>typeof v==='string'&&/^#[0-9a-fA-F]{6}$/.test(v);
@@ -74,6 +75,7 @@ export function creativeBrief(c){
   'Selected clothing: '+OUTFITS[c.outfit]+' ('+c.outfit+'). This is a conceptual garment mockup and MUST be converted into deforming, correctly skinned clothes.',
   'Direct sculpt: PROJECT.json creative.sculpt contains per-rig, topology-signed, sparse bind-space vertex offsets and skin paint. PREVIEW.glb contains the actual sculpted, skinned geometry, UVs, weights and colour attributes. Preserve that appearance; do not reduce the authored sculpt to generic face presets.',
   'Surface/physics settings: '+JSON.stringify(c.realism||newRealism())+'. The optional Infinite scanned head is one adult male portrait with closed eyes, CC BY 3.0, transferred to the existing Head/Neck bones; it has no facial expression rig. Preserve attribution. It is not a photorealistic full-body replacement.',
+  'Hair length/volume and garment length are percentages of the selected procedural style, with 100 as its default. Hair roots and ponytail tie stay attached; volume controls guide lift. Use PREVIEW.glb as the exact shape reference; garment rest geometry and constraints are regenerated for its selected length.',
   'Thin hair ribbons use an alpha strand texture and anisotropic material; they are not strand-level hair simulation. CLOTH_SIMULATION.json contains XPBD rest data, pins, constraints, body collision bone links and settings; CLOTH_SOLVER.mjs is the actual portable solver source. For simulated garments the reference images and preview are settled in Idle_Loop; PROJECT.pose remains the selected motion to test. PREVIEW.glb contains a frozen draped skinned mesh, not baked secondary physics. Port/bake the simulation for the game and validate body/self collisions. No self collision/sewing is implemented.',
   'Hair design: '+HAIRSTYLES[c.hair]+'. Sculpt hair and ensure it follows Head bone and does not clip with headgear.',
   ...Object.entries(labels).map(([key,value])=>'Face / '+key+': '+value),
