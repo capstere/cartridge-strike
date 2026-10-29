@@ -1,6 +1,6 @@
 /** Easy UI for revising the FPS skeleton, authoring character props and independent 3D objects. */
 import {DesignWorkbench} from './workbench.mjs';
-import {newProject,validateProject,PALETTES,PRESETS,SHAPES,addPart,clonePart,aiBrief,animationContract,filename} from './project-schema.mjs';
+import {newProject,validateProject,PALETTES,PRESETS,SHAPES,addPart,clonePart,mirrorPart,aiBrief,animationContract,filename} from './project-schema.mjs';
 import {makePrototypeGLB} from './prototype-glb.mjs';
 import {packZip} from './zip-export.mjs';
 import {inspectGLB} from '../furniture-editor/library/glb-utils.mjs';
@@ -96,7 +96,7 @@ function partsSummary(){
  const controls={
   'pos-x':[part.position[0]*100,' cm'],'pos-y':[part.position[1]*100,' cm'],'pos-z':[part.position[2]*100,' cm'],
   'size-x':[part.dimensions[0]*100,' cm'],'size-y':[part.dimensions[1]*100,' cm'],'size-z':[part.dimensions[2]*100,' cm'],
-  'rot-y':[part.rotation[1],'°']
+  'rot-x':[part.rotation[0],'°'],'rot-y':[part.rotation[1],'°'],'rot-z':[part.rotation[2],'°']
  };
  for(const [id,[value,suffix]]of Object.entries(controls)){
   $(id).value=Math.round(value);
@@ -389,6 +389,10 @@ function installEvents(){
   try{const p=clonePart(project,selectedPart);selectedPart=p.id;partEdited();}
   catch(e){status(e.message,true);}
  });
+ $('mirror-part').addEventListener('click',()=>{
+  try{const p=mirrorPart(project,selectedPart);selectedPart=p.id;partEdited();}
+  catch(e){status(e.message,true);}
+ });
  $('remove-part').addEventListener('click',()=>{
   project.parts=project.parts.filter(p=>p.id!==selectedPart);selectedPart=null;partEdited();
  });
@@ -399,12 +403,12 @@ function installEvents(){
  $('part-anchor').addEventListener('change',e=>{const p=selected();if(!p)return;p.anchor=e.target.value;partEdited();});
  $('part-color').addEventListener('input',e=>{const p=selected();if(!p)return;p.color=e.target.value;visualChange({rebuild:true,save:false});persist();});
  $('part-note').addEventListener('input',e=>{const p=selected();if(!p)return;p.note=e.target.value.slice(0,1000);persist();});
- for(const id of ['pos-x','pos-y','pos-z','size-x','size-y','size-z','rot-y'])$(id).addEventListener('input',e=>{
+ for(const id of ['pos-x','pos-y','pos-z','size-x','size-y','size-z','rot-x','rot-y','rot-z'])$(id).addEventListener('input',e=>{
   const p=selected();if(!p)return;
   const index='xyz'.indexOf(id.slice(-1)),value=Number(e.target.value);
   if(id.startsWith('pos-'))p.position[index]=value/100;
   else if(id.startsWith('size-'))p.dimensions[index]=value/100;
-  else p.rotation[1]=value;
+  else p.rotation[index]=value;
   $(id+'-value').textContent=value+(id==='rot-y'?'°':' cm');
   visualChange({rebuild:true,save:false});persist();
  });
