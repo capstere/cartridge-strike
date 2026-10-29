@@ -78,7 +78,7 @@ export function makeHair(avatar,style,color){
     ray.set(center.clone().addScaledVector(d,.4),d.clone().negate());const hit=ray.intersectObject(cap)[0];
     if(hit)points.push(hit.point.clone().addScaledVector(hit.face.normal,.0008));
    }
-   if(points.length>3)strands.push(new T.TubeGeometry(new T.CatmullRomCurve3(points),24,.0008,5,false));
+   if(points.length>3)strands.push(new T.TubeGeometry(new T.CatmullRomCurve3(points),24,.00045,5,false));
   }
   if(strands.length){const merged=mergeGeometries(strands);for(const g of strands)g.dispose();add(group,merged,material(new T.Color(color).offsetHSL(0,0,-.035),{roughness:.85}),'combed-hair-strands');}
  }
@@ -103,10 +103,13 @@ export function makeHair(avatar,style,color){
   const g=new T.BufferGeometry();g.setAttribute('position',new T.Float32BufferAttribute(vertices,3));g.setIndex(indices);g.computeVertexNormals();const curtain=add(group,g,mat.clone(),'layered-hair-curtain');curtain.material.side=T.DoubleSide;
   for(const side of [-1,1]){
    const path=new T.CatmullRomCurve3([new T.Vector3(side*a.width*.52,a.top-.09,a.centerZ+.05),new T.Vector3(side*a.width*.57,a.top-.19,a.centerZ+.075),new T.Vector3(side*a.width*.65,a.top-(style==='long'?.29:.23),a.centerZ+.145),new T.Vector3(side*a.width*.59,a.top-(style==='long'?.38:.25),a.centerZ+.17)]);
-   const pos=[],idx=[],steps=20;
-   for(let i=0;i<=steps;i++){const t=i/steps,p=path.getPoint(t),width=.021*(.45+.55*Math.sin(Math.PI*t))*(1-.85*t**5);for(const sign of [-1,1])pos.push(p.x+sign*width,p.y,p.z+.005*Math.cos(t*Math.PI*2));}
-   for(let i=0;i<steps;i++)idx.push(i*2,i*2+1,i*2+2,i*2+1,i*2+3,i*2+2);
-   const ribbon=new T.BufferGeometry();ribbon.setAttribute('position',new T.Float32BufferAttribute(pos,3));ribbon.setIndex(idx);ribbon.computeVertexNormals();const m=mat.clone();m.side=T.DoubleSide;add(group,ribbon,m,'face-framing-lock');
+   const pos=[],idx=[],steps=24,radial=10;
+   for(let i=0;i<=steps;i++){
+    const t=i/steps,p=path.getPoint(t),taper=1-.97*t**4,width=.013*(.7+.3*Math.sin(Math.PI*t))*taper,depth=.008*taper;
+    for(let j=0;j<=radial;j++){const angle=j/radial*TAU;pos.push(p.x+Math.cos(angle)*width,p.y,p.z+Math.sin(angle)*depth);}
+   }
+   for(let i=0;i<steps;i++)for(let j=0;j<radial;j++){const k=i*(radial+1)+j;idx.push(k,k+1,k+radial+1,k+1,k+radial+2,k+radial+1);}
+   const lock=new T.BufferGeometry();lock.setAttribute('position',new T.Float32BufferAttribute(pos,3));lock.setIndex(idx);lock.computeVertexNormals();add(group,lock,mat,'rounded-face-framing-lock');
   }
 
  }

@@ -23,7 +23,7 @@ export class FashionPreview{
   if(!avatar||project.kind!=='character'){this.dispose();return;}
   const c=project.creative||makeCreative(),p=project.palette;
   const headgear=project.parts.some(part=>part.visible&&['cap','helmet','hair'].includes(part.preset));
-  const signature=JSON.stringify({c,p,headgear});
+  const signature=JSON.stringify({c,p,headgear,beardAccessory:project.parts.some(part=>part.visible&&part.preset==='beard')});
   if(this.avatar===avatar&&this.signature===signature)return;
   this.clear();if(this.avatar!==avatar)this.sources.clear();
   this.avatar=avatar;this.signature=signature;

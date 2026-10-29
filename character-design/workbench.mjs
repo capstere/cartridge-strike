@@ -75,7 +75,7 @@ export class DesignWorkbench{
   const seen=new Set();
   for(const mesh of this.avatar.meshes){
    const m=mesh.material,name=m?.name||'',objectName=mesh.name||'';
-   mesh.visible=!(hideTactical&&/^(continuous-(chest|back)-rig|vest-pocket|pocket-flap|shoulder-webbing|radio|radio-aerial|headset|chest-role-patch|back-role-patch)$/.test(objectName))&&!(customHair&&name==='hair');
+   mesh.visible=!(hideTactical&&/^(continuous-(chest|back)-rig|vest-pocket|pocket-flap|shoulder-webbing|radio|radio-aerial|headset|chest-role-patch|back-role-patch)$/.test(objectName))&&!(customHair&&name==='hair')&&!(customHair&&objectName==='headset');
    if(!m?.color||seen.has(m))continue;
    seen.add(m);
    if(name==='jacket-fabric')m.color.set(p.jacket);
