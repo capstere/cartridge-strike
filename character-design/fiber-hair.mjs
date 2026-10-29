@@ -23,16 +23,18 @@ export function makeFiberHair(avatar,style,color){
   const frontal=root.z>a.centerZ+.025,high=n.y>.55;
   if(high||frontal)tangent.lerp(new T.Vector3(sign*.95,-.15,-.25),high?.85:.65);tangent.normalize();
   const side=new T.Vector3().crossVectors(n,tangent).normalize();if(side.lengthSq()<.01)side.set(1,0,0);
-  const len=length*(.8+rand()*.4),width=style==='buzz'?.001:.0018,start=vertices.length/3,steps=12;
+  const len=length*(.8+rand()*.4),width=style==='buzz'?.001:.0018,start=vertices.length/3,steps=12;const tailX=(rand()-.5)*.018;const pony=style==='ponytail'?new T.CatmullRomCurve3([root.clone(),new T.Vector3(sign*a.width*.43,a.top-.045,a.centerZ-.025),new T.Vector3(tailX,a.top-.115,a.centerZ-a.depth*.57),new T.Vector3(tailX,a.top-.20,a.centerZ-a.depth*.70),new T.Vector3(tailX*.4,a.top-.34,a.centerZ-a.depth*.60)]):null;
   for(let j=0;j<=steps;j++){
    const t=j/steps,travel=Math.min(len,.10),p=root.clone().addScaledVector(tangent,travel*Math.sin(t*Math.PI/2)).addScaledVector(down,Math.max(0,len-travel*.4)*t*t).addScaledVector(n,.003*Math.sin(Math.PI*t));
+   if(pony)p.copy(pony.getPoint(t));
    const curl=style==='curly'?Math.sin(t*18+h)*.003*t:Math.sin(t*5+h)*.0008*t;p.addScaledVector(side,curl);
    // Keep long strands outside a conservative head envelope, especially eyes.
    const cy=a.top-.13,rx=a.width*.46,rz=a.depth*.46,dy=(p.y-cy)/.14,cross=Math.sqrt(Math.max(0,1-dy*dy));
    if(Math.abs(dy)<1){let x=p.x,z=p.z-a.centerZ,rad=Math.hypot(x/rx,z/rz);if(rad<cross*1.045){if(rad<1e-5){x=sign*.001;z=-.001;rad=Math.hypot(x/rx,z/rz);}const k=cross*1.045/rad;p.x=x*k;p.z=a.centerZ+z*k;}}
-   const outward=new T.Vector3(p.x/(rx*rx),(p.y-cy)/(.15*.15),(p.z-a.centerZ)/(rz*rz)).normalize(),flow=tangent.clone().multiplyScalar(travel*Math.PI/2*Math.cos(t*Math.PI/2)).addScaledVector(down,2*Math.max(0,len-travel*.4)*t),ribbonSide=new T.Vector3().crossVectors(outward,flow).normalize();if(ribbonSide.lengthSq()<.01)ribbonSide.copy(side);
+   const outward=new T.Vector3(p.x/(rx*rx),(p.y-cy)/(.15*.15),(p.z-a.centerZ)/(rz*rz)).normalize(),flow=pony?pony.getTangent(t):tangent.clone().multiplyScalar(travel*Math.PI/2*Math.cos(t*Math.PI/2)).addScaledVector(down,2*Math.max(0,len-travel*.4)*t),ribbonSide=new T.Vector3().crossVectors(outward,flow).normalize();if(ribbonSide.lengthSq()<.01)ribbonSide.copy(side);
    for(const s of [-1,1]){const q=p.clone().addScaledVector(ribbonSide,s*width*(1-t*.95));vertices.push(...q.toArray());uv.push(s<0?0:1,t);}if(j<steps){const k=start+j*2;indices.push(k,k+1,k+2,k+1,k+3,k+2);}
   }
  }
- const g=new T.BufferGeometry();g.setAttribute('position',new T.Float32BufferAttribute(vertices,3));g.setAttribute('uv',new T.Float32BufferAttribute(uv,2));g.setIndex(indices);g.computeVertexNormals();const fibers=new T.Mesh(g,material);fibers.name='individual-hair-ribbons';fibers.userData.strands=count;group.add(fibers);group.userData.textureOwner=true;group.name='fiber-hair-'+style;return group;
+ const g=new T.BufferGeometry();g.setAttribute('position',new T.Float32BufferAttribute(vertices,3));g.setAttribute('uv',new T.Float32BufferAttribute(uv,2));g.setIndex(indices);g.computeVertexNormals();const fibers=new T.Mesh(g,material);fibers.name='individual-hair-ribbons';fibers.userData.strands=count;group.add(fibers);if(style==='ponytail'){const tie=new T.Mesh(new T.TorusGeometry(.019,.003,6,20),new T.MeshStandardMaterial({color:'#242020',roughness:.95}));tie.name='fiber-hair-tie';tie.position.set(0,a.top-.115,a.centerZ-a.depth*.57);group.add(tie);}
+ group.userData.textureOwner=true;group.name='fiber-hair-'+style;return group;
 }
