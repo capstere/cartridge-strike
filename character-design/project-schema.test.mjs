@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newProject,addPart,clonePart,validateProject,aiBrief,animationContract,REQUIRED_CLIPS} from './project-schema.mjs';
+import {newProject,addPart,clonePart,mirrorPart,validateProject,aiBrief,animationContract,REQUIRED_CLIPS} from './project-schema.mjs';
 
 test('new and revised projects keep a known original game skeleton',()=>{
  const p=newProject({newCharacter:true,gender:'female',template:'blank'});
@@ -13,6 +13,10 @@ test('custom parts are bounded and can attach to named bones',()=>{
  const a=addPart(p,'helmet');assert.equal(a.anchor,'Head');
  const b=clonePart(p,a.id);assert.notEqual(b.id,a.id);
  assert.equal(p.parts.length,2);
+ const mirrored=mirrorPart(p,a.id);
+ assert.equal(mirrored.position[0],-a.position[0]);
+ assert.equal(mirrored.anchor,a.anchor);
+ assert.equal(p.parts.length,3);
  assert.equal(validateProject(p),p);
  b.dimensions[0]=5;assert.throws(()=>validateProject(p),/objektdel/);
  b.dimensions[0]=.2;b.anchor='unknown';assert.throws(()=>validateProject(p),/objektdel/);
