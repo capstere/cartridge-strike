@@ -1,6 +1,6 @@
 /** Studio-only edits to cloned skinned geometry. Original assets/runtime stay untouched. */
 import * as T from '../vendor/three/three.module.js';
-import {makeCreative} from './creative-schema.mjs';
+import {makeCreative} from './creative-schema.mjs?v=4';
 const clamp=T.MathUtils.clamp;
 export class FashionPreview{
  constructor(onRedraw=()=>{}){this.onRedraw=onRedraw;this.parts=[];this.textures=[];this.avatar=null;this.signature='';this.generation=0;this.sources=new Map();this.pendingImages=[];}

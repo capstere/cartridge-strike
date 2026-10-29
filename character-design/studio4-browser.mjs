@@ -8,7 +8,7 @@ import {createHash} from 'node:crypto';
 import {crc32} from './zip-export.mjs';
 const require=createRequire(import.meta.url),{chromium}=require('../frontline/source/tools/dev/node_modules/playwright-core');
 const origin=process.env.CHARACTER_TEST_ORIGIN||'http://127.0.0.1:8765';
-const browser=await chromium.launch({executablePath:process.env.CHROMIUM_EXECUTABLE_PATH||undefined,headless:true,args:['--use-gl=angle','--use-angle=swiftshader','--enable-unsafe-swiftshader','--ignore-gpu-blocklist','--no-sandbox','--disable-gpu-sandbox']});
+const browser=await chromium.launch({proxy:process.env.CHARACTER_TEST_PROXY?{server:process.env.CHARACTER_TEST_PROXY}:undefined,executablePath:process.env.CHROMIUM_EXECUTABLE_PATH||undefined,headless:true,args:['--use-gl=angle','--use-angle=swiftshader','--enable-unsafe-swiftshader','--ignore-gpu-blocklist','--no-sandbox','--disable-gpu-sandbox']});
 const hash=bytes=>createHash('sha256').update(bytes).digest('hex');
 function unzip(bytes){const files=new Map();let off=0;while(bytes.readUInt32LE(off)===0x04034b50){assert.equal(bytes.readUInt16LE(off+8),0);const length=bytes.readUInt32LE(off+18),nameLen=bytes.readUInt16LE(off+26),extra=bytes.readUInt16LE(off+28),start=off+30+nameLen+extra,name=bytes.toString('utf8',off+30,off+30+nameLen),data=bytes.subarray(start,start+length);assert.equal(crc32(data),bytes.readUInt32LE(off+14),name+' CRC');files.set(name,data);off=start+length;}return files;}
 const gltf=bytes=>{assert.equal(bytes.readUInt32LE(0),0x46546c67);assert.equal(bytes.readUInt32LE(8),bytes.length);return JSON.parse(bytes.toString('utf8',20,20+bytes.readUInt32LE(12)));};
@@ -23,10 +23,10 @@ try{
   const settle=()=>page.waitForTimeout(140);
   const download=async id=>{const event=page.waitForEvent('download');await text(id).click();return readFile(await(await event).path());};
   const slider=async(id,value)=>{await text(id).fill(String(value));await text(id).dispatchEvent('input');await settle();};
-  await page.goto(origin+'/character-design/',{waitUntil:'domcontentloaded'});
+  await page.goto(origin+'/character-design/?studio=4',{waitUntil:'domcontentloaded'});
   await page.waitForFunction(()=>document.querySelector('#status').textContent.includes('redo!'));
   assert.equal(await page.title(),'Character Design Studio 4 · Cartridge Strike');
-  if(mobile)await text('viewer-tools').locator('summary').click();
+  if(mobile)await text('viewer-tools').locator(':scope > summary').click();
   const initial=await pixels();await tab('face').click();
   for(const [key,value]of [['jaw','Bred'],['eyes','Stora'],['nose','Bred'],['mouth','Brett leende'],['eyebrows','Tjocka'],['facialHair','Helskägg'],['freckles','Tydliga']]){
    const before=await pixels();await page.locator('[data-face-field="'+key+'"]').selectOption(value);await settle();assert.notEqual(await pixels(),before,key+' must visibly change actual WebGL rendering');
@@ -85,7 +85,7 @@ try{
   for(const clip of await text('pose').locator('option').evaluateAll(options=>options.map(o=>o.value))){await text('pose').selectOption(clip);await text('play').click();await page.waitForTimeout(60);await text('play').click();}
   await text('pose').selectOption('Idle_Loop');
   assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1),'no horizontal mobile overflow');
-  await mkdir('test-results',{recursive:true});await text('focus-body').click();if(mobile)await text('viewer-tools').locator('summary').click();await page.locator('.preview-frame').scrollIntoViewIfNeeded();await page.screenshot({path:'test-results/studio4-'+(mobile?'mobile':'desktop')+'.png'});
+  await mkdir('test-results',{recursive:true});await text('focus-body').click();if(mobile)await text('viewer-tools').locator(':scope > summary').click();await page.locator('.preview-frame').scrollIntoViewIfNeeded();await page.screenshot({path:'test-results/studio4-'+(mobile?'mobile':'desktop')+'.png'});
   assert.deepEqual(errors,[]);
   console.log('PASS Studio 4 '+(mobile?'mobile/touch':'desktop')+': visible facial changes, outfits, exact PNG, undo/redo, GLB imports, animations, IndexedDB reopen, ZIP hashes and parsed skinned preview ('+rig.animations.length+' clips)');
   await context.close();

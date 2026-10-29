@@ -1,6 +1,6 @@
 /** Small studio controller: reversible edits, layers and direct touch/mouse manipulation. */
 import * as T from '../vendor/three/three.module.js';
-import {ensureCreative} from './creative-schema.mjs';
+import {ensureCreative} from './creative-schema.mjs?v=4';
 const $=id=>document.getElementById(id),clamp=T.MathUtils.clamp;
 function copy(p){
  // Asset strings are immutable: share them across history entries rather than

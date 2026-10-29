@@ -1,13 +1,13 @@
 /** Easy UI for revising the FPS skeleton, authoring character props and independent 3D objects. */
-import {saveProject,loadProject,listProjects,bytesToData,dataToBytes} from './project-store.mjs';
-import {installStudioControls} from './studio-controls.mjs';
-import {DesignWorkbench} from './workbench.mjs';
-import {newProject,validateProject,PALETTES,PRESETS,SHAPES,addPart,clonePart,mirrorPart,aiBrief,animationContract,filename} from './project-schema.mjs';
-import {makePrototypeGLB} from './prototype-glb.mjs';
-import {packZip} from './zip-export.mjs';
+import {saveProject,loadProject,listProjects,bytesToData,dataToBytes} from './project-store.mjs?v=4';
+import {installStudioControls} from './studio-controls.mjs?v=4';
+import {DesignWorkbench} from './workbench.mjs?v=4';
+import {newProject,validateProject,PALETTES,PRESETS,SHAPES,addPart,clonePart,mirrorPart,aiBrief,animationContract,filename} from './project-schema.mjs?v=4';
+import {makePrototypeGLB} from './prototype-glb.mjs?v=4';
+import {packZip} from './zip-export.mjs?v=4';
 import {inspectGLB} from '../furniture-editor/library/glb-utils.mjs';
-import {installCreativeControls} from './creative-controls.mjs';
-import {ensureCreative} from './creative-schema.mjs';
+import {installCreativeControls} from './creative-controls.mjs?v=4';
+import {ensureCreative} from './creative-schema.mjs?v=4';
 
 const W=480,H=680,STORE='cartridge-strike-character-studio-v2';
 const byId=id=>document.getElementById(id);
