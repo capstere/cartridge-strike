@@ -1,3 +1,4 @@
+import {makeCreative,validateCreative,creativeBrief} from './creative-schema.mjs';
 /** Portable, deterministic v2 concept format. No browser or 3D dependencies. */
 export const FORMAT='cartridge-strike-character-project';
 export const VERSION=2;
@@ -34,7 +35,7 @@ export function newProject({kind='character',newCharacter=false,gender='male',te
     base:{gender:gender==='female'?'female':'male',team:['analysts','counterAnalysts','hostage'].includes(team)?team:'analysts',template:PALETTES[template]?template:'analysts',
       original_glb:'quaternius-operator-'+(gender==='female'?'female':'male')+'.glb'},
     palette:{...theme},body:{height:100,width:100},pose:'Idle_Loop',view_flip:false,
-    parts:[],notes:{face:'',clothes:'',shoes:'',gear:'',general:''},
+    parts:[],creative:makeCreative(),notes:{face:'',clothes:'',shoes:'',gear:'',general:''},
     // Reference files are opt-in local attachments; bytes live outside this portable JSON.
     references:[]
   };
@@ -81,7 +82,7 @@ export function validateProject(data){
   if(!['male','female'].includes(b.gender)||!['analysts','counterAnalysts','hostage'].includes(b.team)||!PALETTES[b.template]||b.original_glb!=='quaternius-operator-'+b.gender+'.glb')throw Error('Okänd grundmodell.');
   if(!data.palette||Object.keys(PALETTES.analysts).some(key=>!cssColor(data.palette[key])))throw Error('Ogiltiga klädfärger.');
   if(!data.body||!finite(data.body.height,80,120)||!finite(data.body.width,80,120))throw Error('Kroppsreglagen är utanför tillåtet område.');
-  if(!REQUIRED_CLIPS.includes(data.pose)||data.view_flip!==undefined&&typeof data.view_flip!=='boolean')throw Error('Okänd pose eller vyinställning.');
+  if((typeof data.pose!=='string'||data.pose.length>64||!(/^[A-Za-z][A-Za-z0-9_]{0,63}$/.test(data.pose)))||data.view_flip!==undefined&&typeof data.view_flip!=='boolean')throw Error('Okänd pose eller vyinställning.');
   if(!Array.isArray(data.parts)||data.parts.length>60||new Set(data.parts.map(p=>p.id)).size!==data.parts.length)throw Error('För många eller duplicerade delar.');
   for(const p of data.parts){
     if(!p||typeof p.id!=='string'||p.id.length>32||typeof p.name!=='string'||p.name.length>80||!SHAPES[p.shape]||!Object.hasOwn(ANCHORS,p.anchor)||!cssColor(p.color)||
@@ -90,6 +91,7 @@ export function validateProject(data){
       !p.dimensions.every(n=>finite(n,.01,4))||typeof p.visible!=='boolean'||typeof p.note!=='string'||p.note.length>1000)throw Error('Fel i en objektdel.');
     if(data.kind==='object'&&p.anchor!=='root')throw Error('Fristående objekt kan inte fästas på skelett.');
   }
+  if(data.creative!==undefined)validateCreative(data.creative);
   if(!data.notes||Object.keys(newProject().notes).some(k=>typeof data.notes[k]!=='string'||data.notes[k].length>3000))throw Error('Ogiltiga designanteckningar.');
   if(!Array.isArray(data.references)||data.references.length>8||data.references.some(x=>!x||typeof x.name!=='string'||x.name.length>100||!['glb','blend','png','jpg','jpeg','webp'].includes(x.type)||!finite(x.bytes,0,12*1024*1024)))throw Error('Ogiltiga referenser.');
   return data;
@@ -142,6 +144,7 @@ export function aiBrief(project,availableClips=[],availableBones=[]){
     '## Appearance',
     ...(project.kind==='character'?['Body height: '+project.body.height+'% of original. Body width: '+project.body.width+'% of original.',...Object.entries(project.palette).map(([k,v])=>'Material '+k+': '+v)]:[]),
     ...Object.entries(project.notes).map(([k,v])=>k+': '+(v||'[unchanged / unspecified]')),
+    ...(project.kind==='character'?creativeBrief(project.creative):[]),
     '',
     '## Modelled 3D components (coordinates in original unscaled model space, meters)',
     ...(project.parts.length?project.parts.map(p=>'- '+p.name+' ('+p.shape+'), anchor='+p.anchor+', pos=['+p.position.join(', ')+'], rotation degrees=['+p.rotation.join(', ')+'], dimensions m=['+p.dimensions.join(', ')+'], color='+p.color+', visible='+p.visible+', note='+(p.note||'none')):['No added primitive parts.']),
