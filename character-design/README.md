@@ -1,55 +1,67 @@
-# Character Design Studio — Cartridge Strike
+# Character Design Studio 2.0 — skapa karaktärer & egna 3D-objekt
 
 **Öppna:** https://capstere.github.io/cartridge-strike/character-design/
 
-Det här är en separat, icke-destruktiv skiss- och exportvy. FPS-spelet ändras inte.
+En enkel, fristående kreativ studio. Spelets FPS-runtime, botar och animationer ändras inte av redigeringarna i studion.
 
-## Användning
+## Så här gör du
 
-1. Välj **manlig** eller **kvinnlig** grundmodell och önskad lagfärg.
-2. Se samma riggade spelkaraktär framifrån, bakifrån, vänster och höger. Välj stå, gå eller huka. **Vänd fram/bak** om modellen upplevs bakvänd.
-3. Rita med finger, penna eller mus direkt ovanpå referensvyerna. Välj pennfärg och tjocklek.
-4. Skriv på vanlig svenska hur ansikte, hår, kläder, skor och utrustning ska förändras.
-5. Hämta **Character Design Sheet PNG**, **AI-brief JSON** och relevant **original-GLB**. Skicka alla tre till den AI/3D-tjänst som ska göra arbetet. Det finns även en kopierbar AI-instruktion.
-6. För papper eller skannade handritningar: skriv ut sidan till PDF, rita på utskriften, skanna/fotografera och skicka bilden tillsammans med GLB och AI-brief.
+1. Välj **Redigera karaktär**, **Skapa ny karaktär** eller **Bygg eget objekt**.
+2. För karaktärer: välj en riggad manlig/kvinnlig grundmodell och färgstil. Det här använder samma Quaternius-baserade GLB och karaktärsbibliotek som spelet.
+3. Byt färger på hud, hår, kläder och skor. Testa rörelser direkt i 3D-fönstret.
+4. Välj **3D-delar** och lägg till t.ex. en keps, glasögon, ryggsäck eller en egen kub, cylinder, kula, kon eller ring. Välj en del och använd enkla reglage för placering och storlek. Karaktärsdelar kan följa huvud, bröst, midja, händer och fötter.
+5. Skriv valfria beskrivningar under **Mina idéer** och bifoga egna inspirationsbilder, GLB eller Blender-filer. Filerna stannar i webbläsaren och skickas endast via lokal export.
+6. Rita på vyerna fram/bak/vänster/höger med finger, penna eller mus.
+7. Klicka **Hämta AI-paket (.zip)** och lämna den filen till din valda 3D-AI. Ladda även upp ZIP:en här om du vill att ChatGPT hjälper dig vidare.
 
-Du kan även bifoga egna inspirationsbilder och dina .blend-modeller direkt till AI-tjänsten. Beskriv då vad som ska överföras från inspirationsmodellen till *den befintliga spelriggen*.
+### Skapa en HELT NY figur – vad innebär det?
 
-## Var finns den riktiga karaktären?
+Du får ett nytt karaktärsprojekt, med valfri stil, egna delar och kreativ frihet. **Det finns fortfarande en färdig animerad basrigg under figuren**. Det är en avsiktlig fördel: AI:n har riktiga ben, skinning, animationer och spelgränssnitt att utgå från, i stället för en statisk bild utan rigg.
 
-| Syfte | Fil |
+Studion är **inte Blender**: den skulpterar inte ett högupplöst ansikte eller målar UV-texturer. För sådana större ändringar lämnas detaljerat underlag till AI:n som levererar en slutlig riggad modell. Du slipper lära dig Blender.
+
+### Bygg helt egna objekt
+
+I **Bygg eget objekt** skapar du statiska 3D-prylar av former. Namnge dem, flytta dem med cm-reglage, ändra färger, skala, vrid och duplicera delarna. **Hämta mina 3D-delar (.glb)** ger en riktig glTF 2.0 binary med mesh/normals/material och objektens transform; den kan öppnas som ett statiskt utkast i kompatibla 3D-verktyg. Finare detaljer, riggning och spelkollision är ett separat integrationssteg. Props kan skapas som egna modeller och senare integreras i spel eller Designstudio efter granskning.
+
+## ZIP-paketet
+
+| Fil | Innehåll |
 | --- | --- |
-| Riggad, animerad manlig originalbas | [quaternius-operator-male.glb](../assets/fps/models/quaternius-operator-male.glb) |
-| Riggad, animerad kvinnlig originalbas | [quaternius-operator-female.glb](../assets/fps/models/quaternius-operator-female.glb) |
-| Material/utrustning som spelet bygger ovanpå grundmodellen | [character-library.mjs](../src/fps/character-library.mjs) |
-| Koppling till spelmekanik, vapengrepp och dödsanimation | [character-actors.mjs](../src/fps/character-actors.mjs) |
-| Modeller och animationslicens | [quaternius-characters-CC0.txt](../licenses/quaternius-characters-CC0.txt) |
+| `PROJECT.json` | Redigerbart projekt v2: färger, material, längd, kroppsbredd, delar, millimeterprecision i meter, skissbild-data och anteckningar |
+| `DESIGN_SHEET.png` | Fyra faktiska 3D-vyer med ritmarkeringar |
+| `AI_INSTRUCTIONS.md` | Dina önskemål och exakta mått/fästpunkter samt krav för färdig spelmodell |
+| `ANIMATION_CONTRACT.json` | Aktuellt originalrigg-/animationskontrakt, clipnamn och kända ben |
+| `BASE_RIG.glb` | Endast karaktärer: **orörd** manlig/kvinnlig original-GLB med riktiga animationsklipp |
+| `STATIC_PROTOTYPE.glb` | Om delar lagts till: **statisk** glTF 2.0-prototyp av dina skapade geometrier |
+| `REFERENCE_XX.*` | Eventuella användarbifogade referenser som fortfarande finns tillgängliga lokalt |
+| `README.txt` | Förklarar vad som är färdigt och vad AI ska göra |
 
-GLB-modellerna är Quaternius-baserade och licensierade under CC0 1.0. Spelversionen har modifierad klädsel och ommappade animationer.
+**Viktigt:** `STATIC_PROTOTYPE.glb` är inte en färdigriggad karaktär. Originalriggen med animationer är bifogad separat. De exakta fästpunkterna (t.ex. `Head`, `spine_03`) och restkoordinater finns i projektet. AI:n måste skapa skinnade/deformerande delar, fästa dem på rätt ben och återanvända/testa originalanimationerna i slutlig GLB.
 
-## Tekniskt kontrakt för en AI som reviderar originalet
+## Animationer och integration i spelet
 
-- Gör en **visuell revision** av befintlig modell. Utgå från bifogad GLB; generera inte en orelaterad 3D-karaktär.
-- **Bevara skeleton/rigg, benens namn, hierarki, bindpose och skinning** eller leverera dokumenterad kompatibel re-targeting som verifierats mot originalanimationerna.
-- Bevara animationerna och särskilt de som spelkoden uttryckligen kräver: Idle_Loop, Walk_Loop, Crouch_Idle_Loop, Pistol_Idle_Loop, Pistol_Reload, Death01. Spelkoden använder även fler clips, till exempel Jump_Loop, Jog_Fwd_Loop, Sprint_Loop, Crouch_Fwd_Loop och Pistol_Shoot.
-- Bibehåll originalorientering och proportioner. Runtime normaliserar karaktärens höjd till ungefär **1,69 m**. Hand- och vapensockets styrs av existerande ben.
-- Glöm inte deformering av skor/byxben, axlar och kläder vid gång, hukning och dödsanimation.
-- Färdig leverans: **glTF 2.0 (.glb)** med material, texturer, skinning, animationer, ortografiska referensbilder och ändringslogg. Kontrollera storlek och mobilprestanda.
-- Modellen ska **integreras separat** i spelet. Spelet ändrar materialfärger baserat på materialnamn och lägger till boots, väst, headset, patches, bälte och annat via character-library.mjs. Om AI bygger dessa detaljer direkt i GLB måste motsvarande runtime-delar avaktiveras/justeras för att undvika dubbla objekt.
-- Ingen AI-redigering ska skriva över originalfilerna. Importera först som nytt filnamn och testa rörlighet, reload, skjutning, död och alla lagfärger.
+- Dessa clips finns som krav i projektet: `Idle_Loop`, `Walk_Loop`, `Jog_Fwd_Loop`, `Sprint_Loop`, `Jump_Loop`, `Crouch_Idle_Loop`, `Crouch_Fwd_Loop`, `Pistol_Idle_Loop`, `Pistol_Shoot`, `Pistol_Reload`, `Death01`.
+- Basen är `assets/fps/models/quaternius-operator-male.glb` respektive `quaternius-operator-female.glb`; originallogiken finns i [character-library.mjs](../src/fps/character-library.mjs) och vapengrepp/död i [character-actors.mjs](../src/fps/character-actors.mjs).
+- Spelmotorn normaliserar bashöjden till ungefär 1,69 m. Studions längd-/breddreglage visar **konceptuell** proportion; AI:n måste vid behov justera skinning, kollision och rörelser.
+- Runtime lägger på boots, vest, headset, role patches och färger. En färdig GLB måste samordnas med detta så att det inte blir dubbla 3D-delar.
+- Spelets originalskelett, bindpose och ben-/animationsnamn bör bibehållas. Karaktären ska testas i riktiga spelet under gång, hukning, hopp, omladdning, skott, död, med vapengrepp och på mobil.
+- Studions utseendeförändringar sker **bara i studion** tills en separat spelintegration görs. Originalfiler skrivs aldrig över här.
 
-## Teknik och verifiering
+## Spara och återuppta
 
-Studion laddar **samma GLB-filer och samma createAuthoredAvatar()** som den publicerade FPS-koden. Den gör bara frysta ortografiska referensrenderingar. Ritningen ligger i separata 2D-canvaslager och ändrar aldrig själva 3D-modellen. Vid modell- eller posebyte rensas ritlagren, så exportera innan du byter.
+- **Spara projekt (.json)** sparar även dina 2D-markeringar. **Öppna sparat projekt** läser JSON och bygger upp modellen igen.
+- Webbläsaren försöker autospara projektet lokalt (ingen synk/extern uppladdning). Exportera JSON innan du byter dator eller rensar webbläsaren.
+- Bifogade inspirationsfiler sparas **inte** i localStorage eller JSON av integritet-/storleksskäl. Om du återöppnar projektet måste du bifoga dem på nytt innan ZIP-export. ZIP:en innehåller de filer som finns tillgängliga vid export.
+- Max 60 3D-delar, 8 referensfiler, 18 MB sammanlagd referensstorlek och 32 MB ZIP; GLB-validering följer möbelbibliotekets säkerhetsgräns.
+- Ritbilder, ZIP och 3D-prototyp genereras lokalt. Ingen extern AI-API-anrop görs från sidan.
 
-Sidan kräver en WebGL-kompatibel webbläsare och fungerar efter Pages-publicering på samma ursprung som spelet. Det är en statisk sida utan server, externa AI-anrop eller uppladdning av personliga skisser. Exporterade filer skapas lokalt i webbläsaren.
+## Verifiering
 
-### Testchecklista
+`node --test character-design/*.test.mjs`
 
-1. På GitHub Pages: se att båda könen kan laddas och att de fyra ortografiska bilderna syns.
-2. Byt mellan Analysts, Counter Analysts och Visitor; bekräfta att utrustning och färger ändras.
-3. Byt stå, gå, huka och kontrollera att leder/kläder sitter kvar.
-4. Rita i alla fyra vyer på dator/mobil, hämta PNG och kontrollera att röda linjer följer med.
-5. Hämta JSON och verifiera att det står rätt originalmodell, designval och krav.
-6. Testa att kopiera prompt och att skriva ut till PDF.
-7. Kontrollera att spelet fortfarande spelar som innan; inga spelruntimefiler har ändrats.
+`node --check character-design/app.mjs`
+
+Ett separat Actions-workflow kör även ett verkligt Chromium/WebGL-test av animerad figur, egna delar, JSON-projektrunda, ZIP med originalrigg och glTF-binära exporten. Inga Actions-artifakter laddas upp.
+
+Basmodeller och animationer av Quaternius under [CC0 1.0](../licenses/quaternius-characters-CC0.txt). Kom ihåg att användarbifogat material kan omfattas av andra licenser.
