@@ -55,14 +55,21 @@ function clearDrawing(){
  for(const c of inks.values())c.getContext('2d').clearRect(0,0,W,H);
  history.length=0;artwork={};saveLocal();
 }
-function restoreArtwork(saved){
+async function restoreArtwork(saved){
+ const loading=[];
  for(const [name,canvas] of inks){
   const c=canvas.getContext('2d');c.clearRect(0,0,W,H);
   const data=saved?.[name];
   if(typeof data==='string'&&data.startsWith('data:image/png;base64,')&&data.length<1_500_000){
-   const img=new Image();img.onload=()=>{c.drawImage(img,0,0,W,H);};img.src=data;
+   loading.push(new Promise(resolve=>{
+    const img=new Image();
+    img.onload=()=>{c.drawImage(img,0,0,W,H);resolve();};
+    img.onerror=()=>resolve();
+    img.src=data;
+   }));
   }
  }
+ await Promise.all(loading);
 }
 function partsSummary(){
  const box=$('part-list');box.replaceChildren();
@@ -157,6 +164,7 @@ function persist(){
 function visualChange({rebuild=false,recreate=false,save=true}={}){
  if(!ready)return;
  try{
+  workbench.flipped=!!project.view_flip;
   workbench.update(project,{rebuild,recreate});
   updateModeVisual();refreshPrompt();
   if(save)saveLocal();
@@ -316,7 +324,7 @@ async function importProject(file){
   attachments.clear();project=obj;dirty=false;selectedPart=null;
   setTab(obj.kind==='object'?'parts':'look');
   refreshUI();visualChange({recreate:true,rebuild:true,save:false});
-  restoreArtwork(obj.artwork);saveLocal();
+  await restoreArtwork(obj.artwork);saveLocal();
   status('Projektet öppnades. Lägg till eventuella referensfiler igen innan du exporterar ZIP.');
  }catch(e){status('Kunde inte öppna projektet: '+e.message,true);}
 }
@@ -358,6 +366,7 @@ function installEvents(){
  $('right-turn').addEventListener('click',()=>{workbench.yaw+=Math.PI/8;workbench.renderPreview();});
  $('zoom-in').addEventListener('click',()=>{workbench.zoom=Math.min(2.5,workbench.zoom*1.2);workbench.renderPreview();});
  $('zoom-out').addEventListener('click',()=>{workbench.zoom=Math.max(.5,workbench.zoom/1.2);workbench.renderPreview();});
+ $('flip-views').addEventListener('click',()=>{project.view_flip=!project.view_flip;workbench.flipped=!!project.view_flip;workbench.renderSheet();persist();});
  const canvas=$('preview3d');let pointer=null,last=[0,0];
  canvas.addEventListener('pointerdown',e=>{
   if(!ready||pointer!==null)return;pointer=e.pointerId;last=[e.clientX,e.clientY];canvas.setPointerCapture(pointer);
@@ -433,8 +442,8 @@ async function start(){
  try{
   await workbench.initialize();ready=true;
   refreshUI();
-  workbench.update(project,{recreate:true,rebuild:true});
-  restoreArtwork(project.artwork);
+  workbench.flipped=!!project.view_flip;workbench.update(project,{recreate:true,rebuild:true});
+  await restoreArtwork(project.artwork);
   status('Studion är redo! Ändra en färg, lägg till en 3D-del eller skapa en helt ny karaktär.');
  }catch(error){
   console.error(error);status('Kunde inte starta WebGL eller ladda spelets originalmodeller: '+error.message,true);
