@@ -1,12 +1,12 @@
 /** Easy UI for revising the FPS skeleton, authoring character props and independent 3D objects. */
-import {saveProject,loadProject,listProjects,bytesToData,dataToBytes} from './project-store.mjs?v=51';
-import {installStudioControls} from './studio-controls.mjs?v=51';
-import {DesignWorkbench} from './workbench.mjs?v=51';
-import {newProject,validateProject,PALETTES,PRESETS,SHAPES,addPart,clonePart,mirrorPart,aiBrief,animationContract,filename} from './project-schema.mjs?v=51';
-import {packZip} from './zip-export.mjs?v=51';
+import {saveProject,loadProject,listProjects,bytesToData,dataToBytes} from './project-store.mjs?v=52';
+import {installStudioControls} from './studio-controls.mjs?v=52';
+import {DesignWorkbench} from './workbench.mjs?v=52';
+import {newProject,validateProject,PALETTES,PRESETS,SHAPES,addPart,clonePart,mirrorPart,aiBrief,animationContract,filename} from './project-schema.mjs?v=52';
+import {packZip} from './zip-export.mjs?v=52';
 import {inspectGLB} from '../furniture-editor/library/glb-utils.mjs';
-import {installCreativeControls} from './creative-controls.mjs?v=51';
-import {ensureCreative} from './creative-schema.mjs?v=51';
+import {installCreativeControls} from './creative-controls.mjs?v=52';
+import {ensureCreative} from './creative-schema.mjs?v=52';
 
 const W=480,H=680,STORE='cartridge-strike-character-studio-v2';
 const byId=id=>document.getElementById(id);
@@ -61,7 +61,7 @@ function download(data,name,type='application/octet-stream'){
  document.body.appendChild(link);link.click();link.remove();
  setTimeout(()=>URL.revokeObjectURL(url),2000);
 }
-function projectSnapshot(){workbench.sculpt.store(project);return {...project,studioVersion:'5.1',artwork:ready?{...captureArtwork(),faceViews:creativeControls?.captureFaces()||{},portraitFraming:project.artwork?.portraitFraming||'anatomical-v5'}:project.artwork};}
+function projectSnapshot(){workbench.sculpt.store(project);return {...project,studioVersion:'5.2',artwork:ready?{...captureArtwork(),faceViews:creativeControls?.captureFaces()||{},portraitFraming:project.artwork?.portraitFraming||'anatomical-v5'}:project.artwork};}
 function refreshPrompt(){
  try{$('ai-prompt').textContent=aiBrief(project,workbench.getClips(),workbench.getBones());}
  catch(e){status('Fel i projektet: '+e.message,true);}
@@ -305,7 +305,7 @@ async function writeZip(){
   files.push({name:'BASE_RIG.glb',data:bytes});
  }
  if(workbench.getPartInstances().length)files.push({name:'STATIC_PROTOTYPE.glb',data:new Uint8Array(await workbench.exportParts())});
- if(workbench.cloth.mesh){files.push({name:'CLOTH_SIMULATION.json',data:JSON.stringify(workbench.cloth.handoff())});const solver=await fetch(new URL('./cloth-solver.mjs?v=51',import.meta.url));if(!solver.ok)throw Error('Tygsimuleringens källkod saknas.');files.push({name:'CLOTH_SOLVER.mjs',data:await solver.text()});}
+ if(workbench.cloth.mesh){files.push({name:'CLOTH_SIMULATION.json',data:JSON.stringify(workbench.cloth.handoff())});const solver=await fetch(new URL('./cloth-solver.mjs?v=52',import.meta.url));if(!solver.ok)throw Error('Tygsimuleringens källkod saknas.');files.push({name:'CLOTH_SOLVER.mjs',data:await solver.text()});}
  if(project.creative?.realism?.head==='scan'){for(const name of ['LeePerrySmith.glb','Map-COL.jpg','Infinite-Level_02_Tangent_SmoothUV.jpg','LeePerrySmith_License.txt']){const response=await fetch(new URL('./assets/scan/'+name,import.meta.url));if(!response.ok)throw Error('Skanningens originalfil saknas: '+name);files.push({name:'SCAN_SOURCE_'+name,data:new Uint8Array(await response.arrayBuffer())});}}
  files.push({name:'PREVIEW.glb',data:new Uint8Array(await workbench.exportPreview())});
  if(project.kind==='character'&&creativeControls)files.push(...await creativeControls.exportEntries());
@@ -314,7 +314,7 @@ async function writeZip(){
   if(!bytes)throw Error('Referensfil saknas: '+ref.name+'. Lägg till den igen innan export.');
   files.push({name:'REFERENCE_'+String(i+1).padStart(2,'0')+'.'+ref.type,data:bytes});
  }
- const manifest={studioVersion:'5.1',prototypeOnly:true,project:project.name,references:project.references.map((r,i)=>({originalName:r.name,file:'REFERENCE_'+String(i+1).padStart(2,'0')+'.'+r.type})),files:[]};
+ const manifest={studioVersion:'5.2',prototypeOnly:true,project:project.name,references:project.references.map((r,i)=>({originalName:r.name,file:'REFERENCE_'+String(i+1).padStart(2,'0')+'.'+r.type})),files:[]};
  for(const file of files){const bytes=typeof file.data==='string'?new TextEncoder().encode(file.data):file.data;const hash=await crypto.subtle.digest('SHA-256',bytes);manifest.files.push({name:file.name,bytes:bytes.byteLength,sha256:[...new Uint8Array(hash)].map(b=>b.toString(16).padStart(2,'0')).join('')});}
  files.push({name:'MANIFEST.json',data:JSON.stringify(manifest,null,2)});
  return packZip(files);

@@ -17,7 +17,7 @@ try{
   const $=id=>page.locator('#'+id),tool=mode=>page.locator('[data-sculpt-tool="'+mode+'"]');
   async function download(id){const ev=page.waitForEvent('download');await $(id).click();return readFile(await(await ev).path());}
   const saved=async()=>JSON.parse((await download('save-json')).toString());
-  await page.goto(origin+'/character-design/?studio=5.1');await page.waitForFunction(()=>document.querySelector('#status').textContent.includes('redo!'));
+  await page.goto(origin+'/character-design/?studio=5.2');await page.waitForFunction(()=>document.querySelector('#status').textContent.includes('redo!'));
   assert.equal(await $('tab-sculpt').isVisible(),true);const gender=mobile?'female':'male';
   if(mobile)await $('gender').selectOption(gender);
   await $('sculpt-focus').click();
@@ -56,7 +56,7 @@ try{
   const geometry=await page.evaluate(async ({data,gender})=>{
    const T=await import('../vendor/three/three.module.js'),{GLTFLoader}=await import('../vendor/three/addons/loaders/GLTFLoader.js');const bytes=Uint8Array.from(atob(data),c=>c.charCodeAt(0)),asset=await new GLTFLoader().parseAsync(bytes.buffer,'');let face;
    asset.scene.traverse(m=>{if(m.isSkinnedMesh&&m.material.name==='face-skin')face=m;});
-   const {DesignWorkbench}=await import('./workbench.mjs?v=51'),{newProject}=await import('./project-schema.mjs?v=51');
+   const {DesignWorkbench}=await import('./workbench.mjs?v=52'),{newProject}=await import('./project-schema.mjs?v=52');
    const canvas=document.createElement('canvas');canvas.style.cssText='position:fixed;left:-3000px;width:320px;height:400px';document.body.appendChild(canvas);const fresh=new DesignWorkbench(canvas,new Map());await fresh.initialize();fresh.update(newProject({gender}),{recreate:true,rebuild:true});
    const baseline=fresh.avatar.meshes.find(m=>m.material.name==='face-skin').geometry.attributes.position.array,edited=face.geometry.attributes.position.array;let maxDelta=0;for(let i=0;i<edited.length;i++)maxDelta=Math.max(maxDelta,Math.abs(edited[i]-baseline[i]));fresh.dispose();canvas.remove();
    const paint=face.geometry.attributes.color;let nonWhite=false;for(let i=0;i<paint.count;i++)if(Math.abs(paint.getX(i)-1)>.01||Math.abs(paint.getY(i)-1)>.01){nonWhite=true;break;}

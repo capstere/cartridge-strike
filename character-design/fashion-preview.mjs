@@ -1,10 +1,10 @@
 /** Studio-only edits to cloned skinned geometry. Original assets/runtime stay untouched. */
 import * as T from '../vendor/three/three.module.js';
-import {makeHair,makeBeard} from './anatomy-accessories.mjs?v=51';
-import {makeFiberHair} from './fiber-hair.mjs?v=51';
-import {fabricMaterial} from './cloth-preview.mjs?v=51';
-import {FABRICS} from './realism-schema.mjs?v=51';
-import {makeCreative} from './creative-schema.mjs?v=51';
+import {makeHair,makeBeard} from './anatomy-accessories.mjs?v=52';
+import {makeFiberHair} from './fiber-hair.mjs?v=52';
+import {fabricMaterial} from './cloth-preview.mjs?v=52';
+import {FABRICS} from './realism-schema.mjs?v=52';
+import {makeCreative} from './creative-schema.mjs?v=52';
 const clamp=T.MathUtils.clamp;
 export class FashionPreview{
  constructor(onRedraw=()=>{}){this.onRedraw=onRedraw;this.parts=[];this.textures=[];this.avatar=null;this.signature='';this.generation=0;this.sources=new Map();this.pendingImages=[];}
@@ -109,7 +109,7 @@ export class FashionPreview{
    if(m.name.startsWith('boot-sole'))m.material.color.set(c.shoes==='sneakers'?p.accent:'#161e24');
   }
   const attach=(group,name)=>{group.name=name;avatar.root.add(group);avatar.root.updateWorldMatrix(true,true);head.attach(group);this.parts.push(group);};
-  if(!['original','bald'].includes(c.hair)&&!headgear)attach(c.realism?.fiberHair?makeFiberHair(avatar,c.hair,p.hair):makeHair(avatar,c.hair,p.hair),'creative-fitted-hair');
+  if(!['original','bald'].includes(c.hair)&&!headgear)attach(c.realism?.fiberHair?makeFiberHair(avatar,c.hair,p.hair,c.realism):makeHair(avatar,c.hair,p.hair),'creative-fitted-hair');
   if(c.face.facialHair!=='Ingen'&&!project.parts.some(part=>part.visible&&part.preset==='beard'))attach(makeBeard(avatar,c.face.facialHair,p.hair),'creative-fitted-beard');
   if(c.face.freckles!=='Nej')for(const side of [-1,1])for(let i=0;i<(c.face.freckles==='Tydliga'?9:4);i++)solid(new T.SphereGeometry(.0019,5,4),'#86543d','freckle',[side*(.027+(i%3)*.013),1.653+Math.floor(i/3)*.008,.095-(i%3)*.004]);
   if(c.outfit==='hoodie'){

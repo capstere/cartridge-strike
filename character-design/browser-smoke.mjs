@@ -20,7 +20,7 @@ page.route('**/*',route=>{
 });
 const log=name=>console.log('PASS '+name);
 try{
- await page.goto(origin+'/character-design/?studio=5.1',{waitUntil:'domcontentloaded',timeout:45000});
+ await page.goto(origin+'/character-design/?studio=5.2',{waitUntil:'domcontentloaded',timeout:45000});
  await page.waitForFunction(()=>document.getElementById('status').textContent.includes('redo!'),null,{timeout:45000});
  log('original skeleton loaded via in-game character-library');
  const sheet=await page.evaluate(()=>{

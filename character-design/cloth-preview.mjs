@@ -1,8 +1,8 @@
 import * as T from '../vendor/three/three.module.js';
-import {heightNormal} from './surface-textures.mjs?v=51';
-import {ClothSolver} from './cloth-solver.mjs?v=51';
-import {skinMatrix} from './sculpt-engine.mjs?v=51';
-import {FABRICS} from './realism-schema.mjs?v=51';
+import {heightNormal} from './surface-textures.mjs?v=52';
+import {ClothSolver} from './cloth-solver.mjs?v=52';
+import {skinMatrix} from './sculpt-engine.mjs?v=52';
+import {FABRICS} from './realism-schema.mjs?v=52';
 export function fabricMaterial(color,type='cotton'){
  const f=FABRICS[type],canvas=document.createElement('canvas');canvas.width=canvas.height=128;const c=canvas.getContext('2d');c.fillStyle='#808080';c.fillRect(0,0,128,128);for(let y=0;y<128;y+=4)for(let x=0;x<128;x+=4){c.fillStyle=(x+y)%8?'#929292':'#696969';c.fillRect(x,y,type==='denim'?3:2,3);}
  const map=heightNormal(canvas,1);map.wrapS=map.wrapT=T.RepeatWrapping;map.repeat.set(24,24);
@@ -16,9 +16,9 @@ export class ClothPreview{
   this.clear();this.avatar=avatar;this.signature=signature;if(r.garment==='none')return;
   const source=avatar.meshes.find(m=>m.material?.name==='jacket-fabric'),base=sources.get(source)||source.geometry.attributes.position.array,rows=16,cols=24,vertices=[],uv=[],indices=[],edges=[],pins=[];
   for(let row=0;row<=rows;row++)for(let col=0;col<=cols;col++){
-   const u=col/cols,v=row/rows,fit=project.creative.fit/100;
-   if(r.garment==='cape')vertices.push((u-.5)*(.40+.18*v)*fit,1.47-.78*v,-.14-.035*Math.sin(Math.PI*u)-.055*v);
-   else{const angle=.40+u*(Math.PI*2-.8),radius=(.20+.035*v)*fit;vertices.push(Math.sin(angle)*radius,1.44-.72*v,Math.cos(angle)*radius*.80);}
+   const u=col/cols,v=row/rows,fit=project.creative.fit/100,lengthScale=(r.garmentLength??100)/100;
+   if(r.garment==='cape')vertices.push((u-.5)*(.40+.18*v)*fit,1.47-.78*v*lengthScale,-.14-.035*Math.sin(Math.PI*u)-.055*v);
+   else{const angle=.40+u*(Math.PI*2-.8),radius=(.20+.035*v)*fit;vertices.push(Math.sin(angle)*radius,1.44-.72*v*lengthScale,Math.cos(angle)*radius*.80);}
    uv.push(u,1-v);const i=row*(cols+1)+col;if(row===0)pins.push(i);
    if(col<cols)edges.push([i,i+1]);if(row<rows)edges.push([i,i+cols+1]);if(col<cols&&row<rows){edges.push([i,i+cols+2],[i+1,i+cols+1]);indices.push(i,i+1,i+cols+1,i+1,i+cols+2,i+cols+1);}if(row<rows-1)edges.push([i,i+2*(cols+1),25]);if(col<cols-1)edges.push([i,i+2,25]);
   }

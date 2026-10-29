@@ -6,13 +6,13 @@
 <meta name="color-scheme" content="light">
 <title>Character Design Studio 5 · Cartridge Strike</title>
 <meta name="description" content="Skapa personliga animerade FPS-karaktärer och egna 3D-objekt med enkla verktyg. Exportera AI-redo designprojekt.">
-<link rel="icon" href="data:,"><link rel="stylesheet" href="style.css?v=51">
+<link rel="icon" href="data:,"><link rel="stylesheet" href="style.css?v=52">
 <script type="importmap">{"imports":{"three":"../vendor/three/three.module.js","three/addons/":"../vendor/three/addons/"}}</script>
 </head>
 <body>
 <header class="masthead">
  <div><a class="back" href="../fps/">← Till spelet</a><p class="eyebrow">CARTRIDGE STRIKE / CREATIVE STUDIO</p>
- <h1>Character Design Studio <span class="edition">5.1</span></h1>
+ <h1>Character Design Studio <span class="edition">5.2</span></h1>
  <p class="lead">Välj en grund. Forma din stil. Lämna över en exakt design till AI:n för att göra karaktären spelklar.</p></div>
  <div class="stamp">INGA 3D-KUNSKAPER<br><strong>BEHÖVS</strong></div>
 </header>
@@ -128,6 +128,9 @@
       <label><input type="checkbox" id="realism-fiberHair"> Tunna hårstråk med anisotropisk glans</label>
       <div class="print-grid"><label>Tyg<select id="realism-fabric"><option value="original">Befintligt tyg</option><option value="cotton">Bomull</option><option value="denim">Denim</option><option value="silk">Siden</option><option value="leather">Läder</option></select></label>
       <label>Plagg med fysisk drapering<select id="realism-garment"><option value="none">Inget extra plagg</option><option value="cape">Axelkappa</option><option value="coat">Öppen långväst</option></select></label></div>
+      <div class="print-grid"><label>Hårlängd <output id="hair-length-value">100 %</output><input id="realism-hairLength" type="range" min="50" max="160" step="5" value="100"></label><label>Hårvolym <output id="hair-volume-value">100 %</output><input id="realism-hairVolume" type="range" min="50" max="150" step="5" value="100"></label></div>
+      <label>Plagglängd <output id="garment-length-value">100 %</output><input id="realism-garmentLength" type="range" min="50" max="130" step="5" value="100"></label>
+      <p class="hint">Hårreglagen formar hårstråken. Plagglängden ändrar kappans eller västens skärning före simuleringen. 100 % är grundformen.</p>
       <label>Vind <input id="realism-wind" type="range" min="0" max="100" value="15"></label>
       <button id="settle-cloth" type="button">Låt tyget falla</button>
       <p class="hint">Spela en rörelse för att se tyget följa kroppen. Fysiken omfattar sträckning, böjning, gravitation och kroppskollisioner. Självkollision och sömnad stöds ännu inte. Exporten behåller draperingen och fysikinställningarna; spelmotorn behöver egen tygfysik.</p>
@@ -333,6 +336,6 @@
   <p class="credits">Quaternius originalkaraktärer och animationer: CC0 1.0 · <a href="../licenses/quaternius-characters-CC0.txt">Licens</a>. Designen ligger lokalt i webbläsaren tills du exporterar. Inga filer laddas upp av studion.</p>
  </section>
 </main>
-<script type="module" src="app.mjs?v=51"></script>
+<script type="module" src="app.mjs?v=52"></script>
 </body>
 </html>

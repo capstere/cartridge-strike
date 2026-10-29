@@ -1,6 +1,14 @@
-# Character Design Studio 5.1
+# Character Design Studio 5.2
 
 Open [the studio](https://capstere.github.io/cartridge-strike/character-design/). The game and its existing characters are unchanged.
+
+## 5.2: custom proportions and collision refinement
+
+In **Färger & kropp → Material, hår & tygfall**, enable thin hair strands and adjust **Hårlängd** (50–160%) and **Hårvolym** (50–150%). The rendered guide geometry changes when the slider is released; roots stay attached. Ponytail length changes below its fixed tie. Volume controls guide lift, not strand count. Choose a cape or open vest and adjust **Plagglängd** (50–130%); the shoulder attachment stays fixed and the simulation is rebuilt from the new cut. Values are relative to each style, not centimetres. Existing projects migrate to 100% without altering their intended proportions.
+
+The scalp underlayer now has a feathered alpha hairline baked into its exported colour texture, reducing the hard cap edge.
+
+These settings survive undo/redo, project reload and the AI package. PREVIEW.glb carries the actual resulting geometry; CLOTH_SIMULATION.json carries garment length and the rebuilt rest shape. Capsule-axis collision no longer leaves free particles trapped inside the body, and the inner constraint/collision loop avoids temporary vector arrays. This remains discrete capsule collision, not continuous mesh collision or self-collision. The scanned portrait, original bodies and procedural hair limitations from 5.1 remain.
 
 ## Use the studio
 
