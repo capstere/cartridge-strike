@@ -4,15 +4,15 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="color-scheme" content="light">
-<title>Character Design Studio 2 · Cartridge Strike</title>
+<title>Character Design Studio 3 · Cartridge Strike</title>
 <meta name="description" content="Skapa personliga animerade FPS-karaktärer och egna 3D-objekt med enkla verktyg. Exportera AI-redo designprojekt.">
-<link rel="icon" href="data:,"><link rel="stylesheet" href="style.css?v=2">
+<link rel="icon" href="data:,"><link rel="stylesheet" href="style.css?v=3">
 <script type="importmap">{"imports":{"three":"../vendor/three/three.module.js","three/addons/":"../vendor/three/addons/"}}</script>
 </head>
 <body>
 <header class="masthead">
  <div><a class="back" href="../fps/">← Till spelet</a><p class="eyebrow">CARTRIDGE STRIKE / CREATIVE STUDIO</p>
- <h1>Character Design Studio <span class="edition">2.0</span></h1>
+ <h1>Character Design Studio <span class="edition">3.0</span></h1>
  <p class="lead">Som The Sims – välj, ändra och skapa. Du designar, AI:n kan sedan bygga klart modellen med originalrigg och animationer.</p></div>
  <div class="stamp">INGA 3D-KUNSKAPER<br><strong>BEHÖVS</strong></div>
 </header>
@@ -53,6 +53,8 @@
     <button id="right-turn" type="button" aria-label="Vrid åt höger">Vrid ↷</button>
     <button id="zoom-in" type="button" aria-label="Zooma in">+ Zoom</button>
     <button id="zoom-out" type="button" aria-label="Zooma ut">− Zoom</button>
+    <button id="focus-head" type="button" class="head-shortcut">Ansikte / närbild</button>
+    <button id="focus-body" type="button">Hela kroppen</button>
     <button id="flip-views" type="button" title="Byt riktning på referensbilderna">Vänd fram/bak</button>
    </div>
    <div class="animation-controls" id="animation-controls">
@@ -64,13 +66,22 @@
      <option value="Pistol_Reload">Ladda om</option><option value="Death01">Dödsanimation</option>
     </select></label>
     <button id="play" class="primary" type="button" aria-pressed="false">▶ Spela rörelsen</button>
+    <label class="anim-speed">Hastighet <output id="anim-speed-value">1×</output><input id="anim-speed" type="range" min="25" max="200" value="100" step="25"></label>
+    <label class="anim-scrub">Spola animation <input id="anim-scrub" type="range" min="0" max="100" value="0" step="1"></label>
    </div>
+   <details id="animation-requests" class="simple-advanced">
+    <summary>Önskar du fler rörelser som AI:n ska skapa?</summary>
+    <p class="hint">Välj framtida animationer här. De spelas <strong>inte</strong> i förhandsvisningen förrän AI:n har skapat dem och de integrerats i spelet.</p>
+    <div id="requested-animations" class="check-grid"></div>
+   </details>
    <p class="hint" id="rig-hint">Det här är samma animerade grundrigg som används i ditt FPS-spel. Nya delar följer kroppen.</p>
   </section>
   <section class="panel edit-panel">
     <div class="section-title"><div><p class="eyebrow">STEG 3 / ÄNDRA & SKAPA</p><h2>Gör den personlig</h2></div></div>
     <div class="tab-row" role="tablist" aria-label="Designverktyg">
      <button type="button" role="tab" aria-selected="true" class="active" data-tab="look">Utseende</button>
+     <button type="button" role="tab" aria-selected="false" data-tab="fashion">Kläder & tryck</button>
+     <button type="button" role="tab" aria-selected="false" data-tab="face">Ansikte & hår</button>
      <button type="button" role="tab" aria-selected="false" data-tab="parts">3D-delar</button>
      <button type="button" role="tab" aria-selected="false" data-tab="ideas">Mina idéer</button>
     </div>
@@ -90,6 +101,53 @@
        <label class="range-control">Kroppsbredd <output id="width-value">100 %</output><input id="width" type="range" min="80" max="120" value="100"></label>
        <p class="hint">Kroppsändringarna är designförslag. AI:n behöver anpassa collision och animationer vid spelintegration.</p>
       </details>
+    </div>
+    <div id="tab-fashion" class="editor-tab" hidden>
+     <p class="hint">Välj kläder, skriv på tröjan eller lägg till en egen PNG som tryck eller mönster. Du ser en enkel 3D-prototyp direkt – AI:n gör slutligt tyg, UV och animerad passform.</p>
+     <label>Välj klädesplagg<select id="outfit-style">
+      <option value="original">Originaluniform</option><option value="tshirt">T-shirt</option>
+      <option value="hoodie">Hoodie</option><option value="jacket">Jacka med dragkedja</option>
+      <option value="polo">Pikétröja</option><option value="labcoat">Labbrock</option>
+      <option value="vest">Skyddsväst</option>
+     </select></label>
+     <div class="design-separator"></div>
+     <h3>Eget tryck eller mönster</h3>
+     <label>Text på tröjan<input id="shirt-text" maxlength="100" placeholder="T.ex. ANALYSTS, mitt namn, nr 05"></label>
+     <div class="print-grid">
+      <label>Textstil<select id="shirt-font"><option value="sans">Modern</option><option value="serif">Klassisk</option><option value="mono">Maskinskriven</option></select></label>
+      <label>Placering<select id="shirt-position"><option value="front">Framsida</option><option value="back">Rygg</option></select></label>
+      <label>Textfärg<input type="color" id="shirt-color" value="#ffffff"></label>
+      <label>Textstorlek <output id="shirt-size-value">60</output><input id="shirt-size" type="range" min="20" max="120" value="60"></label>
+     </div>
+     <div class="reference-box">
+      <label for="shirt-png"><strong>Välj egen PNG-bild</strong></label>
+      <p class="hint">Du kan använda en logotyp, ett tryck eller ett upprepat tygmönster. Bilden lagras i ditt projekt och följer med i AI-paketet.</p>
+      <input type="file" accept="image/png,.png" id="shirt-png">
+      <div class="shirt-picture" id="shirt-picture" hidden><img id="shirt-preview" alt="Valt tröjtryck"><button id="remove-shirt-png" type="button">Ta bort bild</button></div>
+      <label>Hur ska bilden användas?<select id="shirt-image-mode"><option value="print">Tryck / logotyp</option><option value="pattern">Upprepat mönster</option></select></label>
+      <label class="range-control">Bildstorlek <output id="shirt-image-scale-value">100 %</output><input id="shirt-image-scale" type="range" min="30" max="200" value="100" step="10"></label>
+     </div>
+     <p class="hint">3D-visningen visar en plan konceptdekal på kroppen – inte ett färdigt, UV-mappat tyg. Original-PNG:ns utseende och placering dokumenteras i exporten.</p>
+    </div>
+    <div id="tab-face" class="editor-tab" hidden>
+     <p class="hint">Välj ett ungefärligt utseende och rita sedan exakt hur du vill att personen ska se ut i den stora närbilden längre ned på sidan.</p>
+     <label>Frisyr<select id="hair-style">
+      <option value="original">Originalfrisyr</option><option value="buzz">Snaggat</option><option value="short">Kort</option>
+      <option value="curly">Lockigt</option><option value="bob">Page</option><option value="long">Långt</option>
+      <option value="ponytail">Hästsvans</option><option value="mohawk">Mohawk</option>
+     </select></label>
+     <div class="face-grid">
+      <label>Ögonform<select data-face-field="eyes"></select></label>
+      <label>Ögonbryn<select data-face-field="eyebrows"></select></label>
+      <label>Näsa<select data-face-field="nose"></select></label>
+      <label>Mun<select data-face-field="mouth"></select></label>
+      <label>Ansiktsform<select data-face-field="jaw"></select></label>
+      <label>Skägg<select data-face-field="facialHair"></select></label>
+      <label>Fräknar<select data-face-field="freckles"></select></label>
+      <label>Ögonfärg<input type="color" data-face-field="eyeColor" value="#547a8d"></label>
+     </div>
+     <p class="hint">Frisyrerna är enkla 3D-former. Ansiktsvalen är exakta instruktioner till AI:n, inte automatisk skulptering av originalmodellens ansikte.</p>
+     <button id="jump-to-face" type="button" class="primary">Rita ansiktet i närbild</button>
     </div>
     <div id="tab-parts" class="editor-tab" hidden>
      <p class="hint">Lägg till något färdigt eller bygg med kuber, kulor och cylindrar. Du kan flytta och forma varje del.</p>
@@ -150,6 +208,32 @@
     </div>
   </section>
  </div>
+ <section class="panel face-detail" id="face-detail-section">
+  <div class="section-title"><div><p class="eyebrow">PORTRÄTTSTUDIO / NÄRBILD</p><h2>Rita detaljer på ansiktet</h2></div>
+   <span class="hint">Närbild från den riktiga modellen · Högupplöst 1024 × 1024</span>
+  </div>
+  <div class="face-detail-layout">
+   <div class="face-photo">
+    <div class="face-canvas-wrap" id="face-canvas-wrap"><div class="face-image-layer" id="face-image-layer">
+     <canvas id="face-base" width="1024" height="1024" aria-label="Huvud i närbild"></canvas>
+     <canvas class="ink" data-ink="face" width="1024" height="1024" aria-label="Rita detaljer på ansiktet"></canvas>
+    </div></div>
+   </div>
+   <div class="face-side-tools">
+    <label>Välj sida<select id="face-angle"><option value="front">Framifrån</option><option value="left">Vänster profil</option><option value="right">Höger profil</option></select></label>
+    <label>Närbildszoom <output id="face-zoom-value">100 %</output><input id="face-zoom" type="range" min="100" max="400" step="25" value="100"></label>
+    <button id="face-pan" type="button" aria-pressed="false">Flytta bilden</button>
+    <button id="face-center" type="button">Centrera närbild</button>
+    <p class="hint">Zooma upp till 400 %. Välj <strong>Flytta bilden</strong> för att panorera utan att rita. Tryck igen för att fortsätta rita.</p>
+    <div class="design-separator"></div>
+    <label>Ritfärg <input id="face-pen-color" type="color" value="#e13d41"></label>
+    <label>Pennstorlek <input id="face-pen-size" type="range" min="1" max="16" value="4"></label>
+    <button id="face-undo" type="button">Ångra senaste streck</button>
+    <button id="face-clear" type="button">Sudda på vald sida</button>
+    <p class="hint">Dina närbildsritningar för fram-, vänster- och högersida sparas var för sig och skickas med i AI-paketet.</p>
+   </div>
+  </div>
+ </section>
  <section class="panel sheet">
   <div class="section-title"><div><p class="eyebrow">STEG 4 / RITA OM DU VILL</p><h2>Character Design Sheet – fyra vyer</h2></div><span class="hint">Rita med fingret, musen eller pennan direkt på bilderna.</span></div>
   <div class="views">
@@ -185,6 +269,6 @@
   <p class="credits">Quaternius originalkaraktärer och animationer: CC0 1.0 · <a href="../licenses/quaternius-characters-CC0.txt">Licens</a>. Designen ligger lokalt i webbläsaren tills du exporterar. Inga filer laddas upp av studion.</p>
  </section>
 </main>
-<script type="module" src="app.mjs?v=2"></script>
+<script type="module" src="app.mjs?v=3"></script>
 </body>
 </html>
