@@ -8,11 +8,11 @@ import {RoundedBoxGeometry} from '../vendor/three/addons/geometries/RoundedBoxGe
 const TAU=Math.PI*2,clamp=T.MathUtils.clamp;
 export const ACCESSORY_TYPES=['cap','glasses','beard','hair','helmet','backpack','badge','shoulder','wrist'];
 export function anatomy(avatar){
- const skin=avatar.meshes.find(m=>m.material?.name==='face-skin');
+ const skin=avatar.anatomySkin||avatar.meshes.find(m=>m.material?.name==='face-skin');
  const eyes=avatar.meshes.find(m=>m.material?.name==='eyes');
  const bounds=new T.Box3().setFromBufferAttribute(skin.geometry.attributes.position);
  const eyeBox=new T.Box3().setFromBufferAttribute(eyes.geometry.attributes.position);
- return {skin,top:bounds.max.y,width:bounds.max.x-bounds.min.x,depth:bounds.max.z-bounds.min.z,eyeY:(eyeBox.min.y+eyeBox.max.y)/2,front:bounds.max.z,centerZ:(bounds.min.z+bounds.max.z)/2};
+ return {skin,top:bounds.max.y,baseTop:avatar.rigHeadTop??bounds.max.y,width:bounds.max.x-bounds.min.x,depth:bounds.max.z-bounds.min.z,eyeY:(eyeBox.min.y+eyeBox.max.y)/2,front:bounds.max.z,centerZ:(bounds.min.z+bounds.max.z)/2};
 }
 function material(color,extra={}){return new T.MeshStandardMaterial({color,roughness:.78,...extra});}
 function add(group,geometry,mat,name,pos=[0,0,0],scale=null,rotation=null){
@@ -56,7 +56,7 @@ export function hairGeometry(a,style='short'){
  },p=>{if(style==='mohawk'){const crest=Math.exp(-((p.x/.023)**2));p.y+=.065*crest*clamp((p.y-(t-.1))/.1,0,1);}});
 }
 export function beardGeometry(a,style='Kort skägg'){
- const t=a.top,lip=t-.190;
+ const t=a.baseTop??a.top,lip=t-.190;
  return surfacePatch(a.skin,p=>{
   const mouthHole=(p.x/.035)**2+((p.y-lip)/.014)**2-1;
   if(style==='Mustasch')return Math.min(p.y-(lip+.011),lip+.034-p.y,.053-Math.abs(p.x),p.z-.055);
@@ -184,7 +184,7 @@ export function makeAccessory(type,color,avatar){
  const root=normalized(g);root.userData.accessoryType=type;return root;
 }
 export function fitAccessory(part,avatar){
- const a=anatomy(avatar),female=avatar.gender==='female',shift=a.top-1.8100767135620117,type=part.preset,side=part.mirrored?'r':'l';
+ const a=anatomy(avatar),female=avatar.gender==='female',shift=(a.baseTop??a.top)-1.8100767135620117,type=part.preset,side=part.mirrored?'r':'l';
  const spec={
   glasses:{position:[0,a.eyeY+.002,.018],dimensions:[a.width*1.10,.043,.17],anchor:'Head'},
   cap:{position:[0,a.top-.016,.025],dimensions:[a.width*1.15,.092,.275],anchor:'Head'},
@@ -205,6 +205,6 @@ export function fitAccessory(part,avatar){
  }else if(type==='hair'||type==='beard'){
   const group=makeAccessory(type,part.color,avatar),b=group.userData.nativeBounds;part.position=b.center;part.dimensions=b.size.map(v=>Math.max(.01,v));part.anchor='Head';part.rotation=[0,0,0];disposeAccessory(group);
  }else if(spec){Object.assign(part,spec);part.rotation=[0,0,0];}
- part.fitVersion=1;return part;
+ part.fitVersion=1;part.followsFace=true;return part;
 }
 export function disposeAccessory(root){const geometries=new Set(),materials=new Set();root.traverse(m=>{if(m.geometry)geometries.add(m.geometry);if(m.material)for(const mat of [m.material].flat())materials.add(mat);});for(const g of geometries)g.dispose();for(const m of materials)m.dispose();}

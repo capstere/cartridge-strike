@@ -1,7 +1,7 @@
 /** Studio-only edits to cloned skinned geometry. Original assets/runtime stay untouched. */
 import * as T from '../vendor/three/three.module.js';
-import {makeHair,makeBeard} from './anatomy-accessories.mjs?v=4.1';
-import {makeCreative} from './creative-schema.mjs?v=4.1';
+import {makeHair,makeBeard} from './anatomy-accessories.mjs?v=5';
+import {makeCreative} from './creative-schema.mjs?v=5';
 const clamp=T.MathUtils.clamp;
 export class FashionPreview{
  constructor(onRedraw=()=>{}){this.onRedraw=onRedraw;this.parts=[];this.textures=[];this.avatar=null;this.signature='';this.generation=0;this.sources=new Map();this.pendingImages=[];}
@@ -13,13 +13,13 @@ export class FashionPreview{
  }
  source(mesh,avatar){
   if(!this.sources.has(mesh)){
-   const geometry=mesh.geometry.index?mesh.geometry.toNonIndexed():mesh.geometry.clone();avatar.ownedGeometry.push(geometry);
+   const geometry=mesh.geometry.userData.sculptResolution?mesh.geometry:mesh.geometry.index?mesh.geometry.toNonIndexed():mesh.geometry.clone();if(!avatar.ownedGeometry.includes(geometry))avatar.ownedGeometry.push(geometry);
    mesh.geometry=geometry;
    this.sources.set(mesh,Float32Array.from(geometry.attributes.position.array));
   }
   return this.sources.get(mesh);
  }
- create(project,avatar){
+ create(project,avatar,sculpt){
   if(!avatar||project.kind!=='character'){this.dispose();return;}
   const c=project.creative||makeCreative(),p=project.palette;
   const headgear=project.parts.some(part=>part.visible&&['cap','helmet','hair'].includes(part.preset));
@@ -98,6 +98,7 @@ export class FashionPreview{
    if(name==='vest-shell'){mesh.visible=true;mesh.material.color.set(c.vest||c.outfit==='vest'?p.vest:p.jacket);}
    pos.needsUpdate=true;g.computeBoundingBox();g.computeBoundingSphere();
   }
+  sculpt?.apply(project,avatar,this.sources);
   for(const m of avatar.meshes){
    if(m.name.startsWith('boot-shaft'))m.visible=c.shoes!=='sneakers';
    if(m.name.startsWith('boot-sole'))m.material.color.set(c.shoes==='sneakers'?p.accent:'#161e24');

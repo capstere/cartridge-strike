@@ -4,15 +4,15 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="color-scheme" content="light">
-<title>Character Design Studio 4 · Cartridge Strike</title>
+<title>Character Design Studio 5 · Cartridge Strike</title>
 <meta name="description" content="Skapa personliga animerade FPS-karaktärer och egna 3D-objekt med enkla verktyg. Exportera AI-redo designprojekt.">
-<link rel="icon" href="data:,"><link rel="stylesheet" href="style.css?v=4.1">
+<link rel="icon" href="data:,"><link rel="stylesheet" href="style.css?v=5">
 <script type="importmap">{"imports":{"three":"../vendor/three/three.module.js","three/addons/":"../vendor/three/addons/"}}</script>
 </head>
 <body>
 <header class="masthead">
  <div><a class="back" href="../fps/">← Till spelet</a><p class="eyebrow">CARTRIDGE STRIKE / CREATIVE STUDIO</p>
- <h1>Character Design Studio <span class="edition">4.1</span></h1>
+ <h1>Character Design Studio <span class="edition">5.0</span></h1>
  <p class="lead">Välj en grund. Forma din stil. Lämna över en exakt design till AI:n för att göra karaktären spelklar.</p></div>
  <div class="stamp">INGA 3D-KUNSKAPER<br><strong>BEHÖVS</strong></div>
 </header>
@@ -51,6 +51,7 @@
    <div class="section-title"><div><p class="eyebrow">STEG 2 / FÖRHANDSGRANSKA</p><h2>Din design i 3D</h2></div><span class="tiny-chip" id="mode-label">Karaktär</span></div>
    <div class="preview-frame" id="model-drop-zone">
     <canvas id="preview3d" width="720" height="660" aria-label="Roterbar 3D-vy av din design" tabindex="0"></canvas>
+    <div id="sculpt-cursor" class="sculpt-cursor" hidden></div>
     <span class="preview-hint">Dra: rotera · Nyp: zooma · Två fingrar: flytta · Släpp GLB här</span>
    </div>
    <details id="viewer-tools" class="viewer-tools" open><summary>Vy & animationer</summary>
@@ -88,13 +89,39 @@
   <section class="panel edit-panel">
     <div class="section-title"><div><p class="eyebrow">STEG 3 / ÄNDRA & SKAPA</p><h2>Gör den personlig</h2></div></div>
     <div class="tab-row" role="tablist" aria-label="Designverktyg">
-     <button type="button" role="tab" aria-selected="true" class="active" data-tab="look">Utseende</button>
+     <button type="button" role="tab" aria-selected="true" class="active" data-tab="sculpt">Forma direkt</button>
+     <button type="button" role="tab" aria-selected="false" data-tab="look">Färger & kropp</button>
      <button type="button" role="tab" aria-selected="false" data-tab="fashion">Kläder & tryck</button>
      <button type="button" role="tab" aria-selected="false" data-tab="face">Ansikte & hår</button>
      <button type="button" role="tab" aria-selected="false" data-tab="parts">3D-delar</button>
      <button type="button" role="tab" aria-selected="false" data-tab="ideas">Mina idéer</button>
     </div>
-    <div id="tab-look" class="editor-tab">
+    <div id="tab-sculpt" class="editor-tab">
+     <p class="eyebrow">DITT ANSIKTE / DINA HÄNDER</p>
+     <h2>Ta tag. Dra. Gör den personlig.</h2>
+     <p class="hint">Forma kinderna, näsan, hakan och pannan direkt på huden. Dina ändringar följer karaktären genom sparning och animation.</p>
+     <button id="sculpt-focus" type="button" class="primary hero-button">Börja forma ansiktet</button>
+     <div class="sculpt-tools" role="group" aria-label="Forma direkt">
+      <button type="button" data-sculpt-tool="rotate" class="active" aria-pressed="true">Rotera</button>
+      <button type="button" data-sculpt-tool="grab" aria-pressed="false">Dra i huden</button>
+      <button type="button" data-sculpt-tool="inflate" aria-pressed="false">Bygg volym</button>
+      <button type="button" data-sculpt-tool="deflate" aria-pressed="false">Tryck in</button>
+      <button type="button" data-sculpt-tool="smooth" aria-pressed="false">Mjukna</button>
+      <button type="button" data-sculpt-tool="paint" aria-pressed="false">Måla hud</button>
+      <button type="button" data-sculpt-tool="restore" aria-pressed="false">Sudda ändring</button>
+     </div>
+     <p id="sculpt-feedback" class="sculpt-feedback" role="status" aria-live="polite">Välj Börja forma. Dra med musen eller fingret.</p>
+     <div class="sculpt-angles" role="group" aria-label="Ansiktsvinkel"><button type="button" data-sculpt-view="front">Fram</button><button type="button" data-sculpt-view="left">Vänster profil</button><button type="button" data-sculpt-view="right">Höger profil</button><button type="button" data-sculpt-view="back">Bak</button></div>
+     <div class="print-grid">
+      <label>Område <output id="sculpt-radius-value">3.5 cm</output><input id="sculpt-radius" type="range" min="4" max="65" value="35" step="1"></label>
+      <label>Styrka <output id="sculpt-strength-value">60 %</output><input id="sculpt-strength" type="range" min="10" max="100" value="60"></label>
+      <label class="sculpt-check"><input id="sculpt-symmetry" type="checkbox" checked> Forma båda sidor lika</label>
+      <label>Penselfärg<input id="sculpt-color" type="color" value="#c46c67"></label>
+     </div>
+     <div class="sculpt-colors"><label>Hud<input type="color" data-color="skin"></label><label>Ögon<input type="color" data-face-field="eyeColor" value="#547a8d"></label><label>Hår<input type="color" data-color="hair"></label><label>Kläder<input type="color" data-color="jacket"></label></div>
+     <details class="simple-advanced"><summary>Tips & återställning</summary><p class="hint">En cirkel visar var penseln verkar. Börja med ett större område för mjuka former. Välj profil för att dra ut näsan eller hakan. Höger musknapp eller Alt-drag roterar tillfälligt. På mobil: två fingrar flyttar/zoomar; ett finger formar. Ett drag är ett steg i Ångra/Gör om. Rotera eller prova animationen när du vill granska resultatet.</p><button id="sculpt-reset" type="button">Återställ min fria formning & målning</button><p class="hint">Originalets skelett och ansiktets grundtopologi bevaras. Fri formning gäller ansiktet; kroppsproportioner finns under Färger & kropp.</p></details>
+    </div>
+    <div id="tab-look" class="editor-tab" hidden>
       <p class="hint">Ändra färgerna direkt på 3D-figuren. Detaljer som nya frisyrer och prylar hittar du under 3D-delar.</p>
       <div class="color-grid" id="colors">
        <label>Tröja / jacka<input type="color" data-color="jacket"></label>
@@ -167,7 +194,7 @@
       <label>Fräknar<select data-face-field="freckles"></select></label>
       <label>Ögonfärg<input type="color" data-face-field="eyeColor" value="#547a8d"></label>
      </div>
-     <p class="hint">Hår och skägg följer huvudets yta. Huvudbonader ersätter frisyrens överdel för att undvika överlapp. Ansiktsvalen ändrar den riggade förhandsvisningen. Resultatet är en stiliserad designprototyp; detaljer och ansiktsuttryck färdigställs av AI:n.</p>
+     <p class="hint">Hår och skägg följer huvudets yta. Huvudbonader ersätter frisyrens överdel för att undvika överlapp. Välj en grundform här och finjustera sedan med Forma direkt. Resultatet är en stiliserad designprototyp; detaljer och ansiktsuttryck färdigställs av AI:n.</p>
      <button id="jump-to-face" type="button" class="primary">Rita ansiktet i närbild</button>
     </div>
     <div id="tab-parts" class="editor-tab" hidden>
@@ -294,6 +321,6 @@
   <p class="credits">Quaternius originalkaraktärer och animationer: CC0 1.0 · <a href="../licenses/quaternius-characters-CC0.txt">Licens</a>. Designen ligger lokalt i webbläsaren tills du exporterar. Inga filer laddas upp av studion.</p>
  </section>
 </main>
-<script type="module" src="app.mjs?v=4.1"></script>
+<script type="module" src="app.mjs?v=5"></script>
 </body>
 </html>

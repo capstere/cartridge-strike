@@ -1,12 +1,12 @@
 /** Easy UI for revising the FPS skeleton, authoring character props and independent 3D objects. */
-import {saveProject,loadProject,listProjects,bytesToData,dataToBytes} from './project-store.mjs?v=4.1';
-import {installStudioControls} from './studio-controls.mjs?v=4.1';
-import {DesignWorkbench} from './workbench.mjs?v=4.1';
-import {newProject,validateProject,PALETTES,PRESETS,SHAPES,addPart,clonePart,mirrorPart,aiBrief,animationContract,filename} from './project-schema.mjs?v=4.1';
-import {packZip} from './zip-export.mjs?v=4.1';
+import {saveProject,loadProject,listProjects,bytesToData,dataToBytes} from './project-store.mjs?v=5';
+import {installStudioControls} from './studio-controls.mjs?v=5';
+import {DesignWorkbench} from './workbench.mjs?v=5';
+import {newProject,validateProject,PALETTES,PRESETS,SHAPES,addPart,clonePart,mirrorPart,aiBrief,animationContract,filename} from './project-schema.mjs?v=5';
+import {packZip} from './zip-export.mjs?v=5';
 import {inspectGLB} from '../furniture-editor/library/glb-utils.mjs';
-import {installCreativeControls} from './creative-controls.mjs?v=4.1';
-import {ensureCreative} from './creative-schema.mjs?v=4.1';
+import {installCreativeControls} from './creative-controls.mjs?v=5';
+import {ensureCreative} from './creative-schema.mjs?v=5';
 
 const W=480,H=680,STORE='cartridge-strike-character-studio-v2';
 const byId=id=>document.getElementById(id);
@@ -20,7 +20,7 @@ for(const name of ANGLES){
 }
 const workbench=new DesignWorkbench($('preview3d'),bases);
 const attachments=new Map(),history=[];
-let project=restoreAutosave()||newProject(),selectedPart=null,artwork={},ready=false,dirty=false,activeTab='look';
+let project=restoreAutosave()||newProject(),selectedPart=null,artwork={},ready=false,dirty=false,activeTab='sculpt';
 let creativeControls=null,studioControls=null,slotId=null,animationFrame=null;
 function restoreAttachments(){attachments.clear();for(const [name,data]of Object.entries(project.embeddedReferences||{}))attachments.set(name,dataToBytes(data));}
 
@@ -61,7 +61,7 @@ function download(data,name,type='application/octet-stream'){
  document.body.appendChild(link);link.click();link.remove();
  setTimeout(()=>URL.revokeObjectURL(url),2000);
 }
-function projectSnapshot(){return {...project,studioVersion:'4.1',artwork:{...captureArtwork(),faceViews:creativeControls?.captureFaces()||{}}};}
+function projectSnapshot(){workbench.sculpt.store(project);return {...project,studioVersion:'5.0',artwork:ready?{...captureArtwork(),faceViews:creativeControls?.captureFaces()||{},portraitFraming:project.artwork?.portraitFraming||'anatomical-v5'}:project.artwork};}
 function refreshPrompt(){
  try{$('ai-prompt').textContent=aiBrief(project,workbench.getClips(),workbench.getBones());}
  catch(e){status('Fel i projektet: '+e.message,true);}
@@ -151,8 +151,8 @@ function updateModeVisual(){
  $('tab-look').hidden=project.kind==='object'||activeTab!=='look';
  const lookBtn=document.querySelector('[data-tab="look"]');
  lookBtn.hidden=project.kind==='object';
- for(const name of ['fashion','face'])document.querySelector('[data-tab="'+name+'"]').hidden=project.kind==='object';
- if(project.kind==='object'&&['look','fashion','face'].includes(activeTab))setTab('parts');
+ for(const name of ['sculpt','fashion','face'])document.querySelector('[data-tab="'+name+'"]').hidden=project.kind==='object';
+ if(project.kind==='object'&&['sculpt','look','fashion','face'].includes(activeTab))setTab('parts');
  if(project.kind==='object'&&activeTab==='parts')setTab('parts');
  if(project.kind==='character'&&activeTab==='parts')setTab('parts');
  if(project.kind==='character'&&activeTab==='look')setTab('look');
@@ -177,8 +177,8 @@ function refreshUI(){
  selectedPart=project.parts.at(-1)?.id||null;
  updateModeVisual();partsSummary();referenceSummary();creativeControls?.refresh();studioControls?.refresh();refreshPrompt();
 }
-function persist(){
- studioControls?.record();dirty=true;refreshPrompt();saveLocal();
+function persist(options={}){
+ studioControls?.record(options);dirty=true;refreshPrompt();saveLocal();
 }
 function visualChange({rebuild=false,recreate=false,save=true}={}){
  if(!ready)return;
@@ -192,6 +192,7 @@ function visualChange({rebuild=false,recreate=false,save=true}={}){
  }catch(e){console.error(e);status('Kunde inte uppdatera 3D-vyn: '+e.message,true);}
 }
 function resetMode(mode){
+ studioControls?.stopSculpt();
  if(!['revise','create','object'].includes(mode))return;
  if(dirty)saveProject(slotId||crypto.randomUUID(),projectSnapshot()).catch(e=>status('Kunde inte arkivera projekt: '+e.message,true));
  slotId=null;
@@ -199,7 +200,7 @@ function resetMode(mode){
  project=newProject({kind:isObject?'object':'character',newCharacter:isNew,template:isNew?'blank':'analysts'});
  if(isObject)addPart(project,'box');
  attachments.clear();dirty=false;selectedPart=null;workbench.playing=false;
- clearDrawing();creativeControls?.restoreFaces({});setTab(isObject?'parts':'look');
+ clearDrawing();creativeControls?.restoreFaces({});setTab(isObject?'parts':'sculpt');
  refreshUI();visualChange({recreate:true,rebuild:true});
  studioControls?.resetHistory();refreshSlots();status('Nytt '+(isObject?'3D-objekt':isNew?'karaktärsprojekt':'karaktärsprojekt från originalet')+' skapat.');
 }
@@ -279,6 +280,9 @@ function sheetBlob(){
  });
 }
 async function writeZip(){
+ studioControls?.stopSculpt();
+ workbench.playing=false;if(animationFrame!==null){cancelAnimationFrame(animationFrame);animationFrame=null;}
+ $('play').textContent='▶ Spela rörelsen';$('play').setAttribute('aria-pressed','false');
  if(!ready)throw Error('3D-modellerna laddas fortfarande.');
  validateProject(project);
  await Promise.all(workbench.fashion.pendingImages);
@@ -307,7 +311,7 @@ async function writeZip(){
   if(!bytes)throw Error('Referensfil saknas: '+ref.name+'. Lägg till den igen innan export.');
   files.push({name:'REFERENCE_'+String(i+1).padStart(2,'0')+'.'+ref.type,data:bytes});
  }
- const manifest={studioVersion:'4.1',prototypeOnly:true,project:project.name,references:project.references.map((r,i)=>({originalName:r.name,file:'REFERENCE_'+String(i+1).padStart(2,'0')+'.'+r.type})),files:[]};
+ const manifest={studioVersion:'5.0',prototypeOnly:true,project:project.name,references:project.references.map((r,i)=>({originalName:r.name,file:'REFERENCE_'+String(i+1).padStart(2,'0')+'.'+r.type})),files:[]};
  for(const file of files){const bytes=typeof file.data==='string'?new TextEncoder().encode(file.data):file.data;const hash=await crypto.subtle.digest('SHA-256',bytes);manifest.files.push({name:file.name,bytes:bytes.byteLength,sha256:[...new Uint8Array(hash)].map(b=>b.toString(16).padStart(2,'0')).join('')});}
  files.push({name:'MANIFEST.json',data:JSON.stringify(manifest,null,2)});
  return packZip(files);
@@ -351,7 +355,7 @@ async function importProject(file){
   const obj=JSON.parse(await file.text());validateProject(obj);ensureCreative(obj);
   if(dirty)await saveProject(slotId||crypto.randomUUID(),projectSnapshot());
   await workbench.prepareAssets(obj);project=obj;restoreAttachments();dirty=false;selectedPart=null;slotId=null;
-  setTab(obj.kind==='object'?'parts':'look');
+  setTab(obj.kind==='object'?'parts':'sculpt');
   refreshUI();visualChange({recreate:true,rebuild:true,save:false});partsSummary();
   await restoreArtwork(obj.artwork);await creativeControls?.restoreFaces(obj.artwork?.faceViews);saveLocal();
   studioControls?.resetHistory();refreshSlots();status('Projektet öppnades med sparade ritningar och inbäddade tillgångar.');
@@ -374,7 +378,7 @@ function installEvents(){
   visualChange();persist();
  });
  for(const input of document.querySelectorAll('[data-color]'))input.addEventListener('input',()=>{
-  project.palette[input.dataset.color]=input.value;visualChange({save:false});persist();
+  project.palette[input.dataset.color]=input.value;for(const peer of document.querySelectorAll('[data-color]'))if(peer.dataset.color===input.dataset.color)peer.value=input.value;visualChange({save:false});persist();
  });
  for(const [id,key] of [['height','height'],['width','width']])$(id).addEventListener('input',e=>{
   project.body[key]=Number(e.target.value);$(id+'-value').textContent=e.target.value+' %';
@@ -386,6 +390,7 @@ function installEvents(){
  });
  $('play').addEventListener('click',()=>{
   if(!ready)return;
+  studioControls?.stopSculpt();
   const on=workbench.playToggle();
   $('play').textContent=on?'⏸ Pausa rörelsen':'▶ Spela rörelsen';
   $('play').setAttribute('aria-pressed',String(on));
@@ -424,6 +429,7 @@ function installEvents(){
  $('part-note').addEventListener('input',e=>{const p=selected();if(!p)return;p.note=e.target.value.slice(0,1000);persist();});
  for(const id of ['pos-x','pos-y','pos-z','size-x','size-y','size-z','rot-x','rot-y','rot-z'])$(id).addEventListener('input',e=>{
   const p=selected();if(!p)return;
+  p.followsFace=false;
   const index='xyz'.indexOf(id.slice(-1)),value=Number(e.target.value);
   if(id.startsWith('pos-'))p.position[index]=value/100;
   else if(id.startsWith('size-'))p.dimensions[index]=value/100;

@@ -1,4 +1,4 @@
-import {makeCreative,validateCreative,creativeBrief} from './creative-schema.mjs?v=4.1';
+import {makeCreative,validateCreative,creativeBrief} from './creative-schema.mjs?v=5';
 /** Portable, deterministic v2 concept format. No browser or 3D dependencies. */
 export const FORMAT='cartridge-strike-character-project';
 export const VERSION=2;
@@ -96,8 +96,10 @@ export function validateProject(data){
    let total=0;for(const [name,value]of Object.entries(data.embeddedReferences)){if(!data.references.some(r=>r.name===name)||typeof value!=='string'||!value.length||value.length>17_000_000||!/^[A-Za-z0-9+/]+={0,2}$/.test(value))throw Error('Skadad inbäddad fil.');total+=value.length;}if(total>26_000_000)throw Error('Tillgångarna är för stora.');
   }
   for(const part of data.parts)if(part.shape==='glb'&&(!data.references.some(r=>r.name===part.asset&&r.type==='glb')||!data.embeddedReferences?.[part.asset]))throw Error('GLB-tillbehörets originalfil saknas.');
+  if(data.parts.some(p=>p.followsFace!==undefined&&typeof p.followsFace!=='boolean'))throw Error('Ogiltig passformsinställning.');
   if(data.parts.some(p=>p.preset!==undefined&&!Object.hasOwn(PRESETS,p.preset)||p.fitVersion!==undefined&&![0,1].includes(p.fitVersion)))throw Error('Okänt tillbehör.');
   if(data.parts.some(p=>p.mirrored!==undefined&&typeof p.mirrored!=='boolean'))throw Error('Ogiltig spegling.');
+  if(data.artwork?.portraitFraming!==undefined&&!['legacy-headbone-v4','anatomical-v5'].includes(data.artwork.portraitFraming))throw Error('Okänd porträttinramning.');
   if(data.creative!==undefined)validateCreative(data.creative);
   if(!data.notes||Object.keys(newProject().notes).some(k=>typeof data.notes[k]!=='string'||data.notes[k].length>3000))throw Error('Ogiltiga designanteckningar.');
   if(!Array.isArray(data.references)||data.references.length>8||data.references.some(x=>!x||typeof x.name!=='string'||x.name.length>100||!['glb','blend','png','jpg','jpeg','webp'].includes(x.type)||!finite(x.bytes,0,12*1024*1024)))throw Error('Ogiltiga referenser.');
