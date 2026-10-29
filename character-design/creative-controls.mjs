@@ -1,5 +1,5 @@
 /** Optional beginner-friendly creative controls. Owns face drawing and PNG art, not game state. */
-import {makeCreative,ensureCreative,FACE_CHOICES,REQUEST_ANIMATIONS} from './creative-schema.mjs?v=4.1';
+import {makeCreative,ensureCreative,FACE_CHOICES,REQUEST_ANIMATIONS} from './creative-schema.mjs?v=5';
 const $=id=>document.getElementById(id);
 const VIEWS=['front','left','right'];
 const LABELS={front:'Framifrån',left:'Vänster profil',right:'Höger profil'};
@@ -129,7 +129,7 @@ export function installCreativeControls({getProject,workbench,persist,visualChan
    input.replaceChildren(...choices.map(value=>{const o=document.createElement('option');o.value=o.textContent=value;return o;}));
   }
   input.addEventListener('change',()=>{
-   creative().face[field]=input.value;commit(true);
+   creative().face[field]=input.value;for(const peer of document.querySelectorAll('[data-face-field]'))if(peer.dataset.faceField===field)peer.value=input.value;commit(true);
   });
  }
  $('hair-style').addEventListener('change',e=>{creative().hair=e.target.value;commit(true);});

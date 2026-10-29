@@ -1,4 +1,4 @@
-# Character Design Studio 4.1
+# Character Design Studio 5.0
 
 Open [the studio](https://capstere.github.io/cartridge-strike/character-design/). The game and its existing characters are unchanged.
 
@@ -59,6 +59,7 @@ node --test character-design/*.test.mjs
 node character-design/browser-smoke.mjs
 node character-design/studio4-browser.mjs
 node character-design/accessory-quality-browser.mjs
+node character-design/sculpt-browser.mjs
 node tools/verify-owner-runtime.mjs
 ```
 
@@ -75,3 +76,26 @@ Recognisable old presets receive the new geometry. Untouched original defaults a
 Hair and beard patches are clipped from the source head, with interpolated hairlines, small offsets and preserved normals. Headgear suppresses the competing hairstyle. This remains stylized rather than photorealistic hair or collision simulation. Long hair still needs pose-by-pose intersection review before game integration.
 
 The quality browser suite checks 18 real male/female accessory fits against eye, jaw, shoulder and wrist landmarks, checks compound geometry and attachment stability across five motion clips, and captures front/three-quarter/back UI screenshots. It complements the project/export workflow tests; appearance is also reviewed visually.
+
+## 5.0 — direct face studio
+
+Start in **Forma direkt**, press **Börja forma ansiktet**, then drag the actual skin. The camera moves to the real face. Choose a frontal or profile view to control direction and depth; right-button or Alt-drag temporarily rotates. On a touch device one finger sculpts and two fingers navigate without leaving an accidental stroke.
+
+- **Dra i huden** moves a soft, radius-based region; eyes and eyebrows participate, with each eye moved coherently rather than stretched into triangles.
+- **Bygg volym / Tryck in** add or remove local volume along the surface normal.
+- **Mjukna** smooths authored offsets without eroding the original head.
+- **Måla hud** paints soft vertex colour on the actual skin. It retains the underlying source texture; it is not a full-resolution tattoo/texture-layer editor.
+- **Sudda ändring** locally restores sculpt/paint. The global reset button clears free sculpt and paint, and itself has Undo.
+- Symmetry starts on. Area and strength control the soft falloff. Each pointer stroke is one design-history step; incomplete two-finger gestures are cancelled.
+
+The original skinned face is subdivided twice (sixteen times the original triangle count, over twenty thousand logical face points on the male rig) with interpolated UVs, normals and normalized bone weights. UV seams share position offsets. Skinning matrices map posed pointer hits back into bind space. Authored normal decisions are retained through a deformation-relative correction. Neck attachment vertices are protected. Displacements are capped at 6 cm to bound corrupted/extreme data. This is fixed-topology sculpting, not remeshing or arbitrary topology creation.
+
+`PROJECT.json` stores `creative.sculpt.version = 1`, revision and separate male/female data. Each mesh has a topology signature, logical point count, sparse `[point, dx, dy, dz]` bind-space offsets and `[point, linearR, linearG, linearB, opacity]` paint. Wrong topology is rejected explicitly. The male and female bodies keep separate sculpt data. `PREVIEW.glb` contains the actual edited skinned vertex positions and colour attributes; `BASE_RIG.glb` remains unchanged. Original motion clips are retained. The finishing AI should use the actual sculpted preview, not recreate a generic face from preset labels.
+
+Existing clothes, accessories, drawings, reference imports, projects and export tools remain available. Previously saved portrait annotations retain their legacy reference-camera framing. New portraits use the closer anatomical framing. Correctly fitted facial accessories can follow the revised face; manually moved accessories retain the user's transform.
+
+### Scope and quality limits
+
+Direct sculpt currently targets the existing male/female head, eyes and eyebrows. Body proportions remain available through the body controls; body/clothes topology and arbitrary imported GLBs are not directly sculpted. The original texture resolution and source model still limit visual detail. The editor does not automatically rebuild eyelids, teeth, facial expression rigs, realistic hair or cloth, nor prevent every self-intersection after extreme edits. Inspect front/profile views and all motions before game integration. Physical iPhone/Safari behaviour remains outside the Chromium touch-emulation certification.
+
+The sculpt browser suite uses actual mouse and CDP touch events, verifies numerical geometry changes, symmetry/undo semantics, volume/smoothing/paint, two-finger cancellation, portable JSON and transactional reopen. It exports a ZIP, independently loads the GLB, compares its edited skin to a pristine actual source rig, checks vertex paint and renders an exported animation. The same suite runs against the published Pages site after merge. Screenshots are local review outputs, not uploaded CI artifacts.

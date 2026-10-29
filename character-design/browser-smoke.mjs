@@ -20,7 +20,7 @@ page.route('**/*',route=>{
 });
 const log=name=>console.log('PASS '+name);
 try{
- await page.goto(origin+'/character-design/?studio=4',{waitUntil:'domcontentloaded',timeout:45000});
+ await page.goto(origin+'/character-design/?studio=5',{waitUntil:'domcontentloaded',timeout:45000});
  await page.waitForFunction(()=>document.getElementById('status').textContent.includes('redo!'),null,{timeout:45000});
  log('original skeleton loaded via in-game character-library');
  const sheet=await page.evaluate(()=>{
@@ -32,7 +32,8 @@ try{
  });
  assert.ok(sheet>3,'front character preview is blank or uniform: '+sheet);
  log('four-angle 3D views contain rendered character pixels');
- await page.locator('[data-color="jacket"]').fill('#ed5566');
+ await page.locator('[data-tab=look]').click();
+ await page.locator('#colors [data-color="jacket"]').fill('#ed5566');
  await page.locator('[data-tab="fashion"]').click();
  await page.locator('#outfit-style').selectOption('hoodie');
  await page.locator('#shirt-text').fill('QC TEAM 05');

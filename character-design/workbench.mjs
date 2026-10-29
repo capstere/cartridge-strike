@@ -1,13 +1,14 @@
+import {SculptEngine,prepareSculptGeometry} from './sculpt-engine.mjs?v=5';
 /** Live visual preview of the original game skeleton and authored static parts. */
 import * as T from '../vendor/three/three.module.js';
 import {loadCharacterLibrary,createAuthoredAvatar,disposeAvatar} from '../src/fps/character-library.mjs';
-import {makeAccessory,fitAccessory} from './anatomy-accessories.mjs?v=4.1';
-import {REQUIRED_CLIPS,upgradeAccessories} from './project-schema.mjs?v=4.1';
+import {makeAccessory,fitAccessory} from './anatomy-accessories.mjs?v=5';
+import {REQUIRED_CLIPS,upgradeAccessories} from './project-schema.mjs?v=5';
 import {GLTFLoader} from '../vendor/three/addons/loaders/GLTFLoader.js';
 import {GLTFExporter} from '../vendor/three/addons/exporters/GLTFExporter.js';
 import {inspectGLB} from '../furniture-editor/library/glb-utils.mjs';
-import {dataToBytes} from './project-store.mjs?v=4.1';
-import {FashionPreview} from './fashion-preview.mjs?v=4.1';
+import {dataToBytes} from './project-store.mjs?v=5';
+import {FashionPreview} from './fashion-preview.mjs?v=5';
 const RAD=Math.PI/180,SW=480,SH=680,PW=720,PH=660;
 function characterId(gender){
  for(let i=0;i<200;i++){
@@ -22,7 +23,7 @@ export class DesignWorkbench{
   this.preview=preview;this.bases=bases;
   this.renderer=null;this.scene=null;this.avatar=null;this.project=null;
   this.imports=new Map();this.importData=new Map();this.objectRoot=null;this.partMeshes=new Map();
-  this.fashion=new FashionPreview(()=>this.scheduleRender());this.focus='body';this.faceView='front';this.faceCanvas=null;this.animationSpeed=1;
+  this.sculpt=new SculptEngine();this.fashion=new FashionPreview(()=>this.scheduleRender());this.focus='body';this.faceView='front';this.faceCanvas=null;this.animationSpeed=1;
   this.pan=new T.Vector2();this.renderPending=false;this.yaw=.44;this.pitch=.13;this.zoom=1;this.flipped=false;this.playing=false;
   this.currentAction=null;this.initialized=false;this.lastFrame=0;this.frame=0;
  }
@@ -50,6 +51,7 @@ export class DesignWorkbench{
    this.clearParts();this.fashion.dispose();
    if(this.avatar){this.avatar.holder.removeFromParent();disposeAvatar(this.avatar);}
    this.avatar=createAuthoredAvatar(project.base.team==='hostage'?'analysts':project.base.team,characterId(project.base.gender),project.base.team==='hostage');
+   this.sculptRevision=-1;prepareSculptGeometry(this.avatar);
    this.avatar.holder.rotation.y=0; // Studio canonical front is +Z (game actors face -Z).
    this.scene.add(this.avatar.holder);
    rebuild=true;
@@ -60,7 +62,7 @@ export class DesignWorkbench{
   // This avoids misaligned decals after a user previously previewed crouching or death.
   if(project.kind==='character'&&this.avatar)this.neutralRest();
   this.updateAppearance();
-  const anatomyKey=JSON.stringify({gender:project.base.gender,face:project.creative?.face});
+  const anatomyKey=JSON.stringify({gender:project.base.gender,face:project.creative?.face,sculpt:project.creative?.sculpt?.revision});
   if(this.accessoryAnatomyKey!==anatomyKey&&project.parts.some(p=>p.preset))rebuild=true;this.accessoryAnatomyKey=anatomyKey;
   if(rebuild||old?.kind!==project.kind)this.rebuildParts();
   if(project.kind==='character'&&this.avatar)this.pose(project.pose,false);
@@ -93,7 +95,8 @@ export class DesignWorkbench{
   }
   const scale=this.avatar.scale;
   this.avatar.holder.scale.set(scale*body.width/100,scale*body.height/100,scale*body.width/100);
-  if(this.project.kind==='character')this.fashion.create(this.project,this.avatar);
+  this.avatar.holder.updateWorldMatrix(true,true);
+  if(this.project.kind==='character')this.fashion.create(this.project,this.avatar,this.sculpt);
   else this.fashion.dispose();
  }
  async prepareAssets(project){
@@ -157,7 +160,7 @@ export class DesignWorkbench{
    this.neutralRest();
   }
   for(const part of p.parts){
-   if(part.preset&&part.fitVersion===0)this.fitPart(part);
+   if(part.preset&&(part.fitVersion===0||part.followsFace&&this.sculptRevision!==p.creative?.sculpt?.revision))this.fitPart(part);
    const mesh=this.createPartMesh(part);
    this.partMeshes.set(part.id,mesh);
    if(p.kind==='object'){this.objectRoot.add(mesh);continue;}
@@ -170,6 +173,7 @@ export class DesignWorkbench{
     bone.attach(mesh);
    }
   }
+  this.sculptRevision=p.creative?.sculpt?.revision;
   this.updateAppearance();
   if(p.kind==='character')this.pose(p.pose,false);
   this.playing=false;
@@ -194,7 +198,7 @@ export class DesignWorkbench{
   else this.currentAction.setLoop(T.LoopRepeat,Infinity);
   this.currentAction.play();
   mixer.setTime(.23);
-  this.avatar.root.updateWorldMatrix(true);
+  this.avatar.root.updateWorldMatrix(true,true);
   this.avatar.root.traverse(o=>{if(o.isSkinnedMesh)o.skeleton.update();});
   return true;
  }
@@ -216,6 +220,7 @@ export class DesignWorkbench{
  getFraming(){
   if(this.project?.kind==='character'){
    if(this.focus==='shoes')return {center:new T.Vector3(0,.16,0),span:.65};
+   if(this.focus==='head'&&this.sculpt.headFraming())return this.sculpt.headFraming();
    if(this.focus==='head'&&this.avatar){const v=this.avatar.bones.get('Head')?.getWorldPosition(new T.Vector3());if(v)return {center:v,span:.74};}
    return {center:new T.Vector3(0,.90,0),span:2.43};
   }
@@ -263,8 +268,9 @@ export class DesignWorkbench{
  }
  renderFace(view=this.faceView){
   if(!this.initialized||!this.avatar||this.project?.kind!=='character'||!this.faceCanvas)return;
-  const origin=this.avatar.bones.get('Head')?.getWorldPosition(new T.Vector3());if(!origin)return;
-  const size=1024,zoom=.40;
+  const legacy=this.project.artwork?.portraitFraming==='legacy-headbone-v4';
+  const origin=!legacy&&this.sculpt.headFraming()?.center||this.avatar.bones.get('Head')?.getWorldPosition(new T.Vector3());if(!origin)return;
+  const size=1024,zoom=legacy?.40:.23;
   this.faceCamera.left=-zoom;this.faceCamera.right=zoom;this.faceCamera.top=zoom;this.faceCamera.bottom=-zoom;
   const side=this.flipped?-1:1;
   const positions={front:[0,0,3.2*side],left:[-3.2*side,0,0],right:[3.2*side,0,0]};

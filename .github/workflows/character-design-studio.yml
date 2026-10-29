@@ -25,7 +25,7 @@ concurrency:
 jobs:
   validate-editor:
     runs-on: ubuntu-latest
-    timeout-minutes: 18
+    timeout-minutes: 25
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -55,6 +55,7 @@ jobs:
           timeout 220s xvfb-run -a node character-design/browser-smoke.mjs
           timeout 300s xvfb-run -a node character-design/studio4-browser.mjs
           timeout 180s xvfb-run -a node character-design/accessory-quality-browser.mjs
+          timeout 360s xvfb-run -a node character-design/sculpt-browser.mjs
       - name: Verify published Pages with real desktop and touch WebGL
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         env:
@@ -62,10 +63,11 @@ jobs:
         run: |
           set -euo pipefail
           for i in $(seq 1 24); do
-            if curl -fsS "${CHARACTER_TEST_ORIGIN}/character-design/?verify=${GITHUB_SHA}" | grep -q 'Character Design Studio 4'; then break; fi
+            if curl -fsS "${CHARACTER_TEST_ORIGIN}/character-design/?verify=${GITHUB_SHA}" | grep -q 'Character Design Studio 5'; then break; fi
             sleep 5
           done
           timeout 220s xvfb-run -a node character-design/browser-smoke.mjs
           timeout 300s xvfb-run -a node character-design/studio4-browser.mjs
           timeout 180s xvfb-run -a node character-design/accessory-quality-browser.mjs
+          timeout 360s xvfb-run -a node character-design/sculpt-browser.mjs
       # Intentionally no upload-artifact action: preserve the repo's tiny Actions storage quota.
