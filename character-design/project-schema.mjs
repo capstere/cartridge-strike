@@ -62,6 +62,18 @@ export function clonePart(project,id){
   Object.assign(next,JSON.parse(JSON.stringify(old)),{id:next.id,name:old.name+' kopia',position:[old.position[0]+.13,old.position[1],old.position[2]]});
   return next;
 }
+/** Duplicate the other side of a symmetric outfit without editing geometry. */
+export function mirrorPart(project,id){
+ const original=project.parts.find(p=>p.id===id);
+ if(!original)throw Error('Delen finns inte.');
+ const mirrored=clonePart(project,id);
+ mirrored.name=original.name+' (spegel)';
+ mirrored.position=[-original.position[0],original.position[1],original.position[2]];
+ mirrored.rotation=[original.rotation[0],-original.rotation[1],-original.rotation[2]];
+ const counterpart={hand_l:'hand_r',hand_r:'hand_l',foot_l:'foot_r',foot_r:'foot_l'};
+ mirrored.anchor=counterpart[original.anchor]||original.anchor;
+ return mirrored;
+}
 export function validateProject(data){
   if(!data||typeof data!=='object'||data.format!==FORMAT||data.version!==VERSION)throw Error('Inte ett Character Design Studio v2-projekt.');
   if(!['character','object'].includes(data.kind)||typeof data.name!=='string'||data.name.length>100)throw Error('Projektets typ eller namn är ogiltigt.');
