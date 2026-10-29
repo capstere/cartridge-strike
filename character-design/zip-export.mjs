@@ -5,7 +5,7 @@ export function crc32(bytes){let n=0xffffffff;for(const x of bytes)n=CRC_TABLE[(
 const u16=(d,o,n)=>d.setUint16(o,n,true),u32=(d,o,n)=>d.setUint32(o,n>>>0,true);
 const goodName=s=>/^[a-zA-Z0-9_-]{1,80}(?:\.[a-zA-Z0-9]{1,8})?$/.test(s)&&!s.startsWith('.');
 export function packZip(entries){
- if(!Array.isArray(entries)||!entries.length||entries.length>20)throw Error('Felaktigt antal paketfiler.');
+ if(!Array.isArray(entries)||!entries.length||entries.length>64)throw Error('Felaktigt antal paketfiler.');
  const locals=[],central=[];let offset=0,bytesTotal=0;
  const names=new Set();
  for(const {name,data} of entries){
@@ -13,7 +13,7 @@ export function packZip(entries){
   names.add(name);
   const bytes=typeof data==='string'?encoder.encode(data):data instanceof Uint8Array?data:data instanceof ArrayBuffer?new Uint8Array(data):null;
   if(!bytes)throw Error('Ogiltigt innehåll i paketet.');
-  bytesTotal+=bytes.byteLength;if(bytesTotal>32*1024*1024)throw Error('Paketet får inte vara större än 32 MB.');
+  bytesTotal+=bytes.byteLength;if(bytesTotal>96*1024*1024)throw Error('Paketet får inte vara större än 96 MB.');
   const file=encoder.encode(name),crc=crc32(bytes);
   const local=new Uint8Array(30+file.length+bytes.length),v=new DataView(local.buffer);
   u32(v,0,0x04034b50);u16(v,4,20);u16(v,6,0x0800);u16(v,8,0);

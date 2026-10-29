@@ -25,6 +25,8 @@ export const FONT_STYLES=Object.freeze({sans:'Sans-serif',serif:'Serif',mono:'Mo
 export function makeCreative(){
  return {
   outfit:'original',hair:'original',
+  fit:100,roughness:85,shoes:'boots',gloves:'original',vest:false,
+  printTransform:{x:0,y:0,rotation:0,scale:100},
   face:{eyes:'Naturliga',eyebrows:'Naturliga',nose:'Naturlig',mouth:'Naturlig',jaw:'Naturlig',facialHair:'Ingen',freckles:'Nej',eyeColor:'#547a8d'},
   print:{text:'',color:'#ffffff',font:'sans',size:60,position:'front',
    imageData:null,imageName:null,imageMode:'print',imageScale:100},
@@ -33,19 +35,24 @@ export function makeCreative(){
 }
 export function ensureCreative(project){
  if(!project.creative)project.creative=makeCreative();
+ const defaults=makeCreative();
+ for(const key of ['fit','roughness','shoes','gloves','vest','printTransform'])if(project.creative[key]===undefined)project.creative[key]=defaults[key];
  return project.creative;
 }
 const hex=v=>typeof v==='string'&&/^#[0-9a-fA-F]{6}$/.test(v);
 export function validateCreative(c){
  if(!c||typeof c!=='object'||!Object.hasOwn(OUTFITS,c.outfit)||!Object.hasOwn(HAIRSTYLES,c.hair))throw Error('Okänd kläd- eller frisyrstil.');
  if(!c.face||!hex(c.face.eyeColor)||Object.entries(FACE_CHOICES).some(([k,values])=>!values.includes(c.face[k])))throw Error('Ogiltiga ansiktsinställningar.');
+ for(const [key,min,max] of [['fit',85,120],['roughness',10,100]])if(c[key]!==undefined&&(!Number.isFinite(c[key])||c[key]<min||c[key]>max))throw Error('Ogiltig passform/material.');
+ if(c.shoes!==undefined&&!['boots','sneakers'].includes(c.shoes)||c.gloves!==undefined&&!['original','skin'].includes(c.gloves)||c.vest!==undefined&&typeof c.vest!=='boolean')throw Error('Ogiltigt klädeslager.');
+ if(c.printTransform!==undefined){const t=c.printTransform;if(!t||!Number.isFinite(t.x)||Math.abs(t.x)>100||!Number.isFinite(t.y)||Math.abs(t.y)>100||!Number.isFinite(t.rotation)||Math.abs(t.rotation)>180||!Number.isFinite(t.scale)||t.scale<25||t.scale>200)throw Error('Ogiltig tryckplacering.');}
  const p=c.print||{};
  if(typeof p.text!=='string'||p.text.length>100||!hex(p.color)||!Object.hasOwn(FONT_STYLES,p.font)||
   !Number.isInteger(p.size)||p.size<20||p.size>120||!['front','back'].includes(p.position)||
   !['print','pattern'].includes(p.imageMode)||!Number.isInteger(p.imageScale)||p.imageScale<30||p.imageScale>200)throw Error('Ogiltigt tryck eller text.');
  if(p.imageData!==null&&p.imageData!==undefined&&
-  (typeof p.imageData!=='string'||p.imageData.length>950000||!/^data:image\/png;base64,[A-Za-z0-9+/=]+$/.test(p.imageData)))
-  throw Error('PNG-mönstret får inte vara större än 950 kB som datatext.');
+  (typeof p.imageData!=='string'||p.imageData.length>7_000_000||!/^data:image\/png;base64,[A-Za-z0-9+/=]+$/.test(p.imageData)))
+  throw Error('PNG-mönstret får inte vara större än 7 MB som datatext.');
  if(p.imageName!==null&&p.imageName!==undefined&&(typeof p.imageName!=='string'||p.imageName.length>100))throw Error('Ogiltigt PNG-filnamn.');
  if(!Array.isArray(c.requestedAnimations)||c.requestedAnimations.length>10||new Set(c.requestedAnimations).size!==c.requestedAnimations.length||
    c.requestedAnimations.some(x=>!Object.hasOwn(REQUEST_ANIMATIONS,x)))throw Error('Ogiltiga önskade animationer.');
@@ -62,12 +69,13 @@ export function creativeBrief(c){
   'Selected clothing: '+OUTFITS[c.outfit]+' ('+c.outfit+'). This is a conceptual garment mockup and MUST be converted into deforming, correctly skinned clothes.',
   'Hair design: '+HAIRSTYLES[c.hair]+'. Sculpt hair and ensure it follows Head bone and does not clip with headgear.',
   ...Object.entries(labels).map(([key,value])=>'Face / '+key+': '+value),
-  'Use FACE_FRONT.png, FACE_LEFT.png, FACE_RIGHT.png if provided as high-resolution traced detail references; the original face UV/topology is not changed by concept sliders.',
+  'Use FACE_FRONT.png, FACE_LEFT.png, FACE_RIGHT.png if provided as high-resolution traced detail references; face choices deform the cloned preview geometry; validate facial topology and expression quality before integration.',
   'Shirt text: '+(p.text||'[none]')+'; font='+p.font+', colour='+p.color+', size='+p.size+' px in 512px preview, position='+p.position+'.',
   'Textile uploaded: '+(p.imageData?'yes – see SHIRT_ARTWORK.png ('+(p.imageName||'custom art')+')':'none')+
    '; type='+p.imageMode+'; scale='+p.imageScale+'%.',
   'For pattern: seamlessly tile/repeat across garment UVs. For print: place artwork on '+p.position+' without stretching; keep transparent areas and legibility.',
-  'Canvas print preview in the studio is a flat chest mockup. The final designer must apply the exact artwork to a properly UV-unwrapped, animated fabric mesh.',
+  'Print is projected onto the skinned shirt preview. PROJECT.json printTransform stores x/y in cm, rotation in degrees and scale percent. Preserve the original PNG aspect ratio and transparency.',
+  'Clothing layers / fit / material: '+JSON.stringify({fit:c.fit,roughness:c.roughness,shoes:c.shoes,gloves:c.gloves,vest:c.vest,printTransform:c.printTransform}),
   '',
   '## Additional animations requested (NOT included in original rig)',
   ...(c.requestedAnimations.length?c.requestedAnimations.map(id=>'- '+REQUEST_ANIMATIONS[id]+': create an original animation clip on the SAME original skeleton and document integration to game logic.'):['None requested.']),

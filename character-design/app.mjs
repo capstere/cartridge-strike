@@ -1,11 +1,13 @@
 /** Easy UI for revising the FPS skeleton, authoring character props and independent 3D objects. */
-import {DesignWorkbench} from './workbench.mjs';
-import {newProject,validateProject,PALETTES,PRESETS,SHAPES,addPart,clonePart,mirrorPart,aiBrief,animationContract,filename} from './project-schema.mjs';
-import {makePrototypeGLB} from './prototype-glb.mjs';
-import {packZip} from './zip-export.mjs';
+import {saveProject,loadProject,listProjects,bytesToData,dataToBytes} from './project-store.mjs?v=4';
+import {installStudioControls} from './studio-controls.mjs?v=4';
+import {DesignWorkbench} from './workbench.mjs?v=4';
+import {newProject,validateProject,PALETTES,PRESETS,SHAPES,addPart,clonePart,mirrorPart,aiBrief,animationContract,filename} from './project-schema.mjs?v=4';
+import {makePrototypeGLB} from './prototype-glb.mjs?v=4';
+import {packZip} from './zip-export.mjs?v=4';
 import {inspectGLB} from '../furniture-editor/library/glb-utils.mjs';
-import {installCreativeControls} from './creative-controls.mjs';
-import {ensureCreative} from './creative-schema.mjs';
+import {installCreativeControls} from './creative-controls.mjs?v=4';
+import {ensureCreative} from './creative-schema.mjs?v=4';
 
 const W=480,H=680,STORE='cartridge-strike-character-studio-v2';
 const byId=id=>document.getElementById(id);
@@ -20,7 +22,8 @@ for(const name of ANGLES){
 const workbench=new DesignWorkbench($('preview3d'),bases);
 const attachments=new Map(),history=[];
 let project=restoreAutosave()||newProject(),selectedPart=null,artwork={},ready=false,dirty=false,activeTab='look';
-let creativeControls=null;
+let creativeControls=null,studioControls=null,slotId=null,animationFrame=null;
+function restoreAttachments(){attachments.clear();for(const [name,data]of Object.entries(project.embeddedReferences||{}))attachments.set(name,dataToBytes(data));}
 
 function status(message,error=false){
  const node=$('status');node.textContent=message;node.classList.toggle('error',error);
@@ -39,14 +42,15 @@ function captureArtwork(){
  return result;
 }
 let autosaveTimer=null;
-function flushLocalSave(){
+async function flushLocalSave(){
  if(!ready)return;
  if(autosaveTimer!==null){clearTimeout(autosaveTimer);autosaveTimer=null;}
- try{artwork=captureArtwork();localStorage.setItem(STORE,JSON.stringify(projectSnapshot()));}
- catch{status('Webbläsaren har inte plats att autospara. Hämta projektfilen (.json) innan du stänger.',true);}
+ try{artwork=captureArtwork();await saveProject('autosave',projectSnapshot());$('save-state').textContent='Alla ändringar sparade på denna enhet';}
+ catch{$('save-state').textContent='Sparning misslyckades · hämta JSON';status('Kunde inte autospara i webbläsaren. Hämta projektfilen (.json) innan du stänger.',true);}
 }
 function saveLocal(){
  if(!ready)return;
+ $('save-state').textContent='Sparar…';
  if(autosaveTimer!==null)clearTimeout(autosaveTimer);
  // Drawing/export uses immediate captures; autosave can be throttled to keep
  // touch/pen strokes and shirt text responsive even with a 1024px portrait.
@@ -58,7 +62,7 @@ function download(data,name,type='application/octet-stream'){
  document.body.appendChild(link);link.click();link.remove();
  setTimeout(()=>URL.revokeObjectURL(url),2000);
 }
-function projectSnapshot(){return {...project,artwork:{...captureArtwork(),faceViews:creativeControls?.captureFaces()||{}}};}
+function projectSnapshot(){return {...project,studioVersion:'4.0',artwork:{...captureArtwork(),faceViews:creativeControls?.captureFaces()||{}}};}
 function refreshPrompt(){
  try{$('ai-prompt').textContent=aiBrief(project,workbench.getClips(),workbench.getBones());}
  catch(e){status('Fel i projektet: '+e.message,true);}
@@ -100,7 +104,7 @@ function partsSummary(){
  $('part-editor').hidden=!part;
  if(!part)return;
  $('part-name').value=part.name;
- $('part-shape').value=part.shape;
+ $('part-shape').value=part.shape;$('part-shape').querySelector('option[value="glb"]').disabled=!part.asset;
  $('part-anchor').value=part.anchor;
  $('part-anchor-wrap').hidden=project.kind==='object';
  $('part-color').value=part.color;
@@ -121,7 +125,8 @@ function referenceSummary(){
   const item=document.createElement('div');item.className='reference-item';
   const title=document.createElement('span');title.textContent=ref.name+(attachments.has(ref.name)?' (bifogas i ZIP)':' (lägg till filen igen)');
   const remove=document.createElement('button');remove.type='button';remove.textContent='Ta bort';remove.setAttribute('aria-label','Ta bort '+ref.name);
-  remove.addEventListener('click',()=>{attachments.delete(ref.name);project.references=project.references.filter(x=>x!==ref);referenceSummary();persist();});
+  remove.addEventListener('click',()=>{if(project.parts.some(p=>p.asset===ref.name)){status('Ta först bort tillbehöret som använder filen.',true);return;}
+   attachments.delete(ref.name);if(project.embeddedReferences)delete project.embeddedReferences[ref.name];project.references=project.references.filter(x=>x!==ref);referenceSummary();persist();});
   item.append(title,remove);root.append(item);
  }
 }
@@ -171,14 +176,16 @@ function refreshUI(){
  for(const input of document.querySelectorAll('[data-note]'))input.value=project.notes[input.dataset.note];
  $('play').textContent='▶ Spela rörelsen';$('play').setAttribute('aria-pressed','false');
  selectedPart=project.parts.at(-1)?.id||null;
- updateModeVisual();partsSummary();referenceSummary();creativeControls?.refresh();refreshPrompt();
+ updateModeVisual();partsSummary();referenceSummary();creativeControls?.refresh();studioControls?.refresh();refreshPrompt();
 }
 function persist(){
- dirty=true;refreshPrompt();saveLocal();
+ studioControls?.record();dirty=true;refreshPrompt();saveLocal();
 }
 function visualChange({rebuild=false,recreate=false,save=true}={}){
  if(!ready)return;
  try{
+  if(animationFrame!==null){cancelAnimationFrame(animationFrame);animationFrame=null;}
+  $('play').textContent='▶ Spela rörelsen';$('play').setAttribute('aria-pressed','false');
   workbench.flipped=!!project.view_flip;
   workbench.update(project,{rebuild,recreate});
   creativeControls?.syncClips();updateModeVisual();refreshPrompt();
@@ -187,14 +194,15 @@ function visualChange({rebuild=false,recreate=false,save=true}={}){
 }
 function resetMode(mode){
  if(!['revise','create','object'].includes(mode))return;
- if(dirty&&!window.confirm('Skapa nytt? Hämta projektfilen först om du vill behålla dina senaste ändringar.'))return;
+ if(dirty)saveProject(slotId||crypto.randomUUID(),projectSnapshot()).catch(e=>status('Kunde inte arkivera projekt: '+e.message,true));
+ slotId=null;
  const isObject=mode==='object',isNew=mode==='create';
  project=newProject({kind:isObject?'object':'character',newCharacter:isNew,template:isNew?'blank':'analysts'});
  if(isObject)addPart(project,'box');
  attachments.clear();dirty=false;selectedPart=null;workbench.playing=false;
  clearDrawing();creativeControls?.restoreFaces({});setTab(isObject?'parts':'look');
  refreshUI();visualChange({recreate:true,rebuild:true});
- status('Nytt '+(isObject?'3D-objekt':isNew?'karaktärsprojekt':'karaktärsprojekt från originalet')+' skapat.');
+ studioControls?.resetHistory();refreshSlots();status('Nytt '+(isObject?'3D-objekt':isNew?'karaktärsprojekt':'karaktärsprojekt från originalet')+' skapat.');
 }
 function selected(){return project.parts.find(p=>p.id===selectedPart)||null;}
 function partEdited(refresh=true){
@@ -274,11 +282,12 @@ function sheetBlob(){
 function getPrototype(){
  const instances=workbench.getPartInstances();
  if(!instances.length)throw Error('Lägg till minst en synlig 3D-del för att hämta en GLB-prototyp.');
- return makePrototypeGLB(instances);
+ return makePrototypeGLB(instances.filter(i=>i.mesh.isMesh));
 }
 async function writeZip(){
  if(!ready)throw Error('3D-modellerna laddas fortfarande.');
  validateProject(project);
+ await Promise.all(workbench.fashion.pendingImages);
  // Ensure screenshots and static mesh are from the same design state.
  workbench.renderSheet();
  const sheet=await sheetBlob();
@@ -296,13 +305,17 @@ async function writeZip(){
   if(bytes.length>6*1024*1024||bytes.length<1000)throw Error('Originalriggen har oväntad storlek.');
   files.push({name:'BASE_RIG.glb',data:bytes});
  }
- if(workbench.getPartInstances().length)files.push({name:'STATIC_PROTOTYPE.glb',data:getPrototype()});
+ if(workbench.getPartInstances().some(i=>i.mesh.isMesh))files.push({name:'STATIC_PROTOTYPE.glb',data:getPrototype()});
+ files.push({name:'PREVIEW.glb',data:new Uint8Array(await workbench.exportPreview())});
  if(project.kind==='character'&&creativeControls)files.push(...await creativeControls.exportEntries());
  for(let i=0;i<project.references.length;i++){
   const ref=project.references[i],bytes=attachments.get(ref.name);
-  if(!bytes)continue;
+  if(!bytes)throw Error('Referensfil saknas: '+ref.name+'. Lägg till den igen innan export.');
   files.push({name:'REFERENCE_'+String(i+1).padStart(2,'0')+'.'+ref.type,data:bytes});
  }
+ const manifest={studioVersion:'4.0',prototypeOnly:true,project:project.name,references:project.references.map((r,i)=>({originalName:r.name,file:'REFERENCE_'+String(i+1).padStart(2,'0')+'.'+r.type})),files:[]};
+ for(const file of files){const bytes=typeof file.data==='string'?new TextEncoder().encode(file.data):file.data;const hash=await crypto.subtle.digest('SHA-256',bytes);manifest.files.push({name:file.name,bytes:bytes.byteLength,sha256:[...new Uint8Array(hash)].map(b=>b.toString(16).padStart(2,'0')).join('')});}
+ files.push({name:'MANIFEST.json',data:JSON.stringify(manifest,null,2)});
  return packZip(files);
 }
 async function exportZip(){
@@ -313,7 +326,7 @@ async function exportZip(){
  }catch(e){console.error(e);status('Exporten misslyckades: '+e.message,true);}
  finally{button.disabled=false;button.textContent='Hämta AI-paket (.zip)';}
 }
-async function addReferences(e){
+async function addReferences(e,asAccessory=false){
  for(const file of e.target.files||[]){
   try{
    const type=(file.name.split('.').pop()||'').toLowerCase();
@@ -327,6 +340,12 @@ async function addReferences(e){
    const name=normalText(file.name);
    if(project.references.some(x=>x.name===name))throw Error('En referens med samma filnamn finns redan.');
    project.references.push({name,type,bytes:bytes.byteLength});attachments.set(name,bytes);
+   project.embeddedReferences??={};project.embeddedReferences[name]=bytesToData(bytes);
+   if(asAccessory&&type==='glb'){
+    const part=addPart(project,'box');part.shape='glb';part.asset=name;part.name=name.slice(0,80);selectedPart=part.id;
+    try{await workbench.prepareAssets(project);}catch(error){project.parts=project.parts.filter(p=>p!==part);project.references=project.references.filter(r=>r.name!==name);delete project.embeddedReferences[name];attachments.delete(name);throw error;}
+    partsSummary();setTab('parts');visualChange({rebuild:true});
+   }
   }catch(error){status(file.name+': '+error.message,true);}
  }
  e.target.value='';referenceSummary();persist();
@@ -334,14 +353,14 @@ async function addReferences(e){
 async function importProject(file){
  if(!file)return;
  try{
-  if(file.size>3*1024*1024)throw Error('Projektfilen är för stor.');
+  if(file.size>40*1024*1024)throw Error('Projektfilen är för stor.');
   const obj=JSON.parse(await file.text());validateProject(obj);ensureCreative(obj);
-  if(dirty&&!window.confirm('Ersätta ditt nuvarande projekt med den sparade versionen?'))return;
-  attachments.clear();project=obj;dirty=false;selectedPart=null;
+  if(dirty)await saveProject(slotId||crypto.randomUUID(),projectSnapshot());
+  await workbench.prepareAssets(obj);project=obj;restoreAttachments();dirty=false;selectedPart=null;slotId=null;
   setTab(obj.kind==='object'?'parts':'look');
   refreshUI();visualChange({recreate:true,rebuild:true,save:false});
   await restoreArtwork(obj.artwork);await creativeControls?.restoreFaces(obj.artwork?.faceViews);saveLocal();
-  status('Projektet öppnades. Lägg till eventuella referensfiler igen innan du exporterar ZIP.');
+  studioControls?.resetHistory();refreshSlots();status('Projektet öppnades med sparade ritningar och inbäddade tillgångar.');
  }catch(e){status('Kunde inte öppna projektet: '+e.message,true);}
 }
 function installEvents(){
@@ -376,25 +395,15 @@ function installEvents(){
   const on=workbench.playToggle();
   $('play').textContent=on?'⏸ Pausa rörelsen':'▶ Spela rörelsen';
   $('play').setAttribute('aria-pressed',String(on));
-  if(on)requestAnimationFrame(animateLoop);
+  if(!on)workbench.renderSheet();
+  if(animationFrame!==null)cancelAnimationFrame(animationFrame);
+  if(on)animationFrame=requestAnimationFrame(animateLoop);
  });
  $('left-turn').addEventListener('click',()=>{workbench.yaw-=Math.PI/8;workbench.renderPreview();});
  $('right-turn').addEventListener('click',()=>{workbench.yaw+=Math.PI/8;workbench.renderPreview();});
  $('zoom-in').addEventListener('click',()=>{workbench.zoom=Math.min(6,workbench.zoom*1.2);workbench.renderPreview();});
  $('zoom-out').addEventListener('click',()=>{workbench.zoom=Math.max(.5,workbench.zoom/1.2);workbench.renderPreview();});
  $('flip-views').addEventListener('click',()=>{project.view_flip=!project.view_flip;workbench.flipped=!!project.view_flip;workbench.renderSheet();persist();});
- const canvas=$('preview3d');let pointer=null,last=[0,0];
- canvas.addEventListener('pointerdown',e=>{
-  if(!ready||pointer!==null)return;pointer=e.pointerId;last=[e.clientX,e.clientY];canvas.setPointerCapture(pointer);
- });
- canvas.addEventListener('pointermove',e=>{
-  if(e.pointerId!==pointer)return;
-  workbench.yaw-=(e.clientX-last[0])*.008;
-  workbench.pitch=Math.max(-.8,Math.min(.8,workbench.pitch+(e.clientY-last[1])*.006));
-  last=[e.clientX,e.clientY];workbench.renderPreview();
- });
- for(const ev of ['pointerup','pointercancel','lostpointercapture'])canvas.addEventListener(ev,e=>{if(pointer===e.pointerId)pointer=null;});
- canvas.addEventListener('wheel',e=>{e.preventDefault();workbench.zoom=Math.min(6,Math.max(.5,workbench.zoom*(e.deltaY>0?.9:1.1)));workbench.renderPreview();},{passive:false});
  $('part-type').addEventListener('change',()=>{});
  $('add-part').addEventListener('click',()=>{
   try{
@@ -425,7 +434,7 @@ function installEvents(){
   if(id.startsWith('pos-'))p.position[index]=value/100;
   else if(id.startsWith('size-'))p.dimensions[index]=value/100;
   else p.rotation[index]=value;
-  $(id+'-value').textContent=value+(id==='rot-y'?'°':' cm');
+  $(id+'-value').textContent=value+(id.startsWith('rot-')?'°':' cm');
   visualChange({rebuild:true,save:false});persist();
  });
  for(const input of document.querySelectorAll('[data-note]'))input.addEventListener('input',e=>{project.notes[e.target.dataset.note]=e.target.value.slice(0,3000);persist();});
@@ -440,8 +449,8 @@ function installEvents(){
   try{download(await sheetBlob(),filename(project.name)+'-design-sheet.png','image/png');status('Design Sheet exporterad.');}
   catch(e){status(e.message,true);}
  });
- $('save-glb').addEventListener('click',()=>{
-  try{download(getPrototype(),filename(project.name)+'-3d-prototyp.glb','model/gltf-binary');status('Statisk 3D-prototyp exporterad. Animationerna finns i separat originalrigg.');}
+ $('save-glb').addEventListener('click',async()=>{
+  try{const bytes=await workbench.exportParts();download(bytes,filename(project.name)+'-3d-prototyp.glb','model/gltf-binary');status('Statisk 3D-prototyp exporterad. Animationerna finns i separat originalrigg.');}
   catch(e){status(e.message,true);}
  });
  $('export-zip').addEventListener('click',exportZip);
@@ -455,23 +464,34 @@ function installEvents(){
 function animateLoop(time){
  if(!ready||!workbench.playing)return;
  workbench.tick(time);
- requestAnimationFrame(animateLoop);
+ animationFrame=requestAnimationFrame(animateLoop);
 }
+async function refreshSlots(){try{const rows=await listProjects();const menu=$('saved-projects');menu.replaceChildren(new Option('Öppna från ateljén…',''));for(const row of rows.filter(x=>x.id!=='autosave').sort((a,b)=>b.updated.localeCompare(a.updated)))menu.append(new Option(row.name+' · '+new Date(row.updated).toLocaleDateString('sv-SE'),row.id));}catch(e){status('Projektbiblioteket kunde inte öppnas: '+e.message,true);}}
 async function start(){
  workbench.faceCanvas=$('face-base');
  creativeControls=installCreativeControls({getProject:()=>project,workbench,persist,visualChange,status,download});
  installEvents();initDrawing();
+ studioControls=installStudioControls({getProject:()=>project,workbench,persist,visualChange,status,selected,getSelectedId:()=>selectedPart,selectPart:id=>{selectedPart=id;setTab('parts');partsSummary();},refresh:refreshUI,restore:async p=>{project=p;restoreAttachments();await workbench.prepareAssets(p);refreshUI();visualChange({recreate:true,rebuild:true});saveLocal();}});
+ $('accessory-file').addEventListener('change',e=>addReferences(e,true));
+ const zone=$('model-drop-zone');zone.addEventListener('dragover',e=>{e.preventDefault();zone.classList.add('drop-active');});zone.addEventListener('dragleave',()=>zone.classList.remove('drop-active'));zone.addEventListener('drop',e=>{e.preventDefault();zone.classList.remove('drop-active');addReferences({target:{files:e.dataTransfer.files,value:''}},true);});
+ $('save-slot').addEventListener('click',async()=>{try{slotId??=crypto.randomUUID();await saveProject(slotId,projectSnapshot());await flushLocalSave();await refreshSlots();status('Karaktären är sparad i ateljén, inklusive tillgångar och ritningar.');}catch(e){status('Sparningen misslyckades: '+e.message,true);}});
+ $('saved-projects').addEventListener('change',async e=>{const id=e.target.value;if(!id)return;try{const item=await loadProject(id);if(!item)throw Error('Projektet finns inte.');await importProject(new File([JSON.stringify(item.project)],'projekt.json'));slotId=id;}catch(error){status(error.message,true);}});
  try{
-  await workbench.initialize();ready=true;
+  const saved=await loadProject('autosave').catch(()=>null);if(saved){validateProject(saved.project);ensureCreative(saved.project);project=saved.project;}restoreAttachments();
+  await workbench.initialize();await workbench.prepareAssets(project);ready=true;
   refreshUI();
   workbench.flipped=!!project.view_flip;workbench.update(project,{recreate:true,rebuild:true});
   creativeControls.syncClips();
   await restoreArtwork(project.artwork);await creativeControls.restoreFaces(project.artwork?.faceViews);
+  studioControls.resetHistory();await refreshSlots();$('save-state').textContent='Projektet är öppet · automatisk sparning';
   status('Studion är redo! Ändra en färg, lägg till en 3D-del eller skapa en helt ny karaktär.');
  }catch(error){
   console.error(error);status('Kunde inte starta WebGL eller ladda spelets originalmodeller: '+error.message,true);
   $('export-zip').disabled=true;$('save-glb').disabled=true;
+  const notice=document.createElement('div');notice.className='webgl-notice';notice.setAttribute('role','alert');const message=document.createElement('p');message.textContent='3D-visningen kunde inte starta i denna webbläsare. Ditt sparade projekt finns kvar. Prova en webbläsare med WebGL aktiverat.';const retry=document.createElement('button');retry.textContent='Försök igen';retry.onclick=()=>location.reload();notice.append(message,retry);$('model-drop-zone').append(notice);
  }
 }
-window.addEventListener('pagehide',()=>{flushLocalSave();workbench.dispose();});
+window.addEventListener('resize',()=>{if(ready)workbench.renderPreview();});
+document.addEventListener('visibilitychange',()=>{if(document.hidden)flushLocalSave();});
+window.addEventListener('pagehide',()=>flushLocalSave());
 start();

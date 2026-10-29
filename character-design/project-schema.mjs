@@ -1,10 +1,10 @@
-import {makeCreative,validateCreative,creativeBrief} from './creative-schema.mjs';
+import {makeCreative,validateCreative,creativeBrief} from './creative-schema.mjs?v=4';
 /** Portable, deterministic v2 concept format. No browser or 3D dependencies. */
 export const FORMAT='cartridge-strike-character-project';
 export const VERSION=2;
 export const REQUIRED_CLIPS=Object.freeze(['Idle_Loop','Walk_Loop','Jog_Fwd_Loop','Sprint_Loop','Jump_Loop','Crouch_Idle_Loop','Crouch_Fwd_Loop','Pistol_Idle_Loop','Pistol_Shoot','Pistol_Reload','Death01']);
 export const ANCHORS=Object.freeze({root:'Fristående / kropp',Head:'Huvud',spine_03:'Bröst / rygg',pelvis:'Midja',hand_l:'Vänster hand',hand_r:'Höger hand',foot_l:'Vänster fot',foot_r:'Höger fot'});
-export const SHAPES=Object.freeze({box:'Kub / låda',sphere:'Kula',cylinder:'Cylinder',cone:'Kon',torus:'Ring'});
+export const SHAPES=Object.freeze({box:'Kub / låda',sphere:'Kula',cylinder:'Cylinder',cone:'Kon',torus:'Ring',glb:'Importerad GLB'});
 export const PALETTES=Object.freeze({
   analysts:{jacket:'#22435e',pants:'#22435e',vest:'#132d42',skin:'#e8d1b9',hair:'#49372a',boots:'#243039',accent:'#5aa8cf'},
   counterAnalysts:{jacket:'#9b967c',pants:'#9b967c',vest:'#505b42',skin:'#c6a486',hair:'#261e19',boots:'#243039',accent:'#c9ad65'},
@@ -68,7 +68,7 @@ export function mirrorPart(project,id){
  const original=project.parts.find(p=>p.id===id);
  if(!original)throw Error('Delen finns inte.');
  const mirrored=clonePart(project,id);
- mirrored.name=original.name+' (spegel)';
+ mirrored.name=original.name+' (spegel)';mirrored.mirrored=!original.mirrored;
  mirrored.position=[-original.position[0],original.position[1],original.position[2]];
  mirrored.rotation=[original.rotation[0],-original.rotation[1],-original.rotation[2]];
  const counterpart={hand_l:'hand_r',hand_r:'hand_l',foot_l:'foot_r',foot_r:'foot_l'};
@@ -91,6 +91,12 @@ export function validateProject(data){
       !p.dimensions.every(n=>finite(n,.01,4))||typeof p.visible!=='boolean'||typeof p.note!=='string'||p.note.length>1000)throw Error('Fel i en objektdel.');
     if(data.kind==='object'&&p.anchor!=='root')throw Error('Fristående objekt kan inte fästas på skelett.');
   }
+  if(data.embeddedReferences!==undefined){
+   if(!data.embeddedReferences||typeof data.embeddedReferences!=='object'||Array.isArray(data.embeddedReferences)||Object.keys(data.embeddedReferences).length>8)throw Error('Ogiltiga inbäddade tillgångar.');
+   let total=0;for(const [name,value]of Object.entries(data.embeddedReferences)){if(!data.references.some(r=>r.name===name)||typeof value!=='string'||!value.length||value.length>17_000_000||!/^[A-Za-z0-9+/]+={0,2}$/.test(value))throw Error('Skadad inbäddad fil.');total+=value.length;}if(total>26_000_000)throw Error('Tillgångarna är för stora.');
+  }
+  for(const part of data.parts)if(part.shape==='glb'&&(!data.references.some(r=>r.name===part.asset&&r.type==='glb')||!data.embeddedReferences?.[part.asset]))throw Error('GLB-tillbehörets originalfil saknas.');
+  if(data.parts.some(p=>p.mirrored!==undefined&&typeof p.mirrored!=='boolean'))throw Error('Ogiltig spegling.');
   if(data.creative!==undefined)validateCreative(data.creative);
   if(!data.notes||Object.keys(newProject().notes).some(k=>typeof data.notes[k]!=='string'||data.notes[k].length>3000))throw Error('Ogiltiga designanteckningar.');
   if(!Array.isArray(data.references)||data.references.length>8||data.references.some(x=>!x||typeof x.name!=='string'||x.name.length>100||!['glb','blend','png','jpg','jpeg','webp'].includes(x.type)||!finite(x.bytes,0,12*1024*1024)))throw Error('Ogiltiga referenser.');
@@ -103,6 +109,9 @@ export function animationContract(project,availableClips=[],availableBones=[]){
     source_file:character?project.base.original_glb:null,
     existing_game_character_import:'src/fps/character-library.mjs',
     existing_game_actor_bridge:'src/fps/character-actors.mjs',
+    studio_preview_file:'PREVIEW.glb',
+    studio_preview_status:'Skinned design prototype with original clips; NOT gameplay-validated. Accessories may be rigid. Validate deformation, grip, collisions and materials before integration.',
+    canonical_axes:{units:'meters',up:'+Y',front:'+Z',game_holder_rotation_y:'PI (the game turns actors to face -Z)'},
     reference_height_m:character?1.69:null,
     dimensions_multiplier:character?{height:project.body.height/100,width:project.body.width/100}:null,
     required_animation_clips:character?[...REQUIRED_CLIPS]:[],
@@ -139,6 +148,8 @@ export function aiBrief(project,availableClips=[],availableBones=[]){
     '## Source and interpretation',
     project.kind==='character'?('Start from BASE_RIG.glb ('+project.base.original_glb+'); do NOT substitute an unrelated skeleton.'):'The project contains a precisely positioned 3D primitive prototype and JSON. The object is NOT an animated game character.',
     'The 4-angle reference PNG and annotations are creative direction, not exact topology.',
+    'PREVIEW.glb is the complete visible design prototype with its existing skeleton and animation clips. Preserve its visible appearance. New hair and rigid accessories require animation/intersection review; it is NOT a verified game-ready asset.',
+    'Use MANIFEST.json to map packaged references to their original names and hashes. Do not infer missing files.',
     'PROJECT.json is the canonical editable specification; ANIMATION_CONTRACT.json is the compatibility checklist.',
     '',
     '## Appearance',
@@ -166,7 +177,7 @@ export function aiBrief(project,availableClips=[],availableBones=[]){
     '## Delivery acceptance',
     ...c.quality_checks.map((v,i)=>(i+1)+'. '+v),
     'Provide final game-ready .glb, 4 orthographic views, a change log, and an integration note describing any rig/material differences.',
-    'The generated PROP_PROTOTYPE.glb is a static shape concept; it is NOT the final rigged character and is not animation-complete.',
+    'The generated STATIC_PROTOTYPE.glb is a static shape concept; it is NOT the final rigged character and is not animation-complete.',
     'Reference files are inspiration; use only what the user has rights to include.'
   ];
   return lines.join('\n');

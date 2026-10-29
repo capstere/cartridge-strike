@@ -5,7 +5,7 @@ import {readFile} from 'node:fs/promises';
 const require=createRequire(import.meta.url);
 const {chromium}=require('../frontline/source/tools/dev/node_modules/playwright-core');
 const origin=process.env.CHARACTER_TEST_ORIGIN||'http://127.0.0.1:8765';
-const browser=await chromium.launch({headless:true,args:['--use-gl=angle','--use-angle=swiftshader','--enable-unsafe-swiftshader','--ignore-gpu-blocklist','--no-sandbox','--disable-gpu-sandbox']});
+const browser=await chromium.launch({proxy:process.env.CHARACTER_TEST_PROXY?{server:process.env.CHARACTER_TEST_PROXY}:undefined,executablePath:process.env.CHROMIUM_EXECUTABLE_PATH||undefined,headless:true,args:['--use-gl=angle','--use-angle=swiftshader','--enable-unsafe-swiftshader','--ignore-gpu-blocklist','--no-sandbox','--disable-gpu-sandbox']});
 const errors=[];
 const context=await browser.newContext({viewport:{width:1370,height:920},acceptDownloads:true});
 const page=await context.newPage();page.setDefaultTimeout(35000);
@@ -20,7 +20,7 @@ page.route('**/*',route=>{
 });
 const log=name=>console.log('PASS '+name);
 try{
- await page.goto(origin+'/character-design/',{waitUntil:'domcontentloaded',timeout:45000});
+ await page.goto(origin+'/character-design/?studio=4',{waitUntil:'domcontentloaded',timeout:45000});
  await page.waitForFunction(()=>document.getElementById('status').textContent.includes('redo!'),null,{timeout:45000});
  log('original skeleton loaded via in-game character-library');
  const sheet=await page.evaluate(()=>{

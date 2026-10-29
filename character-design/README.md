@@ -1,85 +1,66 @@
-# Character Design Studio 3.0 — skapa karaktärer & egna 3D-objekt
+# Character Design Studio 4.0
 
-**Öppna:** https://capstere.github.io/cartridge-strike/character-design/
+Open [the studio](https://capstere.github.io/cartridge-strike/character-design/). The game and its existing characters are unchanged.
 
-En enkel, fristående kreativ studio. Spelets FPS-runtime, botar och animationer ändras inte av redigeringarna i studion.
+## Use the studio
 
-## Nya enkla kreativa funktioner i 3.0
+1. Choose an existing character or create a new design using either original rig.
+2. Set colours and body proportions in **Utseende**. Try **Ansikte & hår**: eyes, brows, nose, mouth, jaw, beard and freckles all affect the rendered preview. Use **Ansikte / närbild** for a close view.
+3. Choose an upper garment in **Kläder & tryck**. Combine it with shoes, gloves and a vest; adjust fit and material. Add text and/or your PNG. The PNG's original bytes, proportions and transparency are retained. Use **Flytta tryck i 3D**, or the position, rotation and scale controls. Select front/back to place the graphic on either side. Pattern mode tiles the image on the torso.
+4. In **3D-delar**, add shapes or upload a self-contained GLB. Dropping a GLB onto the viewport also imports an accessory. Select a part, choose its body attachment, then use **Flytta del i 3D** or the precise centimetre/degree controls. Duplicate, mirror and hide individual parts. GLB accessories are normalized to their editable dimensions; the original file remains in the project.
+5. Preview every animation present in the original rig. Play/pause, change speed or scrub. Requested new animations are explicitly a brief for future work.
+6. Draw on the four reference views or the 1024px face reference. Face drawings have separate front/left/right views, zoom up to 400%, pan and stroke undo. These are annotations, not a texture-paint or sculpting system.
+7. Use **Spara i ateljén** for multiple named designs. Autosave saves the working project to IndexedDB after editing and when hiding the page. **Spara projekt (.json)** is a portable backup including PNG and reference/accessory bytes. Reopen it with **Öppna sparat projekt**. Keep a JSON backup when changing device or clearing browser data.
+8. Choose **Hämta AI-paket (.zip)** and give the complete ZIP to the AI implementing the character.
 
-**Kläder & tryck:** välj originaluniform, T-shirt, hoodie, jacka, piké, labbrock eller skyddsväst. Förhandsvisningens riggfästa kläder är en förenklad designprototyp; AI:n behöver skapa riktiga skinnade textilmeshar och material.
+Mouse: drag to orbit, wheel/buttons to zoom, **Flytta vyn** or Shift-drag to pan. Touch: one finger to orbit, pinch to zoom and two fingers to pan. Front/back/side and face/shoe focus buttons simplify detailed work. Design undo/redo is separate from the drawing undo buttons; text fields retain their native text undo. Model changes pause playback.
 
-Skriv valfri text på tröjan, välj teckensnitt, färg och framsida eller rygg. Importera en **egen PNG** som tryck/logotyp eller upprepat mönster. Originalfilen måste vara PNG, högst 5 MB och högst 8 megapixlar. Studion skalar ner till 384×384 för responsiv förhandsvisning. Den optimerade bilden bevaras i projektets JSON och exporteras som **SHIRT_ARTWORK.png** i AI-paketet. Behåll din högupplösta originalfil separat om AI:n behöver den för slutlig texturkvalitet. Den enkla dekalen är inte färdigt UV-mappad tyggeometri.
+## What the ZIP contains
 
-**Ansikte & hår:** testa frisyrer i 3D och specificera ögonform, ögonfärg, ögonbryn, näsa, mun, ansiktsform, skägg och fräknar. Bortsett från enklare hårprototyper är dessa val **AI-designkrav**, inte automatisk skulptering av originalansiktet.
+| File | Purpose |
+|---|---|
+| `PROJECT.json` | Canonical editable design, parts, dimensions, notes, print transform, annotations and embedded assets |
+| `PREVIEW.glb` | Complete visible design prototype, original skeleton and all original animation clips; custom geometry/materials and rigid attachments |
+| `BASE_RIG.glb` | Byte-for-byte unmodified original character GLB |
+| `STATIC_PROTOTYPE.glb` | Optional authored primitive parts; static, no skeleton or textures |
+| `DESIGN_SHEET.png` | Four full-body orthographic views with annotations, independent of the viewport's detail zoom |
+| `FACE_FRONT/LEFT/RIGHT.png` | Face closeups with view-specific annotations |
+| `SHIRT_ARTWORK.png` | Original PNG without resampling |
+| `REFERENCE_01.glb`, etc. | Original uploaded references and accessory files |
+| `MANIFEST.json` | Original reference names mapped to packaged names, byte lengths and SHA-256 hashes |
+| `AI_INSTRUCTIONS.md` | What to retain, change, create and verify in the game |
+| `ANIMATION_CONTRACT.json` | Bone/clip list, coordinate convention, weapon attachment and integration requirements |
 
-**Rita i närbild:** använd porträttstudion med riktiga 1024×1024-vyer av originalmodellens huvud – fram, vänster och höger. Rita med finger, penna eller mus; zooma 100–400 %, panorera med ”Flytta bilden” och ångra streck separat per vinkel. Tre bilder exporteras som **FACE_FRONT.png**, **FACE_LEFT.png**, **FACE_RIGHT.png**. Du kan också ladda ner aktuell närbild separat.
+The design sheet uses the selected pose. Choose idle before drawing/exporting for an upright reference. Reference annotations are not automatically transformed when the design or pose changes.
 
-**Fler animationer:** uppspelningsmenyn byggs direkt från alla clipnamn i den laddade GLB-filen. Ändra uppspelningshastighet och spola. Du kan dessutom **önska** vinka, dansa, fira, klättra, hoppa hukande med mera, men dessa animationer finns inte i den ursprungliga GLB:n och måste skapas på samma skelett och sedan integreras i spelkoden av AI:n.
+## Honest scope
 
-### Så enkelt är arbetsflödet
+This is a stylized character **design tool**, not automatic production modelling or Blender. The upper garments reuse the original weighted suit topology, with short-sleeve skin colouring, adjustable silhouette, collars/hood details and projected torso art. They deform with the original animation; they are not independently tailored cloth meshes. Different garment choices share topology. Shoes are styled variants of the runtime boot geometry. The original body is clothed: **Bara händer** changes glove colour to skin, rather than creating new hand topology.
 
-Välj karaktär → testa kläder → lägg till eget tryck → beskriv ansiktet → zooma och rita → exportera **AI-paket (.zip)**. Du behöver inte Blender. Gamla projektformatet v2 stöds fortfarande; nya kreativa fält är bakåtkompatibla. Projekt/ritningar försöker sparas automatiskt i webbläsaren. För säker återupptagning på en annan enhet: välj **Spara projekt (.json)**.
+Face choices apply local geometry changes to cloned skinned meshes. Eye colour currently tints the original eye material. Hair, beards, freckles, collars and custom objects are simplified rigid shapes attached to bones. They are not photorealistic hair, facial expression rigs or clothing simulation. There is one active shirt graphic combining PNG and text, on one chosen side; independent multilayer decals and simultaneous front/back prints are not implemented. Imported GLBs can be references or attached accessories, not arbitrary replacement humanoid rigs. Imported skinning is preserved, but imported animation clips are not played by the host skeleton.
 
-## Så här gör du
+`PREVIEW.glb` retains an existing rig and animations. This **does not** certify new clothes/hair/accessories as game-ready. The finishing AI must inspect clipping in every pose, refine geometry and UVs, validate weights and hands/weapon alignment, and deliberately handle the game's generated boots, vest, patches and headset. The original game files are never modified by editing/exporting here. Nothing is uploaded by the studio.
 
-1. Välj **Redigera karaktär**, **Skapa ny karaktär** eller **Bygg eget objekt**.
-2. För karaktärer: välj en riggad manlig/kvinnlig grundmodell och färgstil. Det här använder samma Quaternius-baserade GLB och karaktärsbibliotek som spelet.
-3. Byt färger på hud, hår, kläder och skor. Testa rörelser direkt i 3D-fönstret.
-4. Välj **3D-delar** och lägg till t.ex. en keps, glasögon, ryggsäck eller en egen kub, cylinder, kula, kon eller ring. Välj en del och använd enkla reglage för placering och storlek. Karaktärsdelar kan följa huvud, bröst, midja, händer och fötter.
-5. Skriv valfria beskrivningar under **Mina idéer** och bifoga egna inspirationsbilder, GLB eller Blender-filer. Filerna stannar i webbläsaren och skickas endast via lokal export.
-6. Rita på vyerna fram/bak/vänster/höger med finger, penna eller mus.
-7. Klicka **Hämta AI-paket (.zip)** och lämna den filen till din valda 3D-AI. Ladda även upp ZIP:en här om du vill att ChatGPT hjälper dig vidare.
+## Reliability and performance
 
-### Skapa en HELT NY figur – vad innebär det?
+- Existing v2/v3 project JSON is accepted; new fields have defaults. Legacy references without embedded bytes must be supplied again; AI export fails clearly if a referenced file is missing.
+- Transactional IndexedDB replaces tiny localStorage limits. Named projects include assets and annotations. Legacy localStorage autosave is read only for migration. A storage failure is reported; it must not claim a successful save.
+- Maximum eight references, 12 MB per generic file, 18 MB total; usable GLBs are self-contained and limited by the inspector (8 MB, geometry/object budgets and no external URLs or decoder dependency). PNG: 5 MB, up to 4096 per dimension and 8 megapixels. ZIP limit: 96 MB, reflecting project-embedded and separately packaged originals.
+- One WebGL renderer, on-demand preview updates. Playback renders the preview; reference sheets are refreshed on edit, pause and export, avoiding repeated high-resolution sheet rendering while animating.
+- If WebGL cannot initialize, the viewport shows a visible recovery notice; saved projects remain available. Browser/device WebGL support is required. Mobile layout/touch is tested through Chromium emulation; this is not a physical iPhone/Safari certification.
+- Undo history shares immutable asset data and is capped at 25 design states. Drawing tools maintain their own stroke history. Imported source buffers are not changed; studio deformations use cloned geometry.
 
-Du får ett nytt karaktärsprojekt, med valfri stil, egna delar och kreativ frihet. **Det finns fortfarande en färdig animerad basrigg under figuren**. Det är en avsiktlig fördel: AI:n har riktiga ben, skinning, animationer och spelgränssnitt att utgå från, i stället för en statisk bild utan rigg.
+## Verification
 
-Studion är **inte Blender**: den skulpterar inte ett högupplöst ansikte eller målar UV-texturer. För sådana större ändringar lämnas detaljerat underlag till AI:n som levererar en slutlig riggad modell. Du slipper lära dig Blender.
+With a static server on port 8765:
 
-### Bygg helt egna objekt
+```sh
+node --test character-design/*.test.mjs
+node character-design/browser-smoke.mjs
+node character-design/studio4-browser.mjs
+node tools/verify-owner-runtime.mjs
+```
 
-I **Bygg eget objekt** skapar du statiska 3D-prylar av former. Namnge dem, flytta dem med cm-reglage, ändra färger, skala, vrid och duplicera delarna. **Hämta mina 3D-delar (.glb)** ger en riktig glTF 2.0 binary med mesh/normals/material och objektens transform; den kan öppnas som ett statiskt utkast i kompatibla 3D-verktyg. Finare detaljer, riggning och spelkollision är ett separat integrationssteg. Props kan skapas som egna modeller och senare integreras i spel eller Designstudio efter granskning.
+Browser runtime: `npm ci --prefix frontline/source/tools/dev --ignore-scripts`, then install Chromium with its pinned Playwright CLI. Optional `CHROMIUM_EXECUTABLE_PATH` selects a local Chromium binary; optional `CHARACTER_TEST_ORIGIN` runs against published Pages. No external CDN assets are needed at runtime. CI runs real WebGL, both desktop and touch mobile sizes, visible face changes, garment styles, original PNG preservation, undo/redo, real GLB accessory roundtrip, all original clips, persistent reopen, ZIP CRC/SHA-256 and parsing the exported skinned GLB. Test screenshots remain local; CI uploads no test artifacts.
 
-## ZIP-paketet
-
-| Fil | Innehåll |
-| --- | --- |
-| `PROJECT.json` | Redigerbart projekt v2: färger, material, längd, kroppsbredd, delar, millimeterprecision i meter, skissbild-data och anteckningar |
-| `DESIGN_SHEET.png` | Fyra faktiska 3D-vyer med ritmarkeringar |
-| `FACE_FRONT.png`, `FACE_LEFT.png`, `FACE_RIGHT.png` | Detaljerade ansiktsvyer med ritningar |
-| `SHIRT_ARTWORK.png` | Optimerad PNG med tröjtryck/mönster om uppladdad |
-| `AI_INSTRUCTIONS.md` | Dina önskemål och exakta mått/fästpunkter samt krav för färdig spelmodell |
-| `ANIMATION_CONTRACT.json` | Aktuellt originalrigg-/animationskontrakt, clipnamn och kända ben |
-| `BASE_RIG.glb` | Endast karaktärer: **orörd** manlig/kvinnlig original-GLB med riktiga animationsklipp |
-| `STATIC_PROTOTYPE.glb` | Om delar lagts till: **statisk** glTF 2.0-prototyp av dina skapade geometrier |
-| `REFERENCE_XX.*` | Eventuella användarbifogade referenser som fortfarande finns tillgängliga lokalt |
-| `README.txt` | Förklarar vad som är färdigt och vad AI ska göra |
-
-**Viktigt:** `STATIC_PROTOTYPE.glb` är inte en färdigriggad karaktär. Originalriggen med animationer är bifogad separat. De exakta fästpunkterna (t.ex. `Head`, `spine_03`) och restkoordinater finns i projektet. AI:n måste skapa skinnade/deformerande delar, fästa dem på rätt ben och återanvända/testa originalanimationerna i slutlig GLB.
-
-## Animationer och integration i spelet
-
-- Dessa clips finns som krav i projektet: `Idle_Loop`, `Walk_Loop`, `Jog_Fwd_Loop`, `Sprint_Loop`, `Jump_Loop`, `Crouch_Idle_Loop`, `Crouch_Fwd_Loop`, `Pistol_Idle_Loop`, `Pistol_Shoot`, `Pistol_Reload`, `Death01`.
-- Basen är `assets/fps/models/quaternius-operator-male.glb` respektive `quaternius-operator-female.glb`; originallogiken finns i [character-library.mjs](../src/fps/character-library.mjs) och vapengrepp/död i [character-actors.mjs](../src/fps/character-actors.mjs).
-- Spelmotorn normaliserar bashöjden till ungefär 1,69 m. Studions längd-/breddreglage visar **konceptuell** proportion; AI:n måste vid behov justera skinning, kollision och rörelser.
-- Runtime lägger på boots, vest, headset, role patches och färger. En färdig GLB måste samordnas med detta så att det inte blir dubbla 3D-delar.
-- Spelets originalskelett, bindpose och ben-/animationsnamn bör bibehållas. Karaktären ska testas i riktiga spelet under gång, hukning, hopp, omladdning, skott, död, med vapengrepp och på mobil.
-- Studions utseendeförändringar sker **bara i studion** tills en separat spelintegration görs. Originalfiler skrivs aldrig över här.
-
-## Spara och återuppta
-
-- **Spara projekt (.json)** sparar även dina 2D-markeringar. **Öppna sparat projekt** läser JSON och bygger upp modellen igen.
-- Webbläsaren försöker autospara projektet lokalt (ingen synk/extern uppladdning). Exportera JSON innan du byter dator eller rensar webbläsaren.
-- Bifogade inspirationsfiler sparas **inte** i localStorage eller JSON av integritet-/storleksskäl. Om du återöppnar projektet måste du bifoga dem på nytt innan ZIP-export. ZIP:en innehåller de filer som finns tillgängliga vid export.
-- Max 60 3D-delar, 8 referensfiler, 18 MB sammanlagd referensstorlek och 32 MB ZIP; GLB-validering följer möbelbibliotekets säkerhetsgräns.
-- Ritbilder, ZIP och 3D-prototyp genereras lokalt. Ingen extern AI-API-anrop görs från sidan.
-
-## Verifiering
-
-`node --test character-design/*.test.mjs`
-
-`node --check character-design/app.mjs`
-
-Ett separat Actions-workflow kör även ett verkligt Chromium/WebGL-test av animerad figur, egna delar, JSON-projektrunda, ZIP med originalrigg och glTF-binära exporten. Inga Actions-artifakter laddas upp.
-
-Basmodeller och animationer av Quaternius under [CC0 1.0](../licenses/quaternius-characters-CC0.txt). Kom ihåg att användarbifogat material kan omfattas av andra licenser.
+Three.js GLTFExporter is vendored at the same 0.180.0 version as the renderer, under Three.js's existing MIT licence. Original Quaternius characters/animations are CC0; see `licenses/quaternius-characters-CC0.txt`.
