@@ -1,13 +1,13 @@
-import {newRealism,validateRealism} from './realism-schema.mjs?v=52';
-import {newSculpt,validateSculpt} from './sculpt-schema.mjs?v=52';
+import {newRealism,validateRealism} from './realism-schema.mjs?v=53';
+import {newSculpt,validateSculpt} from './sculpt-schema.mjs?v=53';
 /** Extra creative options, backward-compatible with saved v2 design projects. */
 export const OUTFITS=Object.freeze({
  original:'Originaluniform',tshirt:'T-shirt',hoodie:'Hoodie',jacket:'Jacka med dragkedja',
- polo:'Pikétröja',labcoat:'Labbrock',vest:'Skyddsväst'
+ polo:'Pikétröja',labcoat:'Labbrock',vest:'Skyddsväst',fieldjacket:'Studiojacka'
 });
 export const HAIRSTYLES=Object.freeze({
  original:'Originalfrisyr',bald:'Rakat / inget hår',short:'Kort',curly:'Lockigt',bob:'Page',long:'Långt',
- ponytail:'Hästsvans',mohawk:'Mohawk',buzz:'Snaggat'
+ ponytail:'Hästsvans',mohawk:'Mohawk',buzz:'Snaggat',swept:'Kort, sidokammad'
 });
 export const FACE_CHOICES=Object.freeze({
  eyes:['Naturliga','Stora','Smala','Runda','Markerade'],
@@ -34,6 +34,13 @@ export function makeCreative(){
    imageData:null,imageName:null,imageMode:'print',imageScale:100},
   requestedAnimations:[],faceView:'front'
  };
+}
+/** Explicit opt-in for older designs; new character projects start here. */
+export function applyStudioFoundation(project){
+ const c=ensureCreative(project);c.outfit='fieldjacket';c.hair='swept';c.fit=100;c.vest=false;c.roughness=85;
+ c.realism.head='original';c.realism.fiberHair=false;c.realism.fabric='cotton';c.realism.garment='none';
+ project.base.template='civilian';Object.assign(project.palette,{skin:'#e8d1b9',hair:'#352922',jacket:'#465e68',pants:'#293740',boots:'#302e2b',accent:'#8faaa7'});
+ return project;
 }
 export function ensureCreative(project){
  if(project.artwork?.faceViews&&!project.artwork.portraitFraming&&!/^5\./.test(project.studioVersion||''))project.artwork.portraitFraming='legacy-headbone-v4';
@@ -78,6 +85,8 @@ export function creativeBrief(c){
   'Hair length/volume and garment length are percentages of the selected procedural style, with 100 as its default. Hair roots and ponytail tie stay attached; volume controls guide lift. Use PREVIEW.glb as the exact shape reference; garment rest geometry and constraints are regenerated for its selected length.',
   'Thin hair ribbons use an alpha strand texture and anisotropic material; they are not strand-level hair simulation. CLOTH_SIMULATION.json contains XPBD rest data, pins, constraints, body collision bone links and settings; CLOTH_SOLVER.mjs is the actual portable solver source. For simulated garments the reference images and preview are settled in Idle_Loop; PROJECT.pose remains the selected motion to test. PREVIEW.glb contains a frozen draped skinned mesh, not baked secondary physics. Port/bake the simulation for the game and validate body/self collisions. No self collision/sewing is implemented.',
   'Hair design: '+HAIRSTYLES[c.hair]+'. Sculpt hair and ensure it follows Head bone and does not clip with headgear.',
+  ...(c.hair==='swept'?['The studio swept cut has a fully covered fitted scalp and opaque tapered combed locks. It is rigidly Head-attached, not fiber simulation; hairLength/hairVolume do not change this authored cut. Preserve the exact geometry from PREVIEW.glb.']:[]),
+  ...(c.outfit==='fieldjacket'?['The studio jacket reuses the original weighted garment shell. Its collar and projected zipper are independently skinned to the SAME skeleton with transferred garment weights; it is not independent cloth simulation. The original vest-shell is part of the body surface, not removable cloth; the extra vest option changes its colour. An independently tailored vest remains finishing work. Validate collar/neck, zipper and all layers in game poses.']:[]),
   ...Object.entries(labels).map(([key,value])=>'Face / '+key+': '+value),
   'Use FACE_FRONT.png, FACE_LEFT.png, FACE_RIGHT.png if provided as high-resolution traced detail references; face choices deform the cloned preview geometry; validate facial topology and expression quality before integration.',
   'Shirt text: '+(p.text||'[none]')+'; font='+p.font+', colour='+p.color+', size='+p.size+' px in 512px preview, position='+p.position+'.',

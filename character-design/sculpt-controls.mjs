@@ -69,4 +69,4 @@ export function installSculptControls({getProject,workbench,persist,visualChange
  function sync(){cursor.hidden=true;if(getProject().kind==='object')select('rotate');}
  return {select,begin,move,end,cancel,hover,sync,get editing(){return mode!=='rotate';},get active(){return active;}};
 }
-import {skinMatrix} from './sculpt-engine.mjs?v=52';
+import {skinMatrix} from './sculpt-engine.mjs?v=53';
