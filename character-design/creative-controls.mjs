@@ -132,9 +132,10 @@ export function installCreativeControls({getProject,workbench,persist,visualChan
    creative().face[field]=input.value;for(const peer of document.querySelectorAll('[data-face-field]'))if(peer.dataset.faceField===field)peer.value=input.value;commit(true);
   });
  }
- for(const key of ['head','fiberHair','fabric','garment','wind'])$('realism-'+key).addEventListener('change',e=>{const r=creative().realism;workbench.playing=false;r[key]=key==='fiberHair'?e.target.checked:key==='wind'?Number(e.target.value):e.target.value;if(key==='head'&&r.head==='scan'){getProject().palette.skin='#ffffff';getProject().base.template='civilian';creative().hair='bald';for(const peer of document.querySelectorAll('[data-color=skin]'))peer.value='#ffffff';}if(r.fiberHair&&['original','bald'].includes(creative().hair))creative().hair='short';$('hair-style').value=creative().hair;$('fabric-material').closest('label').hidden=r.fabric!=='original';visualChange({recreate:key==='head',save:false});persist({force:true});status('Material och tygfall uppdaterade. Spela en rörelse för att se fysiken.');});
+ function syncRealismControls(){const r=creative().realism;for(const input of document.querySelectorAll('[data-face-field=eyes],[data-face-field=eyeColor],[data-face-field=eyebrows],#tab-sculpt [data-color=eyes]')){input.disabled=r.head==='scan';input.title=r.head==='scan'?'Det skannade porträttet har slutna, fotograferade ögon. Forma huden direkt.':'';}$('realism-fiberHair').checked=r.fiberHair;$('realism-wind').disabled=r.garment==='none';$('settle-cloth').disabled=r.garment==='none';}
+ for(const key of ['head','fiberHair','fabric','garment','wind'])$('realism-'+key).addEventListener('change',e=>{const r=creative().realism;workbench.playing=false;r[key]=key==='fiberHair'?e.target.checked:key==='wind'?Number(e.target.value):e.target.value;if(key==='head'&&r.head==='scan'){getProject().palette.skin='#ffffff';getProject().base.template='civilian';creative().hair='bald';for(const peer of document.querySelectorAll('[data-color=skin]'))peer.value='#ffffff';}if(r.fiberHair&&['original','bald'].includes(creative().hair))creative().hair='short';syncRealismControls();$('hair-style').value=creative().hair;$('fabric-material').closest('label').hidden=r.fabric!=='original';visualChange({recreate:key==='head',save:false});persist({force:true});status('Material och tygfall uppdaterade. Spela en rörelse för att se fysiken.');});
  $('settle-cloth').addEventListener('click',()=>{workbench.cloth.reset();workbench.cloth.settle(240);workbench.renderSheet();status(workbench.cloth.mesh?'Tyget har draperats med gravitation och kroppskollisioner.':'Välj axelkappa eller långväst först.');});
- $('hair-style').addEventListener('change',e=>{creative().hair=e.target.value;commit(true);});
+ $('hair-style').addEventListener('change',e=>{creative().hair=e.target.value;if(['original','bald'].includes(e.target.value))creative().realism.fiberHair=false;syncRealismControls();commit(true);});
  $('outfit-style').addEventListener('change',e=>{creative().outfit=e.target.value;commit(true);});
  const printFields=[
   ['shirt-text','text'],['shirt-font','font'],['shirt-position','position'],
@@ -221,7 +222,7 @@ export function installCreativeControls({getProject,workbench,persist,visualChan
   $('play').textContent='▶ Spela rörelsen';$('play').setAttribute('aria-pressed','false');
  });
  function refresh(){
-  const c=creative();
+  const c=creative();syncRealismControls();
   for(const key of ['head','fiberHair','fabric','garment','wind']){const input=$('realism-'+key);if(key==='fiberHair')input.checked=c.realism[key];else input.value=c.realism[key];}
   $('fabric-material').closest('label').hidden=c.realism.fabric!=='original';
   $('outfit-style').value=c.outfit;$('hair-style').value=c.hair;
