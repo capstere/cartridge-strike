@@ -2,6 +2,7 @@
 import * as T from '../vendor/three/three.module.js';
 import {loadCharacterLibrary,createAuthoredAvatar,disposeAvatar} from '../src/fps/character-library.mjs';
 import {REQUIRED_CLIPS} from './project-schema.mjs';
+import {FashionPreview} from './fashion-preview.mjs';
 const RAD=Math.PI/180,SW=480,SH=680,PW=720,PH=660;
 function characterId(gender){
  for(let i=0;i<200;i++){
@@ -16,6 +17,7 @@ export class DesignWorkbench{
   this.preview=preview;this.bases=bases;
   this.renderer=null;this.scene=null;this.avatar=null;this.project=null;
   this.objectRoot=null;this.partMeshes=new Map();
+  this.fashion=new FashionPreview(()=>this.renderSheet());this.focus='body';this.faceView='front';this.faceCanvas=null;this.animationSpeed=1;
   this.yaw=.44;this.pitch=.13;this.zoom=1;this.flipped=false;this.playing=false;
   this.currentAction=null;this.initialized=false;this.lastFrame=0;this.frame=0;
  }
@@ -32,6 +34,7 @@ export class DesignWorkbench{
   this.objectRoot=new T.Group();this.objectRoot.name='object-workshop';this.scene.add(this.objectRoot);
   this.camera=new T.OrthographicCamera(-1.6,1.6,1.47,-1.47,.01,100);
   this.sheetCamera=new T.OrthographicCamera(-1.17*SW/SH,1.17*SW/SH,1.17,-1.17,.01,100);
+  this.faceCamera=new T.OrthographicCamera(-.38,.38,.38,-.38,.01,100);
   await loadCharacterLibrary();
   this.initialized=true;
  }
@@ -39,7 +42,7 @@ export class DesignWorkbench{
   if(!this.initialized)return;
   const old=this.project;this.project=project;
   if(project.kind==='character'&&(!this.avatar||recreate||old?.base.gender!==project.base.gender||old?.base.team!==project.base.team)){
-   this.clearParts();
+   this.clearParts();this.fashion.dispose();
    if(this.avatar){this.avatar.holder.removeFromParent();disposeAvatar(this.avatar);}
    this.avatar=createAuthoredAvatar(project.base.team==='hostage'?'analysts':project.base.team,characterId(project.base.gender),project.base.team==='hostage');
    this.scene.add(this.avatar.holder);
@@ -47,17 +50,24 @@ export class DesignWorkbench{
   }
   if(this.avatar)this.avatar.holder.visible=project.kind==='character';
   this.objectRoot.visible=project.kind==='object';
+  // All fashion overlays attach in the same canonical idle rest pose.
+  // This avoids misaligned decals after a user previously previewed crouching or death.
+  if(project.kind==='character'&&this.avatar)this.pose('Idle_Loop',false);
   this.updateAppearance();
   if(rebuild||old?.kind!==project.kind)this.rebuildParts();
+  else if(project.kind==='character'&&this.avatar)this.pose(project.pose,false);
   this.renderSheet();
  }
  updateAppearance(){
   if(!this.avatar||!this.project)return;
-  const {palette:p,body,base}=this.project,hideTactical=base.template==='blank'||base.template==='civilian';
+  const {palette:p,body,base}=this.project;
+  const customClothes=this.project.creative?.outfit&&this.project.creative.outfit!=='original';
+  const customHair=this.project.creative?.hair&&this.project.creative.hair!=='original';
+  const hideTactical=base.template==='blank'||base.template==='civilian'||customClothes;
   const seen=new Set();
   for(const mesh of this.avatar.meshes){
    const m=mesh.material,name=m?.name||'',objectName=mesh.name||'';
-   mesh.visible=!(hideTactical&&/^(continuous-(chest|back)-rig|vest-pocket|pocket-flap|shoulder-webbing|radio|radio-aerial|headset|chest-role-patch|back-role-patch)$/.test(objectName));
+   mesh.visible=!(hideTactical&&/^(continuous-(chest|back)-rig|vest-pocket|pocket-flap|shoulder-webbing|radio|radio-aerial|headset|chest-role-patch|back-role-patch)$/.test(objectName))&&!(customHair&&name==='hair');
    if(!m?.color||seen.has(m))continue;
    seen.add(m);
    if(name==='jacket-fabric')m.color.set(p.jacket);
@@ -75,6 +85,8 @@ export class DesignWorkbench{
   }
   const scale=this.avatar.scale;
   this.avatar.holder.scale.set(scale*body.width/100,scale*body.height/100,scale*body.width/100);
+  if(this.project.kind==='character')this.fashion.create(this.project,this.avatar);
+  else this.fashion.dispose();
  }
  createPartMesh(part){
   let g;
@@ -156,13 +168,16 @@ export class DesignWorkbench{
   if(!this.initialized||!this.playing||this.project?.kind!=='character')return;
   const delta=this.lastFrame?Math.max(0,Math.min(.06,(time-this.lastFrame)/1000)):0;
   this.lastFrame=time;
-  this.avatar.mixer.update(delta);
+  this.avatar.mixer.update(delta*this.animationSpeed);
   this.avatar.root.updateMatrixWorld(true);
   this.renderPreview();
   if(++this.frame%12===0)this.renderSheet();
  }
  getFraming(){
-  if(this.project?.kind==='character')return {center:new T.Vector3(0,.90,0),span:2.43};
+  if(this.project?.kind==='character'){
+   if(this.focus==='head'&&this.avatar){const v=this.avatar.bones.get('Head')?.getWorldPosition(new T.Vector3());if(v)return {center:v,span:.74};}
+   return {center:new T.Vector3(0,.90,0),span:2.43};
+  }
   const box=new T.Box3();
   for(const mesh of this.partMeshes.values())if(mesh.visible)box.expandByObject(mesh);
   if(box.isEmpty())return {center:new T.Vector3(0,.4,0),span:2.4};
@@ -200,7 +215,30 @@ export class DesignWorkbench{
    ctx.clearRect(0,0,SW,SH);
    ctx.drawImage(this.renderer.domElement,0,0,SW,SH);
   }
+  this.renderFace();
   this.renderPreview();
+ }
+ renderFace(view=this.faceView){
+  if(!this.initialized||!this.avatar||this.project?.kind!=='character'||!this.faceCanvas)return;
+  const origin=this.avatar.bones.get('Head')?.getWorldPosition(new T.Vector3());if(!origin)return;
+  const size=1024,zoom=.40;
+  this.faceCamera.left=-zoom;this.faceCamera.right=zoom;this.faceCamera.top=zoom;this.faceCamera.bottom=-zoom;
+  const side=this.flipped?-1:1;
+  const positions={front:[0,0,3.2*side],left:[-3.2*side,0,0],right:[3.2*side,0,0]};
+  const p=positions[view]||positions.front;
+  this.faceCamera.position.copy(origin).add(new T.Vector3(...p));
+  this.faceCamera.lookAt(origin);this.faceCamera.updateProjectionMatrix();
+  this.renderer.setSize(size,size,false);this.grid.visible=false;
+  this.renderer.render(this.scene,this.faceCamera);
+  const ctx=this.faceCanvas.getContext('2d');ctx.clearRect(0,0,size,size);
+  ctx.drawImage(this.renderer.domElement,0,0,size,size);
+ }
+ scrub(fraction){
+  if(!this.avatar||!this.currentAction)return;
+  this.playing=false;
+  const clip=this.currentAction.getClip();
+  this.avatar.mixer.setTime(Math.min(clip.duration-.001,Math.max(0,fraction)*clip.duration));
+  this.avatar.root.updateMatrixWorld(true);this.renderSheet();
  }
  getPartInstances(){
   this.scene?.updateMatrixWorld(true);
@@ -211,7 +249,7 @@ export class DesignWorkbench{
  getClips(){return this.avatar?[...this.avatar.clips.keys()]:[];}
  getBones(){return this.avatar?[...this.avatar.bones.keys()]:[];}
  dispose(){
-  this.clearParts();
+  this.clearParts();this.fashion.dispose();
   if(this.avatar){this.avatar.holder.removeFromParent();disposeAvatar(this.avatar);}
   this.renderer?.dispose();
  }
