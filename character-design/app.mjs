@@ -38,10 +38,19 @@ function captureArtwork(){
  const result={};for(const [n,c] of inks)result[n]=c.toDataURL('image/png');
  return result;
 }
+let autosaveTimer=null;
+function flushLocalSave(){
+ if(!ready)return;
+ if(autosaveTimer!==null){clearTimeout(autosaveTimer);autosaveTimer=null;}
+ try{artwork=captureArtwork();localStorage.setItem(STORE,JSON.stringify(projectSnapshot()));}
+ catch{status('Webbläsaren har inte plats att autospara. Hämta projektfilen (.json) innan du stänger.',true);}
+}
 function saveLocal(){
  if(!ready)return;
- try{artwork=captureArtwork();localStorage.setItem(STORE,JSON.stringify(projectSnapshot()));}
- catch{status('Projektet visas som vanligt men webbläsaren kan inte autospara. Hämta projektfilen innan du stänger.',true);}
+ if(autosaveTimer!==null)clearTimeout(autosaveTimer);
+ // Drawing/export uses immediate captures; autosave can be throttled to keep
+ // touch/pen strokes and shirt text responsive even with a 1024px portrait.
+ autosaveTimer=setTimeout(flushLocalSave,500);
 }
 function download(data,name,type='application/octet-stream'){
  const b=data instanceof Blob?data:new Blob([data],{type});
@@ -139,7 +148,7 @@ function updateModeVisual(){
  const lookBtn=document.querySelector('[data-tab="look"]');
  lookBtn.hidden=project.kind==='object';
  for(const name of ['fashion','face'])document.querySelector('[data-tab="'+name+'"]').hidden=project.kind==='object';
- if(project.kind==='object'&&activeTab==='look')setTab('parts');
+ if(project.kind==='object'&&['look','fashion','face'].includes(activeTab))setTab('parts');
  if(project.kind==='object'&&activeTab==='parts')setTab('parts');
  if(project.kind==='character'&&activeTab==='parts')setTab('parts');
  if(project.kind==='character'&&activeTab==='look')setTab('look');
@@ -464,5 +473,5 @@ async function start(){
   $('export-zip').disabled=true;$('save-glb').disabled=true;
  }
 }
-window.addEventListener('pagehide',()=>workbench.dispose());
+window.addEventListener('pagehide',()=>{flushLocalSave();workbench.dispose();});
 start();
