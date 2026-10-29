@@ -12,7 +12,7 @@ export class ClothPreview{
  constructor(){this.mesh=null;this.signature='';this.accumulator=0;}
  clear(){if(this.mesh){this.mesh.removeFromParent();this.mesh.geometry.dispose();this.mesh.material.normalMap?.dispose();this.mesh.material.dispose();}this.mesh=null;this.signature='';}
  configure(project,avatar,sources){
-  const r=project.creative.realism,signature=JSON.stringify({r,color:project.palette.jacket,fit:project.creative.fit});if(this.avatar===avatar&&signature===this.signature)return;
+  const r=project.creative.realism,signature=JSON.stringify({r,color:project.palette.jacket,fit:project.creative.fit,body:project.body});if(this.avatar===avatar&&signature===this.signature)return;
   this.clear();this.avatar=avatar;this.signature=signature;if(r.garment==='none')return;
   const source=avatar.meshes.find(m=>m.material?.name==='jacket-fabric'),base=sources.get(source)||source.geometry.attributes.position.array,rows=16,cols=24,vertices=[],uv=[],indices=[],edges=[],pins=[];
   for(let row=0;row<=rows;row++)for(let col=0;col<=cols;col++){

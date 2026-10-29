@@ -195,7 +195,7 @@ export class DesignWorkbench{
  }
  pose(name,play=false){
   if(!this.avatar||!this.avatar.clips.has(name))return false;
-  this.playing=play;
+  const poseChanged=this.currentAction?.getClip()?.name!==name;this.playing=play;
   const mixer=this.avatar.mixer;
   mixer.stopAllAction();
   this.currentAction=mixer.clipAction(this.avatar.clips.get(name));
@@ -206,6 +206,7 @@ export class DesignWorkbench{
   mixer.setTime(.23);
   this.avatar.root.updateWorldMatrix(true,true);
   this.avatar.root.traverse(o=>{if(o.isSkinnedMesh)o.skeleton.update();});
+  if(poseChanged&&this.cloth.mesh)this.cloth.reset();
   return true;
  }
  playToggle(){
@@ -294,7 +295,7 @@ export class DesignWorkbench{
   this.playing=false;
   const clip=this.currentAction.getClip();
   this.avatar.mixer.setTime(Math.min(clip.duration-.001,Math.max(0,fraction)*clip.duration));
-  this.avatar.root.updateMatrixWorld(true);this.renderSheet();
+  this.avatar.root.updateMatrixWorld(true);if(this.cloth.mesh){this.cloth.reset();this.cloth.settle(90);}this.renderSheet();
  }
  getPartInstances(){
   this.scene?.updateMatrixWorld(true);
