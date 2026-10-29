@@ -1,10 +1,10 @@
-# Cartridge Strike Designstudion 3.5.0 — bygg i plan och 3D
+# Cartridge Strike Designstudion 3.6.0 — bygg i plan och 3D
 
 **[Öppna Designstudion](https://capstere.github.io/cartridge-strike/furniture-editor/new.html)** (dator och mus rekommenderas).
 
 **NY BANA** och **[REDIGERA FLOOR 5](https://capstere.github.io/cartridge-strike/furniture-editor/new.html?mode=edit-floor5)** använder samma byggverktyg. Ett rum ger golv och fyra väggar; klicka på en vägg för dörr, öppning, fönster eller glas. Spelets fysik följer automatiskt byggdelarna. Du kan placera möbler trots varningar och flytta dem senare. Bildkorten visar biblioteket; 3D-vyn visar samma möbelmodeller som FPS. **GÅ RUNT I BANAN** använder FPS-renderaren, dörrmotorn och kapselkollisionen direkt från ditt utkast, även innan spelmålen finns. Planvyn och export fungerar utan WebGL; 3D och promenad kräver WebGL 2.
 
-Schema 2, editor 3.5.0 och kompatibel spelversion 0.18.0 används. Exportens `project.json` är källan; `COLLISION_MAP.json` är en härledd, integritetskontrollerad karta. JSON/ZIP från den äldre studion kan öppnas utan att skissen eller ursprungliga data förloras. Den **[klassiska studion](https://capstere.github.io/cartridge-strike/furniture-editor/)** finns kvar för äldre arbetsflöden.
+Schema 2, editor 3.6.0 och kompatibel spelversion 0.18.0 används. Exportens `project.json` är källan; `COLLISION_MAP.json` är en härledd, integritetskontrollerad karta. JSON/ZIP från den äldre studion kan öppnas utan att skissen eller ursprungliga data förloras. Den **[klassiska studion](https://capstere.github.io/cartridge-strike/furniture-editor/)** finns kvar för äldre arbetsflöden.
 
 ### Bygg en ny bana
 
@@ -18,6 +18,10 @@ Version 1 JSON/ZIP kan fortfarande öppnas i Floor 5-läget. Ny projektversion 2
 
 
 > Följande äldre avsnitt beskriver den klassiska studion. För det gemensamma byggläget och spelintegration gäller beskrivningen ovan och [AI_EXPORT.md](AI_EXPORT.md).
+
+**Börja här:** Rita ett rum i NY BANA, dra en dörr från byggverktygen till väggen, möblera, slå på **SPELUTSEENDE**, välj **GÅ RUNT I BANAN** och spara ZIP. Markera ett eget rum och dra i hörnen för att ändra storlek. Originalgolvets form i Floor 5 går ännu inte att ändra med rumshandtagen. [Projektöversikt](../README.md) · [Kommande spelarbete](../docs/roadmap.md).
+
+**Läsanvisning:** Avsnitt med rubriker som *Prototypgren*, *Framtida projektläge* och *Vad byggläget faktiskt kan och inte kan* längre ned beskriver äldre studio/versioner. De gäller inte som begränsningar för den nya Designstudion. De versionsmärkta avsnitten längst ned beskriver den aktuella implementationen; se även [formatbeslut](../docs/level-project-decisions.md).
 
 ## Designstudion: tomma ytor, smart inredning, gardiner och persienner (28 oktober 2026)
 
