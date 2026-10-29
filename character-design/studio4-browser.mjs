@@ -13,7 +13,7 @@ const hash=bytes=>createHash('sha256').update(bytes).digest('hex');
 function unzip(bytes){const files=new Map();let off=0;while(bytes.readUInt32LE(off)===0x04034b50){assert.equal(bytes.readUInt16LE(off+8),0);const length=bytes.readUInt32LE(off+18),nameLen=bytes.readUInt16LE(off+26),extra=bytes.readUInt16LE(off+28),start=off+30+nameLen+extra,name=bytes.toString('utf8',off+30,off+30+nameLen),data=bytes.subarray(start,start+length);assert.equal(crc32(data),bytes.readUInt32LE(off+14),name+' CRC');files.set(name,data);off=start+length;}return files;}
 const gltf=bytes=>{assert.equal(bytes.readUInt32LE(0),0x46546c67);assert.equal(bytes.readUInt32LE(8),bytes.length);return JSON.parse(bytes.toString('utf8',20,20+bytes.readUInt32LE(12)));};
 try{
- for(const mobile of [false,true]){
+ for(const mobile of (process.env.CHARACTER_TEST_DEVICE==='mobile'?[true]:[false,true])){
   const context=await browser.newContext({viewport:mobile?{width:390,height:844}:{width:1440,height:1000},isMobile:mobile,hasTouch:mobile,acceptDownloads:true});
   const page=await context.newPage(),errors=[];page.setDefaultTimeout(45000);
   page.on('pageerror',e=>errors.push(e.message));page.on('console',m=>{if(m.type()==='error')errors.push(m.text());});
@@ -69,6 +69,7 @@ try{
   await text('save-slot').click();await page.waitForFunction(()=>document.querySelector('#save-state').textContent.includes('Alla ändringar'));
   saved=JSON.parse((await download('save-json')).toString());assert.equal(saved.parts.length,4);assert.equal(saved.embeddedReferences['custom-prop.glb'],prop.toString('base64'));
   await page.reload();await page.waitForFunction(()=>document.querySelector('#status').textContent.includes('redo!'));
+  if(mobile)await text('viewer-tools').locator(':scope > summary').click();
   assert.equal(await page.locator('.part-item').count(),4,'autosave restores imported GLBs');
   await page.locator('[data-mode="create"]').click();
   await text('saved-projects').selectOption({label:(await text('saved-projects').locator('option').allTextContents()).find(s=>s.startsWith(saved.name))});
