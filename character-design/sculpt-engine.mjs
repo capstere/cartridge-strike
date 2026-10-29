@@ -67,12 +67,12 @@ export class SculptEngine{
  constructor(){this.avatar=null;this.entries=[];this.dirty=false;this.stroke=null;}
  apply(project,avatar,sources){
   if(this.avatar!==avatar){this.avatar=avatar;this.entries=[];this.stroke=null;}
-  const meshes=avatar.meshes.filter(m=>m.isSkinnedMesh&&(m.material?.name==='face-skin'||m.material?.name==='eyes'||m.material?.name==='hair'&&/eyebrow/i.test(m.name)));
+  const meshes=avatar.meshes.filter(m=>m.isSkinnedMesh&&!m.userData.sculptDisabled&&(m.material?.name==='face-skin'||m.material?.name==='eyes'||m.material?.name==='hair'&&/eyebrow/i.test(m.name)));
   for(const mesh of meshes){
    const key=mesh.material.name==='hair'?'eyebrows':mesh.material.name,source=sources.get(mesh);if(!source)continue;
    let entry=this.entries.find(e=>e.mesh===mesh);if(!entry){entry=entryFor(mesh,source,key);this.entries.push(entry);}
    entry.base=Float32Array.from(mesh.geometry.attributes.position.array);entry.offsets.fill(0);entry.paint.fill(0);
-   const saved=project.creative?.sculpt?.models?.[avatar.gender]?.[key];
+   const saved=project.creative?.sculpt?.models?.[avatar.sculptKey||avatar.gender]?.[key];
    if(saved){if(saved.count!==entry.groups.length||saved.topology!==entry.topology)throw Error('Den sparade ansiktsformen matchar inte denna grundmodell.');
     for(let i=0;i<saved.deltas.length;i+=4)entry.offsets.set(saved.deltas.slice(i+1,i+4),saved.deltas[i]*3);
     for(let i=0;i<saved.paint.length;i+=5)entry.paint.set(saved.paint.slice(i+1,i+5),saved.paint[i]*4);
@@ -183,7 +183,7 @@ export class SculptEngine{
  }
  store(project,finish=false){
   if(!this.dirty)return false;project.creative.sculpt??=newSculpt();const sculpt=project.creative.sculpt;
-  sculpt.models[this.avatar.gender]=Object.fromEntries(this.entries.map(e=>[e.key,sparse(e)]));
+  sculpt.models[this.avatar.sculptKey||this.avatar.gender]=Object.fromEntries(this.entries.map(e=>[e.key,sparse(e)]));
   if(finish){sculpt.revision++;this.dirty=false;}return true;
  }
  finish(project){const changed=!!this.stroke?.changed;this.store(project,true);this.stroke=null;for(const e of this.entries)this.updateEntry(e,project,true);this.updateHeadCenter();return changed;}

@@ -4,7 +4,7 @@ export const SCULPT_MAX_OFFSET=.06;
 export function newSculpt(){return {version:SCULPT_VERSION,revision:0,models:{}};}
 export function validateSculpt(s){
  if(!s||s.version!==1||!Number.isInteger(s.revision)||s.revision<0||s.revision>1e9||!s.models||typeof s.models!=='object'||Array.isArray(s.models))throw Error('Ogiltig skulptering.');
- if(Object.keys(s.models).some(k=>!['male','female'].includes(k)))throw Error('Okänd skulpteringsrigg.');
+ if(Object.keys(s.models).some(k=>!['male','female','scan-male','scan-female'].includes(k)))throw Error('Okänd skulpteringsrigg.');
  for(const model of Object.values(s.models)){
   if(!model||typeof model!=='object'||Array.isArray(model)||Object.keys(model).some(k=>!['face-skin','eyes','eyebrows'].includes(k)))throw Error('Okänd ansiktsyta.');
   for(const mesh of Object.values(model)){

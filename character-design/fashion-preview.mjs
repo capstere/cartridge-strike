@@ -1,13 +1,16 @@
 /** Studio-only edits to cloned skinned geometry. Original assets/runtime stay untouched. */
 import * as T from '../vendor/three/three.module.js';
-import {makeHair,makeBeard} from './anatomy-accessories.mjs?v=5';
-import {makeCreative} from './creative-schema.mjs?v=5';
+import {makeHair,makeBeard} from './anatomy-accessories.mjs?v=51';
+import {makeFiberHair} from './fiber-hair.mjs?v=51';
+import {fabricMaterial} from './cloth-preview.mjs?v=51';
+import {FABRICS} from './realism-schema.mjs?v=51';
+import {makeCreative} from './creative-schema.mjs?v=51';
 const clamp=T.MathUtils.clamp;
 export class FashionPreview{
  constructor(onRedraw=()=>{}){this.onRedraw=onRedraw;this.parts=[];this.textures=[];this.avatar=null;this.signature='';this.generation=0;this.sources=new Map();this.pendingImages=[];}
  clear(){
   this.generation++;
-  for(const mesh of this.parts){mesh.removeFromParent();const materials=new Set();mesh.traverse(o=>{o.geometry?.dispose();for(const m of [o.material].flat())if(m)materials.add(m);});for(const m of materials)m.dispose();}
+  for(const mesh of this.parts){mesh.removeFromParent();const materials=new Set();mesh.traverse(o=>{o.geometry?.dispose();for(const m of [o.material].flat())if(m)materials.add(m);});for(const m of materials){if(m.name?.startsWith('fiber-'))m.map?.dispose();if(m.name==='fiber-scalp')m.normalMap?.dispose();m.dispose();}}
   for(const t of this.textures)t.dispose();
   this.parts=[];this.textures=[];this.signature='';this.pendingImages=[];
  }
@@ -42,7 +45,9 @@ export class FashionPreview{
   const shirts=[];
   for(const mesh of avatar.meshes){
    const name=mesh.material?.name||'';
+   if(/fabric|vest/.test(name)&&c.realism?.fabric&&c.realism.fabric!=='original'){if(!mesh.material.isMeshPhysicalMaterial){const old=mesh.material,m=new T.MeshPhysicalMaterial();T.MeshStandardMaterial.prototype.copy.call(m,old);avatar.materials.set(m,m);mesh.material=m;}if(mesh.material.userData.fabric!==c.realism.fabric){mesh.material.userData.ownedTexture?.dispose();const cloth=fabricMaterial(p.jacket,c.realism.fabric);mesh.material.bumpMap=null;mesh.material.normalMap=cloth.normalMap;mesh.material.normalScale.copy(cloth.normalScale);mesh.material.sheen=cloth.sheen;mesh.material.sheenColor.copy(cloth.sheenColor);mesh.material.userData.ownedTexture=cloth.normalMap;mesh.material.userData.fabric=c.realism.fabric;cloth.dispose();mesh.material.needsUpdate=true;}}
    if(!mesh.isSkinnedMesh)continue;
+   if(/fabric|vest/.test(name)&&c.realism?.fabric==='original'&&mesh.material.userData.fabric){mesh.material.userData.ownedTexture?.dispose();delete mesh.material.userData.ownedTexture;delete mesh.material.userData.fabric;mesh.material.bumpMap=null;mesh.material.normalMap=null;mesh.material.sheen=0;mesh.material.needsUpdate=true;}
    const source=this.source(mesh,avatar),g=mesh.geometry,pos=g.attributes.position;
    pos.array.set(source);
    const custom=c.outfit!=='original',fit=(c.fit??100)/100;
@@ -94,7 +99,7 @@ export class FashionPreview{
    }
    if(name==='gloves-leather')mesh.material.color.set(c.gloves==='skin'?p.skin:p.accent);
    if(name==='boots-leather')mesh.material.color.set(p.boots);
-   if(/fabric|vest/.test(name)){mesh.material.roughness=(c.roughness??85)/100;}
+   if(/fabric|vest/.test(name)){mesh.material.roughness=(c.roughness??85)/100; if(c.realism?.fabric&&c.realism.fabric!=='original')mesh.material.roughness=FABRICS[c.realism?.fabric||'cotton'].roughness;}
    if(name==='vest-shell'){mesh.visible=true;mesh.material.color.set(c.vest||c.outfit==='vest'?p.vest:p.jacket);}
    pos.needsUpdate=true;g.computeBoundingBox();g.computeBoundingSphere();
   }
@@ -104,7 +109,7 @@ export class FashionPreview{
    if(m.name.startsWith('boot-sole'))m.material.color.set(c.shoes==='sneakers'?p.accent:'#161e24');
   }
   const attach=(group,name)=>{group.name=name;avatar.root.add(group);avatar.root.updateWorldMatrix(true,true);head.attach(group);this.parts.push(group);};
-  if(c.hair!=='original'&&!headgear)attach(makeHair(avatar,c.hair,p.hair),'creative-fitted-hair');
+  if(!['original','bald'].includes(c.hair)&&!headgear)attach(c.realism?.fiberHair?makeFiberHair(avatar,c.hair,p.hair):makeHair(avatar,c.hair,p.hair),'creative-fitted-hair');
   if(c.face.facialHair!=='Ingen'&&!project.parts.some(part=>part.visible&&part.preset==='beard'))attach(makeBeard(avatar,c.face.facialHair,p.hair),'creative-fitted-beard');
   if(c.face.freckles!=='Nej')for(const side of [-1,1])for(let i=0;i<(c.face.freckles==='Tydliga'?9:4);i++)solid(new T.SphereGeometry(.0019,5,4),'#86543d','freckle',[side*(.027+(i%3)*.013),1.653+Math.floor(i/3)*.008,.095-(i%3)*.004]);
   if(c.outfit==='hoodie'){

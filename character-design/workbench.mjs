@@ -1,14 +1,16 @@
-import {SculptEngine,prepareSculptGeometry} from './sculpt-engine.mjs?v=5';
+import {loadScan,applyScanHead} from './scan-head.mjs?v=51';
+import {ClothPreview} from './cloth-preview.mjs?v=51';
+import {SculptEngine,prepareSculptGeometry} from './sculpt-engine.mjs?v=51';
 /** Live visual preview of the original game skeleton and authored static parts. */
 import * as T from '../vendor/three/three.module.js';
 import {loadCharacterLibrary,createAuthoredAvatar,disposeAvatar} from '../src/fps/character-library.mjs';
-import {makeAccessory,fitAccessory} from './anatomy-accessories.mjs?v=5';
-import {REQUIRED_CLIPS,upgradeAccessories} from './project-schema.mjs?v=5';
+import {makeAccessory,fitAccessory} from './anatomy-accessories.mjs?v=51';
+import {REQUIRED_CLIPS,upgradeAccessories} from './project-schema.mjs?v=51';
 import {GLTFLoader} from '../vendor/three/addons/loaders/GLTFLoader.js';
 import {GLTFExporter} from '../vendor/three/addons/exporters/GLTFExporter.js';
 import {inspectGLB} from '../furniture-editor/library/glb-utils.mjs';
-import {dataToBytes} from './project-store.mjs?v=5';
-import {FashionPreview} from './fashion-preview.mjs?v=5';
+import {dataToBytes} from './project-store.mjs?v=51';
+import {FashionPreview} from './fashion-preview.mjs?v=51';
 const RAD=Math.PI/180,SW=480,SH=680,PW=720,PH=660;
 function characterId(gender){
  for(let i=0;i<200;i++){
@@ -23,7 +25,7 @@ export class DesignWorkbench{
   this.preview=preview;this.bases=bases;
   this.renderer=null;this.scene=null;this.avatar=null;this.project=null;
   this.imports=new Map();this.importData=new Map();this.objectRoot=null;this.partMeshes=new Map();
-  this.sculpt=new SculptEngine();this.fashion=new FashionPreview(()=>this.scheduleRender());this.focus='body';this.faceView='front';this.faceCanvas=null;this.animationSpeed=1;
+  this.cloth=new ClothPreview();this.sculpt=new SculptEngine();this.fashion=new FashionPreview(()=>this.scheduleRender());this.focus='body';this.faceView='front';this.faceCanvas=null;this.animationSpeed=1;
   this.pan=new T.Vector2();this.renderPending=false;this.yaw=.44;this.pitch=.13;this.zoom=1;this.flipped=false;this.playing=false;
   this.currentAction=null;this.initialized=false;this.lastFrame=0;this.frame=0;
  }
@@ -32,8 +34,9 @@ export class DesignWorkbench{
   this.renderer.setPixelRatio(1);this.renderer.setSize(PW,PH,false);
   this.renderer.outputColorSpace=T.SRGBColorSpace;
   this.renderer.toneMapping=T.ACESFilmicToneMapping;this.renderer.toneMappingExposure=1.3;
+  const room=new T.Scene();room.background=new T.Color(.3,.3,.3);for(const [position,size,intensity]of [[[-3,3,2],[2,4,.1],4],[[3,2,-2],[2,3,.1],2],[[0,5,0],[3,.1,3],3]]){const panel=new T.Mesh(new T.BoxGeometry(...size),new T.MeshBasicMaterial({color:new T.Color(intensity,intensity,intensity)}));panel.position.fromArray(position);room.add(panel);}const pmrem=new T.PMREMGenerator(this.renderer);this.studioEnvironment=pmrem.fromScene(room,.04);pmrem.dispose();room.traverse(o=>{o.geometry?.dispose();o.material?.dispose();});
   this.scene=new T.Scene();this.scene.background=new T.Color(0xf1f7f5);
-  this.scene.add(new T.HemisphereLight(0xffffff,0x83979e,2.25));
+  this.hemi=new T.HemisphereLight(0xffffff,0x83979e,2.25);this.scene.add(this.hemi);
   const key=new T.DirectionalLight(0xffffff,2.2);key.position.set(-3,6,5);this.scene.add(key);
   const fill=new T.DirectionalLight(0xe5edff,1.2);fill.position.set(3,4,-4);this.scene.add(fill);
   this.grid=new T.GridHelper(5,25,0xa3bdbc,0xd7e5e1);this.grid.position.y=-.013;this.scene.add(this.grid);
@@ -42,15 +45,17 @@ export class DesignWorkbench{
   this.sheetCamera=new T.OrthographicCamera(-1.17*SW/SH,1.17*SW/SH,1.17,-1.17,.01,100);
   this.faceCamera=new T.OrthographicCamera(-.38,.38,.38,-.38,.01,100);
   await loadCharacterLibrary();
+  try{this.scan=await loadScan();}catch(e){this.scanError=e.message;}
   this.initialized=true;
  }
  update(project,{recreate=false,rebuild=false}={}){
   if(!this.initialized)return;
-  const old=this.project;this.project=project;upgradeAccessories(project);
-  if(project.kind==='character'&&(!this.avatar||recreate||old?.base.gender!==project.base.gender||old?.base.team!==project.base.team)){
-   this.clearParts();this.fashion.dispose();
+  const old=this.project;this.project=project;const headProfile=project.creative?.realism?.head||'original';upgradeAccessories(project);
+  if(project.kind==='character'&&(!this.avatar||recreate||this.headProfile!==headProfile||old?.base.gender!==project.base.gender||old?.base.team!==project.base.team)){
+   this.clearParts();this.fashion.dispose();this.cloth.clear();
    if(this.avatar){this.avatar.holder.removeFromParent();disposeAvatar(this.avatar);}
    this.avatar=createAuthoredAvatar(project.base.team==='hostage'?'analysts':project.base.team,characterId(project.base.gender),project.base.team==='hostage');
+   this.headProfile=headProfile;if(headProfile==='scan'){if(!this.scan)throw Error('Det skannade huvudet kunde inte laddas: '+this.scanError);applyScanHead(this.avatar,this.scan);for(const m of this.avatar.meshes)if(m.material?.name==='eyes'||m.material?.name==='hair'&&/eyebrow/i.test(m.name))m.userData.sculptDisabled=true;}
    this.sculptRevision=-1;prepareSculptGeometry(this.avatar);
    this.avatar.holder.rotation.y=0; // Studio canonical front is +Z (game actors face -Z).
    this.scene.add(this.avatar.holder);
@@ -65,12 +70,12 @@ export class DesignWorkbench{
   const anatomyKey=JSON.stringify({gender:project.base.gender,face:project.creative?.face,sculpt:project.creative?.sculpt?.revision});
   if(this.accessoryAnatomyKey!==anatomyKey&&project.parts.some(p=>p.preset))rebuild=true;this.accessoryAnatomyKey=anatomyKey;
   if(rebuild||old?.kind!==project.kind)this.rebuildParts();
-  if(project.kind==='character'&&this.avatar)this.pose(project.pose,false);
+  if(project.kind==='character'&&this.avatar){this.pose(project.pose,false);if(project.creative?.realism)this.cloth.configure(project,this.avatar,this.fashion.sources);}else this.cloth.clear();
   this.renderSheet();
  }
  updateAppearance(){
   if(!this.avatar||!this.project)return;
-  const {palette:p,body,base}=this.project;
+  const {palette:p,body,base}=this.project;const realism=this.project.creative?.realism;this.scene.environment=realism&&(realism.head==='scan'||realism.fiberHair||realism.fabric!=='original'||realism.garment!=='none')?this.studioEnvironment.texture:null;this.scene.environmentIntensity=.35;this.renderer.toneMappingExposure=realism?.head==='scan'?.95:1.3;this.hemi.intensity=realism?.head==='scan'?1.4:2.25;
   const customClothes=this.project.creative?.outfit&&this.project.creative.outfit!=='original';
   const customHair=this.project.creative?.hair&&this.project.creative.hair!=='original'||this.project.parts.some(p=>p.visible&&['cap','helmet','hair'].includes(p.preset));
   const hideTactical=base.template==='blank'||base.template==='civilian'||customClothes;
@@ -84,7 +89,7 @@ export class DesignWorkbench{
    if(name==='trousers-fabric')m.color.set(p.pants);
    if(name==='vest-shell')m.color.set(p.vest);
    if(name==='hair')m.color.set(p.hair);
-   if(name==='face-skin')m.color.set(p.skin);
+   if(name==='face-skin')m.color.set(p.skin);if(name==='scan-neck-skin')m.color.set(p.skin).multiply(new T.Color('#d8b6a9'));
   }
   for(const mesh of this.avatar.meshes){
    const n=mesh.name||'',m=mesh.material;
@@ -98,6 +103,7 @@ export class DesignWorkbench{
   this.avatar.holder.updateWorldMatrix(true,true);
   if(this.project.kind==='character')this.fashion.create(this.project,this.avatar,this.sculpt);
   else this.fashion.dispose();
+  if(this.avatar.scanHead)for(const m of this.avatar.meshes)if(m.userData.sculptDisabled)m.visible=false;
  }
  async prepareAssets(project){
   for(const part of project.parts){
@@ -189,7 +195,7 @@ export class DesignWorkbench{
  }
  pose(name,play=false){
   if(!this.avatar||!this.avatar.clips.has(name))return false;
-  this.playing=play;
+  const poseChanged=this.currentAction?.getClip()?.name!==name;this.playing=play;
   const mixer=this.avatar.mixer;
   mixer.stopAllAction();
   this.currentAction=mixer.clipAction(this.avatar.clips.get(name));
@@ -200,6 +206,7 @@ export class DesignWorkbench{
   mixer.setTime(.23);
   this.avatar.root.updateWorldMatrix(true,true);
   this.avatar.root.traverse(o=>{if(o.isSkinnedMesh)o.skeleton.update();});
+  if(poseChanged&&this.cloth.mesh)this.cloth.reset();
   return true;
  }
  playToggle(){
@@ -214,7 +221,7 @@ export class DesignWorkbench{
   this.lastFrame=time;
   this.avatar.mixer.update(delta*this.animationSpeed);
   this.avatar.root.updateMatrixWorld(true);
-  this.renderPreview();
+  this.cloth.step(delta);this.renderPreview();
   // Reference sheets are refreshed on pause/edit/export, not during playback.
  }
  getFraming(){
@@ -288,7 +295,7 @@ export class DesignWorkbench{
   this.playing=false;
   const clip=this.currentAction.getClip();
   this.avatar.mixer.setTime(Math.min(clip.duration-.001,Math.max(0,fraction)*clip.duration));
-  this.avatar.root.updateMatrixWorld(true);this.renderSheet();
+  this.avatar.root.updateMatrixWorld(true);if(this.cloth.mesh){this.cloth.reset();this.cloth.settle(90);}this.renderSheet();
  }
  getPartInstances(){
   this.scene?.updateMatrixWorld(true);
@@ -321,12 +328,13 @@ export class DesignWorkbench{
    return await new GLTFExporter().parseAsync(this.project.kind==='character'?this.avatar.holder:this.objectRoot,{binary:true,onlyVisible:true,animations:this.project.kind==='character'?[...this.avatar.clips.values()]:[],maxTextureSize:4096});
   }finally{if(this.avatar){this.pose(this.project.pose,false);this.avatar.mixer.setTime(time);}this.playing=playing;this.renderSheet();}
  }
+ prepareHandoff(){if(this.cloth.mesh){this.playing=false;this.pose('Idle_Loop',false);this.cloth.reset();this.cloth.settle(180);}}
  getClips(){return this.avatar?[...this.avatar.clips.keys()]:[];}
  getBones(){return this.avatar?[...this.avatar.bones.keys()]:[];}
  dispose(){
-  this.clearParts();this.fashion.dispose();
+  this.clearParts();this.fashion.dispose();this.cloth.clear();
   if(this.avatar){this.avatar.holder.removeFromParent();disposeAvatar(this.avatar);}
   for(const model of this.imports.values())model.traverse(o=>{o.geometry?.dispose();for(const m of [o.material].flat()){if(!m)continue;for(const v of Object.values(m))if(v?.isTexture)v.dispose();m.dispose();}});this.imports.clear();this.importData.clear();
-  this.renderer?.dispose();
+  this.studioEnvironment?.dispose();this.renderer?.dispose();
  }
 }

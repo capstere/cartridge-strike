@@ -1,11 +1,12 @@
-import {newSculpt,validateSculpt} from './sculpt-schema.mjs?v=5';
+import {newRealism,validateRealism} from './realism-schema.mjs?v=51';
+import {newSculpt,validateSculpt} from './sculpt-schema.mjs?v=51';
 /** Extra creative options, backward-compatible with saved v2 design projects. */
 export const OUTFITS=Object.freeze({
  original:'Originaluniform',tshirt:'T-shirt',hoodie:'Hoodie',jacket:'Jacka med dragkedja',
  polo:'Pikétröja',labcoat:'Labbrock',vest:'Skyddsväst'
 });
 export const HAIRSTYLES=Object.freeze({
- original:'Originalfrisyr',short:'Kort',curly:'Lockigt',bob:'Page',long:'Långt',
+ original:'Originalfrisyr',bald:'Rakat / inget hår',short:'Kort',curly:'Lockigt',bob:'Page',long:'Långt',
  ponytail:'Hästsvans',mohawk:'Mohawk',buzz:'Snaggat'
 });
 export const FACE_CHOICES=Object.freeze({
@@ -25,7 +26,7 @@ export const REQUEST_ANIMATIONS=Object.freeze({
 export const FONT_STYLES=Object.freeze({sans:'Sans-serif',serif:'Serif',mono:'Monospace'});
 export function makeCreative(){
  return {
-  outfit:'original',hair:'original',sculpt:newSculpt(),
+  outfit:'original',hair:'original',sculpt:newSculpt(),realism:newRealism(),
   fit:100,roughness:85,shoes:'boots',gloves:'original',vest:false,
   printTransform:{x:0,y:0,rotation:0,scale:100},
   face:{eyes:'Naturliga',eyebrows:'Naturliga',nose:'Naturlig',mouth:'Naturlig',jaw:'Naturlig',facialHair:'Ingen',freckles:'Nej',eyeColor:'#547a8d'},
@@ -35,10 +36,10 @@ export function makeCreative(){
  };
 }
 export function ensureCreative(project){
- if(project.artwork?.faceViews&&!project.artwork.portraitFraming&&project.studioVersion!=='5.0')project.artwork.portraitFraming='legacy-headbone-v4';
+ if(project.artwork?.faceViews&&!project.artwork.portraitFraming&&!/^5\./.test(project.studioVersion||''))project.artwork.portraitFraming='legacy-headbone-v4';
  if(!project.creative)project.creative=makeCreative();
  const defaults=makeCreative();
- for(const key of ['fit','roughness','shoes','gloves','vest','printTransform','sculpt'])if(project.creative[key]===undefined)project.creative[key]=defaults[key];
+ for(const key of ['fit','roughness','shoes','gloves','vest','printTransform','sculpt','realism'])if(project.creative[key]===undefined)project.creative[key]=defaults[key];
  return project.creative;
 }
 const hex=v=>typeof v==='string'&&/^#[0-9a-fA-F]{6}$/.test(v);
@@ -49,6 +50,7 @@ export function validateCreative(c){
  if(c.shoes!==undefined&&!['boots','sneakers'].includes(c.shoes)||c.gloves!==undefined&&!['original','skin'].includes(c.gloves)||c.vest!==undefined&&typeof c.vest!=='boolean')throw Error('Ogiltigt klädeslager.');
  if(c.printTransform!==undefined){const t=c.printTransform;if(!t||!Number.isFinite(t.x)||Math.abs(t.x)>100||!Number.isFinite(t.y)||Math.abs(t.y)>100||!Number.isFinite(t.rotation)||Math.abs(t.rotation)>180||!Number.isFinite(t.scale)||t.scale<25||t.scale>200)throw Error('Ogiltig tryckplacering.');}
  if(c.sculpt!==undefined)validateSculpt(c.sculpt);
+ if(c.realism!==undefined)validateRealism(c.realism);
  const p=c.print||{};
  if(typeof p.text!=='string'||p.text.length>100||!hex(p.color)||!Object.hasOwn(FONT_STYLES,p.font)||
   !Number.isInteger(p.size)||p.size<20||p.size>120||!['front','back'].includes(p.position)||
@@ -71,6 +73,8 @@ export function creativeBrief(c){
   '## Clothing, facial design and custom textile artwork',
   'Selected clothing: '+OUTFITS[c.outfit]+' ('+c.outfit+'). This is a conceptual garment mockup and MUST be converted into deforming, correctly skinned clothes.',
   'Direct sculpt: PROJECT.json creative.sculpt contains per-rig, topology-signed, sparse bind-space vertex offsets and skin paint. PREVIEW.glb contains the actual sculpted, skinned geometry, UVs, weights and colour attributes. Preserve that appearance; do not reduce the authored sculpt to generic face presets.',
+  'Surface/physics settings: '+JSON.stringify(c.realism||newRealism())+'. The optional Infinite scanned head is one adult male portrait with closed eyes, CC BY 3.0, transferred to the existing Head/Neck bones; it has no facial expression rig. Preserve attribution. It is not a photorealistic full-body replacement.',
+  'Thin hair ribbons use an alpha strand texture and anisotropic material; they are not strand-level hair simulation. CLOTH_SIMULATION.json contains XPBD rest data, pins, constraints, body collision bone links and settings; CLOTH_SOLVER.mjs is the actual portable solver source. For simulated garments the reference images and preview are settled in Idle_Loop; PROJECT.pose remains the selected motion to test. PREVIEW.glb contains a frozen draped skinned mesh, not baked secondary physics. Port/bake the simulation for the game and validate body/self collisions. No self collision/sewing is implemented.',
   'Hair design: '+HAIRSTYLES[c.hair]+'. Sculpt hair and ensure it follows Head bone and does not clip with headgear.',
   ...Object.entries(labels).map(([key,value])=>'Face / '+key+': '+value),
   'Use FACE_FRONT.png, FACE_LEFT.png, FACE_RIGHT.png if provided as high-resolution traced detail references; face choices deform the cloned preview geometry; validate facial topology and expression quality before integration.',

@@ -160,3 +160,4 @@ pre{white-space:pre-wrap;overflow-wrap:anywhere;max-height:370px;overflow:auto;f
 @media(max-width:640px){.sculpt-tools{grid-template-columns:repeat(2,minmax(0,1fr))}.sculpt-colors{grid-template-columns:repeat(4,minmax(0,1fr))}.sculpt-feedback{min-height:0}.sculpt-angles button{min-width:42%}#tab-sculpt h2{font-size:1.3rem}}
 
 @media(max-width:640px){html{scroll-padding-top:350px;scroll-padding-bottom:18px}html:has(.viewer-tools[open]){scroll-padding-top:12px}}
+.realism-panel{margin:0 0 1.25rem;padding:1rem;border:1px solid #c7d9d9;border-radius:14px;background:#f6fafa}.realism-panel legend{font-weight:800;color:#135365}.realism-panel>label{margin:.65rem 0}.realism-panel input[type=checkbox]{width:auto;margin-right:.5rem}.realism-panel .hint{line-height:1.5}
