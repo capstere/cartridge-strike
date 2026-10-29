@@ -107,7 +107,7 @@
      </div>
      <div class="part-list" id="part-list" aria-label="Mina 3D-delar"></div>
      <div id="part-editor" class="part-editor" hidden>
-      <div class="part-editor-title"><strong>Redigera vald del</strong><div><button id="clone-part" class="plain" type="button">Kopiera</button><button id="remove-part" class="danger" type="button">Ta bort</button></div></div>
+      <div class="part-editor-title"><strong>Redigera vald del</strong><div><button id="clone-part" class="plain" type="button">Kopiera</button><button id="mirror-part" class="plain" type="button">Spegelvänd kopia</button><button id="remove-part" class="danger" type="button">Ta bort</button></div></div>
       <label>Namn<input id="part-name" maxlength="80"></label>
       <div class="part-settings">
        <label>Form<select id="part-shape"><option value="box">Kub</option><option value="sphere">Kula</option><option value="cylinder">Cylinder</option><option value="cone">Kon</option><option value="torus">Ring</option></select></label>
@@ -126,7 +126,9 @@
        <label>Bredd <output id="size-x-value"></output><input type="range" id="size-x" min="1" max="200"></label>
        <label>Höjd <output id="size-y-value"></output><input type="range" id="size-y" min="1" max="200"></label>
        <label>Djup <output id="size-z-value"></output><input type="range" id="size-z" min="1" max="200"></label>
+       <label>Luta fram/bak <output id="rot-x-value"></output><input type="range" id="rot-x" min="-180" max="180"></label>
        <label>Vrid runt <output id="rot-y-value"></output><input type="range" id="rot-y" min="-180" max="180"></label>
+       <label>Luta åt sidan <output id="rot-z-value"></output><input type="range" id="rot-z" min="-180" max="180"></label>
       </div>
       <label>Egen instruktion till AI<textarea id="part-note" rows="2" placeholder="T.ex. Gör detta till tyg, avrunda kanterna och sätt fast på ryggen."></textarea></label>
      </div>
