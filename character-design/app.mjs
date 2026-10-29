@@ -491,6 +491,7 @@ async function start(){
   const notice=document.createElement('div');notice.className='webgl-notice';notice.setAttribute('role','alert');const message=document.createElement('p');message.textContent='3D-visningen kunde inte starta i denna webbläsare. Ditt sparade projekt finns kvar. Prova en webbläsare med WebGL aktiverat.';const retry=document.createElement('button');retry.textContent='Försök igen';retry.onclick=()=>location.reload();notice.append(message,retry);$('model-drop-zone').append(notice);
  }
 }
+window.addEventListener('resize',()=>{if(ready)workbench.renderPreview();});
 document.addEventListener('visibilitychange',()=>{if(document.hidden)flushLocalSave();});
 window.addEventListener('pagehide',()=>flushLocalSave());
 start();

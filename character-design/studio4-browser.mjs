@@ -86,6 +86,7 @@ try{
   // Exercise every embedded animation on the actual rig, including death and jumps.
   for(const clip of await text('pose').locator('option').evaluateAll(options=>options.map(o=>o.value))){await text('pose').selectOption(clip);await text('play').click();await page.waitForTimeout(60);await text('play').click();}
   await text('pose').selectOption('Idle_Loop');
+  const aspect=await text('preview3d').evaluate(c=>[c.clientWidth/c.clientHeight,c.width/c.height]);assert.ok(Math.abs(aspect[0]-aspect[1])<.01,'viewport preserves exact character proportions');
   assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1),'no horizontal mobile overflow');
   await mkdir('test-results',{recursive:true});await text('focus-body').click();if(mobile)await text('viewer-tools').locator(':scope > summary').click();await page.locator('.preview-frame').scrollIntoViewIfNeeded();await page.screenshot({path:'test-results/studio4-'+(mobile?'mobile':'desktop')+'.png'});
   assert.deepEqual(errors,[]);

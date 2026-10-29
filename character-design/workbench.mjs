@@ -219,8 +219,9 @@ export class DesignWorkbench{
   if(!this.initialized||!this.project)return;
   const {center,span}=this.getFraming();center.x+=this.pan.x;center.y+=this.pan.y;
   this.grid.visible=true;
-  this.renderer.setSize(PW,PH,false);
-  const aspect=PW/PH;
+  const rect=this.preview.getBoundingClientRect(),aspect=rect.width/Math.max(1,rect.height);
+  const width=Math.max(240,Math.min(PW,Math.round(rect.width*Math.min(1.5,globalThis.devicePixelRatio||1))));
+  this.renderer.setSize(width,Math.round(width/aspect),false);
   this.camera.left=-span*aspect/2;this.camera.right=span*aspect/2;
   this.camera.top=span/2;this.camera.bottom=-span/2;
   this.camera.zoom=this.zoom;
