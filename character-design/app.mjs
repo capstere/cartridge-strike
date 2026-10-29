@@ -305,7 +305,7 @@ async function writeZip(){
   files.push({name:'BASE_RIG.glb',data:bytes});
  }
  if(workbench.getPartInstances().length)files.push({name:'STATIC_PROTOTYPE.glb',data:new Uint8Array(await workbench.exportParts())});
- if(workbench.cloth.mesh)files.push({name:'CLOTH_SIMULATION.json',data:JSON.stringify(workbench.cloth.handoff())});
+ if(workbench.cloth.mesh){files.push({name:'CLOTH_SIMULATION.json',data:JSON.stringify(workbench.cloth.handoff())});const solver=await fetch(new URL('./cloth-solver.mjs?v=51',import.meta.url));if(!solver.ok)throw Error('Tygsimuleringens källkod saknas.');files.push({name:'CLOTH_SOLVER.mjs',data:await solver.text()});}
  if(project.creative?.realism?.head==='scan'){for(const name of ['LeePerrySmith.glb','Map-COL.jpg','Infinite-Level_02_Tangent_SmoothUV.jpg','LeePerrySmith_License.txt']){const response=await fetch(new URL('./assets/scan/'+name,import.meta.url));if(!response.ok)throw Error('Skanningens originalfil saknas: '+name);files.push({name:'SCAN_SOURCE_'+name,data:new Uint8Array(await response.arrayBuffer())});}}
  files.push({name:'PREVIEW.glb',data:new Uint8Array(await workbench.exportPreview())});
  if(project.kind==='character'&&creativeControls)files.push(...await creativeControls.exportEntries());
