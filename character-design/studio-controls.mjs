@@ -12,6 +12,7 @@ function copy(p){
 }
 export function installStudioControls({getProject,workbench,persist,visualChange,status,selected,selectPart,refresh,restore}){
  let states=[],index=-1,restoring=false,lastKey='',lastTime=0,dragMode='rotate';
+ const mobileQuery=matchMedia('(max-width:640px)');$('viewer-tools').open=!mobileQuery.matches;mobileQuery.addEventListener('change',()=>{$('viewer-tools').open=!mobileQuery.matches;});
  const canvas=$('preview3d'),pointers=new Map();let lastPoint=null,pinch=null;
  function updateHistory(){ $('undo-design').disabled=index<=0;$('redo-design').disabled=index>=states.length-1; }
  function resetHistory(){states=[copy(getProject())];index=0;lastKey='';updateHistory();}

@@ -26,6 +26,7 @@ try{
   await page.goto(origin+'/character-design/',{waitUntil:'domcontentloaded'});
   await page.waitForFunction(()=>document.querySelector('#status').textContent.includes('redo!'));
   assert.equal(await page.title(),'Character Design Studio 4 · Cartridge Strike');
+  if(mobile)await text('viewer-tools').locator('summary').click();
   const initial=await pixels();await tab('face').click();
   for(const [key,value]of [['jaw','Bred'],['eyes','Stora'],['nose','Bred'],['mouth','Brett leende'],['eyebrows','Tjocka'],['facialHair','Helskägg'],['freckles','Tydliga']]){
    const before=await pixels();await page.locator('[data-face-field="'+key+'"]').selectOption(value);await settle();assert.notEqual(await pixels(),before,key+' must visibly change actual WebGL rendering');
@@ -84,7 +85,7 @@ try{
   for(const clip of await text('pose').locator('option').evaluateAll(options=>options.map(o=>o.value))){await text('pose').selectOption(clip);await text('play').click();await page.waitForTimeout(60);await text('play').click();}
   await text('pose').selectOption('Idle_Loop');
   assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1),'no horizontal mobile overflow');
-  await mkdir('test-results',{recursive:true});await text('focus-body').click();await page.locator('.workspace').scrollIntoViewIfNeeded();await page.screenshot({path:'test-results/studio4-'+(mobile?'mobile':'desktop')+'.png'});
+  await mkdir('test-results',{recursive:true});await text('focus-body').click();if(mobile)await text('viewer-tools').locator('summary').click();await page.locator('.preview-frame').scrollIntoViewIfNeeded();await page.screenshot({path:'test-results/studio4-'+(mobile?'mobile':'desktop')+'.png'});
   assert.deepEqual(errors,[]);
   console.log('PASS Studio 4 '+(mobile?'mobile/touch':'desktop')+': visible facial changes, outfits, exact PNG, undo/redo, GLB imports, animations, IndexedDB reopen, ZIP hashes and parsed skinned preview ('+rig.animations.length+' clips)');
   await context.close();

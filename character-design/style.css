@@ -151,3 +151,6 @@ pre{white-space:pre-wrap;overflow-wrap:anywhere;max-height:370px;overflow:auto;f
 @media print{.studio-bar{display:none}}
 
 .webgl-notice{position:absolute;inset:15% 8%;padding:22px;background:#fff;border:1px solid #e1b69c;border-radius:14px;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;box-shadow:0 6px 25px #173b4322}
+
+.viewer-tools{margin-top:12px}.viewer-tools>summary{font-size:.85rem;padding:9px 0;color:#125a6b}
+@media(max-width:640px){.viewport-panel{position:sticky;top:0;z-index:5;box-shadow:0 8px 18px #173b431a}.viewport-panel:has(.viewer-tools[open]){position:relative}.viewport-panel .section-title{margin-bottom:7px}.viewport-panel .section-title .eyebrow{display:none}.viewport-panel h2{font-size:1.05rem}.viewport-panel #preview3d{max-height:260px}.viewport-panel .preview-hint{font-size:.65rem;bottom:5px;padding:4px}.viewer-tools{margin-top:5px}.viewer-tools>summary{padding:7px 0}.edit-panel{position:relative;z-index:1}.tab-row{position:static}}
