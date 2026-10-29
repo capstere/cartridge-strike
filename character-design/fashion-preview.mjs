@@ -1,12 +1,13 @@
 /** Studio-only edits to cloned skinned geometry. Original assets/runtime stay untouched. */
 import * as T from '../vendor/three/three.module.js';
-import {makeCreative} from './creative-schema.mjs?v=4';
+import {makeHair,makeBeard} from './anatomy-accessories.mjs?v=4.1';
+import {makeCreative} from './creative-schema.mjs?v=4.1';
 const clamp=T.MathUtils.clamp;
 export class FashionPreview{
  constructor(onRedraw=()=>{}){this.onRedraw=onRedraw;this.parts=[];this.textures=[];this.avatar=null;this.signature='';this.generation=0;this.sources=new Map();this.pendingImages=[];}
  clear(){
   this.generation++;
-  for(const mesh of this.parts){mesh.removeFromParent();mesh.geometry.dispose();mesh.material.dispose();}
+  for(const mesh of this.parts){mesh.removeFromParent();const materials=new Set();mesh.traverse(o=>{o.geometry?.dispose();for(const m of [o.material].flat())if(m)materials.add(m);});for(const m of materials)m.dispose();}
   for(const t of this.textures)t.dispose();
   this.parts=[];this.textures=[];this.signature='';this.pendingImages=[];
  }
@@ -21,7 +22,8 @@ export class FashionPreview{
  create(project,avatar){
   if(!avatar||project.kind!=='character'){this.dispose();return;}
   const c=project.creative||makeCreative(),p=project.palette;
-  const signature=JSON.stringify({c,p});
+  const headgear=project.parts.some(part=>part.visible&&['cap','helmet','hair'].includes(part.preset));
+  const signature=JSON.stringify({c,p,headgear});
   if(this.avatar===avatar&&this.signature===signature)return;
   this.clear();if(this.avatar!==avatar)this.sources.clear();
   this.avatar=avatar;this.signature=signature;
@@ -100,21 +102,9 @@ export class FashionPreview{
    if(m.name.startsWith('boot-shaft'))m.visible=c.shoes!=='sneakers';
    if(m.name.startsWith('boot-sole'))m.material.color.set(c.shoes==='sneakers'?p.accent:'#161e24');
   }
-  if(c.hair!=='original'){
-   const hair=p.hair;
-   // Head geometry is in canonical +Z-forward root space.
-   if(c.hair==='buzz')solid(new T.SphereGeometry(1,20,12),hair,'buzz',[0,1.786,-.026],[.091,.050,.10]);
-   else solid(new T.SphereGeometry(1,20,12),hair,'hair-cap',[0,1.778,-.028],c.hair==='short'?[.096,.060,.099]:[.103,.075,.106]);
-   if(c.hair==='curly')for(let x=-2;x<=2;x++)for(const z of [-.07,.015])solid(new T.SphereGeometry(.033,10,8),hair,'curl',[x*.041,1.84,z]);
-   if(['bob','long'].includes(c.hair))for(const x of [-.096,.096])solid(new T.SphereGeometry(1,12,10),hair,'side-hair',[x,1.70,-.045],[.038,c.hair==='long'?.21:.11,.09]);
-   if(c.hair==='ponytail')solid(new T.SphereGeometry(1,12,10),hair,'ponytail',[0,1.65,-.14],[.05,.18,.06]);
-   if(c.hair==='mohawk')solid(new T.SphereGeometry(1,12,10),hair,'mohawk',[0,1.88,-.02],[.028,.13,.11]);
-  }
-  const beard=c.face.facialHair;
-  if(beard!=='Ingen'){
-   const mustache=beard==='Mustasch';
-   solid(new T.SphereGeometry(1,16,10),p.hair,'beard',[0,mustache?1.635:1.59,mustache?.108:.077],mustache?[.049,.012,.012]:[.071,beard==='Helskägg'?.085:beard==='Stubb'?.035:.05,.045]);
-  }
+  const attach=(group,name)=>{group.name=name;avatar.root.add(group);avatar.root.updateWorldMatrix(true,true);head.attach(group);this.parts.push(group);};
+  if(c.hair!=='original'&&!headgear)attach(makeHair(avatar,c.hair,p.hair),'creative-fitted-hair');
+  if(c.face.facialHair!=='Ingen'&&!project.parts.some(part=>part.visible&&part.preset==='beard'))attach(makeBeard(avatar,c.face.facialHair,p.hair),'creative-fitted-beard');
   if(c.face.freckles!=='Nej')for(const side of [-1,1])for(let i=0;i<(c.face.freckles==='Tydliga'?9:4);i++)solid(new T.SphereGeometry(.0019,5,4),'#86543d','freckle',[side*(.027+(i%3)*.013),1.653+Math.floor(i/3)*.008,.095-(i%3)*.004]);
   if(c.outfit==='hoodie'){
    solid(new T.TorusGeometry(.116,.032,8,24),p.jacket,'hood',[0,1.49,-.045],[1,.7,1],chest,[Math.PI/2,0,0]);

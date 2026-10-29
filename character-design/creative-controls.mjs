@@ -1,5 +1,5 @@
 /** Optional beginner-friendly creative controls. Owns face drawing and PNG art, not game state. */
-import {makeCreative,ensureCreative,FACE_CHOICES,REQUEST_ANIMATIONS} from './creative-schema.mjs?v=4';
+import {makeCreative,ensureCreative,FACE_CHOICES,REQUEST_ANIMATIONS} from './creative-schema.mjs?v=4.1';
 const $=id=>document.getElementById(id);
 const VIEWS=['front','left','right'];
 const LABELS={front:'Framifrån',left:'Vänster profil',right:'Höger profil'};

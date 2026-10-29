@@ -1,12 +1,13 @@
 /** Live visual preview of the original game skeleton and authored static parts. */
 import * as T from '../vendor/three/three.module.js';
 import {loadCharacterLibrary,createAuthoredAvatar,disposeAvatar} from '../src/fps/character-library.mjs';
-import {REQUIRED_CLIPS} from './project-schema.mjs?v=4';
+import {makeAccessory,fitAccessory} from './anatomy-accessories.mjs?v=4.1';
+import {REQUIRED_CLIPS,upgradeAccessories} from './project-schema.mjs?v=4.1';
 import {GLTFLoader} from '../vendor/three/addons/loaders/GLTFLoader.js';
 import {GLTFExporter} from '../vendor/three/addons/exporters/GLTFExporter.js';
 import {inspectGLB} from '../furniture-editor/library/glb-utils.mjs';
-import {dataToBytes} from './project-store.mjs?v=4';
-import {FashionPreview} from './fashion-preview.mjs?v=4';
+import {dataToBytes} from './project-store.mjs?v=4.1';
+import {FashionPreview} from './fashion-preview.mjs?v=4.1';
 const RAD=Math.PI/180,SW=480,SH=680,PW=720,PH=660;
 function characterId(gender){
  for(let i=0;i<200;i++){
@@ -44,7 +45,7 @@ export class DesignWorkbench{
  }
  update(project,{recreate=false,rebuild=false}={}){
   if(!this.initialized)return;
-  const old=this.project;this.project=project;
+  const old=this.project;this.project=project;upgradeAccessories(project);
   if(project.kind==='character'&&(!this.avatar||recreate||old?.base.gender!==project.base.gender||old?.base.team!==project.base.team)){
    this.clearParts();this.fashion.dispose();
    if(this.avatar){this.avatar.holder.removeFromParent();disposeAvatar(this.avatar);}
@@ -59,6 +60,8 @@ export class DesignWorkbench{
   // This avoids misaligned decals after a user previously previewed crouching or death.
   if(project.kind==='character'&&this.avatar)this.neutralRest();
   this.updateAppearance();
+  const anatomyKey=JSON.stringify({gender:project.base.gender,face:project.creative?.face});
+  if(this.accessoryAnatomyKey!==anatomyKey&&project.parts.some(p=>p.preset))rebuild=true;this.accessoryAnatomyKey=anatomyKey;
   if(rebuild||old?.kind!==project.kind)this.rebuildParts();
   if(project.kind==='character'&&this.avatar)this.pose(project.pose,false);
   this.renderSheet();
@@ -67,7 +70,7 @@ export class DesignWorkbench{
   if(!this.avatar||!this.project)return;
   const {palette:p,body,base}=this.project;
   const customClothes=this.project.creative?.outfit&&this.project.creative.outfit!=='original';
-  const customHair=this.project.creative?.hair&&this.project.creative.hair!=='original';
+  const customHair=this.project.creative?.hair&&this.project.creative.hair!=='original'||this.project.parts.some(p=>p.visible&&['cap','helmet','hair'].includes(p.preset));
   const hideTactical=base.template==='blank'||base.template==='civilian'||customClothes;
   const seen=new Set();
   for(const mesh of this.avatar.meshes){
@@ -104,7 +107,13 @@ export class DesignWorkbench{
    this.imports.set(part.asset,asset.scene);this.importData.set(part.asset,data);
   }
  }
+ fitPart(part){
+  if(!this.avatar||!part.preset)return false;this.neutralRest();fitAccessory(part,this.avatar);return true;
+ }
  createPartMesh(part){
+  if(part.preset&&this.avatar){
+   const mesh=makeAccessory(part.preset,part.color,this.avatar);mesh.name=part.name;mesh.userData.designId=part.id;mesh.position.fromArray(part.position);mesh.rotation.set(...part.rotation.map(x=>x*RAD));mesh.scale.fromArray(part.dimensions);if(part.mirrored)mesh.scale.x*=-1;mesh.visible=part.visible;return mesh;
+  }
   if(part.shape==='glb'){
    const source=this.imports.get(part.asset);if(!source)throw Error('Tillbehöret har inte lästs in.');
    const mesh=new T.Group(),model=source.clone(true),a=[],b=[];source.traverse(o=>a.push(o));model.traverse(o=>b.push(o));const map=new Map(a.map((o,i)=>[o,b[i]]));for(const [o,n]of map)if(o.isSkinnedMesh){n.skeleton=new T.Skeleton(o.skeleton.bones.map(v=>map.get(v)),o.skeleton.boneInverses.map(v=>v.clone()));n.bindMatrix.copy(o.bindMatrix);n.bindMatrixInverse.copy(o.bindMatrixInverse);}
@@ -148,6 +157,7 @@ export class DesignWorkbench{
    this.neutralRest();
   }
   for(const part of p.parts){
+   if(part.preset&&part.fitVersion===0)this.fitPart(part);
    const mesh=this.createPartMesh(part);
    this.partMeshes.set(part.id,mesh);
    if(p.kind==='object'){this.objectRoot.add(mesh);continue;}

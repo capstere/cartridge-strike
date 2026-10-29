@@ -1,9 +1,9 @@
-import {makeCreative,validateCreative,creativeBrief} from './creative-schema.mjs?v=4';
+import {makeCreative,validateCreative,creativeBrief} from './creative-schema.mjs?v=4.1';
 /** Portable, deterministic v2 concept format. No browser or 3D dependencies. */
 export const FORMAT='cartridge-strike-character-project';
 export const VERSION=2;
 export const REQUIRED_CLIPS=Object.freeze(['Idle_Loop','Walk_Loop','Jog_Fwd_Loop','Sprint_Loop','Jump_Loop','Crouch_Idle_Loop','Crouch_Fwd_Loop','Pistol_Idle_Loop','Pistol_Shoot','Pistol_Reload','Death01']);
-export const ANCHORS=Object.freeze({root:'Fristående / kropp',Head:'Huvud',spine_03:'Bröst / rygg',pelvis:'Midja',hand_l:'Vänster hand',hand_r:'Höger hand',foot_l:'Vänster fot',foot_r:'Höger fot'});
+export const ANCHORS=Object.freeze({root:'Fristående / kropp',Head:'Huvud',spine_03:'Bröst / rygg',pelvis:'Midja',hand_l:'Vänster hand',hand_r:'Höger hand',foot_l:'Vänster fot',foot_r:'Höger fot',upperarm_l:'Vänster överarm',upperarm_r:'Höger överarm',clavicle_l:'Vänster axel',clavicle_r:'Höger axel'});
 export const SHAPES=Object.freeze({box:'Kub / låda',sphere:'Kula',cylinder:'Cylinder',cone:'Kon',torus:'Ring',glb:'Importerad GLB'});
 export const PALETTES=Object.freeze({
   analysts:{jacket:'#22435e',pants:'#22435e',vest:'#132d42',skin:'#e8d1b9',hair:'#49372a',boots:'#243039',accent:'#5aa8cf'},
@@ -51,7 +51,7 @@ export function addPart(project,preset='box'){
     position:project.kind==='object'?[0,.4,0]:p?[...p.position]:[0,1.25,.16],
     rotation:[0,0,0],dimensions:p?[...p.dimensions]:[.25,.25,.25],
     color:p?p.color:'#56abc5',visible:true,
-    note:''
+    ...(p?{preset,fitVersion:0}:{}),note:''
   };
   project.parts.push(item);
   return item;
@@ -60,7 +60,7 @@ export function clonePart(project,id){
   const old=project.parts.find(p=>p.id===id);
   if(!old)throw Error('Delen finns inte.');
   const next=addPart(project,old.shape);
-  Object.assign(next,JSON.parse(JSON.stringify(old)),{id:next.id,name:old.name+' kopia',position:[old.position[0]+.13,old.position[1],old.position[2]]});
+  Object.assign(next,JSON.parse(JSON.stringify(old)),{id:next.id,name:(old.name+' kopia').slice(0,80),position:[old.position[0]+.13,old.position[1],old.position[2]]});
   return next;
 }
 /** Duplicate the other side of a symmetric outfit without editing geometry. */
@@ -68,10 +68,10 @@ export function mirrorPart(project,id){
  const original=project.parts.find(p=>p.id===id);
  if(!original)throw Error('Delen finns inte.');
  const mirrored=clonePart(project,id);
- mirrored.name=original.name+' (spegel)';mirrored.mirrored=!original.mirrored;
+ mirrored.name=(original.name+' (spegel)').slice(0,80);mirrored.mirrored=!original.mirrored;
  mirrored.position=[-original.position[0],original.position[1],original.position[2]];
  mirrored.rotation=[original.rotation[0],-original.rotation[1],-original.rotation[2]];
- const counterpart={hand_l:'hand_r',hand_r:'hand_l',foot_l:'foot_r',foot_r:'foot_l'};
+ const counterpart={hand_l:'hand_r',hand_r:'hand_l',foot_l:'foot_r',foot_r:'foot_l',upperarm_l:'upperarm_r',upperarm_r:'upperarm_l',clavicle_l:'clavicle_r',clavicle_r:'clavicle_l'};
  mirrored.anchor=counterpart[original.anchor]||original.anchor;
  return mirrored;
 }
@@ -96,6 +96,7 @@ export function validateProject(data){
    let total=0;for(const [name,value]of Object.entries(data.embeddedReferences)){if(!data.references.some(r=>r.name===name)||typeof value!=='string'||!value.length||value.length>17_000_000||!/^[A-Za-z0-9+/]+={0,2}$/.test(value))throw Error('Skadad inbäddad fil.');total+=value.length;}if(total>26_000_000)throw Error('Tillgångarna är för stora.');
   }
   for(const part of data.parts)if(part.shape==='glb'&&(!data.references.some(r=>r.name===part.asset&&r.type==='glb')||!data.embeddedReferences?.[part.asset]))throw Error('GLB-tillbehörets originalfil saknas.');
+  if(data.parts.some(p=>p.preset!==undefined&&!Object.hasOwn(PRESETS,p.preset)||p.fitVersion!==undefined&&![0,1].includes(p.fitVersion)))throw Error('Okänt tillbehör.');
   if(data.parts.some(p=>p.mirrored!==undefined&&typeof p.mirrored!=='boolean'))throw Error('Ogiltig spegling.');
   if(data.creative!==undefined)validateCreative(data.creative);
   if(!data.notes||Object.keys(newProject().notes).some(k=>typeof data.notes[k]!=='string'||data.notes[k].length>3000))throw Error('Ogiltiga designanteckningar.');
@@ -158,7 +159,7 @@ export function aiBrief(project,availableClips=[],availableBones=[]){
     ...(project.kind==='character'?creativeBrief(project.creative):[]),
     '',
     '## Modelled 3D components (coordinates in original unscaled model space, meters)',
-    ...(project.parts.length?project.parts.map(p=>'- '+p.name+' ('+p.shape+'), anchor='+p.anchor+', pos=['+p.position.join(', ')+'], rotation degrees=['+p.rotation.join(', ')+'], dimensions m=['+p.dimensions.join(', ')+'], color='+p.color+', visible='+p.visible+', note='+(p.note||'none')):['No added primitive parts.']),
+    ...(project.parts.length?project.parts.map(p=>'- '+p.name+' ('+(p.preset?'modelled '+p.preset:p.shape)+'), anchor='+p.anchor+', pos=['+p.position.join(', ')+'], rotation degrees=['+p.rotation.join(', ')+'], dimensions m=['+p.dimensions.join(', ')+'], color='+p.color+', visible='+p.visible+', note='+(p.note||'none')):['No added primitive parts.']),
     '',
     '## Character animation and FPS integration',
     ...(project.kind==='character'?[
@@ -181,4 +182,19 @@ export function aiBrief(project,availableClips=[],availableBones=[]){
     'Reference files are inspiration; use only what the user has rights to include.'
   ];
   return lines.join('\n');
+}
+
+/** Upgrade provenance only for recognisable built-in presets. Preserve custom
+ * transforms; untouched old defaults get one anatomical fitting pass. */
+export function upgradeAccessories(project){
+ for(const part of project.parts){
+  if(part.preset||part.shape==='glb')continue;
+  for(const [type,preset]of Object.entries(PRESETS)){
+   if(part.shape!==preset.shape||!(part.name===preset.label||part.name.startsWith(preset.label+' kopia')||part.name.startsWith(preset.label+' (spegel)')))continue;
+   part.preset=type;
+   if(JSON.stringify(part.position)===JSON.stringify(preset.position)&&JSON.stringify(part.dimensions)===JSON.stringify(preset.dimensions)&&part.rotation.every(n=>n===0))part.fitVersion=0;
+   else part.fitVersion=1;
+   break;
+  }
+ }
 }

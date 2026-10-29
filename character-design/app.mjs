@@ -1,13 +1,12 @@
 /** Easy UI for revising the FPS skeleton, authoring character props and independent 3D objects. */
-import {saveProject,loadProject,listProjects,bytesToData,dataToBytes} from './project-store.mjs?v=4';
-import {installStudioControls} from './studio-controls.mjs?v=4';
-import {DesignWorkbench} from './workbench.mjs?v=4';
-import {newProject,validateProject,PALETTES,PRESETS,SHAPES,addPart,clonePart,mirrorPart,aiBrief,animationContract,filename} from './project-schema.mjs?v=4';
-import {makePrototypeGLB} from './prototype-glb.mjs?v=4';
-import {packZip} from './zip-export.mjs?v=4';
+import {saveProject,loadProject,listProjects,bytesToData,dataToBytes} from './project-store.mjs?v=4.1';
+import {installStudioControls} from './studio-controls.mjs?v=4.1';
+import {DesignWorkbench} from './workbench.mjs?v=4.1';
+import {newProject,validateProject,PALETTES,PRESETS,SHAPES,addPart,clonePart,mirrorPart,aiBrief,animationContract,filename} from './project-schema.mjs?v=4.1';
+import {packZip} from './zip-export.mjs?v=4.1';
 import {inspectGLB} from '../furniture-editor/library/glb-utils.mjs';
-import {installCreativeControls} from './creative-controls.mjs?v=4';
-import {ensureCreative} from './creative-schema.mjs?v=4';
+import {installCreativeControls} from './creative-controls.mjs?v=4.1';
+import {ensureCreative} from './creative-schema.mjs?v=4.1';
 
 const W=480,H=680,STORE='cartridge-strike-character-studio-v2';
 const byId=id=>document.getElementById(id);
@@ -62,7 +61,7 @@ function download(data,name,type='application/octet-stream'){
  document.body.appendChild(link);link.click();link.remove();
  setTimeout(()=>URL.revokeObjectURL(url),2000);
 }
-function projectSnapshot(){return {...project,studioVersion:'4.0',artwork:{...captureArtwork(),faceViews:creativeControls?.captureFaces()||{}}};}
+function projectSnapshot(){return {...project,studioVersion:'4.1',artwork:{...captureArtwork(),faceViews:creativeControls?.captureFaces()||{}}};}
 function refreshPrompt(){
  try{$('ai-prompt').textContent=aiBrief(project,workbench.getClips(),workbench.getBones());}
  catch(e){status('Fel i projektet: '+e.message,true);}
@@ -95,7 +94,7 @@ function partsSummary(){
  for(const part of project.parts){
   const b=document.createElement('button');b.type='button';b.className='part-item'+(selectedPart===part.id?' selected':'');
   const label=document.createElement('strong');label.textContent=part.name;
-  const subtitle=document.createElement('span');subtitle.textContent=SHAPES[part.shape]||part.shape;
+  const subtitle=document.createElement('span');subtitle.textContent=part.preset?'Formgivet tillbehör':SHAPES[part.shape]||part.shape;
   b.append(label,subtitle);b.setAttribute('aria-pressed',String(selectedPart===part.id));
   b.addEventListener('click',()=>{selectedPart=part.id;partsSummary();setTab('parts');});
   box.append(b);
@@ -104,7 +103,7 @@ function partsSummary(){
  $('part-editor').hidden=!part;
  if(!part)return;
  $('part-name').value=part.name;
- $('part-shape').value=part.shape;$('part-shape').querySelector('option[value="glb"]').disabled=!part.asset;
+ $('part-shape').value=part.shape;$('part-shape').closest('label').hidden=!!part.preset;$('part-shape').querySelector('option[value="glb"]').disabled=!part.asset;
  $('part-anchor').value=part.anchor;
  $('part-anchor-wrap').hidden=project.kind==='object';
  $('part-color').value=part.color;
@@ -279,11 +278,6 @@ function sheetBlob(){
   buildSheetCanvas().toBlob(blob=>blob?resolve(blob):reject(Error('Kunde inte spara bilden.')),'image/png');
  });
 }
-function getPrototype(){
- const instances=workbench.getPartInstances();
- if(!instances.length)throw Error('Lägg till minst en synlig 3D-del för att hämta en GLB-prototyp.');
- return makePrototypeGLB(instances.filter(i=>i.mesh.isMesh));
-}
 async function writeZip(){
  if(!ready)throw Error('3D-modellerna laddas fortfarande.');
  validateProject(project);
@@ -305,7 +299,7 @@ async function writeZip(){
   if(bytes.length>6*1024*1024||bytes.length<1000)throw Error('Originalriggen har oväntad storlek.');
   files.push({name:'BASE_RIG.glb',data:bytes});
  }
- if(workbench.getPartInstances().some(i=>i.mesh.isMesh))files.push({name:'STATIC_PROTOTYPE.glb',data:getPrototype()});
+ if(workbench.getPartInstances().length)files.push({name:'STATIC_PROTOTYPE.glb',data:new Uint8Array(await workbench.exportParts())});
  files.push({name:'PREVIEW.glb',data:new Uint8Array(await workbench.exportPreview())});
  if(project.kind==='character'&&creativeControls)files.push(...await creativeControls.exportEntries());
  for(let i=0;i<project.references.length;i++){
@@ -313,7 +307,7 @@ async function writeZip(){
   if(!bytes)throw Error('Referensfil saknas: '+ref.name+'. Lägg till den igen innan export.');
   files.push({name:'REFERENCE_'+String(i+1).padStart(2,'0')+'.'+ref.type,data:bytes});
  }
- const manifest={studioVersion:'4.0',prototypeOnly:true,project:project.name,references:project.references.map((r,i)=>({originalName:r.name,file:'REFERENCE_'+String(i+1).padStart(2,'0')+'.'+r.type})),files:[]};
+ const manifest={studioVersion:'4.1',prototypeOnly:true,project:project.name,references:project.references.map((r,i)=>({originalName:r.name,file:'REFERENCE_'+String(i+1).padStart(2,'0')+'.'+r.type})),files:[]};
  for(const file of files){const bytes=typeof file.data==='string'?new TextEncoder().encode(file.data):file.data;const hash=await crypto.subtle.digest('SHA-256',bytes);manifest.files.push({name:file.name,bytes:bytes.byteLength,sha256:[...new Uint8Array(hash)].map(b=>b.toString(16).padStart(2,'0')).join('')});}
  files.push({name:'MANIFEST.json',data:JSON.stringify(manifest,null,2)});
  return packZip(files);
@@ -358,7 +352,7 @@ async function importProject(file){
   if(dirty)await saveProject(slotId||crypto.randomUUID(),projectSnapshot());
   await workbench.prepareAssets(obj);project=obj;restoreAttachments();dirty=false;selectedPart=null;slotId=null;
   setTab(obj.kind==='object'?'parts':'look');
-  refreshUI();visualChange({recreate:true,rebuild:true,save:false});
+  refreshUI();visualChange({recreate:true,rebuild:true,save:false});partsSummary();
   await restoreArtwork(obj.artwork);await creativeControls?.restoreFaces(obj.artwork?.faceViews);saveLocal();
   studioControls?.resetHistory();refreshSlots();status('Projektet öppnades med sparade ritningar och inbäddade tillgångar.');
  }catch(e){status('Kunde inte öppna projektet: '+e.message,true);}
@@ -407,7 +401,7 @@ function installEvents(){
  $('part-type').addEventListener('change',()=>{});
  $('add-part').addEventListener('click',()=>{
   try{
-   const item=addPart(project,$('part-type').value);selectedPart=item.id;partsSummary();visualChange({rebuild:true});persist();
+   const item=addPart(project,$('part-type').value);selectedPart=item.id;visualChange({rebuild:true});partsSummary();persist();
   }catch(e){status(e.message,true);}
  });
  $('clone-part').addEventListener('click',()=>{
@@ -424,7 +418,7 @@ function installEvents(){
  $('part-name').addEventListener('input',e=>{
   const p=selected();if(!p)return;p.name=e.target.value.slice(0,80);partEdited(false);
  });
- $('part-shape').addEventListener('change',e=>{const p=selected();if(!p)return;p.shape=e.target.value;partEdited();});
+ $('part-shape').addEventListener('change',e=>{const p=selected();if(!p)return;p.shape=e.target.value;delete p.preset;delete p.fitVersion;partEdited();});
  $('part-anchor').addEventListener('change',e=>{const p=selected();if(!p)return;p.anchor=e.target.value;partEdited();});
  $('part-color').addEventListener('input',e=>{const p=selected();if(!p)return;p.color=e.target.value;visualChange({rebuild:true,save:false});persist();});
  $('part-note').addEventListener('input',e=>{const p=selected();if(!p)return;p.note=e.target.value.slice(0,1000);persist();});
@@ -480,7 +474,7 @@ async function start(){
   const saved=await loadProject('autosave').catch(()=>null);if(saved){validateProject(saved.project);ensureCreative(saved.project);project=saved.project;}restoreAttachments();
   await workbench.initialize();await workbench.prepareAssets(project);ready=true;
   refreshUI();
-  workbench.flipped=!!project.view_flip;workbench.update(project,{recreate:true,rebuild:true});
+  workbench.flipped=!!project.view_flip;workbench.update(project,{recreate:true,rebuild:true});partsSummary();
   creativeControls.syncClips();
   await restoreArtwork(project.artwork);await creativeControls.restoreFaces(project.artwork?.faceViews);
   studioControls.resetHistory();await refreshSlots();$('save-state').textContent='Projektet är öppet · automatisk sparning';
