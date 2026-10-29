@@ -1,4 +1,4 @@
-# Character Design Studio 4.0
+# Character Design Studio 4.1
 
 Open [the studio](https://capstere.github.io/cartridge-strike/character-design/). The game and its existing characters are unchanged.
 
@@ -22,7 +22,7 @@ Mouse: drag to orbit, wheel/buttons to zoom, **Flytta vyn** or Shift-drag to pan
 | `PROJECT.json` | Canonical editable design, parts, dimensions, notes, print transform, annotations and embedded assets |
 | `PREVIEW.glb` | Complete visible design prototype, original skeleton and all original animation clips; custom geometry/materials and rigid attachments |
 | `BASE_RIG.glb` | Byte-for-byte unmodified original character GLB |
-| `STATIC_PROTOTYPE.glb` | Optional authored primitive parts; static, no skeleton or textures |
+| `STATIC_PROTOTYPE.glb` | Optional authored accessory/primitive parts and imports; static snapshot without host animation |
 | `DESIGN_SHEET.png` | Four full-body orthographic views with annotations, independent of the viewport's detail zoom |
 | `FACE_FRONT/LEFT/RIGHT.png` | Face closeups with view-specific annotations |
 | `SHIRT_ARTWORK.png` | Original PNG without resampling |
@@ -37,7 +37,7 @@ The design sheet uses the selected pose. Choose idle before drawing/exporting fo
 
 This is a stylized character **design tool**, not automatic production modelling or Blender. The upper garments reuse the original weighted suit topology, with short-sleeve skin colouring, adjustable silhouette, collars/hood details and projected torso art. They deform with the original animation; they are not independently tailored cloth meshes. Different garment choices share topology. Shoes are styled variants of the runtime boot geometry. The original body is clothed: **Bara händer** changes glove colour to skin, rather than creating new hand topology.
 
-Face choices apply local geometry changes to cloned skinned meshes. Eye colour currently tints the original eye material. Hair, beards, freckles, collars and custom objects are simplified rigid shapes attached to bones. They are not photorealistic hair, facial expression rigs or clothing simulation. There is one active shirt graphic combining PNG and text, on one chosen side; independent multilayer decals and simultaneous front/back prints are not implemented. Imported GLBs can be references or attached accessories, not arbitrary replacement humanoid rigs. Imported skinning is preserved, but imported animation clips are not played by the host skeleton.
+Face choices apply local geometry changes to cloned skinned meshes. Eye colour currently tints the original eye material. Hair and beard patches are fitted to the actual head surface. Longer hairstyles add hair curtains, face-framing locks and tapered tails. They remain rigid head attachments; freckles and collars are simplified details. They are not photorealistic hair, facial expression rigs or clothing simulation. There is one active shirt graphic combining PNG and text, on one chosen side; independent multilayer decals and simultaneous front/back prints are not implemented. Imported GLBs can be references or attached accessories, not arbitrary replacement humanoid rigs. Imported skinning is preserved, but imported animation clips are not played by the host skeleton.
 
 `PREVIEW.glb` retains an existing rig and animations. This **does not** certify new clothes/hair/accessories as game-ready. The finishing AI must inspect clipping in every pose, refine geometry and UVs, validate weights and hands/weapon alignment, and deliberately handle the game's generated boots, vest, patches and headset. The original game files are never modified by editing/exporting here. Nothing is uploaded by the studio.
 
@@ -58,9 +58,20 @@ With a static server on port 8765:
 node --test character-design/*.test.mjs
 node character-design/browser-smoke.mjs
 node character-design/studio4-browser.mjs
+node character-design/accessory-quality-browser.mjs
 node tools/verify-owner-runtime.mjs
 ```
 
 Browser runtime: `npm ci --prefix frontline/source/tools/dev --ignore-scripts`, then install Chromium with its pinned Playwright CLI. Optional `CHROMIUM_EXECUTABLE_PATH` selects a local Chromium binary; optional `CHARACTER_TEST_ORIGIN` runs against published Pages. No external CDN assets are needed at runtime. CI runs real WebGL, both desktop and touch mobile sizes, visible face changes, garment styles, original PNG preservation, undo/redo, real GLB accessory roundtrip, all original clips, persistent reopen, ZIP CRC/SHA-256 and parsing the exported skinned GLB. Test screenshots remain local; CI uploads no test artifacts.
 
 Three.js GLTFExporter is vendored at the same 0.180.0 version as the renderer, under Three.js's existing MIT licence. Original Quaternius characters/animations are CC0; see `licenses/quaternius-characters-CC0.txt`.
+
+## 4.1 accessory quality
+
+Built-in accessories now use compound geometry: eyeglass rims/lenses/temples, curved cap brim and seams, open helmet shell, backpack pockets/straps/zips, hollow shoulder guard, wrist band and shield badge. New parts are fitted to actual head/eye bounds or the correct shoulder/wrist bones. **Anpassa till kroppen** resets their position, scale and attachment. Manual transforms remain editable. Mirrored shoulder/wrist parts fit the opposite limb.
+
+Recognisable old presets receive the new geometry. Untouched original defaults are fitted automatically; manually adjusted transforms are retained. Free-form cubes/spheres and imported GLB assets are not guessed into anatomical shapes. Imported GLBs still require the user's transform controls.
+
+Hair and beard patches are clipped from the source head, with interpolated hairlines, small offsets and preserved normals. Headgear suppresses the competing hairstyle. This remains stylized rather than photorealistic hair or collision simulation. Long hair still needs pose-by-pose intersection review before game integration.
+
+The quality browser suite checks 18 real male/female accessory fits against eye, jaw, shoulder and wrist landmarks, checks compound geometry and attachment stability across five motion clips, and captures front/three-quarter/back UI screenshots. It complements the project/export workflow tests; appearance is also reviewed visually.

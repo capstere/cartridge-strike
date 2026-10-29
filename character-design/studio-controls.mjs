@@ -1,6 +1,6 @@
 /** Small studio controller: reversible edits, layers and direct touch/mouse manipulation. */
 import * as T from '../vendor/three/three.module.js';
-import {ensureCreative} from './creative-schema.mjs?v=4';
+import {ensureCreative} from './creative-schema.mjs?v=4.1';
 const $=id=>document.getElementById(id),clamp=T.MathUtils.clamp;
 function copy(p){
  // Asset strings are immutable: share them across history entries rather than
@@ -56,7 +56,8 @@ export function installStudioControls({getProject,workbench,persist,visualChange
  for(const id of ['focus-head','focus-body'])$(id).addEventListener('click',()=>{workbench.pan.set(0,0);workbench.renderPreview();});
  for(const b of document.querySelectorAll('[data-camera]'))b.addEventListener('click',()=>{workbench.yaw={front:0,back:Math.PI,left:-Math.PI/2,right:Math.PI/2}[b.dataset.camera];workbench.pitch=0;workbench.pan.set(0,0);workbench.renderPreview();});
  $('toggle-part').addEventListener('click',()=>{const p=selected();if(!p)return;p.visible=!p.visible;visualChange({rebuild:true});persist();refresh();});
- $('reset-part').addEventListener('click',()=>{const p=selected();if(!p)return;p.rotation=[0,0,0];p.dimensions=[.25,.25,.25];p.position=getProject().kind==='object'?[0,.4,0]:[0,1.25,.16];visualChange({rebuild:true});persist();refresh();});
+ $('reset-part').addEventListener('click',()=>{const p=selected();if(!p)return;if(p.preset)workbench.fitPart(p);else{p.rotation=[0,0,0];p.dimensions=[.25,.25,.25];p.position=getProject().kind==='object'?[0,.4,0]:[0,1.25,.16];}visualChange({rebuild:true});persist();refresh();});
+ $('fit-part').addEventListener('click',()=>{const p=selected();if(!p)return;if(!workbench.fitPart(p)){status('Anpassa importerade modeller med måttreglagen.');return;}visualChange({rebuild:true});persist();refresh();status('Tillbehöret har anpassats till denna grundkropp.');});
  const ray=new T.Raycaster(),ndc=new T.Vector2();
  function hit(e){const r=canvas.getBoundingClientRect();ndc.set((e.clientX-r.left)/r.width*2-1,-(e.clientY-r.top)/r.height*2+1);ray.setFromCamera(ndc,workbench.camera);return ray.intersectObjects([...workbench.partMeshes.values()],true).find(h=>h.object.visible);}
  canvas.addEventListener('pointerdown',e=>{
