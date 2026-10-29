@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="sv">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <meta name="description" content="Cartridge Strike Character Design Studio – referensbilder och AI-brief från spelets riktiga animerade 3D-karaktärer.">
+  <title>Character Design Studio · Cartridge Strike</title>
+  <link rel="icon" href="data:,">
+  <link rel="stylesheet" href="style.css">
+  <script type="importmap">{"imports":{"three":"../vendor/three/three.module.js","three/addons/":"../vendor/three/addons/"}}</script>
+</head>
+<body>
+  <header class="masthead">
+    <div>
+      <a href="../fps/" class="back">← Till Cartridge Strike</a>
+      <p class="eyebrow">CARTRIDGE STRIKE / CHARACTER LAB</p>
+      <h1>Character Design Studio</h1>
+      <p class="lead">Utgå från spelets riktiga karaktär. Rita dina idéer, beskriv detaljerna och skicka designunderlaget tillsammans med originalets GLB till en AI.</p>
+    </div>
+    <div class="stamp">ORIGINALRIGG<br><strong>BEVARAS</strong></div>
+  </header>
+
+  <main>
+    <section class="panel controls" aria-label="Modell och vyer">
+      <div class="field">
+        <label for="gender">Grundmodell</label>
+        <select id="gender"><option value="male">Manlig grundmodell</option><option value="female">Kvinnlig grundmodell</option></select>
+      </div>
+      <div class="field">
+        <label for="team">Utseende i spelet</label>
+        <select id="team">
+          <option value="analysts">Analysts – blå uniform</option>
+          <option value="counterAnalysts">Counter Analysts – olivgrön</option>
+          <option value="hostage">Visitor – ljus uniform</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="pose">Referenspose</label>
+        <select id="pose">
+          <option value="Idle_Loop">Stående</option>
+          <option value="Walk_Loop">Gående</option>
+          <option value="Crouch_Idle_Loop">Hukande</option>
+        </select>
+      </div>
+      <button id="flip" class="secondary" type="button">Vänd fram/bak</button>
+      <div class="status" role="status" aria-live="polite" id="status">Läser in originalmodellerna…</div>
+    </section>
+
+    <section class="sheet" aria-label="Karaktärsvyer">
+      <div class="sheet-heading">
+        <div><p class="eyebrow">01 / CHARACTER DESIGN SHEET</p><h2>Fyra vyer från samma 3D-modell</h2></div>
+        <span class="hint">Rita direkt på figurerna med finger, penna eller mus.</span>
+      </div>
+      <div class="views">
+        <article class="view"><h3>FRAMIFRÅN <small>01</small></h3><div class="canvas-wrap"><canvas data-base="front" aria-label="Modell framifrån"></canvas><canvas data-ink="front" class="ink" aria-label="Rita på framifrån-vyn"></canvas></div><p>Ansikte · hår · jacka</p></article>
+        <article class="view"><h3>BAKIFRÅN <small>02</small></h3><div class="canvas-wrap"><canvas data-base="back" aria-label="Modell bakifrån"></canvas><canvas data-ink="back" class="ink" aria-label="Rita på bakifrån-vyn"></canvas></div><p>Rygg · hår · utrustning</p></article>
+        <article class="view"><h3>VÄNSTER <small>03</small></h3><div class="canvas-wrap"><canvas data-base="left" aria-label="Vänster profil"></canvas><canvas data-ink="left" class="ink" aria-label="Rita på vänsterprofil"></canvas></div><p>Profil · armar · skor</p></article>
+        <article class="view"><h3>HÖGER <small>04</small></h3><div class="canvas-wrap"><canvas data-base="right" aria-label="Höger profil"></canvas><canvas data-ink="right" class="ink" aria-label="Rita på högerprofil"></canvas></div><p>Detaljer · passform · siluett</p></article>
+      </div>
+      <div class="draw-toolbar">
+        <label for="pen-color">Penna</label><input id="pen-color" type="color" value="#e94e4e" aria-label="Välj ritfärg">
+        <label for="pen-size">Storlek</label><input id="pen-size" type="range" min="2" max="15" value="5" aria-label="Pennstorlek">
+        <button id="clear" type="button" class="secondary">Sudda alla markeringar</button>
+        <span class="hint">När du byter modell rensas ritmarkeringarna. Spara bilden först.</span>
+      </div>
+    </section>
+
+    <section class="panel brief">
+      <p class="eyebrow">02 / DESIGN BRIEF</p>
+      <h2>Beskriv det du vill förändra</h2>
+      <p class="muted">Skriv med vanliga ord. Du behöver inte kunna Blender eller 3D-modellering.</p>
+      <div class="fields">
+        <label>Namn på karaktären<input id="character-name" placeholder="Exempel: Alex / Medic / Sniper" value="Min FPS-karaktär"></label>
+        <label>Ansikte och hår<textarea id="face" rows="3" placeholder="Ansiktsform, hudton, ögon, frisyr, skägg…"></textarea></label>
+        <label>Kläder och färger<textarea id="clothes" rows="3" placeholder="Tröja, jacka, byxor, tyg, sömmar, färger…"></textarea></label>
+        <label>Skor och handskar<textarea id="shoes" rows="3" placeholder="Sneakers, boots, snörning, sulor, handskar…"></textarea></label>
+        <label>Tillbehör och siluett<textarea id="gear" rows="3" placeholder="Ryggsäck, skyddsväst, headset, bälte, logo…"></textarea></label>
+        <label>Övrigt och designstil<textarea id="notes" rows="3" placeholder="The Sims-känsla, stiliserad realism, referenser, vad som absolut inte ska ändras…"></textarea></label>
+      </div>
+    </section>
+
+    <section class="panel export">
+      <p class="eyebrow">03 / EXPORT & AI-SAMARBETE</p>
+      <h2>Ta med originalet, bilderna och instruktionerna</h2>
+      <div class="downloads">
+        <button id="save-png" class="primary" type="button">Hämta Character Design Sheet (.png)</button>
+        <button id="save-json" class="secondary" type="button">Hämta AI-brief (.json)</button>
+        <button id="copy-prompt" class="secondary" type="button">Kopiera AI-instruktion</button>
+        <button id="print-sheet" class="secondary" type="button">Skriv ut / spara som PDF</button>
+      </div>
+      <div class="model-downloads">
+        <a href="../assets/fps/models/quaternius-operator-male.glb" download>Hämta manlig originalmodell (.glb) ↓</a>
+        <a href="../assets/fps/models/quaternius-operator-female.glb" download>Hämta kvinnlig originalmodell (.glb) ↓</a>
+      </div>
+      <details><summary>Visa AI-instruktionen</summary><pre id="prompt-preview"></pre></details>
+      <p class="important"><strong>Viktigt:</strong> GLB-filen innehåller den riktiga animerade basfiguren. Spelet lägger också på detaljer via <code>src/fps/character-library.mjs</code> (uniformsfärger, boots, väst, headset och patches). De delarna finns inte nödvändigtvis bakade i GLB-filen. Att ändra en GLB uppdaterar därför inte spelet automatiskt; integration måste göras separat.</p>
+      <p class="credits">3D-bas: Quaternius, CC0 1.0. <a href="../licenses/quaternius-characters-CC0.txt">Licens</a> · <a href="README.md">Teknisk guide</a></p>
+    </section>
+  </main>
+  <script type="module" src="app.mjs"></script>
+</body>
+</html>
