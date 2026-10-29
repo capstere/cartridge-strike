@@ -21,7 +21,7 @@ page.route('**/*',route=>{
 const log=name=>console.log('PASS '+name);
 try{
  await page.goto(origin+'/character-design/',{waitUntil:'domcontentloaded',timeout:45000});
- await page.waitForFunction(()=>document.getElementById('status').textContent.includes('redo!'),{timeout:45000});
+ await page.waitForFunction(()=>document.getElementById('status').textContent.includes('redo!'),null,{timeout:45000});
  log('original skeleton loaded via in-game character-library');
  const sheet=await page.evaluate(()=>{
   const c=document.querySelector('[data-base="front"]');const d=c.getContext('2d').getImageData(0,0,c.width,c.height).data;
@@ -37,7 +37,7 @@ try{
  await page.locator('#part-type').selectOption('helmet');
  await page.locator('#add-part').click();
  assert.equal(await page.locator('.part-item').count(),1);
- await page.locator('#pos-x').fill('9');
+ await page.locator('#pos-x').evaluate(el=>{el.value='9';el.dispatchEvent(new Event('input',{bubbles:true}));});
  await page.locator('#part-note').fill('Make a soft helmet with fabric lining.');
  await page.locator('#pose').selectOption('Crouch_Idle_Loop');
  await page.locator('#play').click();
