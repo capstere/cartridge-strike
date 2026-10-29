@@ -13,7 +13,7 @@ test('outfits, shirt text and detailed face requests are preserved in handoff',(
  const p=newProject({newCharacter:true});const c=p.creative;
  c.outfit='hoodie';c.hair='ponytail';c.face.eyeColor='#88aaff';
  c.face.jaw='Kantig';c.print.text='QC TEAM 05';
- c.print.imageMode='pattern';c.print.imageScale=130;
+ c.print.imageMode='pattern';c.print.imageScale=130;c.print.imageData='data:image/png;base64,iVBORw0KGgo=';
  c.requestedAnimations=['wave','crouchJump'];
  validateProject(p);
  const md=aiBrief(p);
