@@ -1,10 +1,10 @@
 /** Versioned level document. Parsing is deliberately independent of the renderer. */
 import {BASE_COMMIT,GAME_VERSION,PATCH_FORMAT,PATCH_SCHEMA} from '../core.mjs';
-import {validateEntry,validateFloorRect} from './architecture.mjs';
+import {validateEntry,validateFloorRect} from './architecture.mjs?v=4.6.0';
 import {assetHash} from '../library/glb-utils.mjs';
 import {makeZip,readZip,PROJECT_ZIP_MAX_BYTES} from '../library/zip.mjs';
-import {floor5Baseline} from './project-scene.mjs';
-import {parseArchitecture} from './architecture.mjs';
+import {floor5Baseline} from './project-scene.mjs?v=4.6.0';
+import {parseArchitecture} from './architecture.mjs?v=4.6.0';
 import {LIBRARY_MAP} from '../library/catalog.mjs?v=4.4.0';
 import {parsePosters} from './posters.mjs';
 import {parseTreatments} from './treatments.mjs';
