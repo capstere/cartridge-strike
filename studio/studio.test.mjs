@@ -67,7 +67,7 @@ test('context furniture dock edits the actual model with real validation and und
  assert.match(editor,/installSelectionDock/);
  assert.match(editor,/selectionDock\.sync\(o/);
  assert.match(editor,/child\.elevation=/);
- assert.match(html,/src="new\.mjs\?v=4\.4\.0"/);
+ assert.match(html,/src="new\.mjs\?v=4\.5\.0"/);
 });
 
 test('free building defaults to optional smart placement, with explicit diagnostics',()=>{
@@ -151,4 +151,21 @@ test('kid-friendly mounting is a real editor action, not decoration-only UI',()=
  assert.match(walls,/export function poseOnWall/);
  for(const id of ['studio:wall-picture','studio:wall-clock','studio:wall-shelf'])
   assert(procedural.includes(id));
+});
+
+test('the highlighted 3D snap target is tied to actual tabletop/wall placement, not a decorative mockup',()=>{
+ const editor=source('furniture-editor/new.mjs');
+ const preview=source('furniture-editor/snap-highlights.mjs');
+ const browser=source('tools/studio-ux-browser.mjs');
+ assert.match(editor,/preferredPlacementPoint\(pick,objects\(\),arch\(\)\)/);
+ assert.match(editor,/snapFeedback=placementPreview\(pose,q,objects\(\),arch\(\)/);
+ assert.match(editor,/highlightSnapSurface\(snapFeedback\)/);
+ assert.match(editor,/userData\.snapTargetId=spec\.targetId/);
+ assert.match(editor,/previewBox\(fit\.x,\(fit\.elevation\|\|0\)\+fit\.height\/2/);
+ assert.match(editor,/addFurniture\(pendingFurniture,q\.x,q\.z,q\.y\)/);
+ assert.match(editor,/ctx\.strokeStyle='#13b48d'/);
+ assert.match(editor,/if\(edge\)/);
+ assert.match(preview,/export function preferredPlacementPoint/);
+ assert.match(preview,/export function placementPreview/);
+ assert.match(browser,/visual3DSnapTargets:true/);
 });

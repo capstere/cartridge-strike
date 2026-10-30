@@ -766,13 +766,13 @@
     },
     {
       "path": "furniture-editor/new.html",
-      "bytes": 17051,
-      "sha256": "57c1f37df4693fc39f733d534f1e2e9622f5bc26e2bc7adf1286c3811fc795d4"
+      "bytes": 17053,
+      "sha256": "b73907dce52a127e5ef325e9e78893f4436d656f3d4e491f43b77d5b56f1b767"
     },
     {
       "path": "furniture-editor/new.mjs",
-      "bytes": 82858,
-      "sha256": "cd38aafa203b04a4c556c34ca77ba0c2e3b23242835bae137f8d6ccec7869c04"
+      "bytes": 85349,
+      "sha256": "cdb90307becf7dfda0d87f33369e85620f1e046a9c658aea756649f5e6ca5f4d"
     },
     {
       "path": "furniture-editor/selection-dock.mjs",
@@ -783,6 +783,11 @@
       "path": "furniture-editor/smart-placement.mjs",
       "bytes": 5625,
       "sha256": "b47dda4748513c2a55d41a55dc3e0672e58a97c28fa306a3451cd80dbb0f6a3b"
+    },
+    {
+      "path": "furniture-editor/snap-highlights.mjs",
+      "bytes": 2378,
+      "sha256": "10169add6c63415ff995c4477106a1e4bef89390d42d247f1399661366c4664d"
     },
     {
       "path": "furniture-editor/soft-placement.mjs",
@@ -1335,7 +1340,7 @@
       "sha256": "9b0c24534a47f2e1c9549a63a5e00a850577e22fe8d18dbc7a532008a027cb89"
     }
   ],
-  "bytes": 22375882,
+  "bytes": 22380753,
   "sourceDirectoriesExcluded": [
     "references",
     "reviews",
