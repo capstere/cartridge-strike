@@ -57,6 +57,9 @@ try{
  assert(await level.locator('#editDock').isHidden());
  await level.locator('#editDockReopen').click();
  assert(await level.locator('#editDock').isVisible(),'Object editing reopens on demand');
+ await level.locator('[data-tab="furnish"]').click();
+ await level.locator('#catalogCards [data-asset="studio:orange-kitchen-chair"]').click();
+ await level.locator('#editDock').waitFor({state:'hidden',timeout:5000});
  await level.reload({waitUntil:'domcontentloaded'});
  await level.waitForFunction(()=>!!window.__levelStudio?.project?.furniture?.added?.length);
  const saved=await level.evaluate(()=>__levelStudio.project.furniture.added.find(o=>o.id==='NY-BORD-0001'));
