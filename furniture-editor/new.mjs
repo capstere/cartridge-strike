@@ -38,7 +38,7 @@ function updateFirstBuild(){
  const panel=$('firstBuild'),hidden=p().mode!=='new-level'||localStorage.getItem(guideKey('guide-hidden'))==='1';
  panel.hidden=hidden;$('showGuide').hidden=p().mode!=='new-level'||!hidden;if(hidden)return;
  const steps=[
-  {done:floors().length>0,text:'Dra ut ett rum i planen eller 3D. Fyra väggar byggs automatiskt.',button:'VÄLJ RUM'},
+  {done:floors().length>0,text:'Tryck Skapa rum så får du ett färdigt golv, väggar och en standarddörr.',button:'SKAPA RUM'},
   {done:arch().some(e=>['door','card-door','opening'].includes(e.kind)),text:'Klicka på en vägg för att sätta dit en dörr. Dra den sedan längs väggen.',button:'VÄLJ DÖRR'},
   {done:objects().length>0,text:'Välj en möbelbild och klicka där möbeln ska stå.',button:'VISA MÖBLER'},
   {done:localStorage.getItem(guideKey('walked'))==='1',text:'Gå runt i banan med FPS-spelets modeller och fysik.',button:'GÅ RUNT'},
@@ -308,22 +308,81 @@ function draw3D(){if(!ensureRenderer())return;group.traverse(o=>{if(o.isMesh){o.
  position3DCamera();
  const r=$('scene3d').getBoundingClientRect();renderer.setSize(Math.max(1,r.width),Math.max(1,r.height),false);camera.aspect=r.width/r.height;camera.updateProjectionMatrix();update3DPreview();
 }
+/** Starter room is a SINGLE undoable project change: actual floor + connected wall pieces + real standard door. */
+function makeStarterRoom(){
+ if(p().mode!=='new-level'||floors().length||arch().length)return false;
+ const before=JSON.stringify(p());
+ try{
+  const b=p().ground.bounds,cx=snap((b.x0+b.x1)/2),cz=snap((b.z0+b.z1)/2);
+  // 8 x 8 units is large enough for a standard 1.20-wide doorway.
+  if(Math.min(b.x1-b.x0,b.z1-b.z0)<8)throw Error('Gör banans grundyta lite större först.');
+  const x0=snap(cx-4),x1=snap(cx+4),z0=snap(cz-4),z1=snap(cz+4);
+  if(!$('floorName').value.trim())$('floorName').value='Mitt första rum';
+  makeFloor({x:x0,z:z0},{x:x1,z:z1},'room');
+  const bottom=arch().find(w=>w.kind==='wall'&&w.a[1]===z0&&w.b[1]===z0&&Math.abs(w.b[0]-w.a[0])>7.9);
+  if(!bottom)throw Error('Kunde inte hitta rummets vägg.');
+  const painted=planPaintOverWall(arch(),bottom.id,[snap(cx-.6),z0],[snap(cx+.6),z0],'door',
+   {posters:p().architecture.posters||[]});
+  arch().splice(0,arch().length,...painted.entries.filter(w=>!w.deleted));
+  p().architecture.posters=painted.posters;
+  selected=null;pendingFurniture=null;pendingTemplate=null;first=null;
+  if(tab!=='build')switchTab('build');
+  setBuildTool('select');
+  if(view!=='plan')$('planView').click();
+  // Show the ROOM, not the full 80-unit empty canvas.
+  zoom=clamp(Math.max(b.x1-b.x0,b.z1-b.z0)/12,1,10);
+  offset={x:(b.x0+b.x1)/2-cx,z:(b.z0+b.z1)/2-cz};view3dCenter=null;
+  commit(before);
+  status('Klart! Ett rum med fyra väggar och en riktig dörr. Välj nu MÖBLERA och klicka på en bild.');
+  return true;
+ }catch(error){
+  project=JSON.parse(before);sceneProject=null;sceneModel=null;
+  redraw();status('Rummet kunde inte skapas: '+error.message);return false;
+ }
+}
+function updateKidSteps(){
+ const ready=floors().length>0;
+ $('kidRoom').querySelector('strong').textContent=ready?'1. Rita nytt rum':'1. Skapa rum';
+ $('kidWalk').querySelector('strong').textContent=view==='walk'?'3. Till bygget':'3. Gå runt';
+ $('kidRoom').classList.toggle('kid-step-primary',!ready);
+}
+$('kidRoom').addEventListener('click',()=>{
+ if(makeStarterRoom())return;
+ if(view==='walk')leaveWalk();
+ switchTab('build');setBuildTool('room');
+ if(view!=='plan')$('planView').click();
+ status('Rita ett nytt rum: dra mellan två hörn i planen. Väggarna byggs automatiskt.');
+});
+$('kidFurnish').addEventListener('click',()=>{
+ if(p().mode==='new-level'&&!floors().length&&!makeStarterRoom())return;
+ if(matchMedia('(max-width:700px)').matches)document.querySelector('[data-mobile-tab="furnish"]').click();
+ else switchTab('furnish');
+ status('Välj en möbelbild och klicka på platsen i rummet. Du kan alltid flytta den igen.');
+});
+$('kidWalk').addEventListener('click',()=>{
+ if(view==='walk'){leaveWalk();return;}
+ if(p().mode==='new-level'&&!floors().length&&!makeStarterRoom())return;
+ $('walkView').click();
+ if(view==='walk')updateKidSteps();
+});
+$('kidSave').addEventListener('click',()=>$('save').click());
+
 const toolLabels={select:'VÄLJ',room:'RUM',corridor:'GOLV',wall:'VÄGG',door:'DÖRR','card-door':'KORTDÖRR',opening:'ÖPPNING',window:'FÖNSTER',glazed:'GLAS',poster:'AFFISCH',curtain:'GARDIN',blind:'PERSIENN'};
 function updateGuide(){const tool=$('tool').value,active=tab==='build'&&tool!=='select',placing=!!pendingFurniture,chosen=lookup();
  $('activeMode').textContent=placing?'PLACERA '+pendingFurniture.name:tab==='build'?toolLabels[tool]||'BYGG':tab==='play'?'SPEL':'MÖBLERA';
- $('activeHelp').textContent=placing?'Klicka i planen eller 3D. Placera även vid varning; flytta senare.':first?'Klicka slutpunkten eller dra från start.':active?['room','corridor','wall'].includes(tool)?'Klicka två punkter eller dra i planen eller 3D.':'Klicka direkt på en vägg i planen eller 3D.':
+ $('activeHelp').textContent=placing?'Klicka där möbeln ska stå. Flytta den sedan precis som du vill.':first?'Klicka slutpunkten eller dra från start.':active?['room','corridor','wall'].includes(tool)?'Klicka två punkter eller dra i planen eller 3D.':'Klicka direkt på en vägg i planen eller 3D.':
   chosen&&!chosen.source&&floors().includes(chosen)?'Dra ett orange hörn för att ändra rummet. Dörrar och fönster följer med.':
   directInsert(chosen)?'Dra öppningen längs väggen. Den gamla luckan stängs automatiskt.':
   chosen?.kind==='wall'?'Dra en orange ändpunkt för att ändra en fri vägg.':'Klicka för att välja. Dra för att flytta.';
  $('cancelAction').hidden=!active&&!placing&&!first;$('deleteAction').disabled=!lookup();
 }
-function redraw(){$('modeLabel').textContent=p().mode==='edit-floor5'?'DESIGNSTUDION / FLOOR 5':'DESIGNSTUDION / NY BANA';updateProps();updateGuide();updateFirstBuild();$('undo').disabled=!history.length;$('redo').disabled=!future.length;if(view==='plan')drawPlan();else if(view==='3d')draw3D();}
+function redraw(){updateKidSteps();$('modeLabel').textContent=p().mode==='edit-floor5'?'DESIGNSTUDION / FLOOR 5':'DESIGNSTUDION / NY BANA';updateProps();updateGuide();updateFirstBuild();$('undo').disabled=!history.length;$('redo').disabled=!future.length;if(view==='plan')drawPlan();else if(view==='3d')draw3D();}
 function switchTab(t){if(view==='walk')leaveWalk();tab=t;pendingFurniture=null;pendingTemplate=null;for(const b of document.querySelectorAll('[data-tab]'))b.classList.toggle('active',b.dataset.tab===t);for(const s of document.querySelectorAll('[data-panel]'))s.hidden=s.dataset.panel!==t;first=null;redraw();}
 document.querySelectorAll('[data-tab]').forEach(b=>b.onclick=()=>switchTab(b.dataset.tab));
 $('firstBuildDismiss').onclick=()=>{localStorage.setItem(guideKey('guide-hidden'),'1');updateFirstBuild();};
 $('showGuide').onclick=()=>{localStorage.removeItem(guideKey('guide-hidden'));updateFirstBuild();};
 $('firstBuildNext').onclick=()=>{switch(Number($('firstBuild').dataset.step)){
- case 0:switchTab('build');setBuildTool('room');$('planView').click();break;
+ case 0:$('kidRoom').click();break;
  case 1:switchTab('build');setBuildTool('door');break;
  case 2:switchTab('furnish');$('catalogSearch').focus();break;
  case 3:$('walkView').click();break;

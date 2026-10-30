@@ -172,3 +172,25 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,su
 #results>details{margin-top:14px;padding:10px;border-radius:9px;border:1px solid #49696c;background:#17383c;color:#d1e8e0}
 #results>details summary{cursor:pointer;font-weight:700}
 #results>details>div{white-space:pre-wrap;font-size:.75rem;margin-top:8px}
+/* Child-first four-step toolbar: big buttons, zero mandatory setup forms. */
+.kid-steps{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;flex:0 0 auto;
+ padding:8px 12px;background:#d7e9df;border-bottom:1px solid #a8c9b9;z-index:3}
+.kid-steps button{display:flex;justify-content:center;align-items:center;gap:9px;min-width:0;min-height:56px;
+ border:2px solid #b4d1c4;border-radius:12px;margin:0;padding:8px 9px;background:#fff;color:#195148;
+ font-size:.9rem;font-weight:800;box-shadow:0 2px 4px #244f4012;line-height:1.2}
+.kid-steps button:hover{background:#edfff4;border-color:#2e8d72}
+.kid-steps button:focus-visible{outline:3px solid #348b71;outline-offset:2px}
+.kid-steps button span{font-size:1.4rem;line-height:1}
+.kid-steps button.kid-step-primary{background:#206c60;color:white;border-color:#277963}
+.kid-categories{display:flex;flex-wrap:wrap;gap:7px;margin:10px 0}
+.kid-categories button{min-height:42px;margin:0;background:#244b4c;border-color:#5f9890;font-size:.8rem;
+ border-radius:99px;padding:8px 13px;flex:0 0 auto}
+.kid-categories button[aria-pressed="true"]{background:#b9f1d4;color:#17453b;border-color:#88d3b2}
+@media(max-width:700px){
+ .kid-steps{gap:5px;padding:7px 6px}
+ .kid-steps button{flex-direction:column;min-height:64px;gap:3px;font-size:.68rem;padding:6px 2px;border-radius:9px}
+ .kid-steps button strong{font-size:.69rem;line-height:1.15}
+ .kid-steps button span{font-size:1.25rem}
+ .kid-categories{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:thin;padding-bottom:5px}
+ .kid-categories button{white-space:nowrap}
+}
