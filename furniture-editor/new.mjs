@@ -22,6 +22,7 @@ import {importLocalGLB,getLocalFile,localLibrary} from './library/models.mjs';
 import {assetHash} from './library/glb-utils.mjs';
 import {installSelectionDock} from './selection-dock.mjs?v=4.4.0';
 import {planAdjacentRoom,ADJACENT_SIDES} from './adjacent-room.mjs';
+import {planDraggedRoom} from './build/room-drag.mjs?v=4.6.0';
 
 const $=id=>document.getElementById(id),canvas=$('plan'),ctx=canvas.getContext('2d');
 const catalogEntries=LIBRARY_ALL;
@@ -142,14 +143,27 @@ function find(x,z){for(const d of decorations()){const at=decorationAt(d);if(at&
   if(Math.hypot(x-a.a[0]-dx*t,z-a.a[1]-dz*t)<.18)return a;
  }
  return floors().find(f=>x>=f.x0&&x<=f.x1&&z>=f.z0&&z<=f.z1)||null;}
-function makeFloor(a,b,role){const x0=Math.min(a.x,b.x),x1=Math.max(a.x,b.x),z0=Math.min(a.z,b.z),z1=Math.max(a.z,b.z);
- if(x1-x0<.5||z1-z0<.5||x1-x0>50||z1-z0>50)throw Error('Golvet måste vara 0,5–50 modellenheter på varje sida.');
+function makeFloor(a,b,role){
+ const {rect,edges}=planDraggedRoom(a,b,p().ground.bounds);
  const id=nextId('BYGG-G-'),name=$('floorName').value.trim()||`${role==='room'?'Rum':'Korridor'} ${floors().length+1}`;
- const f={id,name,role,surface:$('surface').value,x0,z0,x1,z1};p().ground.floors.push(f);if(p().mode==='edit-floor5')model().floors.push({...f,polygon:[[x0,z0],[x1,z0],[x1,z1],[x0,z1]]});if(role==='room'){
-  for(const [u,v] of [[ [x0,z0],[x1,z0] ],[[x1,z0],[x1,z1]],[[x1,z1],[x0,z1]],[[x0,z1],[x0,z0]]])makeSegment('wall',u,v);
- }return f;}
+ const f={id,name,role,surface:$('surface').value,...rect};
+ const scene=model(),beforeFloors=p().ground.floors.length,
+  beforeWalls=arch().length,beforeSceneFloors=scene.floors.length;
+ try{
+  p().ground.floors.push(f);
+  if(p().mode==='edit-floor5')scene.floors.push({...f,polygon:[[rect.x0,rect.z0],[rect.x1,rect.z0],[rect.x1,rect.z1],[rect.x0,rect.z1]]});
+  if(role==='room')for(const [u,v] of edges)makeSegment('wall',u,v);
+  return f;
+ }catch(error){
+  // A drawing failure must never leave an invisible partial room or walls.
+  p().ground.floors.length=beforeFloors;
+  arch().length=beforeWalls;
+  if(p().mode==='edit-floor5')scene.floors.length=beforeSceneFloors;
+  throw error;
+ }
+}
 function makeSegment(kind,a,b){
- if(kind==='wall'&&arch().some(e=>e.kind==='wall'&&((dist({x:e.a[0],z:e.a[1]},{x:a[0],z:a[1]})<.01&&dist({x:e.b[0],z:e.b[1]},{x:b[0],z:b[1]})<.01)||(dist({x:e.b[0],z:e.b[1]},{x:a[0],z:a[1]})<.01&&dist({x:e.a[0],z:e.a[1]},{x:b[0],z:b[1]})<.01))))return arch().find(e=>e.kind==='wall');const len=Math.hypot(a[0]-b[0],a[1]-b[1]);if(len<.25||len>90)throw Error('Byggdelen måste vara 0,25–90 modellenheter lång.');
+ if(kind==='wall'&&arch().some(e=>e.kind==='wall'&&((dist({x:e.a[0],z:e.a[1]},{x:a[0],z:a[1]})<.01&&dist({x:e.b[0],z:e.b[1]},{x:b[0],z:b[1]})<.01)||(dist({x:e.b[0],z:e.b[1]},{x:a[0],z:a[1]})<.01&&dist({x:e.a[0],z:e.a[1]},{x:b[0],z:b[1]})<.01))))return arch().find(e=>e.kind==='wall');const len=Math.hypot(a[0]-b[0],a[1]-b[1]);if(len<.25||len>100)throw Error('Byggdelen måste vara 0,25–100 modellenheter lång.');
  const span=isDoor(kind)?standardPassageSpan(a,b):{a,b};
  const id=nextId(['wall','window','glazed'].includes(kind)?'BYGG-V-':'BYGG-D-'),entry={id,kind,...span,height:isDoor(kind)?2.4:2.85,thickness:.11,sill:Number($('sill').value)||.9,finish:'white'};
  arch().push(entry);return entry;}
@@ -258,7 +272,9 @@ function moveObject(o,x,z){if(arch().includes(o)){
  return false;}
 function finishBuild(a,q,tool){try{const before=JSON.stringify(p());
  selected=['room','corridor'].includes(tool)?makeFloor(a,q,tool).id:makeSegment(tool,[a.x,a.z],[q.x,q.z]).id;
- first=null;drawGesture=null;commit(before);status('Ritad. Bygg vidare eller tryck Esc för att välja och flytta.');
+ first=null;drawGesture=null;commit(before);
+ status(tool==='room'?'Rummet är klart! Du kan fortsätta bygga eller trycka Esc för att möblera.':
+  'Golvytan är klar. Fortsätt bygga eller tryck Esc för att välja.');
  }catch(err){first=null;drawGesture=null;status(err.message);redraw();}}
 function handleBuild(q,tool,gesture){try{
  if(['poster','curtain','blind'].includes(tool)){const hit=wallAtPoint(arch(),[q.x,q.z],{radius:.4});if(!hit)throw Error('Klicka på en vägg eller ett fönster för att fästa tillbehöret.');const before=JSON.stringify(p());p().architecture.posters||=[];p().architecture.treatments||=[];let fresh;if(tool==='poster'){fresh=makePoster(hit.wall,p().architecture.posters,hit.t);p().architecture.posters.push(fresh);}else if(tool==='blind'){fresh=createBlind(arch(),p().architecture.treatments,hit.wall.id);p().architecture.treatments.push(fresh);}else{const w=hit.wall,L=hit.length,half=Math.min(.45,3/L),t=clamp(hit.t,half,1-half),pt=v=>w.a.map((n,i)=>n+(w.b[i]-n)*v);fresh=createCurtain(arch(),p().architecture.treatments,w.id,pt(t-half),pt(t+half));p().architecture.treatments.push(fresh);}selected=fresh.id;commit(before);return;}
