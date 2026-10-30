@@ -781,8 +781,8 @@
     },
     {
       "path": "furniture-editor/smart-placement.mjs",
-      "bytes": 5466,
-      "sha256": "bc824d3122caff3d23c5d9d82120b597b225e0b7521cbeb7e049ba2e790977e3"
+      "bytes": 5625,
+      "sha256": "b47dda4748513c2a55d41a55dc3e0672e58a97c28fa306a3451cd80dbb0f6a3b"
     },
     {
       "path": "furniture-editor/soft-placement.mjs",
@@ -1335,7 +1335,7 @@
       "sha256": "9b0c24534a47f2e1c9549a63a5e00a850577e22fe8d18dbc7a532008a027cb89"
     }
   ],
-  "bytes": 22375723,
+  "bytes": 22375882,
   "sourceDirectoriesExcluded": [
     "references",
     "reviews",
