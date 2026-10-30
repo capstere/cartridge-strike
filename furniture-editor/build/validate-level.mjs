@@ -1,4 +1,4 @@
-import {parseProject} from './level-project.mjs?v=3.5.0';
+import {parseProject} from './level-project.mjs?v=4.4.0';
 import {levelProjectToWorldData} from '../../src/fps/level-adapter.mjs?v=3.5.0';
 import {createWorld,inheritFloor5Gameplay} from '../../src/fps/world.mjs?v=3.5.0';
 import {resolveProjectScene,projectWallPieces} from './project-scene.mjs';
@@ -7,6 +7,7 @@ import {wallPieces} from './architecture.mjs';
 import {testDoorTraversal} from './door-traversal.mjs';
 import {parsePosters} from './posters.mjs';
 import {parseTreatments} from './treatments.mjs';
+import {poseOnWall} from '../wall-mounts.mjs';
 
 /** Validation never labels a structural-only result playable. */
 export function validateLevel(input,{engine=false}={}){
@@ -15,6 +16,11 @@ export function validateLevel(input,{engine=false}={}){
  p=inheritFloor5Gameplay(p);const scene=resolveProjectScene(p),g=p.ground,play=p.gameplay,entries=scene.entries;
  try{parsePosters(p.architecture.posters,entries);parseTreatments(p.architecture.treatments,entries);}
  catch(e){add('V08','fail','Fästfel: '+e.message,null,'Fäst tillbehöret på en befintlig vägg eller ta bort det.');}
+ for(const item of scene.items.filter(o=>o.wallMount)){
+  if(!poseOnWall(item,item.wallMount,entries))
+   add('V08','warn','Väggföremålet saknar en giltig vägg eller får inte plats.',item.id,
+    'Flytta föremålet till en vägg, byt till golv eller justera höjden.');
+ }
  const onFloor=(x,z)=>scene.floors.some(f=>inside(x,z,f.polygon));
  const edited=e=>p.mode==='new-level'||!e.source||p.architecture.edits.some(a=>a.id===e.id);
  const points=[...play.spawns,...[play.objectives.bomb,play.objectives.rescue,...play.objectives.hostages].filter(Boolean)];

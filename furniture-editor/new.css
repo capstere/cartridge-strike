@@ -229,3 +229,13 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,su
  .room-choice-grid button span{margin:0;font-size:1.4rem}
  .room-choice-custom{font-size:.76rem}
 }
+
+/* Intuitive furniture and wall attachments; no additional specialist tool panel. */
+.placement-method{display:block;border:1px solid #6c9e8f;border-radius:10px;background:#234842;
+ padding:10px 12px;margin:11px 0;color:#e9f6ec;font-weight:760}
+.placement-method select{margin-top:7px;min-height:42px}
+.edit-dock-fields .dock-attachment-setting{grid-column:span 2}
+#dockWallHeightRow{grid-column:span 1}
+#dockMountMode{min-height:42px}
+@media(max-width:700px){.placement-method{padding:10px;margin:9px 0}
+ .edit-dock-fields .dock-attachment-setting{grid-column:span 2}}

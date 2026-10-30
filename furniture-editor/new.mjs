@@ -1,6 +1,6 @@
 import {makePoster,locatePoster} from './build/posters.mjs';
 import {createCurtain,createBlind,treatmentPosition} from './build/treatments.mjs';
-import {buildProjectFurniture,buildProjectDecorations} from './build/project-visuals.mjs?v=3.5.0';
+import {buildProjectFurniture,buildProjectDecorations} from './build/project-visuals.mjs?v=4.4.0';
 import {resolveProjectScene,writeProjectScene,floor5Baseline,projectWallPieces} from './build/project-scene.mjs';
 import {inheritFloor5Gameplay} from '../src/fps/world.mjs?v=3.5.0';
 import {wallAtPoint,planPaintOverWall} from './build/paint-over-wall.mjs';
@@ -8,17 +8,18 @@ import {planResizeFloor,planResizeFloorEdge,planSlideInsert,planMoveWallEnd,room
 import {parsePosters} from './build/posters.mjs';
 import {parseTreatments} from './build/treatments.mjs';
 import * as T from '../vendor/three/three.module.js';
-import {exportProject,parseProject,parseProjectZip,exportProjectZip} from './build/level-project.mjs?v=3.6.0';
-import {validateLevel} from './build/validate-level.mjs?v=3.5.0';
+import {exportProject,parseProject,parseProjectZip,exportProjectZip} from './build/level-project.mjs?v=4.4.0';
+import {validateLevel} from './build/validate-level.mjs?v=4.4.0';
 import {validate,corners,inside,segmentIntersectsRectangle,intersects} from './core.mjs';
 import {wallPieces,standardPassageSpan,standardDoorMarkerSpan,isDoor} from './build/architecture.mjs';
-import {LIBRARY_ALL} from './library/catalog.mjs?v=3.7.0';
-import {upgradeLegacyOrangeChair} from './library/procedural.mjs?v=3.5.0';
-import {proposeSmartPose,duplicateFurnitureAssembly} from './smart-placement.mjs';
+import {LIBRARY_ALL} from './library/catalog.mjs?v=4.4.0';
+import {upgradeLegacyOrangeChair} from './library/procedural.mjs?v=4.4.0';
+import {proposeSmartPose,duplicateFurnitureAssembly} from './smart-placement.mjs?v=4.4.0';
+import {poseOnWall,syncWallMounts} from './wall-mounts.mjs?v=4.4.0';
 import {findNearbyFreePlacement} from './soft-placement.mjs';
 import {importLocalGLB,getLocalFile,localLibrary} from './library/models.mjs';
 import {assetHash} from './library/glb-utils.mjs';
-import {installSelectionDock} from './selection-dock.mjs';
+import {installSelectionDock} from './selection-dock.mjs?v=4.4.0';
 import {planAdjacentRoom,ADJACENT_SIDES} from './adjacent-room.mjs';
 
 const $=id=>document.getElementById(id),canvas=$('plan'),ctx=canvas.getContext('2d');
@@ -52,7 +53,7 @@ function updateFirstBuild(){
 }
 const floorAt=(x,z)=>floors().find(f=>inside(x,z,f.polygon||[[f.x0,f.z0],[f.x1,f.z0],[f.x1,f.z1],[f.x0,f.z1]]));
 const nextId=prefix=>{let i=1;const ids=new Set([...floors(),...arch(),...objects()].map(o=>o.id));while(ids.has(prefix+String(i).padStart(4,'0')))i++;return prefix+String(i).padStart(4,'0');};
-function commit(before){if(p().mode==='edit-floor5')writeProjectScene(p(),model());if(before===JSON.stringify(p()))return;if(view==='walk')leaveWalk();history.push(before);if(history.length>60)history.shift();future=[];persist();redraw();queueGameLook();}
+function commit(before){syncWallMounts(objects(),arch());if(p().mode==='edit-floor5')writeProjectScene(p(),model());if(before===JSON.stringify(p()))return;if(view==='walk')leaveWalk();history.push(before);if(history.length>60)history.shift();future=[];persist();redraw();queueGameLook();}
 function persist(){try{localStorage.setItem(p().mode==='edit-floor5'?'cartridge-floor5-level-v2':'cartridge-new-level-v2',JSON.stringify(p()));$('autosave').textContent='Ändringar sparade lokalt.';}catch{$('autosave').textContent='Lokal lagring är full. Spara ZIP nu.';}}
 function point(e){const r=canvas.getBoundingClientRect(),b=p().ground.bounds,scale=Math.min(canvas.width/(b.x1-b.x0),canvas.height/(b.z1-b.z0))*zoom;
  return {x:snap(((e.clientX-r.left)*canvas.width/r.width-canvas.width/2)/scale+(b.x0+b.x1)/2-offset.x),z:snap(((e.clientY-r.top)*canvas.height/r.height-canvas.height/2)/scale+(b.z0+b.z1)/2-offset.z)};}
@@ -157,9 +158,15 @@ function placementIssue(item,other=objects()){
  if(!floorAt(item.x,item.z))return 'Utanför golvet. Rita golv här eller flytta föremålet senare.';
  return validate(item,other,occupyData(),null,{emptyFixed:p().mode==='new-level'||p().legacyPatch?.emptyFixed===true});
 }
-function placementStatus(item){status(`${item.assetName||item.kind} placerad. Dra för att flytta eller välj exakta mått.`);}
+function placementStatus(item){
+ const where=item.wallMount?'på väggen':item.mountId?'ovanpå möbeln':'på golvet';
+ status(`${item.assetName||item.kind} placerad ${where}. Dra för att flytta eller välj exakta mått.`);
+}
+function mountPose(item,point,mode=$('placementMode').value){
+ return proposeSmartPose(item,point,objects(),{mode,walls:arch()});
+}
 function easyFurniturePose(item){
- if(!$('autoPlace').checked||item.mountId||item.collision==='none')return {item,adjusted:false};
+ if(!$('autoPlace').checked||item.mountId||item.wallMount||item.collision==='none')return {item,adjusted:false};
  const floor=floorAt(item.x,item.z);
  if(!floor)return {item,adjusted:false};
  return findNearbyFreePlacement(item,candidate=>
@@ -170,9 +177,10 @@ function addFurniture(entry,x,z){const floor=floorAt(x,z),id=nextId('NY-OBJ-');
  const assetId=entry.id==='clone'?pendingTemplate?.assetId:entry.assetId||entry.id;
  let item={...(pendingTemplate||{}),id,roomId:floor?.id||'',kind:pendingTemplate?.kind||entry.kind||'prop',assetId,assetName:entry.name,x,z,yaw:pendingYaw,w:entry.width,d:entry.depth,height:entry.height};
  if(entry.chairRole&&!pendingTemplate)item.chairRole=entry.chairRole;
- item={...item,...proposeSmartPose(item,{x,z},objects())};
+ item={...item,...mountPose(item,{x,z})};
+  item.roomId=floorAt(item.x,item.z)?.id||floor?.id||'';
   const fitted=easyFurniturePose(item);item=fitted.item;
- if(pendingTemplate){const copies=duplicateFurnitureAssembly(pendingTemplate,objects(),{x:item.x,z:item.z,yaw:item.yaw,mountId:item.mountId,elevation:item.elevation||0});for(const copy of copies)copy.roomId=floor?.id||'';objects().push(...copies);item=copies[0];}else objects().push(item);if(entry.id.startsWith('local:')){
+ if(pendingTemplate){const copies=duplicateFurnitureAssembly(pendingTemplate,objects(),{x:item.x,z:item.z,yaw:item.yaw,mountId:item.mountId,wallMount:item.wallMount||null,elevation:item.elevation||0,collision:item.collision});for(const copy of copies)copy.roomId=floor?.id||'';objects().push(...copies);item=copies[0];}else objects().push(item);if(entry.id.startsWith('local:')){
   if(!p().assets.local.some(a=>a.assetId===entry.id))p().assets.local.push({assetId:entry.id,file:`assets/models/${entry.id.slice(6)}.glb`,bytes:entry.byteCount||entry.size,license:'private, unverified'});
  }else if(entry.id!=='clone'&&!p().assets.library.includes(assetId))p().assets.library.push(assetId);
  selected=item.id;placementStatus(item);
@@ -200,13 +208,35 @@ const selectionDock=installSelectionDock({
   for(const child of objects().filter(child=>child.mountId===item.id&&Number.isFinite(child.elevation)))
    child.elevation=Math.max(0,Math.round((child.elevation+delta)*1000)/1000);
   placementStatus(item);commit(before);
+ },
+ onMountMode:mode=>{
+  const item=lookup();
+  if(!item||!objects().includes(item))return false;
+  const proposed=mountPose(item,{x:item.x,z:item.z},mode);
+  if(mode==='wall'&&!proposed.wallMount)return false;
+  if(mode==='surface'&&!proposed.mountId)return false;
+  const before=JSON.stringify(p());
+  Object.assign(item,proposed);
+  item.roomId=floorAt(item.x,item.z)?.id||item.roomId||'';
+  placementStatus(item);commit(before);
+  return true;
+ },
+ onWallHeight:value=>{
+  const item=lookup();
+  if(!item||!objects().includes(item)||!item.wallMount)return false;
+  const pose=poseOnWall(item,{...item.wallMount,y:value},arch());
+  if(!pose){status('Höjden passar inte på väggen.');return false;}
+  const before=JSON.stringify(p()),collision=item.collision||'none';
+  Object.assign(item,pose,{collision});commit(before);
+  status('Höjden på väggen är ändrad.');
+  return true;
  }
 });
 function updateProps(){const o=lookup();$('selection').hidden=!o;$('posterText').disabled=!o||!p().architecture.posters?.includes(o);$('posterText').value=o?.text||'';$('selectedLabel').disabled=!o||!floors().some(f=>f.id===o.id)||!!o.source;$('selectedLabel').value=o?.name||'';$('selectedSurface').disabled=!o||!floors().includes(o)||!!o.source;$('selectedSurface').value=o?.surface||'carpet';$('selectedSill').disabled=!o||o.kind!=='window';$('selectedSill').value=o?.sill??.9;$('collisionSetting').hidden=!o||!objects().includes(o);$('collisionMode').value=o?.collision||'solid';$('selectionName').textContent=o?`${o.name||o.assetName||o.text||o.type||o.team||o.kind||o.role}`:'Ingenting';
  $('x').value=o?(o.x??o.x0??o.a?.[0]??''):'';$('z').value=o?(o.z??o.z0??o.a?.[1]??''):'';
  $('w').value=o?(o.w??(o.x1!==undefined?o.x1-o.x0:o.b?Math.hypot(o.b[0]-o.a[0],o.b[1]-o.a[1]):'')):'';
  $('d').value=o?(o.d??(o.z1!==undefined?o.z1-o.z0:'')):'';
- for(const id of ['x','z','w','d','remove','rotate','duplicate'])$(id).disabled=!o;
+ for(const id of ['x','z','w','d','remove','rotate','duplicate'])$(id).disabled=!o||(id==='rotate'&&!!o.wallMount);
  selectionDock.sync(o,{isFurniture:!!o&&objects().includes(o)&&!pendingFurniture&&(tab!=='build'||$('tool').value==='select')});
 }
 function rotateWithChildren(o,delta){const c=Math.cos(delta),s=Math.sin(delta);for(const child of objects().filter(v=>v.mountId===o.id)){const dx=child.x-o.x,dz=child.z-o.z;child.x=o.x+c*dx+s*dz;child.z=o.z-s*dx+c*dz;child.yaw+=delta;}o.yaw=((o.yaw+delta+Math.PI)%(2*Math.PI)+2*Math.PI)%(2*Math.PI)-Math.PI;if(objects().includes(o))placementStatus(o);return true;}
@@ -217,7 +247,9 @@ function moveObject(o,x,z){if(arch().includes(o)){
    status('Väggen sitter ihop med en annan byggdel. Flytta hörnet eller öppningen.');return false;}
   const dx=snap(x-o.a[0]),dz=snap(z-o.a[1]);o.a=[snap(o.a[0]+dx),snap(o.a[1]+dz)];o.b=[snap(o.b[0]+dx),snap(o.b[1]+dz)];return true;}const floor=floorAt(x,z);
  if(o.kind&&objects().includes(o)){
-  let candidate={...o,x,z,roomId:floor?.id||'',...proposeSmartPose(o,{x,z},objects())};
+  const requested=o.wallMount?'wall':o.mountId?'surface':'auto';
+  let candidate={...o,x,z,...mountPose(o,{x,z},requested)};
+  candidate.roomId=floorAt(candidate.x,candidate.z)?.id||floor?.id||'';
   const dx=candidate.x-o.x,dz=candidate.z-o.z;Object.assign(o,candidate);
   for(const child of objects().filter(c=>c.mountId===o.id)){child.x=snap(child.x+dx);child.z=snap(child.z+dz);child.roomId=o.roomId;}placementStatus(o);return true;
  }
@@ -278,7 +310,7 @@ function drawPlan(){const r=canvas.getBoundingClientRect(),dpr=Math.min(devicePi
   ctx.restore();
  }
  if($('showPhysics').checked){ctx.save();ctx.strokeStyle='#d42f52';ctx.lineWidth=3*dpr;ctx.setLineDash([5,3]);for(const w of projectWallPieces(arch())){ctx.beginPath();ctx.moveTo(...screen(...w.a));ctx.lineTo(...screen(...w.b));ctx.stroke();}for(const o of objects().filter(o=>o.collision!=='none')){const pts=corners(o).map(v=>screen(...v));ctx.beginPath();pts.forEach((v,i)=>i?ctx.lineTo(...v):ctx.moveTo(...v));ctx.closePath();ctx.stroke();}ctx.restore();}
- if(pendingFurniture&&hover){let ghost={id:'ghost',kind:'prop',assetId:pendingFurniture.id,x:hover.x,z:hover.z,yaw:pendingYaw,w:pendingFurniture.width,d:pendingFurniture.depth,height:pendingFurniture.height,roomId:floorAt(hover.x,hover.z)?.id};ghost={...ghost,...proposeSmartPose(ghost,hover,objects())};ghost=easyFurniturePose(ghost).item;const pts=corners(ghost).map(v=>screen(...v));ctx.beginPath();pts.forEach((v,i)=>i?ctx.lineTo(...v):ctx.moveTo(...v));ctx.closePath();ctx.fillStyle='#36b98b88';ctx.fill();ctx.strokeStyle='#14785b';ctx.lineWidth=2*dpr;ctx.stroke();}
+ if(pendingFurniture&&hover){let ghost={id:'ghost',kind:'prop',assetId:pendingFurniture.id,assetName:pendingFurniture.name,x:hover.x,z:hover.z,yaw:pendingYaw,w:pendingFurniture.width,d:pendingFurniture.depth,height:pendingFurniture.height,roomId:floorAt(hover.x,hover.z)?.id};ghost={...ghost,...mountPose(ghost,hover)};ghost=easyFurniturePose(ghost).item;const pts=corners(ghost).map(v=>screen(...v));ctx.beginPath();pts.forEach((v,i)=>i?ctx.lineTo(...v):ctx.moveTo(...v));ctx.closePath();ctx.fillStyle='#36b98b88';ctx.fill();ctx.strokeStyle='#14785b';ctx.lineWidth=2*dpr;ctx.stroke();}
  if(hover&&tab==='build'&&!first&&['door','card-door','opening','window','glazed'].includes($('tool').value)){
   const hit=wallAtPoint(arch(),[hover.x,hover.z],{radius:.4});if(hit){const width=isDoor($('tool').value)?1.2:Math.min(1.6,hit.length),fraction=clamp(hit.t,width/2/hit.length,1-width/2/hit.length);
    const x=hit.wall.a[0]+(hit.wall.b[0]-hit.wall.a[0])*fraction,z=hit.wall.a[1]+(hit.wall.b[1]-hit.wall.a[1])*fraction;
@@ -306,7 +338,7 @@ function box(x,y,z,w,h,d,color,angle=0,opacity=1,id=null){const material=new T.M
 function previewBox(x,y,z,w,h,d,color,angle=0,opacity=.35){const mesh=new T.Mesh(new T.BoxGeometry(Math.max(.04,w),Math.max(.025,h),Math.max(.04,d)),new T.MeshBasicMaterial({color,transparent:true,opacity,depthWrite:false,side:T.DoubleSide}));mesh.position.set(x,y,z);mesh.rotation.y=angle;preview3d.add(mesh);}
 function update3DPreview(q=hover3d){preview3d.traverse(o=>{if(o.isMesh){o.geometry.dispose();o.material.dispose();}});preview3d.clear();if(view!=='3d'||!renderer)return;
  const current=lookup();if(objects().includes(current))previewBox(current.x,(current.elevation||0)+current.height/2,current.z,current.w,current.height,current.d,0xf2a03e,current.yaw||0,.15);
- if(q&&pendingFurniture){const pose={kind:pendingFurniture.kind||'prop',assetId:pendingFurniture.assetId||pendingFurniture.id,x:q.x,z:q.z,yaw:pendingYaw,w:pendingFurniture.width,d:pendingFurniture.depth,height:pendingFurniture.height,roomId:floorAt(q.x,q.z)?.id};Object.assign(pose,proposeSmartPose(pose,q,objects()));const fit=easyFurniturePose(pose).item;previewBox(fit.x,(fit.elevation||0)+fit.height/2,fit.z,fit.w,fit.height,fit.d,0x24aa80,pendingYaw);}
+ if(q&&pendingFurniture){const pose={kind:pendingFurniture.kind||'prop',assetId:pendingFurniture.assetId||pendingFurniture.id,assetName:pendingFurniture.name,x:q.x,z:q.z,yaw:pendingYaw,w:pendingFurniture.width,d:pendingFurniture.depth,height:pendingFurniture.height,roomId:floorAt(q.x,q.z)?.id};Object.assign(pose,mountPose(pose,q));const fit=easyFurniturePose(pose).item;previewBox(fit.x,(fit.elevation||0)+fit.height/2,fit.z,fit.w,fit.height,fit.d,0x24aa80,pendingYaw);}
  else if(q&&first&&tab==='build'){const tool=$('tool').value,x=(first.x+q.x)/2,z=(first.z+q.z)/2,w=Math.abs(q.x-first.x),d=Math.abs(q.z-first.z);if(['room','corridor'].includes(tool))previewBox(x,.035,z,w,.06,d,0x188d84,0,.28);else{const len=Math.hypot(w,d),angle=-Math.atan2(q.z-first.z,q.x-first.x);previewBox(x,.8,z,len,1.6,.07,0x188d84,angle,.35);}}
  else if(q&&tab==='build'&&['door','card-door','opening','window','glazed'].includes($('tool').value)){const hit=wallAtPoint(arch(),[q.x,q.z],{radius:.4});if(hit){const w=isDoor($('tool').value)?1.2:Math.min(1.6,hit.length),angle=-Math.atan2(hit.wall.b[1]-hit.wall.a[1],hit.wall.b[0]-hit.wall.a[0]);previewBox(hit.point[0],.7,hit.point[1],w,1.4,.12,0xf4ad42,angle,.3);}}
  renderer.render(scene,camera);
@@ -529,7 +561,7 @@ function updateGuide(){const tool=$('tool').value,active=tab==='build'&&tool!=='
   chosen?.kind==='wall'?'Dra en orange ändpunkt för att ändra en fri vägg.':'Klicka för att välja. Dra för att flytta.';
  $('cancelAction').hidden=!active&&!placing&&!first;$('deleteAction').disabled=!lookup();
 }
-function redraw(){updateKidSteps();$('modeLabel').textContent=p().mode==='edit-floor5'?'DESIGNSTUDION / FLOOR 5':'DESIGNSTUDION / NY BANA';updateProps();updateGuide();updateFirstBuild();$('undo').disabled=!history.length;$('redo').disabled=!future.length;if(view==='plan')drawPlan();else if(view==='3d')draw3D();}
+function redraw(){syncWallMounts(objects(),arch());updateKidSteps();$('modeLabel').textContent=p().mode==='edit-floor5'?'DESIGNSTUDION / FLOOR 5':'DESIGNSTUDION / NY BANA';updateProps();updateGuide();updateFirstBuild();$('undo').disabled=!history.length;$('redo').disabled=!future.length;if(view==='plan')drawPlan();else if(view==='3d')draw3D();}
 function switchTab(t){closeRoomChoices();if(view==='walk')leaveWalk();tab=t;pendingFurniture=null;pendingTemplate=null;for(const b of document.querySelectorAll('[data-tab]'))b.classList.toggle('active',b.dataset.tab===t);for(const s of document.querySelectorAll('[data-panel]'))s.hidden=s.dataset.panel!==t;first=null;redraw();}
 document.querySelectorAll('[data-tab]').forEach(b=>b.onclick=()=>switchTab(b.dataset.tab));
 $('firstBuildDismiss').onclick=()=>{localStorage.setItem(guideKey('guide-hidden'),'1');updateFirstBuild();};
@@ -565,6 +597,10 @@ $('cutaway').onchange=redraw;$('showPhysics').onchange=redraw;$('selectedLabel')
 $('catalogSearch').oninput=renderCatalog;
 $('catalogCategory').onchange=renderCatalog;
 $('resetCatalog').onclick=()=>{$('catalogSearch').value='';$('catalogCategory').value='all';renderCatalog();$('catalogSearch').focus();};
+$('placementMode').addEventListener('change',()=>{
+ if(pendingFurniture)status('Välj platsen i banan. Föremålet fäster enligt det valda läget.');
+ redraw();
+});
 function setBuildTool(tool){$('tool').value=tool;first=null;drawGesture=null;pendingFurniture=null;pendingTemplate=null;for(const b of document.querySelectorAll('[data-tool]'))b.classList.toggle('active',b.dataset.tool===tool);renderCatalog();redraw();}
 for(const button of document.querySelectorAll('[data-tool]'))button.onclick=()=>{const tool=$('tool').value===button.dataset.tool&&button.dataset.tool!=='select'?'select':button.dataset.tool;setBuildTool(tool);status(tool==='select'?'Välj en byggdel eller möbel. Delete tar bort den markerade delen.':button.title+' · Esc avslutar verktyget.');};
 for(const button of document.querySelectorAll('[data-tool="door"],[data-tool="window"],[data-tool="glazed"],[data-tool="opening"]')){
@@ -748,13 +784,13 @@ function hit3d(e){const r=$('scene3d').getBoundingClientRect();ray3d.setFromCame
 function pick3d(e){const ground=hit3d(e);const hit=ray3d.intersectObjects([...group.children,...(furnitureRoot?.children||[])],true).find(h=>{let node=h.object;while(node&&!node.userData.editId)node=node.parent;return !!node?.userData.editId;});
  let node=hit?.object;while(node&&!node.userData.editId)node=node.parent;
  return {ground,id:node?.userData.editId||null,handle:node?.userData.editHandle||null,
-  surface:hit?{x:snap(hit.point.x),z:snap(hit.point.z)}:null};}
+  surface:hit?{x:snap(hit.point.x),z:snap(hit.point.z),y:snap(hit.point.y)}:null};}
 $('scene3d').addEventListener('pointerdown',e=>{if(e.button===1||e.button===2||(e.button===0&&spaceHeld)){e.preventDefault();$('scene3d').setPointerCapture(e.pointerId);pan3d={x:e.clientX,y:e.clientY};return;}if(e.button!==0)return;
  $('scene3d').setPointerCapture(e.pointerId);if(e.altKey){orbitDrag={x:e.clientX};return;}
  const pick=pick3d(e),tool=tab==='build'?$('tool').value:tab==='play'?$('gameTool').value:'furnish';
  const onWall=arch().some(a=>a.id===pick.id&&['wall','window','glazed'].includes(a.kind));
  const attachesToWall=tab==='build'&&['door','card-door','opening','window','glazed','poster','curtain','blind'].includes(tool);
- const q=onWall&&attachesToWall&&pick.surface?pick.surface:pick.ground;if(!q)return;
+ const q=onWall&&(attachesToWall||pendingFurniture)&&pick.surface?pick.surface:pick.ground;if(!q)return;
  if(pendingFurniture){try{const before=JSON.stringify(p());addFurniture(pendingFurniture,q.x,q.z);commit(before);}catch(err){status(err.message);}return;}
  if(tab==='play'){const marker=markers().find(m=>m.id===pick.id);if(marker){selected=marker.id;drag3d={item:marker,before:JSON.stringify(p()),dx:pick.ground.x-marker.x,dz:pick.ground.z-marker.z};redraw();}else try{const before=JSON.stringify(p());placeMarker(tool,q.x,q.z);commit(before);}catch(err){status(err.message);}return;}
  if(tab==='build'&&tool!=='select'){handleBuild(q,tool,{x:e.clientX,y:e.clientY,tool,view:'3d'});return;}
@@ -773,7 +809,7 @@ $('scene3d').addEventListener('pointermove',e=>{if(drag3d){const q=hit3d(e);
  if(orbitDrag){orbit+=(e.clientX-orbitDrag.x)*.005;orbitDrag.x=e.clientX;position3DCamera();renderer.render(scene,camera);return;}
  const pick=pick3d(e),onWall=arch().some(a=>a.id===pick.id&&['wall','window','glazed'].includes(a.kind));
  const tool=tab==='build'?$('tool').value:null,attachesToWall=['door','card-door','opening','window','glazed','poster','curtain','blind'].includes(tool);
- hover3d=onWall&&attachesToWall&&pick.surface?pick.surface:pick.ground;
+ hover3d=onWall&&(attachesToWall||pendingFurniture)&&pick.surface?pick.surface:pick.ground;
  if(hover3d)$('coordinates').textContent=`X ${hover3d.x.toFixed(1)} · Z ${hover3d.z.toFixed(1)}`;update3DPreview();});
 $('scene3d').addEventListener('pointerup',e=>{if(drawGesture?.view==='3d'&&first&&Math.hypot(e.clientX-drawGesture.x,e.clientY-drawGesture.y)>6){const q=hit3d(e);if(q)finishBuild(first,q,drawGesture.tool);}drawGesture=null;orbitDrag=null;pan3d=null;if(drag3d){commit(drag3d.before);drag3d=null;}});
 $('scene3d').addEventListener('pointercancel',()=>{orbitDrag=null;pan3d=null;if(drag3d?.before){project=JSON.parse(drag3d.before);redraw();}drag3d=null;drawGesture=null;});

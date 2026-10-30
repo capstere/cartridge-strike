@@ -5,10 +5,11 @@ import {assetHash} from '../library/glb-utils.mjs';
 import {makeZip,readZip,PROJECT_ZIP_MAX_BYTES} from '../library/zip.mjs';
 import {floor5Baseline} from './project-scene.mjs';
 import {parseArchitecture} from './architecture.mjs';
-import {LIBRARY_MAP} from '../library/catalog.mjs?v=3.7.0';
+import {LIBRARY_MAP} from '../library/catalog.mjs?v=4.4.0';
 import {parsePosters} from './posters.mjs';
 import {parseTreatments} from './treatments.mjs';
-import {collisionExport,aiAgentBrief} from './ai-export.mjs?v=3.3.1';
+import {collisionExport,aiAgentBrief} from './ai-export.mjs?v=4.4.0';
+import {validWallMount} from '../wall-mounts.mjs';
 
 export const LEVEL_FORMAT='cartridge-strike-level-project',LEVEL_SCHEMA=2;
 export const LEVEL_GAME_VERSION='0.18.0',LEVEL_BASE_COMMIT='f5c63a22483feeeb29583853dab0c0911af5c09a',LEVEL_EDITOR_VERSION='3.6.0';
@@ -83,7 +84,12 @@ export function parseProject(input,{allowLegacy=true}={}){
  const f=input.furniture;if(!f||!['placements','added','removed'].every(k=>Array.isArray(f[k]))||
   f.placements.length+f.added.length+f.removed.length>350)fail('möbler');
  if(input.mode==='new-level'&&(f.placements.length||f.removed.length))fail('ny bana får inte ärva möbler');
- for(const o of f.added){if(!/^NY-(OBJ|STOL|BORD|SOFFA)-\d{1,5}$/.test(o.id)||!
+ const checkMount=o=>{
+  if(o.elevation!==undefined&&(!Number.isFinite(o.elevation)||o.elevation<0||o.elevation>6))fail('höjd över golv');
+  if(o.mountId!==undefined&&o.mountId!==null&&(typeof o.mountId!=='string'||o.mountId.length>100||o.mountId===o.id))fail('möbelfäste');
+  if(o.wallMount!==undefined&&o.wallMount!==null&&(!validWallMount(o.wallMount)||o.mountId))fail('väggfäste');
+ };
+ for(const o of f.added){checkMount(o);if(!/^NY-(OBJ|STOL|BORD|SOFFA)-\d{1,5}$/.test(o.id)||!
   [o.x,o.z,o.yaw,o.w,o.d,o.height].every(Number.isFinite)||!within(o.x)||!within(o.z)||o.w<=0||o.d<=0||o.w>8||o.d>8||o.height<=0||o.height>8)fail('möbel');
   if(o.assetId&&!LIBRARY_MAP.has(o.assetId)&&!/^local:[a-f0-9]{64}$/.test(o.assetId))fail('okänd möbelmodell');
   if(o.collision!==undefined&&!['solid','none'].includes(o.collision))fail('okänd möbelkollision');
@@ -93,7 +99,7 @@ export function parseProject(input,{allowLegacy=true}={}){
   unique(o.id);}
  if(input.mode==='edit-floor5'){
   const base=floor5Baseline(),byId=new Map(base.items.map(o=>[o.id,o]));parseArchitecture(a,base.entries);
-  for(const o of f.placements){if(!byId.has(o.id)||![o.x,o.z,o.yaw].every(Number.isFinite)||!within(o.x)||!within(o.z))fail('ändrad Floor 5-möbel');
+  for(const o of f.placements){checkMount(o);if(!byId.has(o.id)||![o.x,o.z,o.yaw].every(Number.isFinite)||!within(o.x)||!within(o.z))fail('ändrad Floor 5-möbel');
    if(o.assetId&&!LIBRARY_MAP.has(o.assetId)&&!/^local:[a-f0-9]{64}$/.test(o.assetId))fail('okänd möbelmodell');
    for(const k of ['w','d','height'])if(o[k]!==undefined&&(!Number.isFinite(o[k])||o[k]<=0||o[k]>8))fail('möbelmått');unique(o.id);}
   for(const id of f.removed){if(!byId.has(id))fail('borttagen Floor 5-möbel');unique(id);}

@@ -1,5 +1,5 @@
 import {ONBOARD_LIBRARY} from './onboard-catalog.mjs';
-import {PROCEDURAL_LIBRARY} from './procedural.mjs?v=3.5.0';
+import {PROCEDURAL_LIBRARY} from './procedural.mjs?v=4.4.0';
 /** License-audited, version-pinned reusable 3D furniture library.
  * Kenney source: https://kenney.nl/assets/furniture-kit (CC0 1.0).
  * Curated binary mirror: Hidencod/tge-assets@37f5baddf99899547ae661668880809c42b450f0.

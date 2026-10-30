@@ -2,7 +2,7 @@
  * All objects centered X/Z and resting on the floor; elevation applied by parent.
  */
 import * as T from '../../vendor/three/three.module.js';
-import {proceduralOf} from './procedural.mjs?v=3.5.0';
+import {proceduralOf} from './procedural.mjs?v=4.4.0';
 import {chairColors} from '../appearance.mjs';
 const circle=new T.CylinderGeometry(.5,.5,1,24);
 const metallic=new T.MeshStandardMaterial({color:0xaab6bd,metalness:.57,roughness:.43});
@@ -75,6 +75,23 @@ export function populateProcedural(item,group,put){
    box(0,h*.48,0,w,h*.91,d,white);
    box(0,h*.75,-d*.505,w*.59,h*.25,.016,dark);
    box(0,h*.22,-d*.51,w*.58,.018,.015,metallic);break;
+  case 'wall-picture':
+   box(0,h/2,0,w,h,d,dark);
+   box(0,h/2,-d/2-.005,w*.87,h*.8,.014,navy);
+   box(0,h/2-.04,-d/2-.015,w*.56,h*.18,.008,white);
+   break;
+  case 'wall-clock':{
+   const disc=new T.Mesh(new T.CylinderGeometry(w/2,w/2,d,32),white);
+   disc.rotation.x=Math.PI/2;disc.position.set(0,h/2,0);
+   disc.userData.editId=group.userData.editId;group.add(disc);
+   box(0,h/2,-d/2-.007,.012,h*.34,.009,dark);
+   box(.04,h/2+.025,-d/2-.01,w*.24,.012,.009,navy);
+   break;
+  }
+  case 'wall-shelf':
+   box(0,.06,0,w,.08,d,white);
+   for(const x of [-w*.37,w*.37])box(x,-.025,d*.27,.055,.11,.06,metallic);
+   break;
   case 'cabinet':
    box(0,h/2,0,w,h,d,white);
    box(0,h*.50,-d*.51,w*.018,h*.93,.018,metallic);

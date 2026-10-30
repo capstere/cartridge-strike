@@ -62,9 +62,9 @@ try{
   return {original:LIBRARY.length,procedural:PROCEDURAL_LIBRARY.length,onboard:ONBOARD_LIBRARY.length,
    total:LIBRARY_ALL.length,visible:__furnitureEditor.catalogCount};
  });
- check('104 original GLBs and 22 procedural objects retained alongside 15 verified onboard models',
-  catalogCounts.original===104&&catalogCounts.procedural===22&&catalogCounts.onboard===15&&
-  catalogCounts.total===141&&catalogCounts.visible===141);
+ check('104 original GLBs and 25 procedural objects retained alongside 15 verified onboard models',
+  catalogCounts.original===104&&catalogCounts.procedural===25&&catalogCounts.onboard===15&&
+  catalogCounts.total===144&&catalogCounts.visible===144);
  await page.locator('#openLibrary').click();
  check('library opens without loading FPS runtime',await page.locator('#libraryDialog').evaluate(e=>e.open));
  await page.locator('#librarySearch').fill('Liten växt');
