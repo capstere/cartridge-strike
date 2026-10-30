@@ -26,9 +26,10 @@ export function installSelectionDock({getIssue,onHeight}){
    $(destination).value=roundDisplay(item[source]);
   height.value=roundDisplay(item.height);
   collision.value=item.collision==='none'?'none':'solid';
-  const issue=getIssue(item);
+  const diagnostics=$('showPhysics').checked;
+  const issue=diagnostics?getIssue(item):null;
   message.classList.toggle('issue',!!issue);
-  message.textContent=issue?'Placering med varning: '+issue:'Placering kontrollerad. Ändringar sparas automatiskt.';
+  message.textContent=issue?'Fysikkontroll: '+issue:'Placera fritt. Ändringarna sparas automatiskt.';
   showCollapsed(collapsed);
  }
  function changeNative(source,value){

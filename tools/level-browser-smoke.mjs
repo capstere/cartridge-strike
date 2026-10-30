@@ -86,9 +86,14 @@ try{
  await page.locator('#catalogCards [data-asset="studio:desk-120"]').click();
  at=await page.evaluate(()=>__levelStudio.screenWorldPoint(2,2));await page.mouse.click(at.x,at.y);
  assert.equal(await page.evaluate(()=>__levelStudio.project.furniture.added.length),3,'Collision warning must not block insertion');
- assert.match(await page.locator('#status').innerText(),/Placerad med varning/);
- await page.keyboard.press('Escape');const targetPoint=await page.evaluate(()=>__levelStudio.screenWorldPoint(6,3));
- await page.mouse.move(at.x,at.y);await page.mouse.down();await page.mouse.move(targetPoint.x,targetPoint.y,{steps:6});await page.mouse.up();
+ assert.doesNotMatch(await page.locator('#status').innerText(),/Placerad med varning|fel|blockerad/i,'Free placement should not nag');
+ await page.keyboard.press('Escape');
+ // A suggested position can differ slightly from the original click; drag the actual visible object.
+ const latest=await page.evaluate(()=>__levelStudio.project.furniture.added.at(-1));
+ assert(Math.hypot(latest.x-2,latest.z-2)<.91,'Smart placement stays close to the original click');
+ const dragFrom=await page.evaluate(o=>__levelStudio.screenWorldPoint(o.x,o.z),latest);
+ const targetPoint=await page.evaluate(()=>__levelStudio.screenWorldPoint(6,3));
+ await page.mouse.move(dragFrom.x,dragFrom.y);await page.mouse.down();await page.mouse.move(targetPoint.x,targetPoint.y,{steps:6});await page.mouse.up();
  assert(await page.evaluate(()=>__levelStudio.project.furniture.added.some(o=>Math.abs(o.x-6)<.2&&Math.abs(o.z-3)<.2)));
  await page.locator('#catalogSearch').fill('orange köksstol');
  assert.equal(await page.locator('#catalogCards .catalog-card').count(),1);

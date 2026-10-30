@@ -557,7 +557,7 @@
     {
       "path": "furniture-editor/build/validate-level.mjs",
       "bytes": 10201,
-      "sha256": "4f1e98232b8489e78a2cb3ccb0ad2727e6292aa767b3ca33d2b75a6efa767bd1"
+      "sha256": "1504588035d0898235b477f828a300c012445f6df0bf93985b50da031e0a476e"
     },
     {
       "path": "furniture-editor/core.mjs",
@@ -756,28 +756,33 @@
     },
     {
       "path": "furniture-editor/new.css",
-      "bytes": 15340,
-      "sha256": "938240694ace3de82a3e42081b42ce51bfead432cf85000bd895b29fa6e161f7"
+      "bytes": 15978,
+      "sha256": "f24df9ae13e3b12d12acde1d81d2d93c1a3946f5edf06dd2ee75ee3c39bb94d3"
     },
     {
       "path": "furniture-editor/new.html",
-      "bytes": 14008,
-      "sha256": "38d7ce7ab3351db26b9a4cee310d3e52717a0791d30ebdc07b63a1e7f15fd6fe"
+      "bytes": 14122,
+      "sha256": "7d6321166e8564697377040aa0ebfb7452b7f82a40058bddb02777e9c6a1a134"
     },
     {
       "path": "furniture-editor/new.mjs",
-      "bytes": 69379,
-      "sha256": "347109eb3c14116f96c8cb5a77787b433283736d10a5338c0b86879e96107772"
+      "bytes": 71019,
+      "sha256": "e8322cc1194d23511683bae7ec9919213ad9955c58f13c7c6c1aee407679084f"
     },
     {
       "path": "furniture-editor/selection-dock.mjs",
-      "bytes": 3011,
-      "sha256": "97aca4e909bfc5b209ffdb66e50e6d4e0966e71193f2a3a2b1c03bd601cf3937"
+      "bytes": 3059,
+      "sha256": "3b7bf9a453af8b5f2ba4d7c8101764be9f50822a38e5704d6b8ec6b40c44499d"
     },
     {
       "path": "furniture-editor/smart-placement.mjs",
       "bytes": 3430,
       "sha256": "9b6fa83a5e3500e8ca8232251afb82889001ffe25005f9df13eb210413fb68a5"
+    },
+    {
+      "path": "furniture-editor/soft-placement.mjs",
+      "bytes": 881,
+      "sha256": "6b77cca0cb2a587a381792c1adacdf24e44e9c9a599f3784914b6528dc82959b"
     },
     {
       "path": "furniture-editor/studio-ui.mjs",
@@ -1320,7 +1325,7 @@
       "sha256": "9b0c24534a47f2e1c9549a63a5e00a850577e22fe8d18dbc7a532008a027cb89"
     }
   ],
-  "bytes": 22339992,
+  "bytes": 22343313,
   "sourceDirectoriesExcluded": [
     "references",
     "reviews",

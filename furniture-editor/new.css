@@ -166,3 +166,9 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,su
  .workspace:has(#editDock:not([hidden])) .move-pad{opacity:0;pointer-events:none}
  body[data-studio-sheet="tools"] .edit-dock,body[data-studio-sheet="checks"] .edit-dock{display:none}
 }
+/* Soft placement: a single optional, touch-friendly helper control. */
+.easy-place-toggle{display:flex;align-items:center;gap:10px;border:1px solid #4d8278;background:#204a47;border-radius:10px;padding:11px 12px;margin:12px 0;color:#e8f5ee;cursor:pointer;line-height:1.35}
+.easy-place-toggle input[type=checkbox]{width:20px;height:20px;min-width:20px;margin:0;accent-color:#58b79c}
+#results>details{margin-top:14px;padding:10px;border-radius:9px;border:1px solid #49696c;background:#17383c;color:#d1e8e0}
+#results>details summary{cursor:pointer;font-weight:700}
+#results>details>div{white-space:pre-wrap;font-size:.75rem;margin-top:8px}

@@ -67,5 +67,15 @@ test('context furniture dock edits the actual model with real validation and und
  assert.match(editor,/installSelectionDock/);
  assert.match(editor,/selectionDock\.sync\(o/);
  assert.match(editor,/child\.elevation=/);
- assert.match(html,/src="new\.mjs\?v=3\.9\.0"/);
+ assert.match(html,/src="new\.mjs\?v=4\.0\.0"/);
+});
+
+test('free building defaults to optional smart placement, with explicit diagnostics',()=>{
+ const html=source('furniture-editor/new.html'),code=source('furniture-editor/new.mjs');
+ const dock=source('furniture-editor/selection-dock.mjs');
+ assert.match(html,/id="autoPlace"[^>]*checked/);
+ assert.match(code,/findNearbyFreePlacement/);
+ assert.match(code,/function easyFurniturePose/);
+ assert.match(code,/Visa tekniska detaljer/);
+ assert.match(dock,/const diagnostics=\$\('showPhysics'\).checked/);
 });
