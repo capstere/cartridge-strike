@@ -756,8 +756,8 @@
     },
     {
       "path": "furniture-editor/new.css",
-      "bytes": 11907,
-      "sha256": "6fb58872660b5dc007285912638adb6f2ed1b57f86fc796e3c8916116a70f3e6"
+      "bytes": 12398,
+      "sha256": "ee74aff23de8a7b79f9c0f5d387258e1d3114c08848deb4b02a40e0c7f2a5d8f"
     },
     {
       "path": "furniture-editor/new.html",
@@ -1315,7 +1315,7 @@
       "sha256": "9b0c24534a47f2e1c9549a63a5e00a850577e22fe8d18dbc7a532008a027cb89"
     }
   ],
-  "bytes": 22330993,
+  "bytes": 22331484,
   "sourceDirectoriesExcluded": [
     "references",
     "reviews",

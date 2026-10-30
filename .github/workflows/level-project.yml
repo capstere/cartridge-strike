@@ -45,9 +45,9 @@ jobs:
           python3 -m http.server 8765 --bind 127.0.0.1 >/tmp/level-http.log 2>&1 &
           PID=$!
           trap 'kill "$PID" || true' EXIT
+          timeout 300s xvfb-run -a node tools/studio-ux-browser.mjs
           timeout 220s xvfb-run -a node furniture-editor/editor-browser.mjs
           timeout 220s xvfb-run -a node furniture-editor/build/build-browser.mjs
           timeout 360s xvfb-run -a node tools/level-browser-smoke.mjs
           timeout 420s xvfb-run -a node tools/direct-browser-smoke.mjs
           timeout 420s xvfb-run -a node tools/onboard-library-smoke.mjs
-          timeout 300s xvfb-run -a node tools/studio-ux-browser.mjs

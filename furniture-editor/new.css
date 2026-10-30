@@ -112,3 +112,13 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,su
 @media(prefers-reduced-motion:reduce){
  main>aside.tool-panel,main>aside.checks{transition:none}
 }
+
+/* Keep contextual help inside the scene, NEVER over the toolbar.
+   Compact on phones so movement controls and the canvas stay usable. */
+.work-guide{top:auto;bottom:53px;max-width:min(48%,450px)}
+@media(max-width:1000px){.work-guide{top:auto;bottom:54px;max-width:calc(100% - 170px)}}
+@media(max-width:700px){
+ .work-guide{top:auto;bottom:53px;max-width:calc(100% - 159px);font-size:.7rem}
+ .work-guide>span{display:none}
+ .workspace.game-look .work-guide{max-width:calc(100% - 159px)}
+}
