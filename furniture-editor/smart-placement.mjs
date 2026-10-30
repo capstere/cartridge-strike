@@ -11,7 +11,7 @@ const isSurface=o=>!o.deleted&&(!o.wallMount||proceduralOf(o)?.shape==='wall-she
  ['counter','desk','table','round','wall-shelf'].includes(proceduralOf(o)?.shape)||
  ['desk','table','coffee-table'].includes(o.kind)||
  /counter|bench|worktop|table|desk|skrivbord|bänk|kitchen.?sink|diskbänk/i.test(o.assetName||'')
- )&&Number.isFinite(o.height)&&o.height>.35&&o.height<=1.45;
+ )&&Number.isFinite(o.height)&&(o.height>.35||proceduralOf(o)?.shape==='wall-shelf')&&o.height<=1.45;
 const near=(a,b)=>Math.hypot(a.x-b.x,a.z-b.z);
 const global=(parent,lx,lz)=>{
  const c=Math.cos(parent.yaw),s=Math.sin(parent.yaw);
