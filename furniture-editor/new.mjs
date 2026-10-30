@@ -276,6 +276,7 @@ canvas.addEventListener('pointerdown',e=>{if(view!=='plan')return;if(e.button===
 canvas.addEventListener('pointermove',e=>{if(view!=='plan')return;if(planPan){const r=canvas.getBoundingClientRect(),b=p().ground.bounds,scale=Math.min(canvas.width/(b.x1-b.x0),canvas.height/(b.z1-b.z0))*zoom;offset.x+=(e.clientX-planPan.x)*canvas.width/r.width/scale;offset.z+=(e.clientY-planPan.y)*canvas.height/r.height/scale;planPan.moved ||= Math.hypot(e.clientX-planPan.startX,e.clientY-planPan.startY)>6;planPan.x=e.clientX;planPan.y=e.clientY;drawPlan();return;}const q=point(e);$('coordinates').textContent=`X ${q.x.toFixed(1)} · Z ${q.z.toFixed(1)}`;
  if(drag){if(drag.direct)applyDirectDrag(drag,q);else if(moveObject(drag.hit,snap(q.x-drag.dx),snap(q.z-drag.dz)))redraw();return;}
  hover=q;if(first||pendingFurniture||tab==='build'&&['door','window','glazed','opening','card-door'].includes($('tool').value))redraw();});
+canvas.addEventListener('pointerleave',()=>{if(drag||planPan)return;hover=null;snapFeedback=null;updateGuide();if(view==='plan')drawPlan();});
 canvas.addEventListener('pointerup',e=>{if(planPan){const rotate=planPan.button===2&&!planPan.moved;planPan=null;if(rotate){const o=lookup();if(o?.yaw!==undefined){const before=JSON.stringify(p());rotateWithChildren(o,Math.PI/12);commit(before);}}return;}if(drawGesture?.view==='plan'&&first&&Math.hypot(e.clientX-drawGesture.x,e.clientY-drawGesture.y)>6)finishBuild(first,point(e),drawGesture.tool);drawGesture=null;if(drag){commit(drag.before);drag=null;}});
 canvas.addEventListener('pointercancel',()=>{planPan=null;if(drag?.before){project=JSON.parse(drag.before);redraw();}drag=null;drawGesture=null;});
 canvas.addEventListener('contextmenu',e=>e.preventDefault());
@@ -854,6 +855,10 @@ $('scene3d').addEventListener('pointermove',e=>{if(drag3d){const q=hit3d(e);
  hover3d=pendingFurniture?preferredPlacementPoint(pick,objects(),arch()):
   onWall&&attachesToWall&&pick.surface?pick.surface:pick.ground;
  if(hover3d)$('coordinates').textContent=`X ${hover3d.x.toFixed(1)} · Z ${hover3d.z.toFixed(1)}`;update3DPreview();});
+$('scene3d').addEventListener('pointerleave',()=>{
+ if(drag3d||pan3d||orbitDrag)return;
+ hover3d=null;snapFeedback=null;update3DPreview();
+});
 $('scene3d').addEventListener('pointerup',e=>{if(drawGesture?.view==='3d'&&first&&Math.hypot(e.clientX-drawGesture.x,e.clientY-drawGesture.y)>6){const q=hit3d(e);if(q)finishBuild(first,q,drawGesture.tool);}drawGesture=null;orbitDrag=null;pan3d=null;if(drag3d){commit(drag3d.before);drag3d=null;}});
 $('scene3d').addEventListener('pointercancel',()=>{orbitDrag=null;pan3d=null;if(drag3d?.before){project=JSON.parse(drag3d.before);redraw();}drag3d=null;drawGesture=null;});
 $('scene3d').addEventListener('contextmenu',e=>e.preventDefault());
