@@ -7,6 +7,8 @@ on:
       - 'levels/**'
       - 'tools/level-*'
       - 'tools/direct-*'
+      - 'tools/restore-onboard-large.mjs'
+      - 'tools/onboard-large-source-catalog.json'
       - '.github/workflows/level-project.yml'
   workflow_dispatch:
 permissions:
@@ -22,6 +24,8 @@ jobs:
           node-version: '22'
       - name: Pure tests, Floor 5 doors and SHA manifest
         run: |
+          node --check tools/restore-onboard-large.mjs
+          node tools/restore-onboard-large.mjs --plan
           node --experimental-loader ./tools/vendor-three-test-loader.mjs --test furniture-editor/*.test.mjs furniture-editor/build/*.test.mjs furniture-editor/library/*.test.mjs src/fps/level-adapter.test.mjs src/fps/walk-start.test.mjs
           node --experimental-loader ./tools/vendor-three-test-loader.mjs tools/owner-door-traversal.mjs
           node tools/verify-owner-runtime.mjs
