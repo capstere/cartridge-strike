@@ -78,7 +78,7 @@ test('a small wall shelf is both anchored to the wall and a support for books',(
  const wallPose=proposeSmartPose(wallShelf,{x:4,z:.1},[],{walls:[wall]});
  assert(wallPose.wallMount);
  const mounted={...wallShelf,...wallPose};
- const books=item('kenney:furniture-kit:books','Böcker',.31,.28,.28);
+ const books={...item('kenney:furniture-kit:books','Böcker',.31,.28,.28),id:'NY-OBJ-0003'};
  const pose=proposeSmartPose(books,{x:mounted.x,z:mounted.z},[mounted],{walls:[wall]});
  assert.equal(pose.mountId,mounted.id);
  assert(pose.elevation>1.5);
