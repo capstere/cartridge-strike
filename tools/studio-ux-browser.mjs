@@ -27,7 +27,7 @@ try{
  const beginnerContext=await browser.newContext({viewport:{width:1280,height:850},acceptDownloads:true});
  const beginner=await beginnerContext.newPage();track(beginner);
  await beginner.goto(origin+'/furniture-editor/new.html?test=1',{waitUntil:'domcontentloaded'});
- await beginner.waitForFunction(()=>!!window.__levelStudio,{timeout:90000});
+ await beginner.waitForFunction(()=>!!window.__levelStudio,null,{timeout:90000});
  assert.equal(await beginner.evaluate(()=>__levelStudio.project.ground.floors.length),0);
  await beginner.locator('#kidRoom').click();
  assert.equal(await beginner.evaluate(()=>__levelStudio.project.ground.floors.length),1);
@@ -58,7 +58,7 @@ try{
  const downloaded=await downloadPromise;
  assert.match(downloaded.suggestedFilename(),/\.zip$/,'One-click project export downloads a ZIP');
  await beginner.reload({waitUntil:'domcontentloaded'});
- await beginner.waitForFunction(()=>!!window.__levelStudio,{timeout:90000});
+ await beginner.waitForFunction(()=>!!window.__levelStudio,null,{timeout:90000});
  assert.equal(await beginner.evaluate(()=>__levelStudio.project.ground.floors.length),1);
  assert.equal(await beginner.evaluate(()=>__levelStudio.project.furniture.added.length),1);
  assert.equal(await beginner.evaluate(()=>__levelStudio.project.architecture.added.filter(x=>x.kind==='door').length),1,
@@ -66,7 +66,7 @@ try{
  await beginner.locator('#kidWalk').click();
  await beginner.locator('#walkFrame').waitFor({state:'visible',timeout:90000});
  await beginner.waitForFunction(()=>!!document.querySelector('#walkFrame')?.contentWindow?.__walk?.renderer,
-   {timeout:90000});
+   null,{timeout:90000});
  await beginner.locator('#kidWalk').click();
  assert(await beginner.locator('#plan').isVisible(),'Simple walk button returns to the editor');
  await beginner.close();await beginnerContext.close();
