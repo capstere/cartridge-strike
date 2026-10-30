@@ -2,7 +2,7 @@
  * Paint an opening, glass wall or window over part of an existing wall,
  * replacing the painted span rather than overlapping solid geometry.
  */
-import {isWall,isDoor,makeEntry,getNextId,validateEntry,roundPosition,entryLength,pointToSegmentDistance,cloneEntry,STANDARD_PASSAGE_WIDTH} from './architecture.mjs';
+import {isWall,isDoor,makeEntry,getNextId,validateEntry,roundPosition,entryLength,pointToSegmentDistance,cloneEntry,STANDARD_PASSAGE_WIDTH} from './architecture.mjs?v=4.6.0';
 import {architecturalFinish} from '../appearance.mjs';
 import {validatePoster} from './posters.mjs';
 

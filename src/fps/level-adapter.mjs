@@ -1,8 +1,8 @@
 /** Pure conversion into the existing world/physics/navigation data contract. */
-import {parseProject} from '../../furniture-editor/build/level-project.mjs?v=3.5.0';
-import {wallPieces} from '../../furniture-editor/build/architecture.mjs';
+import {parseProject} from '../../furniture-editor/build/level-project.mjs?v=4.6.0';
+import {wallPieces} from '../../furniture-editor/build/architecture.mjs?v=4.6.0';
 import {corners} from '../../furniture-editor/core.mjs';
-import {resolveProjectScene,floor5Baseline,projectWallPieces} from '../../furniture-editor/build/project-scene.mjs';
+import {resolveProjectScene,floor5Baseline,projectWallPieces} from '../../furniture-editor/build/project-scene.mjs?v=4.6.0';
 
 const polygon=r=>[[r.x0,r.z0],[r.x1,r.z0],[r.x1,r.z1],[r.x0,r.z1]];
 const point=p=>({x:p.x,y:0,z:p.z,yaw:p.yaw||0});

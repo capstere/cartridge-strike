@@ -1,17 +1,17 @@
 import {makePoster,locatePoster} from './build/posters.mjs';
 import {createCurtain,createBlind,treatmentPosition} from './build/treatments.mjs';
 import {buildProjectFurniture,buildProjectDecorations} from './build/project-visuals.mjs?v=4.4.0';
-import {resolveProjectScene,writeProjectScene,floor5Baseline,projectWallPieces} from './build/project-scene.mjs';
-import {inheritFloor5Gameplay} from '../src/fps/world.mjs?v=3.5.0';
-import {wallAtPoint,planPaintOverWall} from './build/paint-over-wall.mjs';
-import {planResizeFloor,planResizeFloorEdge,planSlideInsert,planMoveWallEnd,roomBoundaryIds} from './build/direct-manipulation.mjs?v=4.3.0';
+import {resolveProjectScene,writeProjectScene,floor5Baseline,projectWallPieces} from './build/project-scene.mjs?v=4.6.0';
+import {inheritFloor5Gameplay} from '../src/fps/world.mjs?v=4.6.0';
+import {wallAtPoint,planPaintOverWall} from './build/paint-over-wall.mjs?v=4.6.0';
+import {planResizeFloor,planResizeFloorEdge,planSlideInsert,planMoveWallEnd,roomBoundaryIds} from './build/direct-manipulation.mjs?v=4.6.0';
 import {parsePosters} from './build/posters.mjs';
 import {parseTreatments} from './build/treatments.mjs';
 import * as T from '../vendor/three/three.module.js';
-import {exportProject,parseProject,parseProjectZip,exportProjectZip} from './build/level-project.mjs?v=4.4.0';
-import {validateLevel} from './build/validate-level.mjs?v=4.4.0';
+import {exportProject,parseProject,parseProjectZip,exportProjectZip} from './build/level-project.mjs?v=4.6.0';
+import {validateLevel} from './build/validate-level.mjs?v=4.6.0';
 import {validate,corners,inside,segmentIntersectsRectangle,intersects} from './core.mjs';
-import {wallPieces,standardPassageSpan,standardDoorMarkerSpan,isDoor} from './build/architecture.mjs';
+import {wallPieces,standardPassageSpan,standardDoorMarkerSpan,isDoor} from './build/architecture.mjs?v=4.6.0';
 import {LIBRARY_ALL} from './library/catalog.mjs?v=4.4.0';
 import {upgradeLegacyOrangeChair} from './library/procedural.mjs?v=4.4.0';
 import {proposeSmartPose,duplicateFurnitureAssembly} from './smart-placement.mjs?v=4.4.0';
@@ -21,7 +21,8 @@ import {findNearbyFreePlacement} from './soft-placement.mjs';
 import {importLocalGLB,getLocalFile,localLibrary} from './library/models.mjs';
 import {assetHash} from './library/glb-utils.mjs';
 import {installSelectionDock} from './selection-dock.mjs?v=4.4.0';
-import {planAdjacentRoom,ADJACENT_SIDES} from './adjacent-room.mjs';
+import {planAdjacentRoom,ADJACENT_SIDES} from './adjacent-room.mjs?v=4.6.0';
+import {planDraggedRoom} from './build/room-drag.mjs?v=4.6.0';
 
 const $=id=>document.getElementById(id),canvas=$('plan'),ctx=canvas.getContext('2d');
 const catalogEntries=LIBRARY_ALL;
@@ -142,14 +143,27 @@ function find(x,z){for(const d of decorations()){const at=decorationAt(d);if(at&
   if(Math.hypot(x-a.a[0]-dx*t,z-a.a[1]-dz*t)<.18)return a;
  }
  return floors().find(f=>x>=f.x0&&x<=f.x1&&z>=f.z0&&z<=f.z1)||null;}
-function makeFloor(a,b,role){const x0=Math.min(a.x,b.x),x1=Math.max(a.x,b.x),z0=Math.min(a.z,b.z),z1=Math.max(a.z,b.z);
- if(x1-x0<.5||z1-z0<.5||x1-x0>50||z1-z0>50)throw Error('Golvet måste vara 0,5–50 modellenheter på varje sida.');
+function makeFloor(a,b,role){
+ const {rect,edges}=planDraggedRoom(a,b,p().ground.bounds);
  const id=nextId('BYGG-G-'),name=$('floorName').value.trim()||`${role==='room'?'Rum':'Korridor'} ${floors().length+1}`;
- const f={id,name,role,surface:$('surface').value,x0,z0,x1,z1};p().ground.floors.push(f);if(p().mode==='edit-floor5')model().floors.push({...f,polygon:[[x0,z0],[x1,z0],[x1,z1],[x0,z1]]});if(role==='room'){
-  for(const [u,v] of [[ [x0,z0],[x1,z0] ],[[x1,z0],[x1,z1]],[[x1,z1],[x0,z1]],[[x0,z1],[x0,z0]]])makeSegment('wall',u,v);
- }return f;}
+ const f={id,name,role,surface:$('surface').value,...rect};
+ const scene=model(),beforeFloors=p().ground.floors.length,
+  beforeWalls=arch().length,beforeSceneFloors=scene.floors.length;
+ try{
+  p().ground.floors.push(f);
+  if(p().mode==='edit-floor5')scene.floors.push({...f,polygon:[[rect.x0,rect.z0],[rect.x1,rect.z0],[rect.x1,rect.z1],[rect.x0,rect.z1]]});
+  if(role==='room')for(const [u,v] of edges)makeSegment('wall',u,v);
+  return f;
+ }catch(error){
+  // A drawing failure must never leave an invisible partial room or walls.
+  p().ground.floors.length=beforeFloors;
+  arch().length=beforeWalls;
+  if(p().mode==='edit-floor5')scene.floors.length=beforeSceneFloors;
+  throw error;
+ }
+}
 function makeSegment(kind,a,b){
- if(kind==='wall'&&arch().some(e=>e.kind==='wall'&&((dist({x:e.a[0],z:e.a[1]},{x:a[0],z:a[1]})<.01&&dist({x:e.b[0],z:e.b[1]},{x:b[0],z:b[1]})<.01)||(dist({x:e.b[0],z:e.b[1]},{x:a[0],z:a[1]})<.01&&dist({x:e.a[0],z:e.a[1]},{x:b[0],z:b[1]})<.01))))return arch().find(e=>e.kind==='wall');const len=Math.hypot(a[0]-b[0],a[1]-b[1]);if(len<.25||len>90)throw Error('Byggdelen måste vara 0,25–90 modellenheter lång.');
+ if(kind==='wall'&&arch().some(e=>e.kind==='wall'&&((dist({x:e.a[0],z:e.a[1]},{x:a[0],z:a[1]})<.01&&dist({x:e.b[0],z:e.b[1]},{x:b[0],z:b[1]})<.01)||(dist({x:e.b[0],z:e.b[1]},{x:a[0],z:a[1]})<.01&&dist({x:e.a[0],z:e.a[1]},{x:b[0],z:b[1]})<.01))))return arch().find(e=>e.kind==='wall');const len=Math.hypot(a[0]-b[0],a[1]-b[1]);if(len<.25||len>100)throw Error('Byggdelen måste vara 0,25–100 modellenheter lång.');
  const span=isDoor(kind)?standardPassageSpan(a,b):{a,b};
  const id=nextId(['wall','window','glazed'].includes(kind)?'BYGG-V-':'BYGG-D-'),entry={id,kind,...span,height:isDoor(kind)?2.4:2.85,thickness:.11,sill:Number($('sill').value)||.9,finish:'white'};
  arch().push(entry);return entry;}
@@ -258,7 +272,9 @@ function moveObject(o,x,z){if(arch().includes(o)){
  return false;}
 function finishBuild(a,q,tool){try{const before=JSON.stringify(p());
  selected=['room','corridor'].includes(tool)?makeFloor(a,q,tool).id:makeSegment(tool,[a.x,a.z],[q.x,q.z]).id;
- first=null;drawGesture=null;commit(before);status('Ritad. Bygg vidare eller tryck Esc för att välja och flytta.');
+ first=null;drawGesture=null;commit(before);
+ status(tool==='room'?'Rummet är klart! Du kan fortsätta bygga eller trycka Esc för att möblera.':
+  'Golvytan är klar. Fortsätt bygga eller tryck Esc för att välja.');
  }catch(err){first=null;drawGesture=null;status(err.message);redraw();}}
 function handleBuild(q,tool,gesture){try{
  if(['poster','curtain','blind'].includes(tool)){const hit=wallAtPoint(arch(),[q.x,q.z],{radius:.4});if(!hit)throw Error('Klicka på en vägg eller ett fönster för att fästa tillbehöret.');const before=JSON.stringify(p());p().architecture.posters||=[];p().architecture.treatments||=[];let fresh;if(tool==='poster'){fresh=makePoster(hit.wall,p().architecture.posters,hit.t);p().architecture.posters.push(fresh);}else if(tool==='blind'){fresh=createBlind(arch(),p().architecture.treatments,hit.wall.id);p().architecture.treatments.push(fresh);}else{const w=hit.wall,L=hit.length,half=Math.min(.45,3/L),t=clamp(hit.t,half,1-half),pt=v=>w.a.map((n,i)=>n+(w.b[i]-n)*v);fresh=createCurtain(arch(),p().architecture.treatments,w.id,pt(t-half),pt(t+half));p().architecture.treatments.push(fresh);}selected=fresh.id;commit(before);return;}
@@ -278,7 +294,7 @@ canvas.addEventListener('pointermove',e=>{if(view!=='plan')return;if(planPan){co
  hover=q;if(first||pendingFurniture||tab==='build'&&['door','window','glazed','opening','card-door'].includes($('tool').value))redraw();});
 canvas.addEventListener('pointerleave',()=>{if(drag||planPan)return;hover=null;snapFeedback=null;updateGuide();if(view==='plan')drawPlan();});
 canvas.addEventListener('pointerup',e=>{if(planPan){const rotate=planPan.button===2&&!planPan.moved;planPan=null;if(rotate){const o=lookup();if(o?.yaw!==undefined){const before=JSON.stringify(p());rotateWithChildren(o,Math.PI/12);commit(before);}}return;}if(drawGesture?.view==='plan'&&first&&Math.hypot(e.clientX-drawGesture.x,e.clientY-drawGesture.y)>6)finishBuild(first,point(e),drawGesture.tool);drawGesture=null;if(drag){commit(drag.before);drag=null;}});
-canvas.addEventListener('pointercancel',()=>{planPan=null;if(drag?.before){project=JSON.parse(drag.before);redraw();}drag=null;drawGesture=null;});
+canvas.addEventListener('pointercancel',()=>{planPan=null;if(drag?.before){project=JSON.parse(drag.before);redraw();}if(drawGesture)first=null;drag=null;drawGesture=null;redraw();});
 canvas.addEventListener('contextmenu',e=>e.preventDefault());
 function drawPlan(){const r=canvas.getBoundingClientRect(),dpr=Math.min(devicePixelRatio||1,2);canvas.width=Math.round(r.width*dpr);canvas.height=Math.round(r.height*dpr);ctx.clearRect(0,0,canvas.width,canvas.height);ctx.fillStyle='#e6efea';ctx.fillRect(0,0,canvas.width,canvas.height);
  const b=p().ground.bounds;ctx.strokeStyle='#bfd1ca';ctx.lineWidth=1;for(let x=b.x0;x<=b.x1;x++)for(let z=b.z0;z<=b.z1;z++){const [sx,sz]=screen(x,z);if(sx>=0&&sx<canvas.width&&sz>=0&&sz<canvas.height)ctx.fillRect(sx,sz,1,1);}
@@ -339,7 +355,15 @@ function drawPlan(){const r=canvas.getBoundingClientRect(),dpr=Math.min(devicePi
    const vx=(hit.wall.b[0]-hit.wall.a[0])/hit.length,vz=(hit.wall.b[1]-hit.wall.a[1])/hit.length;
    ctx.beginPath();ctx.moveTo(...screen(x-vx*width/2,z-vz*width/2));ctx.lineTo(...screen(x+vx*width/2,z+vz*width/2));
    ctx.strokeStyle='#f4ad42';ctx.lineWidth=9*dpr;ctx.globalAlpha=.7;ctx.stroke();ctx.globalAlpha=1;}}
- if(first&&hover){const a=screen(first.x,first.z),b=screen(hover.x,hover.z);ctx.beginPath();if(['room','corridor'].includes($('tool').value))ctx.rect(a[0],a[1],b[0]-a[0],b[1]-a[1]);else{ctx.moveTo(...a);ctx.lineTo(...b);}ctx.setLineDash([7,5]);ctx.lineWidth=2;ctx.strokeStyle='#106f79';ctx.stroke();ctx.setLineDash([]);}
+ if(first&&hover){
+  const room=['room','corridor'].includes($('tool').value),bounds=p().ground.bounds;
+  const withinMap=q=>room?{
+   x:clamp(q.x,bounds.x0,bounds.x1),z:clamp(q.z,bounds.z0,bounds.z1)}:q;
+  const start=withinMap(first),end=withinMap(hover),a=screen(start.x,start.z),b=screen(end.x,end.z);
+  ctx.beginPath();if(room)ctx.rect(a[0],a[1],b[0]-a[0],b[1]-a[1]);
+  else{ctx.moveTo(...a);ctx.lineTo(...b);}
+  ctx.setLineDash([7,5]);ctx.lineWidth=2;ctx.strokeStyle='#106f79';ctx.stroke();ctx.setLineDash([]);
+ }
 }
 const scene=new T.Scene();scene.background=new T.Color(0xd9e8e4);const camera=new T.PerspectiveCamera(55,1,.1,250);let renderer=null;
 function ensureRenderer(){
@@ -380,7 +404,13 @@ function update3DPreview(q=hover3d){preview3d.traverse(o=>{if(o.isMesh||o.isLine
   const fit=easyFurniturePose({...pose,...snapFeedback.pose}).item;
   previewBox(fit.x,(fit.elevation||0)+fit.height/2,fit.z,fit.w,fit.height,fit.d,0x24aa80,fit.yaw??pendingYaw,.52);
  }
- else if(q&&first&&tab==='build'){const tool=$('tool').value,x=(first.x+q.x)/2,z=(first.z+q.z)/2,w=Math.abs(q.x-first.x),d=Math.abs(q.z-first.z);if(['room','corridor'].includes(tool))previewBox(x,.035,z,w,.06,d,0x188d84,0,.28);else{const len=Math.hypot(w,d),angle=-Math.atan2(q.z-first.z,q.x-first.x);previewBox(x,.8,z,len,1.6,.07,0x188d84,angle,.35);}}
+ else if(q&&first&&tab==='build'){
+  const tool=$('tool').value,room=['room','corridor'].includes(tool),bounds=p().ground.bounds;
+  const clip=v=>room?{x:clamp(v.x,bounds.x0,bounds.x1),z:clamp(v.z,bounds.z0,bounds.z1)}:v;
+  const a=clip(first),b=clip(q),x=(a.x+b.x)/2,z=(a.z+b.z)/2,w=Math.abs(b.x-a.x),d=Math.abs(b.z-a.z);
+  if(room)previewBox(x,.035,z,w,.06,d,0x188d84,0,.28);
+  else{const len=Math.hypot(w,d),angle=-Math.atan2(b.z-a.z,b.x-a.x);previewBox(x,.8,z,len,1.6,.07,0x188d84,angle,.35);}
+ }
  else if(q&&tab==='build'&&['door','card-door','opening','window','glazed'].includes($('tool').value)){const hit=wallAtPoint(arch(),[q.x,q.z],{radius:.4});if(hit){const w=isDoor($('tool').value)?1.2:Math.min(1.6,hit.length),angle=-Math.atan2(hit.wall.b[1]-hit.wall.a[1],hit.wall.b[0]-hit.wall.a[0]);previewBox(hit.point[0],.7,hit.point[1],w,1.4,.12,0xf4ad42,angle,.3);}}
  updateGuide();renderer.render(scene,camera);
 }
@@ -860,7 +890,7 @@ $('scene3d').addEventListener('pointerleave',()=>{
  hover3d=null;snapFeedback=null;update3DPreview();
 });
 $('scene3d').addEventListener('pointerup',e=>{if(drawGesture?.view==='3d'&&first&&Math.hypot(e.clientX-drawGesture.x,e.clientY-drawGesture.y)>6){const q=hit3d(e);if(q)finishBuild(first,q,drawGesture.tool);}drawGesture=null;orbitDrag=null;pan3d=null;if(drag3d){commit(drag3d.before);drag3d=null;}});
-$('scene3d').addEventListener('pointercancel',()=>{orbitDrag=null;pan3d=null;if(drag3d?.before){project=JSON.parse(drag3d.before);redraw();}drag3d=null;drawGesture=null;});
+$('scene3d').addEventListener('pointercancel',()=>{orbitDrag=null;pan3d=null;if(drag3d?.before){project=JSON.parse(drag3d.before);redraw();}if(drawGesture)first=null;drag3d=null;drawGesture=null;redraw();});
 $('scene3d').addEventListener('contextmenu',e=>e.preventDefault());
 new ResizeObserver(redraw).observe(canvas.parentElement);
 $('name').value=p().name;$('width').value=p().ground.bounds.x1-p().ground.bounds.x0;$('depth').value=p().ground.bounds.z1-p().ground.bounds.z0;

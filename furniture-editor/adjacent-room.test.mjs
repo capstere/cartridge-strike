@@ -71,5 +71,5 @@ test('invalid source, unknown direction and short walls return a useful reason',
  assert.equal(planAdjacentRoom(room,'diagonal',[room],walls,bounds).ok,false);
  assert.equal(planAdjacentRoom({...room,source:true},'right',[room],walls,bounds).ok,false);
  const tiny={...room,x1:-3};
- assert.match(planAdjacentRoom(tiny,'right',[tiny],walls,bounds).reason,/längre/);
+ assert.match(planAdjacentRoom(tiny,'right',[tiny],walls,bounds).reason,/längre|lång/);
 });

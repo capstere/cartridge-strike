@@ -3,7 +3,7 @@ import '../../src/floor5-data.js';
 import '../../src/world.js';
 import {createFurnishings} from '../../src/fps/furnishings.mjs';
 import {catalog,inside,distanceSegment,EDITABLE_KINDS,exportPatch,isChanged} from '../core.mjs';
-import {readBaseline,parseArchitecture,exportArchitecture,wallPieces,isDoor} from './architecture.mjs';
+import {readBaseline,parseArchitecture,exportArchitecture,wallPieces,isDoor} from './architecture.mjs?v=4.6.0';
 
 /** Shared walls may overlap after adjacent rooms are drawn. A fitted window
  * replaces every underlying solid span, just as a door cuts every wall layer. */

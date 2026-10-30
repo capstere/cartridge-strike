@@ -1,5 +1,5 @@
-import {parseProject} from '../furniture-editor/build/level-project.mjs?v=3.6.0';
-import {createWorld} from '../src/fps/world.mjs?v=3.5.0';
+import {parseProject} from '../furniture-editor/build/level-project.mjs?v=4.6.0';
+import {createWorld} from '../src/fps/world.mjs?v=4.6.0';
 import {findWalkStart} from '../src/fps/walk-start.mjs';
 import {Renderer} from '../src/fps/render.mjs?v=3.5.0';
 

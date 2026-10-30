@@ -68,7 +68,7 @@ export function validateEntry(entry,{isNew=false}={}){
  if(!Array.isArray(entry.a)||!Array.isArray(entry.b)||entry.a.length!==2||entry.b.length!==2||
   ![...entry.a,...entry.b].every(v=>finite(v)&&Math.abs(v)<=100))throw Error('Ogiltiga koordinater.');
  const len=entryLength(entry);
- if(len<(entry.source?.008:.25)||len>90)throw Error('Nya byggdelar måste vara minst 0,25 m och högst 90 m långa.');
+ if(len<(entry.source?.008:.25)||len>100)throw Error('Byggdelen måste vara 0,25–100 modellenheter lång.');
  if(!finite(entry.height)||entry.height<.45||entry.height>6)throw Error('Byggdelens höjd måste vara 0,45–6 m.');
  if(!finite(entry.thickness)||entry.thickness<.025||entry.thickness>.7)throw Error('Väggtjockleken måste vara 0,025–0,70 m.');
  if(!finite(entry.sill)||entry.sill<0||entry.sill>entry.height-.15)throw Error('Fönsterbröstningen är inte giltig.');
@@ -80,8 +80,8 @@ export function validateEntry(entry,{isNew=false}={}){
 export function validateFloorRect(e){
  if(!e||typeof e.id!=='string'||!/^BYGG-G-\d{1,5}$/.test(e.id)||
   ![e.x0,e.z0,e.x1,e.z1].every(x=>finite(x)&&Math.abs(x)<=100)||
-  e.x1-e.x0<.5||e.z1-e.z0<.5||e.x1-e.x0>50||e.z1-e.z0>50)
-  throw Error('Golvet måste vara en rektangel mellan 0,5 och 50 m inom kartan.');
+  e.x1-e.x0<.5||e.z1-e.z0<.5||e.x1-e.x0>100||e.z1-e.z0>100)
+  throw Error('Golvet måste vara minst 0,5 och högst 100 modellenheter åt varje håll, inom kartan.');
  if(typeof e.name!=='string'||e.name.length>60)throw Error('Ogiltigt golvnamn.');
  return true;
 }

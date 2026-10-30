@@ -67,7 +67,7 @@ test('context furniture dock edits the actual model with real validation and und
  assert.match(editor,/installSelectionDock/);
  assert.match(editor,/selectionDock\.sync\(o/);
  assert.match(editor,/child\.elevation=/);
- assert.match(html,/src="new\.mjs\?v=4\.5\.0"/);
+ assert.match(html,/src="new\.mjs\?v=4\.6\.0"/);
 });
 
 test('free building defaults to optional smart placement, with explicit diagnostics',()=>{
@@ -168,4 +168,23 @@ test('the highlighted 3D snap target is tied to actual tabletop/wall placement, 
  assert.match(preview,/export function preferredPlacementPoint/);
  assert.match(preview,/export function placementPreview/);
  assert.match(browser,/visual3DSnapTargets:true/);
+});
+
+test('large rooms are real, atomic and not rejected by the obsolete 50-unit limit',()=>{
+ const html=source('furniture-editor/new.html');
+ const editor=source('furniture-editor/new.mjs');
+ const geometry=source('furniture-editor/build/room-drag.mjs');
+ const architecture=source('furniture-editor/build/architecture.mjs');
+ const suite=source('tools/studio-ux-browser.mjs');
+ assert.match(html,/src="new\.mjs\?v=4\.6\.0"/);
+ assert.match(editor,/const \{rect,edges\}=planDraggedRoom\(a,b,p\(\)\.ground\.bounds\)/);
+ assert.match(editor,/if\(role==='room'\)for\(const \[u,v\] of edges\)makeSegment\('wall',u,v\)/);
+ assert.match(editor,/p\(\)\.ground\.floors\.length=beforeFloors/);
+ assert.match(editor,/arch\(\)\.length=beforeWalls/);
+ assert.match(editor,/if\(drawGesture\)first=null/);
+ assert.match(geometry,/export const MIN_ROOM_SPAN=\.5,MAX_ROOM_SPAN=100/);
+ assert.match(geometry,/validateFloorRect\(/);
+ assert.match(geometry,/validateEntry\(/);
+ assert.match(architecture,/e\.x1-e\.x0>100\|\|e\.z1-e\.z0>100/);
+ assert.match(suite,/largeRoomDragAndUndo:true/);
 });
