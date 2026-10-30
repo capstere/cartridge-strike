@@ -43,6 +43,41 @@ try{
  await beginner.locator('#redo').click();
  assert.equal(await beginner.evaluate(()=>__levelStudio.project.architecture.added.filter(x=>x.kind==='door').length),1,
    'Redo restores entire room and doorway in one step');
+
+ // A second room shares the existing wall and inserts a real doorway.
+ await beginner.locator('#kidRoom').click();
+ await beginner.locator('#roomChoices').waitFor({state:'visible'});
+ assert(await beginner.locator('[data-room-side="right"]').isEnabled());
+ assert(await beginner.locator('[data-room-side="below"]').isDisabled(),
+  'The starter rooms existing exterior doorway cannot be overwritten');
+ await beginner.locator('[data-room-side="right"]').hover();
+ await beginner.locator('[data-room-side="right"]').click();
+ assert.equal(await beginner.evaluate(()=>__levelStudio.project.ground.floors.length),2);
+ const adjacent=await beginner.evaluate(()=>({
+  first:__levelStudio.project.ground.floors[0],
+  second:__levelStudio.project.ground.floors[1],
+  doors:__levelStudio.project.architecture.added.filter(e=>e.kind==='door'),
+  walls:__levelStudio.project.architecture.added.filter(e=>e.kind==='wall')
+ }));
+ assert.equal(adjacent.first.x1,adjacent.second.x0,'Rooms share one precise boundary');
+ assert.equal(adjacent.doors.length,2,'A real internal doorway connects the rooms');
+ assert(adjacent.doors.some(d=>Math.abs(d.a[0]-adjacent.second.x0)<.002&&
+  Math.abs(d.b[0]-adjacent.second.x0)<.002),'The internal door occupies the common wall');
+ assert(!adjacent.walls.some(w=>Math.abs(w.a[0]-adjacent.second.x0)<.002&&
+  Math.abs(w.b[0]-adjacent.second.x0)<.002&&
+  Math.min(w.a[1],w.b[1])<0&&Math.max(w.a[1],w.b[1])>0),
+  'No invisible solid wall remains across the door opening');
+ await beginner.locator('#undo').click();
+ assert.equal(await beginner.evaluate(()=>__levelStudio.project.ground.floors.length),1,
+  'Adding a room plus the internal doorway is a single undo action');
+ await beginner.locator('#redo').click();
+ assert.equal(await beginner.evaluate(()=>__levelStudio.project.architecture.added.filter(x=>x.kind==='door').length),2);
+ // Occupied sides are unavailable; choosing a different room remains possible.
+ await beginner.evaluate(()=>__levelStudio.select(__levelStudio.project.ground.floors[0].id));
+ await beginner.locator('#kidRoom').click();
+ assert(await beginner.locator('[data-room-side="right"]').isDisabled());
+ assert(await beginner.locator('[data-room-side="above"]').isEnabled());
+ await beginner.locator('#roomChoiceClose').click();
  await beginner.locator('#kidFurnish').click();
  assert(await beginner.locator('[data-panel="furnish"]').isVisible());
  await beginner.locator('[data-kid-category="bord"]').click();
@@ -59,14 +94,19 @@ try{
  assert.match(downloaded.suggestedFilename(),/\.zip$/,'One-click project export downloads a ZIP');
  await beginner.reload({waitUntil:'domcontentloaded'});
  await beginner.waitForFunction(()=>!!window.__levelStudio,null,{timeout:90000});
- assert.equal(await beginner.evaluate(()=>__levelStudio.project.ground.floors.length),1);
+ assert.equal(await beginner.evaluate(()=>__levelStudio.project.ground.floors.length),2);
  assert.equal(await beginner.evaluate(()=>__levelStudio.project.furniture.added.length),1);
- assert.equal(await beginner.evaluate(()=>__levelStudio.project.architecture.added.filter(x=>x.kind==='door').length),1,
-   'Room, doorway and furniture survive reload');
+ assert.equal(await beginner.evaluate(()=>__levelStudio.project.architecture.added.filter(x=>x.kind==='door').length),2,
+   'Both rooms, their doorways and the furniture survive reload');
  await beginner.locator('#kidWalk').click();
  await beginner.locator('#walkFrame').waitFor({state:'visible',timeout:90000});
  await beginner.waitForFunction(()=>!!document.querySelector('#walkFrame')?.contentWindow?.__walk?.renderer,
    null,{timeout:90000});
+ const connectedFrame=beginner.frame({url:/\/fps\/walk\.html/});
+ assert(connectedFrame,'First-person preview is a real running game instance');
+ const pathBetweenRooms=await connectedFrame.evaluate(()=>__walk.world.findPath({x:0,z:0},{x:8,z:0}));
+ assert(Array.isArray(pathBetweenRooms)&&pathBetweenRooms.length>0,
+  'The player and bots can navigate between the first and second room');
  await beginner.locator('#kidWalk').click();
  assert(await beginner.locator('#plan').isVisible(),'Simple walk button returns to the editor');
  await beginner.close();await beginnerContext.close();
@@ -127,6 +167,12 @@ try{
  await phone.locator('#kidRoom').click();
  assert.equal(await phone.evaluate(()=>__levelStudio.project.ground.floors.length),1);
  assert.equal(await phone.evaluate(()=>__levelStudio.project.architecture.added.filter(x=>x.kind==='door').length),1);
+ await phone.locator('#kidRoom').click();
+ await phone.locator('#roomChoices').waitFor({state:'visible'});
+ assert(await phone.locator('[data-room-side="right"]').isEnabled());
+ await phone.locator('[data-room-side="right"]').click();
+ assert.equal(await phone.evaluate(()=>__levelStudio.project.ground.floors.length),2);
+ assert.equal(await phone.evaluate(()=>__levelStudio.project.architecture.added.filter(x=>x.kind==='door').length),2);
  await phone.locator('#kidFurnish').click();
  assert.equal(await phone.locator('body').getAttribute('data-studio-sheet'),'tools');
  await phone.locator('#closeTools').click();
@@ -178,5 +224,5 @@ try{
 
  assert.deepEqual(errors,[],'No page-level exceptions in Studio navigation');
  console.log(JSON.stringify({status:'PASS',hub:true,wideScene:true,mobileDrawers:true,
-   oneClickRoom:true,doorAndUndo:true,beginnerSaveWalk:true,contextualFurniture:true,autosaveAndUndo:true,characterTaskShortcuts:true,consoleErrors:errors.length}));
+   oneClickRoom:true,adjoiningRoom:true,sharedDoorAndNavigation:true,doorAndUndo:true,beginnerSaveWalk:true,contextualFurniture:true,autosaveAndUndo:true,characterTaskShortcuts:true,consoleErrors:errors.length}));
 }finally{await browser.close();}
