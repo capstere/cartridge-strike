@@ -19,6 +19,7 @@ import {findNearbyFreePlacement} from './soft-placement.mjs';
 import {importLocalGLB,getLocalFile,localLibrary} from './library/models.mjs';
 import {assetHash} from './library/glb-utils.mjs';
 import {installSelectionDock} from './selection-dock.mjs';
+import {planAdjacentRoom,ADJACENT_SIDES} from './adjacent-room.mjs';
 
 const $=id=>document.getElementById(id),canvas=$('plan'),ctx=canvas.getContext('2d');
 const catalogEntries=LIBRARY_ALL;
@@ -27,7 +28,7 @@ const mode=new URLSearchParams(location.search).get('mode')==='edit-floor5'?'edi
 const STORAGE=mode==='edit-floor5'?'cartridge-floor5-level-v2':'cartridge-new-level-v2';let project,selected=null,tab='build',first=null,hover=null,drag=null,view='plan',zoom=1,offset={x:0,z:0},orbit=.65,history=[],future=[],localCatalog=[];
 try{project=parseProject(localStorage.getItem(STORAGE)||'');if(project.mode!==mode)throw Error('mode');project=inheritFloor5Gameplay(correctOldOrangeChair(project));}catch{project=inheritFloor5Gameplay(exportProject({mode,name:mode==='edit-floor5'?'Floor 5 – min version':'Min bana',projectId:'lvl-'+crypto.randomUUID().slice(0,12)}));if(mode==='edit-floor5'){try{const old=localStorage.getItem('cartridge-furniture-studio-0.17.0-v1');if(old)project=inheritFloor5Gameplay(parseProject(old));}catch{}}}
 if(project.mode==='edit-floor5')project.ground.bounds={x0:-48,z0:-33,x1:52,z1:40};
-let pendingFurniture=null,pendingTemplate=null,pendingYaw=0,drawGesture=null,planPan=null,spaceHeld=false,view3dZoom=1,view3dCenter=null;
+let roomPreview=null,pendingFurniture=null,pendingTemplate=null,pendingYaw=0,drawGesture=null,planPan=null,spaceHeld=false,view3dZoom=1,view3dCenter=null;
 let gameLook=false,gameLookTimer=0,walkReturnView='plan',walkReturnLook=false,walkPose=null;
 let sceneModel,sceneProject;function model(){if(sceneProject!==project){sceneProject=project;sceneModel=resolveProjectScene(project);}return sceneModel;}
 const p=()=>project,arch=()=>model().entries,floors=()=>p().mode==='new-level'?p().ground.floors:model().floors,objects=()=>model().items,markers=()=>[...p().gameplay.spawns,...[p().gameplay.objectives.bomb,p().gameplay.objectives.rescue,...p().gameplay.objectives.hostages].filter(Boolean)];
@@ -216,6 +217,11 @@ canvas.addEventListener('contextmenu',e=>e.preventDefault());
 function drawPlan(){const r=canvas.getBoundingClientRect(),dpr=Math.min(devicePixelRatio||1,2);canvas.width=Math.round(r.width*dpr);canvas.height=Math.round(r.height*dpr);ctx.clearRect(0,0,canvas.width,canvas.height);ctx.fillStyle='#e6efea';ctx.fillRect(0,0,canvas.width,canvas.height);
  const b=p().ground.bounds;ctx.strokeStyle='#bfd1ca';ctx.lineWidth=1;for(let x=b.x0;x<=b.x1;x++)for(let z=b.z0;z<=b.z1;z++){const [sx,sz]=screen(x,z);if(sx>=0&&sx<canvas.width&&sz>=0&&sz<canvas.height)ctx.fillRect(sx,sz,1,1);}
  for(const f of floors()){const poly=(f.polygon||[[f.x0,f.z0],[f.x1,f.z0],[f.x1,f.z1],[f.x0,f.z1]]).map(v=>screen(...v));ctx.beginPath();poly.forEach((v,i)=>i?ctx.lineTo(...v):ctx.moveTo(...v));ctx.closePath();ctx.fillStyle=f.surface==='vinyl'?'#d3e8e3':'#f3e4d0';ctx.fill();ctx.strokeStyle=selected===f.id?'#ed993a':'#adc3b8';ctx.lineWidth=selected===f.id?3:1;ctx.stroke();if(zoom>1||!f.source){ctx.fillStyle='#426367';ctx.font=`${12*dpr}px system-ui`;const [x,z]=screen(f.x0,f.z0);ctx.fillText(f.name,x+8,z+17*dpr);}}
+ if(roomPreview&&view==='plan'){
+  const r=roomPreview.rect,pts=[[r.x0,r.z0],[r.x1,r.z0],[r.x1,r.z1],[r.x0,r.z1]].map(q=>screen(...q));
+  ctx.save();ctx.beginPath();pts.forEach((v,i)=>i?ctx.lineTo(...v):ctx.moveTo(...v));ctx.closePath();
+  ctx.fillStyle='#42be9f40';ctx.strokeStyle='#157d68';ctx.lineWidth=3;ctx.setLineDash([8,5]);ctx.fill();ctx.stroke();ctx.restore();
+ }
  for(const e of [...projectWallPieces(arch()),...arch().filter(e=>isDoor(e.kind))]){const marker=isDoor(e.kind)?standardDoorMarkerSpan(e):e;const a=screen(...marker.a),b=screen(...marker.b);ctx.beginPath();ctx.moveTo(...a);ctx.lineTo(...b);ctx.lineWidth=selected===e.id?7:Math.max(3,5*dpr);ctx.strokeStyle=selected===e.id?'#f2a03e':({wall:'#bc5961',glazed:'#35aa8a',window:'#46a0c0',door:'#dc9b4f','card-door':'#dc9b4f',opening:'#fff'}[e.kind]);ctx.stroke();}
  for(const o of objects()){const pts=corners(o).map(v=>screen(...v));ctx.beginPath();pts.forEach((v,i)=>i?ctx.lineTo(...v):ctx.moveTo(...v));ctx.closePath();ctx.fillStyle=selected===o.id?'#ffc874':'#5a7e88';ctx.fill();ctx.strokeStyle='#233e4a';ctx.stroke();}
  for(const m of markers()){const [x,z]=screen(m.x,m.z);ctx.beginPath();ctx.arc(x,z,selected===m.id?12*dpr:9*dpr,0,Math.PI*2);ctx.fillStyle=m.team==='analysts'?'#298bb7':m.team==='counterAnalysts'?'#d5684d':m.id.includes('BOMB')?'#dfb03e':m.id.includes('RESCUE')?'#41b89a':'#bf78b5';ctx.fill();ctx.strokeStyle='#fff';ctx.lineWidth=2;ctx.stroke();ctx.fillStyle='#16343b';ctx.font=`bold ${10*dpr}px system-ui`;ctx.fillText(m.team?String(m.index+1):m.id.includes('H')?'H':m.id.includes('BOMB')?'B':'R',x+11*dpr,z);}
@@ -340,32 +346,126 @@ function makeStarterRoom(){
   redraw();status('Rummet kunde inte skapas: '+error.message);return false;
  }
 }
+function currentRoomForAddition(){
+ const active=lookup(),rooms=floors().filter(f=>f.role==='room'&&!f.source);
+ if(rooms.includes(active))return active;
+ if(objects().includes(active)&&active.roomId){
+  const home=rooms.find(f=>f.id===active.roomId);
+  if(home)return home;
+ }
+ return rooms.at(-1)||null;
+}
+function roomOptions(room){
+ if(!room)return [];
+ const attachments=[...(p().architecture.treatments||[]),...(p().architecture.posters||[])];
+ return ADJACENT_SIDES.map(side=>planAdjacentRoom(room,side,floors(),arch(),p().ground.bounds,
+  {treatments:attachments}));
+}
+function closeRoomChoices({redrawScene=false}={}){
+ const picker=$('roomChoices'),changed=!picker.hidden||!!roomPreview;
+ picker.hidden=true;roomPreview=null;$('kidRoom').setAttribute('aria-expanded','false');
+ if(changed&&redrawScene)redraw();
+}
+function renderRoomChoices(){
+ const room=currentRoomForAddition(),options=roomOptions(room);
+ $('roomChoiceHint').textContent=!room?'Välj ett rum i planen för att bygga vidare.':
+  options.some(x=>x.ok)?'Bygger vidare från '+(room.name||'ditt rum')+'. Välj en ledig sida så kommer en dörr automatiskt.':
+  'Inga lediga sidor här. Välj ett annat rum eller rita ett eget.';
+ for(const button of document.querySelectorAll('[data-room-side]')){
+  const plan=options.find(x=>x.side===button.dataset.roomSide);
+  button.disabled=!plan?.ok;button.title=plan?.ok?'Skapa ett anslutet rum med riktig dörr':plan?.reason||'Välj ett rum först';
+ }
+ return options;
+}
+function openRoomChoices(){
+ if(view==='walk')leaveWalk();
+ if(view!=='plan')$('planView').click();
+ if(tab!=='build')switchTab('build');
+ setBuildTool('select');
+ const picker=$('roomChoices');
+ picker.hidden=false;$('kidRoom').setAttribute('aria-expanded','true');
+ renderRoomChoices();redraw();
+}
+function makeAdjacentRoom(side){
+ const plan=roomOptions(currentRoomForAddition()).find(item=>item.side===side);
+ if(!plan?.ok){status(plan?.reason||'Välj ett annat rum och prova igen.');renderRoomChoices();return false;}
+ const before=JSON.stringify(p()),input=$('floorName'),originalName=input.value;
+ try{
+  input.value=originalName.trim()&&originalName.trim()!=='Mitt första rum'?originalName:
+   'Rum '+(floors().filter(f=>f.role==='room').length+1);
+  const {x0,x1,z0,z1}=plan.rect;
+  const next=makeFloor({x:x0,z:z0},{x:x1,z:z1},'room');
+  const shared=arch().find(w=>w.id===plan.sharedWallId&&w.kind==='wall');
+  if(!shared)throw Error('Den gemensamma väggen finns inte kvar.');
+  const door=planPaintOverWall(arch(),shared.id,plan.doorStart,plan.doorEnd,'door',
+   {posters:p().architecture.posters||[]});
+  arch().splice(0,arch().length,...door.entries.filter(e=>!e.deleted));
+  p().architecture.posters=door.posters;
+  selected=next.id;pendingFurniture=null;pendingTemplate=null;first=null;
+  roomPreview=null;closeRoomChoices();
+  input.value='';setBuildTool('select');
+  const f=frameBuiltFloors(),b=p().ground.bounds;
+  zoom=clamp(Math.min((b.x1-b.x0)/(f.span+1),(b.z1-b.z0)/(f.span+1)),1,10);
+  offset={x:(b.x0+b.x1)/2-f.x,z:(b.z0+b.z1)/2-f.z};
+  view3dCenter=null;
+  commit(before);
+  status('Klart! Rum '+(floors().length)+' har en riktig dörr till det första. Lägg till fler rum eller möblera!');
+  return true;
+ }catch(err){
+  project=JSON.parse(before);sceneProject=null;sceneModel=null;
+  input.value=originalName;roomPreview=null;renderRoomChoices();redraw();
+  status('Kunde inte lägga till rum: '+err.message);
+  return false;
+ }
+}
+function startCustomRoom(){
+ closeRoomChoices();
+ if(view==='walk')leaveWalk();
+ if(tab!=='build')switchTab('build');
+ setBuildTool('room');if(view!=='plan')$('planView').click();
+ status('Rita ett eget rum: dra mellan två hörn i planen. Väggarna byggs automatiskt.');
+}
 function updateKidSteps(){
- const ready=floors().length>0;
- $('kidRoom').querySelector('strong').textContent=ready?'1. Rita nytt rum':'1. Skapa rum';
+ const ready=floors().some(f=>f.role==='room');
+ $('kidRoom').querySelector('strong').textContent=ready?'1. Fler rum':'1. Skapa rum';
  $('kidWalk').querySelector('strong').textContent=view==='walk'?'3. Till bygget':'3. Gå runt';
  $('kidRoom').classList.toggle('kid-step-primary',!ready);
 }
 $('kidRoom').addEventListener('click',()=>{
- if(makeStarterRoom())return;
- if(view==='walk')leaveWalk();
- switchTab('build');setBuildTool('room');
- if(view!=='plan')$('planView').click();
- status('Rita ett nytt rum: dra mellan två hörn i planen. Väggarna byggs automatiskt.');
+ if(makeStarterRoom()){closeRoomChoices();return;}
+ if(p().mode==='new-level'&&floors().some(f=>f.role==='room')){
+  if($('roomChoices').hidden)openRoomChoices();else closeRoomChoices({redrawScene:true});
+  return;
+ }
+ startCustomRoom();
 });
+for(const button of document.querySelectorAll('[data-room-side]')){
+ const show=()=>{
+  const plan=roomOptions(currentRoomForAddition()).find(x=>x.side===button.dataset.roomSide);
+  roomPreview=plan?.ok?plan:null;
+  if(view==='plan')redraw();
+ };
+ button.addEventListener('pointerenter',show);
+ button.addEventListener('focus',show);
+ button.addEventListener('pointerleave',()=>{roomPreview=null;if(view==='plan')redraw();});
+ button.addEventListener('blur',()=>{roomPreview=null;if(view==='plan')redraw();});
+ button.addEventListener('click',()=>makeAdjacentRoom(button.dataset.roomSide));
+}
+$('roomChoiceClose').addEventListener('click',()=>closeRoomChoices({redrawScene:true}));
+$('roomDrawCustom').addEventListener('click',startCustomRoom);
 $('kidFurnish').addEventListener('click',()=>{
- if(p().mode==='new-level'&&!floors().length&&!makeStarterRoom())return;
+ closeRoomChoices();if(p().mode==='new-level'&&!floors().length&&!makeStarterRoom())return;
  if(matchMedia('(max-width:700px)').matches)document.querySelector('[data-mobile-tab="furnish"]').click();
  else switchTab('furnish');
  status('Välj en möbelbild och klicka på platsen i rummet. Du kan alltid flytta den igen.');
 });
 $('kidWalk').addEventListener('click',()=>{
- if(view==='walk'){leaveWalk();return;}
+ closeRoomChoices();if(view==='walk'){leaveWalk();return;}
  if(p().mode==='new-level'&&!floors().length&&!makeStarterRoom())return;
  $('walkView').click();
  if(view==='walk')updateKidSteps();
 });
-$('kidSave').addEventListener('click',()=>$('save').click());
+$('kidSave').addEventListener('click',()=>{closeRoomChoices();$('save').click();});
 
 const toolLabels={select:'VÄLJ',room:'RUM',corridor:'GOLV',wall:'VÄGG',door:'DÖRR','card-door':'KORTDÖRR',opening:'ÖPPNING',window:'FÖNSTER',glazed:'GLAS',poster:'AFFISCH',curtain:'GARDIN',blind:'PERSIENN'};
 function updateGuide(){const tool=$('tool').value,active=tab==='build'&&tool!=='select',placing=!!pendingFurniture,chosen=lookup();
@@ -377,7 +477,7 @@ function updateGuide(){const tool=$('tool').value,active=tab==='build'&&tool!=='
  $('cancelAction').hidden=!active&&!placing&&!first;$('deleteAction').disabled=!lookup();
 }
 function redraw(){updateKidSteps();$('modeLabel').textContent=p().mode==='edit-floor5'?'DESIGNSTUDION / FLOOR 5':'DESIGNSTUDION / NY BANA';updateProps();updateGuide();updateFirstBuild();$('undo').disabled=!history.length;$('redo').disabled=!future.length;if(view==='plan')drawPlan();else if(view==='3d')draw3D();}
-function switchTab(t){if(view==='walk')leaveWalk();tab=t;pendingFurniture=null;pendingTemplate=null;for(const b of document.querySelectorAll('[data-tab]'))b.classList.toggle('active',b.dataset.tab===t);for(const s of document.querySelectorAll('[data-panel]'))s.hidden=s.dataset.panel!==t;first=null;redraw();}
+function switchTab(t){closeRoomChoices();if(view==='walk')leaveWalk();tab=t;pendingFurniture=null;pendingTemplate=null;for(const b of document.querySelectorAll('[data-tab]'))b.classList.toggle('active',b.dataset.tab===t);for(const s of document.querySelectorAll('[data-panel]'))s.hidden=s.dataset.panel!==t;first=null;redraw();}
 document.querySelectorAll('[data-tab]').forEach(b=>b.onclick=()=>switchTab(b.dataset.tab));
 $('firstBuildDismiss').onclick=()=>{localStorage.setItem(guideKey('guide-hidden'),'1');updateFirstBuild();};
 $('showGuide').onclick=()=>{localStorage.removeItem(guideKey('guide-hidden'));updateFirstBuild();};
