@@ -8,7 +8,7 @@ import {findWallMount} from './wall-mounts.mjs';
 import {round,normalizeAngle} from './core.mjs';
 
 const isSurface=o=>!o.deleted&&(!o.wallMount||proceduralOf(o)?.shape==='wall-shelf')&&(
- ['counter','desk','table','round'].includes(proceduralOf(o)?.shape)||
+ ['counter','desk','table','round','wall-shelf'].includes(proceduralOf(o)?.shape)||
  ['desk','table','coffee-table'].includes(o.kind)||
  /counter|bench|worktop|table|desk|skrivbord|bänk|kitchen.?sink|diskbänk/i.test(o.assetName||'')
  )&&Number.isFinite(o.height)&&o.height>.35&&o.height<=1.45;
