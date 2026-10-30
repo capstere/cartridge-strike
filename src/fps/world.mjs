@@ -8,7 +8,7 @@ import { createTacticalMap } from './tactical-map.mjs';
 import { createLivingPlan } from './living-floor-plan.mjs';
 import {createFacilityDetails} from './facility-details.mjs';
 import {prepareGlass,createGlassState} from './destructible-glass.mjs';
-import {levelProjectToWorldData} from './level-adapter.mjs?v=3.5.0';
+import {levelProjectToWorldData} from './level-adapter.mjs?v=4.6.0';
 
 let sharedWorld;
 let levelCacheKey='',levelCache;
