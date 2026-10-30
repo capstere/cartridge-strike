@@ -314,8 +314,10 @@ try{
  await largePage.waitForFunction(()=>!!window.__levelStudio,null,{timeout:90000});
  assert.equal(await largePage.evaluate(()=>__levelStudio.project.ground.floors[0].x1-__levelStudio.project.ground.floors[0].x0),68,
   'A large room persists after reload without violating project validation');
- await largePage.locator('#undo').click();
- assert.equal(await largePage.evaluate(()=>__levelStudio.project.ground.floors.length),0);
+ largePage.once('dialog',dialog=>dialog.accept());
+ await largePage.locator('#newBlank').click();
+ assert.equal(await largePage.evaluate(()=>__levelStudio.project.ground.floors.length),0,
+  'A fresh map can start after reloading the first large room');
  await largePage.locator('#width').fill('100');
  await largePage.locator('#width').dispatchEvent('change');
  await largePage.locator('#depth').fill('100');
