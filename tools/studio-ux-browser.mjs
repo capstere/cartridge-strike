@@ -72,6 +72,40 @@ try{
   'Adding a room plus the internal doorway is a single undo action');
  await beginner.locator('#redo').click();
  assert.equal(await beginner.evaluate(()=>__levelStudio.project.architecture.added.filter(x=>x.kind==='door').length),2);
+
+ // Kid-friendly wall resizing: tap the room, drag its green arrow, and its
+ // top/bottom corners follow. The shared door stays unchanged and passable.
+ await beginner.evaluate(()=>__levelStudio.select(__levelStudio.project.ground.floors[1].id));
+ const beforeWall=await beginner.evaluate(()=>structuredClone(__levelStudio.project.ground.floors));
+ const wallDragStart=await beginner.evaluate(()=>{
+  const f=__levelStudio.project.ground.floors[1];
+  return __levelStudio.screenWorldPoint(f.x1,f.z0+(f.z1-f.z0)*.28);
+ });
+ const wallDragTarget=await beginner.evaluate(()=>{
+  const f=__levelStudio.project.ground.floors[1];
+  return __levelStudio.screenWorldPoint(f.x1+1.5,f.z0+(f.z1-f.z0)*.28);
+ });
+ await beginner.mouse.move(wallDragStart.x,wallDragStart.y);
+ await beginner.mouse.down();
+ await beginner.mouse.move(wallDragTarget.x,wallDragTarget.y,{steps:8});
+ await beginner.mouse.up();
+ const resized=await beginner.evaluate(()=>({
+  first:structuredClone(__levelStudio.project.ground.floors[0]),
+  second:structuredClone(__levelStudio.project.ground.floors[1]),
+  doors:__levelStudio.project.architecture.added.filter(x=>x.kind==='door')
+ }));
+ assert.equal(resized.second.x0,beforeWall[1].x0,'The shared wall stays where it was');
+ assert(resized.second.x1>beforeWall[1].x1+1,'The green arrow enlarges only the selected room');
+ assert.deepEqual(resized.first,beforeWall[0],'Neighbor room remains exactly unchanged');
+ assert.equal(resized.doors.length,2,'No door vanishes during a wall move');
+ assert(resized.doors.every(d=>Math.abs(Math.hypot(d.b[0]-d.a[0],d.b[1]-d.a[1])-1.2)<.002),
+  'Both actual doors retain the standard 1.20 opening');
+ await beginner.locator('#undo').click();
+ assert.equal(await beginner.evaluate(()=>__levelStudio.project.ground.floors[1].x1),beforeWall[1].x1,
+  'A wall drag is exactly one undo step');
+ await beginner.locator('#redo').click();
+ assert.equal(await beginner.evaluate(()=>__levelStudio.project.ground.floors[1].x1),resized.second.x1,
+  'Redo recovers the wall position and doorway');
  // Occupied sides are unavailable; choosing a different room remains possible.
  await beginner.evaluate(()=>__levelStudio.select(__levelStudio.project.ground.floors[0].id));
  await beginner.locator('#kidRoom').click();
@@ -98,6 +132,8 @@ try{
  assert.equal(await beginner.evaluate(()=>__levelStudio.project.furniture.added.length),1);
  assert.equal(await beginner.evaluate(()=>__levelStudio.project.architecture.added.filter(x=>x.kind==='door').length),2,
    'Both rooms, their doorways and the furniture survive reload');
+ assert.equal(await beginner.evaluate(()=>__levelStudio.project.ground.floors[1].x1),resized.second.x1,
+  'A dragged wall and its attached openings survive reload');
  await beginner.locator('#kidWalk').click();
  await beginner.locator('#walkFrame').waitFor({state:'visible',timeout:90000});
  await beginner.waitForFunction(()=>!!document.querySelector('#walkFrame')?.contentWindow?.__walk?.renderer,
@@ -224,5 +260,5 @@ try{
 
  assert.deepEqual(errors,[],'No page-level exceptions in Studio navigation');
  console.log(JSON.stringify({status:'PASS',hub:true,wideScene:true,mobileDrawers:true,
-   oneClickRoom:true,adjoiningRoom:true,sharedDoorAndNavigation:true,doorAndUndo:true,beginnerSaveWalk:true,contextualFurniture:true,autosaveAndUndo:true,characterTaskShortcuts:true,consoleErrors:errors.length}));
+   oneClickRoom:true,adjoiningRoom:true,wallEdgeDragging:true,sharedDoorAndNavigation:true,doorAndUndo:true,beginnerSaveWalk:true,contextualFurniture:true,autosaveAndUndo:true,characterTaskShortcuts:true,consoleErrors:errors.length}));
 }finally{await browser.close();}

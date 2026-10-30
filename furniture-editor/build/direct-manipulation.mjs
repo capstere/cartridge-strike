@@ -132,6 +132,21 @@ export function planResizeFloor(floor,entries,corner,point,{bounds,otherFloors=[
  return {floor:next,entries:updated};
 }
 
+/** Pull ONE wall of a rectangular room; the opposite side stays fixed.
+ * Reuses the exact corner geometry remapper (including 1.20-wide doors)
+ * and its shared-wall checks, so dragging never invents an overlapping collider.
+ */
+export function planResizeFloorEdge(floor,entries,side,point,options={}){
+ const index={left:'nw',right:'se',top:'nw',bottom:'se'};
+ if(!Object.hasOwn(index,side))throw Error('Välj en av rummets fyra väggsidor.');
+ if(![point?.x,point?.z].every(Number.isFinite))throw Error('Dra väggen till en giltig plats.');
+ const corner=index[side];
+ const target=side==='left'?{x:point.x,z:floor.z0}:
+  side==='right'?{x:point.x,z:floor.z1}:
+  side==='top'?{x:floor.x0,z:point.z}:{x:floor.x1,z:point.z};
+ return planResizeFloor(floor,entries,corner,target,options);
+}
+
 /** Drag a free wall endpoint; connected corners are edited with the room handle. */
 export function planMoveWallEnd(entries,id,end,point,{bounds,posters=[],treatments=[]}={}){
  const wall=entries.find(e=>e.id===id&&!e.deleted&&e.kind==='wall');

@@ -511,8 +511,8 @@
     },
     {
       "path": "furniture-editor/build/direct-manipulation.mjs",
-      "bytes": 10304,
-      "sha256": "3c970d43919fda5d50917d9bb32dd812c726a18683b83a71524144f772856daf"
+      "bytes": 11096,
+      "sha256": "e0181a5e5e6dab9379309d3e3f10e325a284024929bbf338cff813364249c10f"
     },
     {
       "path": "furniture-editor/build/door-traversal.mjs",
@@ -766,13 +766,13 @@
     },
     {
       "path": "furniture-editor/new.html",
-      "bytes": 16204,
-      "sha256": "edce3af8af0a665a520bbccd81dd45d889f2c67b633946aee031db7f71de62d0"
+      "bytes": 16196,
+      "sha256": "1b4490e94be7371e9140fae4469247f54579ce66302e5b079b345e5b1972ed92"
     },
     {
       "path": "furniture-editor/new.mjs",
-      "bytes": 79015,
-      "sha256": "9e9d22beb6cb4e13024d78d9b9e1bb360926e854cfa3321ddadb0ade2ff2ae77"
+      "bytes": 81077,
+      "sha256": "89d2dc034f5a511622ca26add6529971b7028a857f086d60219fc3b8b76f4ad4"
     },
     {
       "path": "furniture-editor/selection-dock.mjs",
@@ -1330,7 +1330,7 @@
       "sha256": "9b0c24534a47f2e1c9549a63a5e00a850577e22fe8d18dbc7a532008a027cb89"
     }
   ],
-  "bytes": 22360858,
+  "bytes": 22363704,
   "sourceDirectoriesExcluded": [
     "references",
     "reviews",

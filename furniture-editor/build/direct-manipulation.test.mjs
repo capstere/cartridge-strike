@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {makeEntry,entryLength} from './architecture.mjs';
 import {planPaintOverWall} from './paint-over-wall.mjs';
-import {planResizeFloor,planSlideInsert,planMoveWallEnd,roomBoundaryIds} from './direct-manipulation.mjs';
+import {planResizeFloor,planResizeFloorEdge,planSlideInsert,planMoveWallEnd,roomBoundaryIds} from './direct-manipulation.mjs';
 import {exportProject,parseProject} from './level-project.mjs';
 import {projectWallPieces} from './project-scene.mjs';
 import {createWorld} from '../../src/fps/world.mjs';
@@ -100,4 +100,55 @@ test('the actual FPS physics closes the previous gap after a door is dragged',()
  const world=createWorld({levelProject:project,fresh:true});
  assert.equal(world.canOccupy(4.6,2,.22),false,'the original gap has real solid collision');
  assert(world.data.doors.some(d=>d.id===door.id&&Math.abs(d.center[0]-6.2)<.01));
+});
+
+
+test('green wall handle moves just one wall, not the opposite wall; attached door and window keep their exact widths',()=>{
+ let entries=fit(room(),'BYGG-V-0001','door',[4,2],[5.2,2]);
+ entries=fit(entries,'BYGG-V-0002','window',[8,4],[8,5.6]);
+ const before=structuredClone(entries),door=entries.find(e=>e.kind==='door'),window=entries.find(e=>e.kind==='window');
+ const east=planResizeFloorEdge(floor,entries,'right',{x:10,z:-123},
+  {bounds:{x0:0,z0:0,x1:20,z1:20}});
+ assert.deepEqual([east.floor.x0,east.floor.x1,east.floor.z0,east.floor.z1],[2,10,2,8]);
+ const resizedDoor=east.entries.find(e=>e.id===door.id);
+ const resizedWindow=east.entries.find(e=>e.id===window.id);
+ assert(approx(entryLength(resizedDoor),1.2));
+ assert(approx(entryLength(resizedWindow),1.6));
+ assert(approx(resizedWindow.a[0],10)&&approx(resizedWindow.b[0],10));
+ assert(approx(resizedDoor.a[1],2)&&approx(resizedDoor.b[1],2));
+ assert.deepEqual(entries,before,'Planning cannot mutate original objects or geometry');
+ const north=planResizeFloorEdge(floor,entries,'top',{x:999,z:1},
+  {bounds:{x0:0,z0:0,x1:20,z1:20}});
+ assert.deepEqual([north.floor.x0,north.floor.x1,north.floor.z0,north.floor.z1],[2,8,1,8]);
+ assert(approx(north.entries.find(e=>e.id===door.id).a[1],1));
+ const project=exportProject({ground:{bounds:{x0:0,z0:0,x1:20,z1:20},wallHeightDefault:2.85,floors:[east.floor]},
+  architecture:{schemaVersion:1,edits:[],added:east.entries,removed:[],floors:[],posters:[],treatments:[]}});
+ assert.deepEqual(parseProject(JSON.stringify(project)).architecture.added,east.entries);
+});
+
+test('free outside wall of a connected second room moves while its shared door remains walkable',()=>{
+ const neighbor={...floor,id:'BYGG-G-0002',name:'Room 2',x0:8,x1:14};
+ const withDoor=fit(room(),'BYGG-V-0002','door',[8,4],[8,5.2]);
+ const second=[wall(5,[8,2],[14,2]),wall(6,[14,2],[14,8]),wall(7,[14,8],[8,8])];
+ const original=[...withDoor,...second],before=structuredClone(original);
+ const moved=planResizeFloorEdge(neighbor,original,'right',{x:16,z:99},
+  {bounds:{x0:0,z0:0,x1:20,z1:20},otherFloors:[floor]});
+ assert.deepEqual([moved.floor.x0,moved.floor.x1,moved.floor.z0,moved.floor.z1],[8,16,2,8]);
+ const door=moved.entries.find(e=>e.kind==='door');
+ assert(door&&approx(entryLength(door),1.2));
+ assert(door.a.every((v,i)=>approx(v,before.find(e=>e.id===door.id).a[i])));
+ assert(door.b.every((v,i)=>approx(v,before.find(e=>e.id===door.id).b[i])));
+ assert(moved.entries.some(e=>e.kind==='wall'&&approx(e.a[0],16)&&approx(e.b[0],16)));
+ assert.deepEqual(original,before);
+ assert.throws(()=>planResizeFloorEdge(neighbor,original,'left',{x:7,z:4},
+  {bounds:{x0:0,z0:0,x1:20,z1:20},otherFloors:[floor]}),/delas/);
+});
+
+test('edge-resize guards invalid input, minimum width and world bounds',()=>{
+ assert.throws(()=>planResizeFloorEdge(floor,room(),'diagonal',{x:4,z:4}),/fyra väggsidor/);
+ assert.throws(()=>planResizeFloorEdge(floor,room(),'right',{x:NaN,z:5}),/giltig plats/);
+ assert.throws(()=>planResizeFloorEdge(floor,room(),'left',{x:8.1,z:4},
+  {bounds:{x0:0,z0:0,x1:20,z1:20}}),/Golvet|rektangel|mått|smalt/);
+ assert.throws(()=>planResizeFloorEdge(floor,room(),'right',{x:25,z:4},
+  {bounds:{x0:0,z0:0,x1:20,z1:20}}),/grundyta/);
 });

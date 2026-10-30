@@ -4,7 +4,7 @@ import {buildProjectFurniture,buildProjectDecorations} from './build/project-vis
 import {resolveProjectScene,writeProjectScene,floor5Baseline,projectWallPieces} from './build/project-scene.mjs';
 import {inheritFloor5Gameplay} from '../src/fps/world.mjs?v=3.5.0';
 import {wallAtPoint,planPaintOverWall} from './build/paint-over-wall.mjs';
-import {planResizeFloor,planSlideInsert,planMoveWallEnd,roomBoundaryIds} from './build/direct-manipulation.mjs?v=3.6.0';
+import {planResizeFloor,planResizeFloorEdge,planSlideInsert,planMoveWallEnd,roomBoundaryIds} from './build/direct-manipulation.mjs?v=4.3.0';
 import {parsePosters} from './build/posters.mjs';
 import {parseTreatments} from './build/treatments.mjs';
 import * as T from '../vendor/three/three.module.js';
@@ -60,29 +60,61 @@ function screen(x,z){const b=p().ground.bounds,scale=Math.min(canvas.width/(b.x1
  return [canvas.width/2+(x-(b.x0+b.x1)/2+offset.x)*scale,canvas.height/2+(z-(b.z0+b.z1)/2+offset.z)*scale];}
 const dist=(a,b)=>Math.hypot(a.x-b.x,a.z-b.z);
 const rectCorners=f=>({nw:{x:f.x0,z:f.z0},ne:{x:f.x1,z:f.z0},se:{x:f.x1,z:f.z1},sw:{x:f.x0,z:f.z1}});
+const edgeHandles=f=>{
+ const x=f.x0+(f.x1-f.x0)*.28,z=f.z0+(f.z1-f.z0)*.28;
+ return {'edge-top':{x,z:f.z0},'edge-right':{x:f.x1,z},
+  'edge-bottom':{x,z:f.z1},'edge-left':{x:f.x0,z}};
+};
+// Only offer arrows for edges where a small resize is actually possible.
+// Connected, immovable edges stay visible as ordinary wall geometry.
+function allowedEdgeHandles(f){
+ if(f?.source||!floors().includes(f))return {};
+ const positions=edgeHandles(f),others=floors().filter(x=>x.id!==f.id);
+ const entries=arch(),bounds=p().ground.bounds;
+ return Object.fromEntries(Object.entries(positions).filter(([handle,point])=>{
+  const side=handle.slice(5);
+  return [-.5,.5].some(delta=>{
+   const candidate=side==='left'||side==='right'?{...point,x:point.x+delta}:{...point,z:point.z+delta};
+   try{
+    const result=planResizeFloorEdge(f,entries,side,candidate,{bounds,otherFloors:others});
+    parsePosters(p().architecture.posters||[],result.entries);
+    parseTreatments(p().architecture.treatments||[],result.entries);
+    return true;
+   }catch{return false;}
+  });
+ }));
+}
 const insertCenter=o=>({x:(o.a[0]+o.b[0])/2,z:(o.a[1]+o.b[1])/2});
 const directInsert=o=>['door','card-door','opening','window','glazed'].includes(o?.kind);
 function editHandleAt(e){
  const item=lookup(),r=canvas.getBoundingClientRect(),dpr=canvas.width/r.width;
  const x=(e.clientX-r.left)*dpr,z=(e.clientY-r.top)*canvas.height/r.height;
- const candidates=item&&!item.source&&floors().includes(item)?Object.entries(rectCorners(item)).map(([handle,q])=>({handle,q})):
+ const candidates=item&&!item.source&&floors().includes(item)?
+  Object.entries({...rectCorners(item),...allowedEdgeHandles(item)}).map(([handle,q])=>({handle,q})):
   item?.kind==='wall'&&arch().includes(item)?['a','b'].map(handle=>({handle,q:{x:item[handle][0],z:item[handle][1]}})):[];
- return candidates.find(({q})=>{const [sx,sz]=screen(q.x,q.z);return Math.hypot(x-sx,z-sz)<13*dpr;})?.handle||null;
+ return candidates.find(({handle,q})=>{
+  const [sx,sz]=screen(q.x,q.z),radius=handle.startsWith('edge-')?22:13;
+  return Math.hypot(x-sx,z-sz)<radius*dpr;
+ })?.handle||null;
 }
 function beginDirectDrag(item,q,handle=null){
- const type=handle&&floors().includes(item)?'resize':handle&&item.kind==='wall'?'endpoint':directInsert(item)?'slide':null;
+ const type=handle&&floors().includes(item)?(handle.startsWith('edge-')?'wall-edge':'resize'):
+  handle&&item.kind==='wall'?'endpoint':directInsert(item)?'slide':null;
  if(!type)return null;
  const center=type==='slide'?insertCenter(item):null;
  return {direct:true,type,id:item.id,handle,initialEntries:structuredClone(arch()),
-  initialFloor:type==='resize'?structuredClone(item):null,before:JSON.stringify(p()),
+  initialFloor:['resize','wall-edge'].includes(type)?structuredClone(item):null,before:JSON.stringify(p()),
   dx:center?q.x-center.x:0,dz:center?q.z-center.z:0};
 }
 function applyDirectDrag(info,q){
  try{
   let planned;
-  if(info.type==='resize')planned=planResizeFloor(info.initialFloor,info.initialEntries,info.handle,q,
-   {bounds:p().ground.bounds,otherFloors:floors().filter(f=>f.id!==info.id)});
-  else if(info.type==='endpoint')planned=planMoveWallEnd(info.initialEntries,info.id,info.handle,q,
+  if(info.type==='resize'||info.type==='wall-edge'){
+   const options={bounds:p().ground.bounds,otherFloors:floors().filter(f=>f.id!==info.id)};
+   planned=info.type==='resize'?
+    planResizeFloor(info.initialFloor,info.initialEntries,info.handle,q,options):
+    planResizeFloorEdge(info.initialFloor,info.initialEntries,info.handle.slice(5),q,options);
+  }else if(info.type==='endpoint')planned=planMoveWallEnd(info.initialEntries,info.id,info.handle,q,
    {bounds:p().ground.bounds,posters:p().architecture.posters,treatments:p().architecture.treatments});
   else planned=planSlideInsert(info.initialEntries,info.id,{x:q.x-info.dx,z:q.z-info.dz},
    {posters:p().architecture.posters,treatments:p().architecture.treatments});
@@ -94,7 +126,7 @@ function applyDirectDrag(info,q){
    if(displayed&&displayed!==stored)Object.assign(displayed,planned.floor,
     {polygon:[[planned.floor.x0,planned.floor.z0],[planned.floor.x1,planned.floor.z0],
      [planned.floor.x1,planned.floor.z1],[planned.floor.x0,planned.floor.z1]]});}
-  status(info.type==='resize'?'Rummets storlek ändrad. Väggar och öppningar följer med.':
+  status(['resize','wall-edge'].includes(info.type)?'Klart! Väggen, hörnen och dörrarna följer med.':
    info.type==='slide'?'Öppningen sitter kvar i väggen. Fysiken följer med.':'Väggänden flyttad.');
   redraw();return true;
  }catch(err){status(err.message);return false;}
@@ -226,9 +258,25 @@ function drawPlan(){const r=canvas.getBoundingClientRect(),dpr=Math.min(devicePi
  for(const o of objects()){const pts=corners(o).map(v=>screen(...v));ctx.beginPath();pts.forEach((v,i)=>i?ctx.lineTo(...v):ctx.moveTo(...v));ctx.closePath();ctx.fillStyle=selected===o.id?'#ffc874':'#5a7e88';ctx.fill();ctx.strokeStyle='#233e4a';ctx.stroke();}
  for(const m of markers()){const [x,z]=screen(m.x,m.z);ctx.beginPath();ctx.arc(x,z,selected===m.id?12*dpr:9*dpr,0,Math.PI*2);ctx.fillStyle=m.team==='analysts'?'#298bb7':m.team==='counterAnalysts'?'#d5684d':m.id.includes('BOMB')?'#dfb03e':m.id.includes('RESCUE')?'#41b89a':'#bf78b5';ctx.fill();ctx.strokeStyle='#fff';ctx.lineWidth=2;ctx.stroke();ctx.fillStyle='#16343b';ctx.font=`bold ${10*dpr}px system-ui`;ctx.fillText(m.team?String(m.index+1):m.id.includes('H')?'H':m.id.includes('BOMB')?'B':'R',x+11*dpr,z);}
  for(const d of decorations()){const at=decorationAt(d);if(!at)continue;const [x,z]=screen(at.x,at.z);ctx.fillStyle=selected===d.id?'#f0ae4a':d.type?'#7987a9':'#bb78a2';ctx.fillRect(x-5*dpr,z-5*dpr,10*dpr,10*dpr);}
- const chosen=lookup(),handles=chosen&&!chosen.source&&floors().includes(chosen)?Object.values(rectCorners(chosen)):
-  chosen?.kind==='wall'&&arch().includes(chosen)?[chosen.a,chosen.b].map(([x,z])=>({x,z})):[];
- for(const q of handles){const [x,z]=screen(q.x,q.z);ctx.fillStyle='#f6aa42';ctx.strokeStyle='#12383d';ctx.lineWidth=2*dpr;ctx.fillRect(x-6*dpr,z-6*dpr,12*dpr,12*dpr);ctx.strokeRect(x-6*dpr,z-6*dpr,12*dpr,12*dpr);}
+ const chosen=lookup(),handles=chosen&&!chosen.source&&floors().includes(chosen)?
+  {...rectCorners(chosen),...allowedEdgeHandles(chosen)}:
+  chosen?.kind==='wall'&&arch().includes(chosen)?{
+   a:{x:chosen.a[0],z:chosen.a[1]},b:{x:chosen.b[0],z:chosen.b[1]}}:{};
+ for(const [key,q] of Object.entries(handles)){
+  const [x,z]=screen(q.x,q.z),edge=key.startsWith('edge-');
+  ctx.save();ctx.lineWidth=2*dpr;ctx.strokeStyle='#12383d';
+  if(edge){
+   ctx.beginPath();ctx.arc(x,z,14*dpr,0,Math.PI*2);
+   ctx.fillStyle='#36b88c';ctx.fill();ctx.stroke();
+   ctx.fillStyle='#093d31';ctx.font=`bold ${18*dpr}px system-ui`;
+   ctx.textAlign='center';ctx.textBaseline='middle';
+   ctx.fillText(key==='edge-left'||key==='edge-right'?'↔':'↕',x,z);
+  }else{
+   ctx.fillStyle='#f6aa42';ctx.fillRect(x-6*dpr,z-6*dpr,12*dpr,12*dpr);
+   ctx.strokeRect(x-6*dpr,z-6*dpr,12*dpr,12*dpr);
+  }
+  ctx.restore();
+ }
  if($('showPhysics').checked){ctx.save();ctx.strokeStyle='#d42f52';ctx.lineWidth=3*dpr;ctx.setLineDash([5,3]);for(const w of projectWallPieces(arch())){ctx.beginPath();ctx.moveTo(...screen(...w.a));ctx.lineTo(...screen(...w.b));ctx.stroke();}for(const o of objects().filter(o=>o.collision!=='none')){const pts=corners(o).map(v=>screen(...v));ctx.beginPath();pts.forEach((v,i)=>i?ctx.lineTo(...v):ctx.moveTo(...v));ctx.closePath();ctx.stroke();}ctx.restore();}
  if(pendingFurniture&&hover){let ghost={id:'ghost',kind:'prop',assetId:pendingFurniture.id,x:hover.x,z:hover.z,yaw:pendingYaw,w:pendingFurniture.width,d:pendingFurniture.depth,height:pendingFurniture.height,roomId:floorAt(hover.x,hover.z)?.id};ghost={...ghost,...proposeSmartPose(ghost,hover,objects())};ghost=easyFurniturePose(ghost).item;const pts=corners(ghost).map(v=>screen(...v));ctx.beginPath();pts.forEach((v,i)=>i?ctx.lineTo(...v):ctx.moveTo(...v));ctx.closePath();ctx.fillStyle='#36b98b88';ctx.fill();ctx.strokeStyle='#14785b';ctx.lineWidth=2*dpr;ctx.stroke();}
  if(hover&&tab==='build'&&!first&&['door','card-door','opening','window','glazed'].includes($('tool').value)){
@@ -302,8 +350,12 @@ function draw3D(){if(!ensureRenderer())return;group.traverse(o=>{if(o.isMesh){o.
  for(const d of arch().filter(e=>isDoor(e.kind)&&e.kind!=='opening')){const len=Math.hypot(d.b[0]-d.a[0],d.b[1]-d.a[1]),angle=-Math.atan2(d.b[1]-d.a[1],d.b[0]-d.a[0])+Math.PI/5;box(d.a[0]+Math.cos(angle)*len/2,.45,d.a[1]-Math.sin(angle)*len/2,len,.9,.06,selected===d.id?0xf4ad42:0xcc9d61,angle,1,d.id);}
  for(const m of markers())box(m.x,.25,m.z,.34,.5,.34,selected===m.id?0xf4ad42:m.team==='analysts'?0x298bb7:m.team==='counterAnalysts'?0xd5684d:m.id.includes('BOMB')?0xdfb03e:m.id.includes('RESCUE')?0x41b89a:0xbf78b5,0,1,m.id);
  const chosen=lookup();
- if(chosen&&!chosen.source&&floors().includes(chosen))for(const [handle,q] of Object.entries(rectCorners(chosen))){
-  const mesh=box(q.x,.18,q.z,.34,.34,.34,0xf8a849,0,1,chosen.id);mesh.userData.editHandle=handle;
+ if(chosen&&!chosen.source&&floors().includes(chosen))for(const [handle,q] of
+  Object.entries({...rectCorners(chosen),...allowedEdgeHandles(chosen)})){
+  const edge=handle.startsWith('edge-');
+  const mesh=box(q.x,.24,q.z,edge?0.57:0.34,edge?0.42:0.34,edge?0.57:0.34,
+   edge?0x35ba87:0xf8a849,0,1,chosen.id);
+  mesh.userData.editHandle=handle;
  }
  if(chosen?.kind==='wall'&&arch().includes(chosen))for(const handle of ['a','b']){
   const q=chosen[handle],mesh=box(q[0],.22,q[1],.34,.44,.34,0xf8a849,0,1,chosen.id);
@@ -471,7 +523,8 @@ const toolLabels={select:'VÄLJ',room:'RUM',corridor:'GOLV',wall:'VÄGG',door:'D
 function updateGuide(){const tool=$('tool').value,active=tab==='build'&&tool!=='select',placing=!!pendingFurniture,chosen=lookup();
  $('activeMode').textContent=placing?'PLACERA '+pendingFurniture.name:tab==='build'?toolLabels[tool]||'BYGG':tab==='play'?'SPEL':'MÖBLERA';
  $('activeHelp').textContent=placing?'Klicka där möbeln ska stå. Flytta den sedan precis som du vill.':first?'Klicka slutpunkten eller dra från start.':active?['room','corridor','wall'].includes(tool)?'Klicka två punkter eller dra i planen eller 3D.':'Klicka direkt på en vägg i planen eller 3D.':
-  chosen&&!chosen.source&&floors().includes(chosen)?'Dra ett orange hörn för att ändra rummet. Dörrar och fönster följer med.':
+  chosen&&!chosen.source&&floors().includes(chosen)?
+   'Dra en GRÖN pil för att flytta en vägg, eller ett ORANGE hörn för två väggar. Dörrar följer med.':
   directInsert(chosen)?'Dra öppningen längs väggen. Den gamla luckan stängs automatiskt.':
   chosen?.kind==='wall'?'Dra en orange ändpunkt för att ändra en fri vägg.':'Klicka för att välja. Dra för att flytta.';
  $('cancelAction').hidden=!active&&!placing&&!first;$('deleteAction').disabled=!lookup();
