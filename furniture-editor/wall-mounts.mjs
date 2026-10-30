@@ -34,7 +34,7 @@ export function poseOnWall(item,mount,walls){
  const offset=(Math.max(.035,wall.thickness||.10)/2)+item.d/2+.012;
  return {x:r(wall.a[0]+geo.dx*t+geo.nx*side*offset),
   z:r(wall.a[1]+geo.dz*t+geo.nz*side*offset),
-  yaw:r(normalAngle(-Math.atan2(geo.dz,geo.dx)+(side===-1?Math.PI:0))),
+  yaw:r(normalAngle(-Math.atan2(geo.dz,geo.dx)+(side===1?Math.PI:0))),
   elevation:r(y-item.height/2),mountId:null,wallMount:{wallId:wall.id,t:r(t),side,y:r(y)},
   snapRole:'wall',collision:'none'};
 }
