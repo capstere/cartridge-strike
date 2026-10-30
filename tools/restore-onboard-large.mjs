@@ -100,12 +100,20 @@ if(command==='--plan'){
   const pos=process.argv.indexOf('--source');
   assert(pos>=0 && process.argv[pos+1],'Pass --source /path/to/private/onboard-clone');
   const source=resolve(process.argv[pos+1]);
-  assert.equal(execFileSync('git',['-C',source,'rev-parse','--is-inside-work-tree'],
-    {encoding:'utf8'}).trim(),'true','Source must be a local Git checkout');
-  // Validate ALL 13 originals before writing ANY data. git show returns raw bytes.
+  // A pinned Git checkout is preferred. An authenticated source ZIP extracted
+  // as a folder is also safe: byte length + SHA-256 remain mandatory for each file.
+  let gitCheckout=false;
+  try{
+    gitCheckout=execFileSync('git',['-C',source,'rev-parse','--is-inside-work-tree'],
+      {encoding:'utf8',stdio:['ignore','pipe','ignore']}).trim()==='true';
+  }catch{}
+  assert(existsSync(source),'No such source directory: '+source);
+  // Validate ALL 13 originals before writing ANY data.
   const files=missing.map(entry=>{
-    const data=execFileSync('git',['-C',source,'show',sourceCommit+':'+entry.sourcePath],
-      {encoding:'buffer',maxBuffer:16*1024*1024});
+    const data=gitCheckout
+      ? execFileSync('git',['-C',source,'show',sourceCommit+':'+entry.sourcePath],
+          {encoding:'buffer',maxBuffer:16*1024*1024})
+      : readFileSync(join(source,entry.sourcePath));
     validateBinary(entry,data);
     const dest=join(root,recordModel(entry));
     assert(!existsSync(dest),'Destination already exists; refusing to overwrite '+dest);
