@@ -147,6 +147,103 @@ try{
  assert(await beginner.locator('#plan').isVisible(),'Simple walk button returns to the editor');
  await beginner.close();await beginnerContext.close();
 
+ // Complete hands-on mounting: counter → microwave, wall picture, edit its height,
+ // move its support, resize its wall, export and reload the same real 3D objects.
+ const mountContext=await browser.newContext({viewport:{width:1280,height:860},acceptDownloads:true});
+ const mountPage=await mountContext.newPage();track(mountPage);
+ await mountPage.goto(origin+'/furniture-editor/new.html?test=1',{waitUntil:'domcontentloaded'});
+ await mountPage.waitForFunction(()=>!!window.__levelStudio,null,{timeout:90000});
+ await mountPage.locator('#kidRoom').click();
+ await mountPage.locator('#kidFurnish').click();
+ assert.equal(await mountPage.locator('#placementMode').inputValue(),'auto');
+ await mountPage.locator('#catalogCards [data-asset="studio:counter-120"]').click();
+ let placeAt=await mountPage.evaluate(()=>__levelStudio.screenWorldPoint(0,0));
+ await mountPage.mouse.click(placeAt.x,placeAt.y);
+ const supportId=await mountPage.evaluate(()=>__levelStudio.project.furniture.added.at(-1).id);
+ assert.equal(await mountPage.evaluate(()=>__levelStudio.project.furniture.added.at(-1).elevation),0);
+ await mountPage.locator('#catalogCards [data-asset="kenney:furniture-kit:kitchenmicrowave"]').click();
+ placeAt=await mountPage.evaluate(()=>__levelStudio.screenWorldPoint(0,0));
+ await mountPage.mouse.click(placeAt.x,placeAt.y);
+ const microwave=await mountPage.evaluate(()=>structuredClone(__levelStudio.project.furniture.added.at(-1)));
+ assert.equal(microwave.mountId,supportId,'A normal imported GLB microwave snaps on top of a procedural counter');
+ assert(microwave.elevation>.8,'Microwave base rests on counter top, not inside the floor');
+ await mountPage.locator('#catalogCards [data-asset="studio:wall-picture"]').click();
+ placeAt=await mountPage.evaluate(()=>__levelStudio.screenWorldPoint(3.82,0));
+ await mountPage.mouse.click(placeAt.x,placeAt.y);
+ const wallPictureId=await mountPage.evaluate(()=>__levelStudio.project.furniture.added.at(-1).id);
+ await mountPage.keyboard.press('Escape');
+ const hanging=await mountPage.evaluate(()=>structuredClone(__levelStudio.project.furniture.added.at(-1)));
+ assert(hanging.wallMount&&hanging.wallMount.wallId,'The picture has a stable real wall anchor');
+ assert.equal(hanging.collision,'none','Wall decor never adds an invisible player blocker');
+ assert(hanging.elevation>1);
+ await mountPage.locator('#dockWallHeightRow').waitFor({state:'visible'});
+ await mountPage.locator('#dockWallY').fill('1.9');
+ await mountPage.locator('#dockWallY').dispatchEvent('change');
+ const raised=await mountPage.evaluate(id=>__levelStudio.project.furniture.added.find(o=>o.id===id),wallPictureId);
+ assert.equal(raised.wallMount.y,1.9,'The wall height control edits the actual saved geometry');
+ assert(Math.abs(raised.elevation+raised.height/2-1.9)<.02);
+ await mountPage.locator('#dockMountMode').selectOption('floor');
+ assert.equal(await mountPage.evaluate(id=>__levelStudio.project.furniture.added.find(o=>o.id===id).wallMount,wallPictureId),null);
+ await mountPage.locator('#dockMountMode').selectOption('wall');
+ assert(await mountPage.evaluate(id=>!!__levelStudio.project.furniture.added.find(o=>o.id===id).wallMount,wallPictureId),
+  'A user can switch freely between wall and floor mounting');
+ await mountPage.evaluate(id=>__levelStudio.select(id),supportId);
+ await mountPage.locator('#dockX').fill('1.1');
+ await mountPage.locator('#dockX').dispatchEvent('change');
+ const follow=await mountPage.evaluate(id=>{
+  const things=__levelStudio.project.furniture.added;
+  return {support:things.find(o=>o.id===id),microwave:things.find(o=>o.mountId===id)};
+ },supportId);
+ assert(follow.microwave,'The microwave still belongs to the moved counter');
+ assert(Math.abs(follow.microwave.x-follow.support.x)<.15,'Mounted child follows support movement');
+ await mountPage.locator('#dockHeight').fill('1.1');
+ await mountPage.locator('#dockHeight').dispatchEvent('change');
+ assert(await mountPage.evaluate(id=>{
+  const objects=__levelStudio.project.furniture.added,s=objects.find(o=>o.id===id);
+  return Math.abs(objects.find(o=>o.mountId===id).elevation-(s.height-.008))<.025;
+ },supportId),'Counter height change keeps the microwave on top');
+ await mountPage.locator('[data-tab="build"]').click();
+ await mountPage.evaluate(()=>__levelStudio.select(__levelStudio.project.ground.floors[0].id));
+ const oldWallX=await mountPage.evaluate(id=>__levelStudio.project.furniture.added.find(o=>o.id===id).x,wallPictureId);
+ const dragStart=await mountPage.evaluate(()=>{
+  const f=__levelStudio.project.ground.floors[0];
+  return __levelStudio.screenWorldPoint(f.x1,f.z0+(f.z1-f.z0)*.28);
+ });
+ const dragEnd=await mountPage.evaluate(()=>{
+  const f=__levelStudio.project.ground.floors[0];
+  return __levelStudio.screenWorldPoint(f.x1+.7,f.z0+(f.z1-f.z0)*.28);
+ });
+ await mountPage.mouse.move(dragStart.x,dragStart.y);
+ await mountPage.mouse.down();
+ await mountPage.mouse.move(dragEnd.x,dragEnd.y,{steps:7});
+ await mountPage.mouse.up();
+ const movedPictureX=await mountPage.evaluate(id=>__levelStudio.project.furniture.added.find(o=>o.id===id).x,wallPictureId);
+ assert(movedPictureX>oldWallX+.45,'The wall fixture follows a resized real wall');
+ await mountPage.locator('#undo').click();
+ assert(Math.abs((await mountPage.evaluate(id=>__levelStudio.project.furniture.added.find(o=>o.id===id).x,wallPictureId))-oldWallX)<.03,
+  'Undo restores the wall and attached picture together');
+ await mountPage.locator('#redo').click();
+ await mountPage.locator('#threeView').click();
+ assert(await mountPage.locator('#scene3d').isVisible());
+ await mountPage.waitForFunction(id=>__levelStudio.visualColors.some(row=>row.id===id),
+  wallPictureId,{timeout:30000});
+ const fixtureDownload=mountPage.waitForEvent('download',{timeout:90000});
+ await mountPage.locator('#kidSave').click();
+ const fixtureZip=await fixtureDownload;
+ assert.match(fixtureZip.suggestedFilename(),/\.zip$/);
+ await mountPage.reload({waitUntil:'domcontentloaded'});
+ await mountPage.waitForFunction(()=>!!window.__levelStudio?.project?.furniture?.added?.length,null,{timeout:90000});
+ const restored=await mountPage.evaluate(id=>{
+  const saved=__levelStudio.project.furniture.added;
+  const picture=saved.find(o=>o.id===id);
+  return {picture,attached:saved.find(o=>o.id!==id&&o.mountId)};
+ },wallPictureId);
+ assert(restored.picture.wallMount&&Math.abs(restored.picture.x-movedPictureX)<.02,
+  'Wall mount pose and anchor persist through local autosave/reload');
+ assert(restored.attached&&restored.attached.elevation>1,
+  'Ordinary GLB on a counter persists as an actual mounted asset');
+ await mountPage.close();await mountContext.close();
+
  const level=await desktop.newPage();track(level);
  await level.goto(origin+'/furniture-editor/new.html?test=1',{waitUntil:'domcontentloaded'});
  await level.waitForFunction(()=>!!window.__levelStudio,{timeout:90000});
@@ -260,5 +357,5 @@ try{
 
  assert.deepEqual(errors,[],'No page-level exceptions in Studio navigation');
  console.log(JSON.stringify({status:'PASS',hub:true,wideScene:true,mobileDrawers:true,
-   oneClickRoom:true,adjoiningRoom:true,wallEdgeDragging:true,sharedDoorAndNavigation:true,doorAndUndo:true,beginnerSaveWalk:true,contextualFurniture:true,autosaveAndUndo:true,characterTaskShortcuts:true,consoleErrors:errors.length}));
+   oneClickRoom:true,adjoiningRoom:true,wallEdgeDragging:true,smartSurfaceAndWallMounts:true,sharedDoorAndNavigation:true,doorAndUndo:true,beginnerSaveWalk:true,contextualFurniture:true,autosaveAndUndo:true,characterTaskShortcuts:true,consoleErrors:errors.length}));
 }finally{await browser.close();}
