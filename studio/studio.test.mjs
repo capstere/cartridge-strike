@@ -79,3 +79,23 @@ test('free building defaults to optional smart placement, with explicit diagnost
  assert.match(code,/Visa tekniska detaljer/);
  assert.match(dock,/const diagnostics=\$\('showPhysics'\).checked/);
 });
+
+
+test('four child-sized buttons expose a genuine one-click room and standard doorway workflow',()=>{
+ const html=source('furniture-editor/new.html');
+ const editor=source('furniture-editor/new.mjs');
+ const ui=source('furniture-editor/studio-ui.mjs');
+ const styles=source('furniture-editor/new.css');
+ for(const id of ['kidRoom','kidFurnish','kidWalk','kidSave'])
+  assert(html.includes('id="'+id+'"'),'Child-facing build button missing: '+id);
+ for(const cat of ['all','stolar','bord','kok','dekor'])
+  assert(html.includes('data-kid-category="'+cat+'"'));
+ assert.match(editor,/function makeStarterRoom\(\)/);
+ assert.match(editor,/planPaintOverWall\(arch\(\),bottom\.id/);
+ assert.match(editor,/makeFloor\(\{x:x0,z:z0\},\{x:x1,z:z1\},'room'\)/);
+ assert.match(editor,/commit\(before\)/);
+ assert.match(editor,/zoom=clamp\(Math\.max\(/);
+ assert.match(ui,/category\.dispatchEvent\(new Event\('change'/);
+ assert.match(styles,/\.kid-steps button/);
+ assert.match(styles,/@media\(max-width:700px\)/);
+});
