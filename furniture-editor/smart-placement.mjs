@@ -25,6 +25,8 @@ const wallWords=/bathroommirror|mirror|spegel|wall.?clock|väggklock|poster|affi
 const tableWords=/microwave|mikro|coffee.?machine|kaffemaskin|tangentbord|keyboard|monitor|datorskärm|printer|skrivare|laptop|bok|books|pottedplant|plantsmall|bordslampa|table.?lamp|mug|cup|kopp|flaska|vase|vas|donut|food.?kit|small.?box|plasticboxsmall|kartongkniv|knife|telefon|phone.?portable/i;
 const floorWords=/golvlampa|floor.?lamp|sofa|chair|stol|hylla|shelf|locker|skåp|cabinet|fridge|kyl|frys|bin|sopkärl|cart|vagn|pall|pallet|bord|table|desk|bänk|counter|bed|säng|shower|dusch|toilet|toalett/i;
 export function inferPlacementRole(item){
+ const procedural=proceduralOf(item);
+ if(procedural)return procedural.placement||'floor';
  const explicit=placementRole(item);
  if(explicit!=='floor')return explicit;
  const name=String(item?.assetName||'')+' '+String(item?.assetId||'');
@@ -59,7 +61,8 @@ export function findSupport(item,point,objects,{radius=.38,role=inferPlacementRo
 export function proposeSmartPose(item,point,objects,{enabled=true,mode='auto',walls=[]}={}){
  const pos={x:round(point.x),z:round(point.z)};
  const floor={...pos,mountId:null,wallMount:null,elevation:0,snapRole:'floor'};
- if(!enabled||mode==='floor')return floor;
+ if(!enabled)return {...pos,mountId:null,elevation:0}; // Legacy API contract
+ if(mode==='floor')return floor;
  const role=mode==='wall'?'wall':mode==='surface'?'countertop':inferPlacementRole(item);
  if(role==='wall'){
   const mount=findWallMount(item,point,walls);
