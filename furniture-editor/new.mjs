@@ -208,13 +208,35 @@ const selectionDock=installSelectionDock({
   for(const child of objects().filter(child=>child.mountId===item.id&&Number.isFinite(child.elevation)))
    child.elevation=Math.max(0,Math.round((child.elevation+delta)*1000)/1000);
   placementStatus(item);commit(before);
+ },
+ onMountMode:mode=>{
+  const item=lookup();
+  if(!item||!objects().includes(item))return false;
+  const proposed=mountPose(item,{x:item.x,z:item.z},mode);
+  if(mode==='wall'&&!proposed.wallMount)return false;
+  if(mode==='surface'&&!proposed.mountId)return false;
+  const before=JSON.stringify(p());
+  Object.assign(item,proposed);
+  item.roomId=floorAt(item.x,item.z)?.id||item.roomId||'';
+  placementStatus(item);commit(before);
+  return true;
+ },
+ onWallHeight:value=>{
+  const item=lookup();
+  if(!item||!objects().includes(item)||!item.wallMount)return false;
+  const pose=poseOnWall(item,{...item.wallMount,y:value},arch());
+  if(!pose){status('Höjden passar inte på väggen.');return false;}
+  const before=JSON.stringify(p()),collision=item.collision||'none';
+  Object.assign(item,pose,{collision});commit(before);
+  status('Höjden på väggen är ändrad.');
+  return true;
  }
 });
 function updateProps(){const o=lookup();$('selection').hidden=!o;$('posterText').disabled=!o||!p().architecture.posters?.includes(o);$('posterText').value=o?.text||'';$('selectedLabel').disabled=!o||!floors().some(f=>f.id===o.id)||!!o.source;$('selectedLabel').value=o?.name||'';$('selectedSurface').disabled=!o||!floors().includes(o)||!!o.source;$('selectedSurface').value=o?.surface||'carpet';$('selectedSill').disabled=!o||o.kind!=='window';$('selectedSill').value=o?.sill??.9;$('collisionSetting').hidden=!o||!objects().includes(o);$('collisionMode').value=o?.collision||'solid';$('selectionName').textContent=o?`${o.name||o.assetName||o.text||o.type||o.team||o.kind||o.role}`:'Ingenting';
  $('x').value=o?(o.x??o.x0??o.a?.[0]??''):'';$('z').value=o?(o.z??o.z0??o.a?.[1]??''):'';
  $('w').value=o?(o.w??(o.x1!==undefined?o.x1-o.x0:o.b?Math.hypot(o.b[0]-o.a[0],o.b[1]-o.a[1]):'')):'';
  $('d').value=o?(o.d??(o.z1!==undefined?o.z1-o.z0:'')):'';
- for(const id of ['x','z','w','d','remove','rotate','duplicate'])$(id).disabled=!o;
+ for(const id of ['x','z','w','d','remove','rotate','duplicate'])$(id).disabled=!o||(id==='rotate'&&!!o.wallMount);
  selectionDock.sync(o,{isFurniture:!!o&&objects().includes(o)&&!pendingFurniture&&(tab!=='build'||$('tool').value==='select')});
 }
 function rotateWithChildren(o,delta){const c=Math.cos(delta),s=Math.sin(delta);for(const child of objects().filter(v=>v.mountId===o.id)){const dx=child.x-o.x,dz=child.z-o.z;child.x=o.x+c*dx+s*dz;child.z=o.z-s*dx+c*dz;child.yaw+=delta;}o.yaw=((o.yaw+delta+Math.PI)%(2*Math.PI)+2*Math.PI)%(2*Math.PI)-Math.PI;if(objects().includes(o))placementStatus(o);return true;}
@@ -575,6 +597,10 @@ $('cutaway').onchange=redraw;$('showPhysics').onchange=redraw;$('selectedLabel')
 $('catalogSearch').oninput=renderCatalog;
 $('catalogCategory').onchange=renderCatalog;
 $('resetCatalog').onclick=()=>{$('catalogSearch').value='';$('catalogCategory').value='all';renderCatalog();$('catalogSearch').focus();};
+$('placementMode').addEventListener('change',()=>{
+ if(pendingFurniture)status('Välj platsen i banan. Föremålet fäster enligt det valda läget.');
+ redraw();
+});
 function setBuildTool(tool){$('tool').value=tool;first=null;drawGesture=null;pendingFurniture=null;pendingTemplate=null;for(const b of document.querySelectorAll('[data-tool]'))b.classList.toggle('active',b.dataset.tool===tool);renderCatalog();redraw();}
 for(const button of document.querySelectorAll('[data-tool]'))button.onclick=()=>{const tool=$('tool').value===button.dataset.tool&&button.dataset.tool!=='select'?'select':button.dataset.tool;setBuildTool(tool);status(tool==='select'?'Välj en byggdel eller möbel. Delete tar bort den markerade delen.':button.title+' · Esc avslutar verktyget.');};
 for(const button of document.querySelectorAll('[data-tool="door"],[data-tool="window"],[data-tool="glazed"],[data-tool="opening"]')){
