@@ -76,3 +76,30 @@ test('AI handoff ZIP validates derived collision map and accepts older ZIP',asyn
  const invalid=structuredClone(p);invalid.furniture.added=[{id:'NY-OBJ-0001',kind:'prop',x:1,z:1,yaw:0,w:.3,d:.3,height:.5,collision:'ghost'}];
  assert.throws(()=>parseProject(invalid),/möbelkollision/);
 });
+
+
+test('wall-hung furniture is saved exactly in JSON and ZIP with its height, face and physical noncollision',async()=>{
+ const wall={id:'BYGG-V-0001',kind:'wall',a:[0,0],b:[8,0],height:2.85,thickness:.11,sill:.9,finish:'white'};
+ const fixture={id:'NY-OBJ-0001',kind:'prop',assetId:'studio:wall-picture',assetName:'Tavla med ram · blå',
+  roomId:'BYGG-G-0001',x:4,z:.12,yaw:Math.PI,w:.85,d:.07,height:.62,elevation:1.24,
+  wallMount:{wallId:wall.id,t:.5,side:1,y:1.55},mountId:null,collision:'none',snapRole:'wall'};
+ const floor={id:'BYGG-G-0001',name:'Test',role:'room',surface:'carpet',x0:0,z0:0,x1:8,z1:8};
+ const p=exportProject({
+  ground:{bounds:{x0:0,z0:0,x1:10,z1:10},wallHeightDefault:2.85,floors:[floor]},
+  architecture:{schemaVersion:1,edits:[],added:[wall],removed:[],floors:[],posters:[],treatments:[]},
+  furniture:{placements:[],added:[fixture],removed:[]},assets:{library:[fixture.assetId],local:[],posters:[]}
+ });
+ assert.deepEqual(parseProject(JSON.stringify(p)).furniture.added[0],fixture);
+ assert.deepEqual((await parseProjectZip(await exportProjectZip(p))).project.furniture.added[0],fixture);
+ for(const illegal of [
+  {wallId:wall.id,t:-1,side:1,y:1.55},
+  {wallId:wall.id,t:.5,side:0,y:1.55},
+  {wallId:'',t:.5,side:1,y:1.55},
+  {wallId:wall.id,t:.5,side:1,y:99}
+ ]){
+  const bad=structuredClone(p);bad.furniture.added[0].wallMount=illegal;
+  assert.throws(()=>parseProject(bad),/väggfäste/);
+ }
+ const both=structuredClone(p);both.furniture.added[0].mountId='NY-OBJ-0002';
+ assert.throws(()=>parseProject(both),/väggfäste/);
+});
