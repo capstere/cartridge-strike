@@ -42,3 +42,11 @@ På Linux-CI utan skärm används `xvfb-run -a` för webbläsarprovet, precis so
 - Innan publicering i ett öppet repository måste återdistributionsrätten till varje 3D-modell verifieras. Särskilt kändis-/filmfigurer och tredjepartspaket kräver licenskontroll; filinnehav är inte automatiskt publiceringstillstånd.
 
 Se även [Issue #54](https://github.com/capstere/cartridge-strike/issues/54) för komplett lista över de 13 källfilerna och deras SHA-256.
+
+## Verifierad ZIP-återställning 2026-10-30
+
+`Filer.zip` innehåller samtliga 13 rätta original: 33 492 844 byte, exakt matchning mot den fixerade källkatalogens SHA-256. ZIP-filerna har mappats till respektive `asset-portfolio/custom/optimized/` eller `incoming/` utan omkonvertering.
+
+Kandidatens katalog innehåller 28 onboard-modeller och 154 objekt totalt. De 13 nya förhandsbilderna är renderade genom den riktiga GLTFLoader/WebGL-kedjan. Manifestet har 284 poster; befintliga spel- och banfiler är oförändrade.
+
+Källmodellerna i ZIP-arkivets `incoming/` innehåller CC BY 4.0-attribuering för 12 av de 13 återställda modellerna; se [modellattribuering](onboard-model-attribution.md). `MS Exel.glb` är en Excel-logotyp utan inbäddad källa eller licens. Återdistributionsrätten för den posten behöver klarläggas innan publicering enligt kvalitetsgrinden ovan. Filerna har därför endast återställts lokalt, inte publicerats på PR-grenen.
