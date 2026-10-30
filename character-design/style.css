@@ -161,3 +161,32 @@ pre{white-space:pre-wrap;overflow-wrap:anywhere;max-height:370px;overflow:auto;f
 
 @media(max-width:640px){html{scroll-padding-top:350px;scroll-padding-bottom:18px}html:has(.viewer-tools[open]){scroll-padding-top:12px}}
 .realism-panel{margin:0 0 1.25rem;padding:1rem;border:1px solid #c7d9d9;border-radius:14px;background:#f6fafa}.realism-panel legend{font-weight:800;color:#135365}.realism-panel>label{margin:.65rem 0}.realism-panel input[type=checkbox]{width:auto;margin-right:.5rem}.realism-panel .hint{line-height:1.5}
+
+/* Studio UX: task-first entry and an optional quiet workspace.
+   These styles never alter project, canvas, rig or export data. */
+.studio-header-links{display:flex;gap:24px;flex-wrap:wrap;align-items:center}
+.studio-header-links .back{margin-bottom:14px;font-weight:700}
+.quick-jobs{display:flex;gap:8px;align-items:center;flex-wrap:wrap;background:#e2ece8;
+ border:1px solid #cfdfd9;border-radius:14px;padding:10px 13px;margin-bottom:20px}
+.quick-jobs>span{font-size:.69rem;letter-spacing:.1em;font-weight:850;color:#47716e;margin-right:5px}
+.quick-jobs button{font-size:.8rem;background:#fff;border-color:#c6dad3;padding:10px 14px;min-height:40px}
+.quick-jobs button:hover{background:#d4f0e3;border-color:#5eac95}
+.quick-jobs .quick-export{margin-left:auto;background:#155763;border-color:#155763;color:#fff}
+.quick-jobs .quick-export:hover{background:#247d83}
+#focus-design{border-color:#7fa5a7;background:#214f57;color:#fff}
+#focus-design:hover,#focus-design[aria-pressed=true]{background:#ddf8e9;color:#1a5156}
+.simple-focus .setup,.simple-focus .sheet{display:none!important}
+.simple-focus:not(.focus-show-face) .face-detail{display:none!important}
+.simple-focus .workspace{scroll-margin-top:90px}
+.edit-panel,.export,.face-detail{scroll-margin-top:95px}
+@media(max-width:640px){
+ .studio-header-links{gap:15px}
+ .studio-header-links .back{margin-bottom:7px}
+ .quick-jobs{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:thin;gap:7px;padding:9px 10px}
+ .quick-jobs button{white-space:nowrap;flex:0 0 auto}
+ .quick-jobs>span{white-space:nowrap;flex:0 0 auto}
+ .quick-jobs .quick-export{margin-left:0}
+ .simple-focus .workspace{gap:0}
+ .edit-panel,.export,.face-detail{scroll-margin-top:24px}
+}
+@media print{.quick-jobs{display:none}}

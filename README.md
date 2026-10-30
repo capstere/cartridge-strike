@@ -1,5 +1,11 @@
 # Cartridge Strike
 
+## Designa utan att kunna 3D
+
+**[Öppna Studio](https://capstere.github.io/cartridge-strike/studio/)** för att välja mellan karaktärsdesign och banbygge. Karaktärsstudion har snabba uppgifter och ett frivilligt fokusläge. Banbyggaren har en större arbetsyta och verktygspaneler som öppnas på mobil, utan att de underliggande spelfilerna eller exportformaten ändras.
+
+Projekten sparas lokalt i webbläsaren. **Ladda alltid ner AI-paket/ZIP** för säkerhetskopia och överlämning till FPS-utvecklingen. Designen publiceras inte automatiskt i spelet.
+
 [Spela Floor 5](https://capstere.github.io/cartridge-strike/fps/) · [Designa en FPS-karaktär](https://capstere.github.io/cartridge-strike/character-design/) · [Bygg en ny bana](https://capstere.github.io/cartridge-strike/furniture-editor/new.html) · [Redigera Floor 5](https://capstere.github.io/cartridge-strike/furniture-editor/new.html?mode=edit-floor5) · [Spela syntetisk demobana](https://capstere.github.io/cartridge-strike/fps/?level=synthetic-demo)
 
 Designstudion 3.6.0 bygger banprojekt i schema 2 för spelversion 0.18.0. Arkitektur och möbler har spelgeometri och kollision från samma projektdata. Du kan bygga i plan och 3D, visa FPS-utseendet, gå runt, kontrollera spelbarhet och spara/öppna JSON eller ZIP. Ett privat förhandsprov publicerar inte projektet. [Aktuell användarguide](furniture-editor/README.md) och [formatbeslut](docs/level-project-decisions.md).

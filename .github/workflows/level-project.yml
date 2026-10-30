@@ -3,6 +3,9 @@ on:
   pull_request:
     paths:
       - 'furniture-editor/**'
+      - 'studio/**'
+      - 'tools/studio-ux-browser.mjs'
+      - 'fps/index.html'
       - 'src/**'
       - 'levels/**'
       - 'tools/level-*'
@@ -25,6 +28,8 @@ jobs:
       - name: Pure tests, Floor 5 doors and SHA manifest
         run: |
           node --check tools/restore-onboard-large.mjs
+          for file in tools/studio-ux-browser.mjs furniture-editor/studio-ui.mjs character-design/app.mjs; do node --check "$file"; done
+          node --test studio/studio.test.mjs
           node tools/restore-onboard-large.mjs --plan
           node --experimental-loader ./tools/vendor-three-test-loader.mjs --test furniture-editor/*.test.mjs furniture-editor/build/*.test.mjs furniture-editor/library/*.test.mjs src/fps/level-adapter.test.mjs src/fps/walk-start.test.mjs
           node --experimental-loader ./tools/vendor-three-test-loader.mjs tools/owner-door-traversal.mjs
@@ -40,6 +45,7 @@ jobs:
           python3 -m http.server 8765 --bind 127.0.0.1 >/tmp/level-http.log 2>&1 &
           PID=$!
           trap 'kill "$PID" || true' EXIT
+          timeout 300s xvfb-run -a node tools/studio-ux-browser.mjs
           timeout 220s xvfb-run -a node furniture-editor/editor-browser.mjs
           timeout 220s xvfb-run -a node furniture-editor/build/build-browser.mjs
           timeout 360s xvfb-run -a node tools/level-browser-smoke.mjs

@@ -6,12 +6,12 @@
 <meta name="color-scheme" content="light">
 <title>Character Design Studio 5 · Cartridge Strike</title>
 <meta name="description" content="Skapa personliga animerade FPS-karaktärer och egna 3D-objekt med enkla verktyg. Exportera AI-redo designprojekt.">
-<link rel="icon" href="data:,"><link rel="stylesheet" href="style.css?v=53">
+<link rel="icon" href="data:,"><link rel="stylesheet" href="style.css?v=54">
 <script type="importmap">{"imports":{"three":"../vendor/three/three.module.js","three/addons/":"../vendor/three/addons/"}}</script>
 </head>
 <body>
 <header class="masthead">
- <div><a class="back" href="../fps/">← Till spelet</a><p class="eyebrow">CARTRIDGE STRIKE / CREATIVE STUDIO</p>
+ <div><nav class="studio-header-links" aria-label="Växla mellan studior"><a class="back" href="../studio/">← Alla studior</a><a class="back" href="../fps/">Spela</a></nav><p class="eyebrow">CARTRIDGE STRIKE / CREATIVE STUDIO</p>
  <h1>Character Design Studio <span class="edition">5.3</span></h1>
  <p class="lead">Välj en grund. Forma din stil. Lämna över en exakt design till AI:n för att göra karaktären spelklar.</p></div>
  <div class="stamp">INGA 3D-KUNSKAPER<br><strong>BEHÖVS</strong></div>
@@ -19,7 +19,7 @@
 <main>
  <div class="studio-bar" aria-label="Projektverktyg">
   <div><strong>Min ateljé</strong><span id="save-state" role="status">Öppnar projekt…</span></div>
-  <div class="bar-actions"><button id="undo-design" type="button" disabled>Ångra</button><button id="redo-design" type="button" disabled>Gör om</button>
+  <div class="bar-actions"><button id="focus-design" type="button" aria-pressed="false" title="Visa bara själva designarbetet">Fokusera på designen</button><button id="undo-design" type="button" disabled>Ångra</button><button id="redo-design" type="button" disabled>Gör om</button>
   <button id="save-slot" type="button">Spara i ateljén</button><select id="saved-projects" aria-label="Sparade karaktärer"><option value="">Öppna från ateljén…</option></select></div>
  </div>
  <section class="panel setup">
@@ -46,6 +46,14 @@
     </select></label>
   </div>
  </section>
+ <nav class="quick-jobs" aria-label="Vad vill du skapa just nu?">
+  <span>JAG VILL…</span>
+  <button type="button" data-jump="sculpt">Forma ansiktet</button>
+  <button type="button" data-jump="fashion">Byta kläder</button>
+  <button type="button" data-jump="face">Ändra hår &amp; ögon</button>
+  <button type="button" data-jump="parts">Lägga till 3D-delar</button>
+  <button type="button" data-jump="export" class="quick-export">Hämta AI-paketet ↗</button>
+ </nav>
  <div class="workspace">
   <section class="panel viewport-panel">
    <div class="section-title"><div><p class="eyebrow">STEG 2 / FÖRHANDSGRANSKA</p><h2>Din design i 3D</h2></div><span class="tiny-chip" id="mode-label">Karaktär</span></div>
@@ -336,6 +344,6 @@
   <p class="credits">Quaternius originalkaraktärer och animationer: CC0 1.0 · <a href="../licenses/quaternius-characters-CC0.txt">Licens</a>. Designen ligger lokalt i webbläsaren tills du exporterar. Inga filer laddas upp av studion.</p>
  </section>
 </main>
-<script type="module" src="app.mjs?v=53"></script>
+<script type="module" src="app.mjs?v=54"></script>
 </body>
 </html>
