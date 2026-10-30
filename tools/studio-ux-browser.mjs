@@ -32,6 +32,36 @@ try{
  assert(await level.locator('#quickSave').isVisible(),'ZIP save stays reachable');
  await level.locator('#stageFocus').click();
  assert(await level.locator('#savePanel').isVisible(),'Desktop inspector can return');
+
+ // User journey: select a real room object, change 3 different visible attributes,
+ // undo a change, autosave and reopen without touching project JSON by hand.
+ await level.locator('#demo').click();
+ await level.waitForFunction(()=>__levelStudio.project.furniture.added.some(o=>o.id==='NY-BORD-0001'));
+ await level.evaluate(()=>__levelStudio.select('NY-BORD-0001'));
+ await level.locator('#editDock').waitFor({state:'visible'});
+ assert.match(await level.locator('#editDockName').textContent(),/bord|table/i);
+ await level.locator('#dockWidth').fill('1.65');
+ await level.locator('#dockWidth').dispatchEvent('change');
+ assert.equal(await level.evaluate(()=>__levelStudio.project.furniture.added.find(o=>o.id==='NY-BORD-0001').w),1.65);
+ await level.locator('#dockHeight').fill('1.15');
+ await level.locator('#dockHeight').dispatchEvent('change');
+ assert.equal(await level.evaluate(()=>__levelStudio.project.furniture.added.find(o=>o.id==='NY-BORD-0001').height),1.15);
+ await level.locator('#dockCollision').selectOption('none');
+ assert.equal(await level.evaluate(()=>__levelStudio.project.furniture.added.find(o=>o.id==='NY-BORD-0001').collision),'none');
+ const oldYaw=await level.evaluate(()=>__levelStudio.project.furniture.added.find(o=>o.id==='NY-BORD-0001').yaw);
+ await level.locator('#dockRotate').click();
+ assert.notEqual(await level.evaluate(()=>__levelStudio.project.furniture.added.find(o=>o.id==='NY-BORD-0001').yaw),oldYaw);
+ await level.locator('#dockUndo').click();
+ assert.equal(await level.evaluate(()=>__levelStudio.project.furniture.added.find(o=>o.id==='NY-BORD-0001').yaw),oldYaw);
+ await level.locator('#editDockClose').click();
+ assert(await level.locator('#editDock').isHidden());
+ await level.locator('#editDockReopen').click();
+ assert(await level.locator('#editDock').isVisible(),'Object editing reopens on demand');
+ await level.reload({waitUntil:'domcontentloaded'});
+ await level.waitForFunction(()=>!!window.__levelStudio?.project?.furniture?.added?.length);
+ const saved=await level.evaluate(()=>__levelStudio.project.furniture.added.find(o=>o.id==='NY-BORD-0001'));
+ assert(saved && saved.w===1.65 && saved.height===1.15 && saved.collision==='none',
+   'Inspector changes survive autosave and reload');
  await level.close();await desktop.close();
 
  const mobile=await browser.newContext({viewport:{width:390,height:844},isMobile:true,hasTouch:true});
@@ -55,6 +85,21 @@ try{
  assert(await phone.locator('#save').isVisible());
  await phone.locator('#closeSave').click();
  await phone.locator('#savePanel').waitFor({state:'hidden',timeout:5000});
+ await phone.locator('#mobileSave').click();
+ await phone.locator('#demo').click();
+ await phone.waitForFunction(()=>__levelStudio.project.furniture.added.some(o=>o.id==='NY-STOL-0001'));
+ await phone.locator('#closeSave').click();
+ await phone.locator('#savePanel').waitFor({state:'hidden',timeout:5000});
+ await phone.evaluate(()=>__levelStudio.select('NY-STOL-0001'));
+ await phone.locator('#editDock').waitFor({state:'visible',timeout:5000});
+ const dockRect=await phone.locator('#editDock').boundingBox();
+ assert(dockRect && dockRect.x>=0 && dockRect.x+dockRect.width<=395,'Context inspector fits on phone');
+ await phone.locator('#dockWidth').fill('0.7');
+ await phone.locator('#dockWidth').dispatchEvent('change');
+ assert.equal(await phone.evaluate(()=>__levelStudio.project.furniture.added.find(o=>o.id==='NY-STOL-0001').w),0.7);
+ await phone.locator('#editDockClose').click();
+ await phone.locator('#editDockReopen').click();
+ await phone.locator('#editDock').waitFor({state:'visible',timeout:5000});
  await phone.close();
 
  const character=await mobile.newPage();track(character);
@@ -73,5 +118,5 @@ try{
 
  assert.deepEqual(errors,[],'No page-level exceptions in Studio navigation');
  console.log(JSON.stringify({status:'PASS',hub:true,wideScene:true,mobileDrawers:true,
-   characterTaskShortcuts:true,consoleErrors:errors.length}));
+   contextualFurniture:true,autosaveAndUndo:true,characterTaskShortcuts:true,consoleErrors:errors.length}));
 }finally{await browser.close();}
