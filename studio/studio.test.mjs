@@ -54,3 +54,18 @@ test('mobile level editor has a canvas-first task drawer and retains save/export
  assert.match(css,/body\[data-studio-sheet="tools"\]/);
  assert.match(html,/studio-ui\.mjs/);
 });
+
+
+test('context furniture dock edits the actual model with real validation and undo actions',()=>{
+ const html=source('furniture-editor/new.html'),code=source('furniture-editor/selection-dock.mjs'),editor=source('furniture-editor/new.mjs');
+ for(const id of ['editDock','editDockName','editDockMessage','editDockReopen',
+  'dockX','dockZ','dockWidth','dockDepth','dockHeight','dockCollision',
+  'dockRotate','dockDuplicate','dockUndo','dockDelete'])
+  assert(html.includes('id="'+id+'"'),'Missing contextual control '+id);
+ assert.match(code,/dispatchEvent\(new Event\('change'/);
+ assert.match(code,/onHeight\(value\)/);
+ assert.match(editor,/installSelectionDock/);
+ assert.match(editor,/selectionDock\.sync\(o/);
+ assert.match(editor,/child\.elevation=/);
+ assert.match(html,/src="new\.mjs\?v=3\.9\.0"/);
+});
