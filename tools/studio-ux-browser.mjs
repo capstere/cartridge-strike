@@ -275,6 +275,68 @@ try{
   'Ordinary GLB on a counter persists as an actual mounted asset');
  await mountPage.close();await mountContext.close();
 
+ // Regression: dragging a room larger than 50 used to fail with no floor.
+ // A 100-unit map must also accept rooms almost as large as the whole level.
+ const largeContext=await browser.newContext({viewport:{width:1280,height:850},acceptDownloads:true});
+ const largePage=await largeContext.newPage();track(largePage);
+ await largePage.goto(origin+'/furniture-editor/new.html?test=1',{waitUntil:'domcontentloaded'});
+ await largePage.waitForFunction(()=>!!window.__levelStudio,null,{timeout:90000});
+ await largePage.locator('[data-tool="room"]').click();
+ const dragRoom=async(a,b)=>{
+  const start=await largePage.evaluate(q=>__levelStudio.screenWorldPoint(...q),a);
+  const end=await largePage.evaluate(q=>__levelStudio.screenWorldPoint(...q),b);
+  await largePage.mouse.move(start.x,start.y);
+  await largePage.mouse.down();
+  await largePage.mouse.move(end.x,end.y,{steps:12});
+  await largePage.mouse.up();
+ };
+ const cancelPoint=await largePage.evaluate(()=>__levelStudio.screenWorldPoint(0,0));
+ await largePage.mouse.move(cancelPoint.x,cancelPoint.y);
+ await largePage.mouse.down();
+ await largePage.locator('#plan').dispatchEvent('pointercancel');
+ await largePage.mouse.up();
+ assert.equal(await largePage.evaluate(()=>__levelStudio.project.ground.floors.length),0,
+  'A cancelled touch/drag may not create any ghost floor');
+ await dragRoom([-34,-32],[34,32]);
+ let big=await largePage.evaluate(()=>structuredClone(__levelStudio.project));
+ assert.equal(big.ground.floors.length,1,'A 68 by 64 room must insert rather than silently fail');
+ assert.deepEqual([big.ground.floors[0].x0,big.ground.floors[0].x1,big.ground.floors[0].z0,big.ground.floors[0].z1],
+  [-34,34,-32,32]);
+ assert.equal(big.architecture.added.filter(x=>x.kind==='wall').length,4,'All four walls must be real');
+ assert.match(await largePage.locator('#status').innerText(),/Rummet är klart/);
+ await largePage.locator('#undo').click();
+ assert.equal(await largePage.evaluate(()=>__levelStudio.project.ground.floors.length),0,
+  'Undo removes whole large room and its walls in one step');
+ assert.equal(await largePage.evaluate(()=>__levelStudio.project.architecture.added.length),0);
+ await largePage.locator('#redo').click();
+ assert.equal(await largePage.evaluate(()=>__levelStudio.project.ground.floors.length),1);
+ await largePage.reload({waitUntil:'domcontentloaded'});
+ await largePage.waitForFunction(()=>!!window.__levelStudio,null,{timeout:90000});
+ assert.equal(await largePage.evaluate(()=>__levelStudio.project.ground.floors[0].x1-__levelStudio.project.ground.floors[0].x0),68,
+  'A large room persists after reload without violating project validation');
+ await largePage.locator('#undo').click();
+ assert.equal(await largePage.evaluate(()=>__levelStudio.project.ground.floors.length),0);
+ await largePage.locator('#width').fill('100');
+ await largePage.locator('#width').dispatchEvent('change');
+ await largePage.locator('#depth').fill('100');
+ await largePage.locator('#depth').dispatchEvent('change');
+ await largePage.locator('#tool').selectOption('room');
+ await dragRoom([-37,-37],[57,57]);
+ big=await largePage.evaluate(()=>structuredClone(__levelStudio.project));
+ assert.equal(big.ground.floors.length,1,'A 94 by 94 room fits on a 100 by 100 map');
+ assert.equal(big.ground.floors[0].x1-big.ground.floors[0].x0,94);
+ assert.equal(big.ground.floors[0].z1-big.ground.floors[0].z0,94);
+ assert.equal(big.architecture.added.filter(x=>x.kind==='wall').length,4,
+  'Long walls may not disappear, duplicate or leave invisible blockers');
+ const largeDownload=largePage.waitForEvent('download',{timeout:90000});
+ await largePage.locator('#kidSave').click();
+ assert.match((await largeDownload).suggestedFilename(),/\.zip$/);
+ await largePage.reload({waitUntil:'domcontentloaded'});
+ await largePage.waitForFunction(()=>!!window.__levelStudio,null,{timeout:90000});
+ assert.equal(await largePage.evaluate(()=>__levelStudio.project.ground.floors[0].x1-__levelStudio.project.ground.floors[0].x0),94,
+  'Very large room survives export and autosave/reload');
+ await largePage.close();await largeContext.close();
+
  const level=await desktop.newPage();track(level);
  await level.goto(origin+'/furniture-editor/new.html?test=1',{waitUntil:'domcontentloaded'});
  await level.waitForFunction(()=>!!window.__levelStudio,{timeout:90000});
@@ -388,5 +450,5 @@ try{
 
  assert.deepEqual(errors,[],'No page-level exceptions in Studio navigation');
  console.log(JSON.stringify({status:'PASS',hub:true,wideScene:true,mobileDrawers:true,
-   oneClickRoom:true,adjoiningRoom:true,wallEdgeDragging:true,smartSurfaceAndWallMounts:true,visual3DSnapTargets:true,sharedDoorAndNavigation:true,doorAndUndo:true,beginnerSaveWalk:true,contextualFurniture:true,autosaveAndUndo:true,characterTaskShortcuts:true,consoleErrors:errors.length}));
+   oneClickRoom:true,adjoiningRoom:true,wallEdgeDragging:true,smartSurfaceAndWallMounts:true,visual3DSnapTargets:true,largeRoomDragAndUndo:true,sharedDoorAndNavigation:true,doorAndUndo:true,beginnerSaveWalk:true,contextualFurniture:true,autosaveAndUndo:true,characterTaskShortcuts:true,consoleErrors:errors.length}));
 }finally{await browser.close();}
