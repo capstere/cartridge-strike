@@ -137,6 +137,41 @@ function setTab(name){
   $('tab-'+button.dataset.tab).hidden=!on;
  }
 }
+/** Task shortcuts navigate controls without changing the saved character or rig. */
+function setupQuickStudio(){
+ const focus=$('focus-design');
+ let compact=false;
+ try{compact=localStorage.getItem('cartridge-character-quiet-ui')==='1';}catch{}
+ const apply=()=>{
+  document.body.classList.toggle('simple-focus',compact);
+  focus.setAttribute('aria-pressed',String(compact));
+  focus.textContent=compact?'Visa alla verktyg':'Fokusera på designen';
+  if(compact)$('viewer-tools').open=false;
+  if(!compact)document.body.classList.remove('focus-show-face');
+ };
+ focus.addEventListener('click',()=>{
+  compact=!compact;
+  try{localStorage.setItem('cartridge-character-quiet-ui',compact?'1':'0');}catch{}
+  apply();
+ });
+ const moveTo=element=>{
+  if(!element)return;
+  const reduced=window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+  element.scrollIntoView({behavior:reduced?'auto':'smooth',block:'start'});
+ };
+ for(const button of document.querySelectorAll('.quick-jobs [data-jump]')){
+  button.addEventListener('click',()=>{
+   const destination=button.dataset.jump;
+   if(destination==='export'){moveTo(document.querySelector('section.export'));return;}
+   if(project.kind==='object'&&!['parts','ideas'].includes(destination))return;
+   setTab(destination);
+   moveTo(document.querySelector('.edit-panel'));
+  });
+ }
+ // Detailed face drawing stays reachable when other sections are hidden.
+ $('jump-to-face').addEventListener('click',()=>document.body.classList.add('focus-show-face'),{capture:true});
+ apply();
+}
 function updateModeVisual(){
  const mode=project.kind==='object'?'object':project.intent==='create'?'create':'revise';
  for(const b of document.querySelectorAll('[data-mode]')){
@@ -156,6 +191,7 @@ function updateModeVisual(){
  if(project.kind==='object'&&activeTab==='parts')setTab('parts');
  if(project.kind==='character'&&activeTab==='parts')setTab('parts');
  if(project.kind==='character'&&activeTab==='look')setTab('look');
+ for(const button of document.querySelectorAll('.quick-jobs [data-jump]'))button.hidden=project.kind==='object'&&!['parts','export'].includes(button.dataset.jump);
  $('character-presets').disabled=project.kind==='object';
  if(project.kind==='object'&&PRESETS[$('part-type').value])$('part-type').value='box';
  $('mode-label').textContent=project.kind==='object'?'Eget 3D-objekt':project.intent==='create'?'Ny karaktär':'Befintlig karaktär';
@@ -478,7 +514,7 @@ async function refreshSlots(){try{const rows=await listProjects();const menu=$('
 async function start(){
  workbench.faceCanvas=$('face-base');
  creativeControls=installCreativeControls({getProject:()=>project,workbench,persist,visualChange,status,download});
- installEvents();initDrawing();
+ installEvents();setupQuickStudio();initDrawing();
  studioControls=installStudioControls({getProject:()=>project,workbench,persist,visualChange,status,selected,getSelectedId:()=>selectedPart,selectPart:id=>{selectedPart=id;setTab('parts');partsSummary();},refresh:refreshUI,restore:async p=>{project=p;restoreAttachments();await workbench.prepareAssets(p);refreshUI();visualChange({recreate:true,rebuild:true});saveLocal();}});
  $('accessory-file').addEventListener('change',e=>addReferences(e,true));
  const zone=$('model-drop-zone');zone.addEventListener('dragover',e=>{e.preventDefault();zone.classList.add('drop-active');});zone.addEventListener('dragleave',()=>zone.classList.remove('drop-active'));zone.addEventListener('drop',e=>{e.preventDefault();zone.classList.remove('drop-active');addReferences({target:{files:e.dataTransfer.files,value:''}},true);});
