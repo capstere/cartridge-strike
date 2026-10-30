@@ -122,3 +122,47 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,su
  .work-guide>span{display:none}
  .workspace.game-look .work-guide{max-width:calc(100% - 159px)}
 }
+
+
+/* Contextual object editing: high-frequency controls remain next to the scene.
+   Advanced properties stay in the existing sidebar, preserving power-user tools. */
+.edit-dock{
+ position:absolute;z-index:6;left:12px;bottom:52px;
+ width:min(432px,calc(100% - 154px));max-height:min(57vh,440px);overflow-y:auto;
+ padding:12px 14px;border-radius:14px;border:1px solid #75bca9;
+ color:#eaf8f0;background:#183b40f5;box-shadow:0 16px 42px #051a20a8;
+ backdrop-filter:blur(12px);touch-action:pan-y;
+}
+.edit-dock-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:9px}
+.edit-dock-head>div{display:grid;gap:3px;min-width:0}
+.edit-dock-head small{color:#9bc7bc;font-size:.63rem;letter-spacing:.11em;font-weight:800}
+.edit-dock-head strong{font-size:.95rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.edit-dock-head button{min-height:34px;font-size:.76rem;flex:none;background:#315b5e}
+.edit-dock-fields{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px 10px}
+.edit-dock-fields label{margin:0;min-width:0;font-size:.72rem;font-weight:750;color:#c0ddd4}
+.edit-dock-fields input,.edit-dock-fields select{min-width:0;width:100%;height:40px;margin-top:4px;
+ padding:7px 8px;font-size:.86rem;border:1px solid #719795;background:#234d50;color:#fff;border-radius:8px}
+.edit-dock-fields label:last-child{grid-column:span 2}
+.edit-dock-fields input:focus-visible,.edit-dock-fields select:focus-visible{
+ outline:3px solid #9be3b8;outline-offset:1px}
+.edit-dock-actions{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;margin-top:10px}
+.edit-dock-actions button{min-height:40px;font-size:.75rem;margin:0;padding:7px 5px}
+.edit-dock-actions .danger-action{background:#60373c;border-color:#ab7775;color:#ffddd5}
+#editDockMessage{font-size:.72rem;line-height:1.4;margin:9px 0 0;color:#a2d8c4;max-height:3.9em;overflow:auto}
+#editDockMessage.issue{color:#ffd39b}
+.edit-dock-reopen{position:absolute;z-index:6;bottom:53px;left:12px;background:#216a67;
+ border-color:#8cceae;box-shadow:0 4px 17px #09242fa3;font-size:.79rem;font-weight:750}
+.workspace:has(#editDock:not([hidden])) .work-guide,
+.workspace:has(#editDockReopen:not([hidden])) .work-guide{display:none}
+@media(max-width:700px){
+ .edit-dock{left:8px;right:8px;bottom:52px;width:auto;max-height:min(39dvh,355px);padding:11px 12px;
+  border-radius:14px}
+ .edit-dock-fields{grid-template-columns:repeat(3,minmax(0,1fr));gap:7px}
+ .edit-dock-fields label{font-size:.71rem}
+ .edit-dock-fields input,.edit-dock-fields select{height:42px;font-size:.86rem;padding:6px}
+ .edit-dock-actions{grid-template-columns:repeat(4,minmax(0,1fr))}
+ .edit-dock-actions button{font-size:.7rem;padding:6px 3px}
+ .edit-dock-reopen{left:8px;bottom:53px}
+ .workspace:has(#editDock:not([hidden])) .move-pad{opacity:0;pointer-events:none}
+ body[data-studio-sheet="tools"] .edit-dock,body[data-studio-sheet="checks"] .edit-dock{display:none}
+}
