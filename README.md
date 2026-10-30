@@ -20,5 +20,3 @@ Designstudion 3.6.0 bygger banprojekt i schema 2 för spelversion 0.18.0. Arkite
 ## Utveckla säkert
 
 Kör `node --test furniture-editor/build/*.test.mjs src/fps/*.test.mjs` och `node tools/verify-owner-runtime.mjs` för koden och publiceringsmanifestet. GitHub Actions kör dessutom riktiga Chromium/WebGL- och FPS-regressioner. Vid ändring av publicerade runtimefiler ska `build-info.json` regenereras enligt repots verifieringsverktyg och Pages kontrolleras efter merge. Använd [den prioriterade spelplanen](docs/roadmap.md) för nästa förändringar.
-
-Detta är ett publikt repo. En privat `onboard`-modell får stanna där eller i ett lokalt ZIP-projekt tills rättigheter, innehåll och avsedd publicering har granskats. Publicera inga privata ritningar eller arbetsplatsdetaljer.
