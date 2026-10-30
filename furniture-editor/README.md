@@ -1,6 +1,6 @@
 ## Nytt 30 oktober: onboard-biblioteket
 
-28 nya objekt med förhandsbilder, bättre sökning och filtret **Används i banan**. Öppna **MÖBLERA → Nytt från onboard**. [Objekt, funktioner och nästa förbättringar](../docs/onboard-library.md).
+15 nya objekt med förhandsbilder, bättre sökning och filtret **Används i banan**. Öppna **MÖBLERA → Nytt från onboard**. [Objekt, funktioner och nästa förbättringar](../docs/onboard-library.md).
 
 # Cartridge Strike Designstudion 3.6.0 — bygg i plan och 3D
 

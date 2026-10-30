@@ -1,28 +1,25 @@
 # Objekt från onboard · 30 oktober 2026
 
-28 nya statiska dekorobjekt har lagts till i Designstudions gemensamma bibliotek. Ägaren har uttryckligen godkänt användning och publicering av sina modeller. Källan är `capstere/onboard`, med optimerade GLB-filer där sådana finns. SHA-256 och filstorlek finns per objekt i `furniture-editor/library/onboard-catalog.mjs`.
+**15 kompletta och verifierade GLB-modeller** från `capstere/onboard` finns nu i Designstudion. Välj **Nytt från onboard** under Möblera. Tillsammans med befintliga objekt finns nu **141 katalogobjekt** (104 kuraterade möbler, 22 procedurmodeller och 15 nya). Flera sökord, svenska och engelska namn samt accentfri sökning stöds.
 
-Välj **Nytt från onboard** i biblioteket. Sök med svenska namn eller originalnamn; flera sökord och sökning utan accenttecken stöds. Korten visar bredd, djup och höjd i modellenheter. Föremålen laddas först när de används. Samlingen tillför cirka 35 MB till repot; detta hämtas inte vid sidstart.
+Varje objekt har 3D-renderad förhandsbild, bredd/djup/höjd, källfil och källcommit samt kontrollsumma (SHA-256). Modellerna laddas först när de används. Figurer, vapen och dörrmodeller är statisk dekor. Skapa en fungerande öppning med byggverktyget **Dörr**.
 
-Figurer, vapen och dörrmodeller i detta paket är **statisk dekor**. De ersätter inte spelkaraktärer, köpbara vapen eller fungerande dörrar. Använd byggverktyget Dörr för en passage med dörrmotor. Modellsamlingar behålls som ett samlat objekt. Se dem i 3D innan du bestämmer placering och storlek.
+## Varför 15 i stället för 28?
 
-Sex NORD-modeller finns redan i biblioteket och har inte dubblerats. Större original över redigerarens 8 MiB-gräns samt Blender-arbetsfiler kräver separat export/optimering innan de kan läggas in. Alla 28 kort har renderade förhandsbilder.
+Astra importerade 28 modeller men GitHub-överföringen trunkerade **13 större GLB-binära filer** till cirka 786 kB. En verifiering mot originalblobbarna i det privata `capstere/onboard` visade att endast 15 filer var identiska med originalen. För att undvika trasiga modeller har de 13 ofullständiga kopiorna och deras förhandsbilder tagits bort från denna PR. De fullständiga originalen finns kvar i `onboard` och kan importeras i ett separat steg med binärsäker överföring.
 
-Verifiering: alla 28 passerar den vanliga GLB-inspektören, innehållshashkontroll och ett Chromium/WebGL-prov som laddar och renderar varje modell. Det befintliga browserprovet kontrollerar byggande, dörrar, promenad och ZIP-rundtur. Full spelbarhet avgörs fortfarande av projektets motorvalidering, inklusive blockerade passager.
+Tester granskar filstorlek, SHA-256, GLB-format, projektsparning och visning i riktig Chromium/WebGL. Inga ändringar av FPS-kampbalans eller befintlig layout.
 
-Tio riggade modeller kräver korrekt skelettkloning och separat animationsprov innan de används som möbler. De har inte lagts till i denna katalog: onboard:animated-realistic-goat-3d-animal-model, onboard:counter-strike-source-counter-terrorist, onboard:counter-strike-source-terrorist, onboard:crazy-doctor-fps-creator, onboard:cultist-tpose, onboard:cyberpunk-character, onboard:donald-trump, onboard:donald-trump-running, onboard:enemy1, onboard:terrorist.
+## Ny användarvänlighet
 
-## Smidigare byggande
+- Filtret **Används i banan** hjälper dig återanvända placerade föremål.
+- **Rensa sökning och filter** nollställer endast bibliotekets visning.
+- Nya kort visar verkliga miniatyrbilder och alla tre måtten.
+- Sök med flera ord i valfri ordning, även utan svenska accenttecken.
 
-- **Används i banan** visar modeller som redan är placerade, för snabb återanvändning.
-- **Rensa sökning och filter** återställer biblioteket utan att ändra banan.
-- Sökningen klarar flera ord i valfri ordning, svenska/originalnamn och exempelvis `sackar` för `säckar`.
-- Alla nya objekt har en verklig förhandsbild; måtten inkluderar höjd.
+## Återstående önskemål
 
-## Nästa förbättringar att prioritera
-
-1. Dela samlingsmodeller (labbutrustning, lådor och återvinningskärl) till separata placerbara föremål.
-2. Exportera de 123 Blender-källorna till optimerade GLB med förhandsbilder och rimliga standardmått.
-3. Gruppmarkering, fördelning med jämna avstånd och egna sparbara möbelgrupper för återkommande rum.
-
-Dessa tre punkter är identifierade förbättringar, inte funktioner som ingår i denna ändring. Riggade figurer kräver fortsatt separat stöd; de statiska figurerna här är dekor.
+1. Återför de 13 större GLB-filerna med fullständiga binärdata.
+2. Dela samlingsmodeller till enskilda föremål.
+3. Konvertera och optimera återstående Blender-filer.
+4. Inför gruppmarkering och sparbara möbelgrupper för återkommande rum.

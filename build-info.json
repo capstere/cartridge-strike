@@ -595,11 +595,6 @@
       "sha256": "f2d0a18b7b28842d03081a5cceba41649b1aa88a5ed4785a8f588f92c32f918a"
     },
     {
-      "path": "furniture-editor/library/models/onboard/doctor-lab.glb",
-      "bytes": 3206360,
-      "sha256": "7acb9c075fa783dda241af343292cbf4e8572f0cc480c69779813c852b21f77e"
-    },
-    {
       "path": "furniture-editor/library/models/onboard/door-frame-lod0.glb",
       "bytes": 8768,
       "sha256": "311281c8d0e273ad49f8ac50bf69aa80e295e815296289ccef074923407d2d29"
@@ -615,54 +610,9 @@
       "sha256": "b17bb05508aa085b438513634affeb02a54c77fef1ad9b1d76509865a162847e"
     },
     {
-      "path": "furniture-editor/library/models/onboard/garbage-bags.glb",
-      "bytes": 3503752,
-      "sha256": "061bf474fbdeb5a441c8bb75c81df23800a4623ff314a2ee5ee59834275d9b42"
-    },
-    {
       "path": "furniture-editor/library/models/onboard/goose-low-poly.glb",
       "bytes": 80780,
       "sha256": "cb8767f6e834d81185c8221f7cb1730b5b738eda2449b884f3b9f8c33f2a514a"
-    },
-    {
-      "path": "furniture-editor/library/models/onboard/lab-table.glb",
-      "bytes": 1095580,
-      "sha256": "9bb9f1251ac90457bdab61da90bab1d6211c7f513a86e7a868eaff554941e520"
-    },
-    {
-      "path": "furniture-editor/library/models/onboard/laboratory-drying-oven.glb",
-      "bytes": 1301856,
-      "sha256": "0e45d530895e94d5e8d132d12ddc89e7d762eb270c2dc5d0ad7e098999db918e"
-    },
-    {
-      "path": "furniture-editor/library/models/onboard/low-poly-gun-pack-weapon-pack-assets.glb",
-      "bytes": 957996,
-      "sha256": "9c186a6325b0af4ef355f934b892cd3e50fd5fab39ed7c223ba8461e50f50be1"
-    },
-    {
-      "path": "furniture-editor/library/models/onboard/low-poly-vending-machine.glb",
-      "bytes": 2063584,
-      "sha256": "8e2fac74d7951f29f7716e9064d15f2174777928d38810fce7e499783b8bd900"
-    },
-    {
-      "path": "furniture-editor/library/models/onboard/mfg-lab.glb",
-      "bytes": 1518024,
-      "sha256": "4fcf0c1655b61e46a12d67852d1a332efb699a95984158c7b42c2febb2c0e9ae"
-    },
-    {
-      "path": "furniture-editor/library/models/onboard/ms-exel.glb",
-      "bytes": 1175480,
-      "sha256": "44bf6b1951dc074f7df364e14e2648b888bd555d5c3783dcac0d5ad1a376a6b9"
-    },
-    {
-      "path": "furniture-editor/library/models/onboard/office-chair.glb",
-      "bytes": 1958992,
-      "sha256": "dcb89d258e897fbecac392a883eaba39a9ae177a18fe2fb60618014aaa62e1dc"
-    },
-    {
-      "path": "furniture-editor/library/models/onboard/old-bed.glb",
-      "bytes": 2780076,
-      "sha256": "ebd18e7fc6f25fecb8bdf11ea0b4aeead6e1209b36bb65761a2a24e102a7fff9"
     },
     {
       "path": "furniture-editor/library/models/onboard/patrol-carbine-lod0.glb",
@@ -690,16 +640,6 @@
       "sha256": "10d43152637961a90713680c3484482c0db322b08b7c49d5793f9ea77d0b359a"
     },
     {
-      "path": "furniture-editor/library/models/onboard/soldat-2.glb",
-      "bytes": 6066160,
-      "sha256": "95d7e4960be7208540c3827e188643f751f1009eff19838dcf4956a9710b7144"
-    },
-    {
-      "path": "furniture-editor/library/models/onboard/trash-can-recycle-bin-16mb-4part.glb",
-      "bytes": 5260528,
-      "sha256": "c278f7c98b87dc65cf52cc4a8869a3db824e1ab35254f6028139ea6b2a503ac2"
-    },
-    {
       "path": "furniture-editor/library/models/onboard/tv-remote-psx.glb",
       "bytes": 116412,
       "sha256": "c15619c415ea13c61c9a38627de5c93e9cda046b57d02833980d946be483841a"
@@ -720,14 +660,9 @@
       "sha256": "ec12dfae624e029935b52cf878dbd2b64a9ada8692935aadc9eb8e24b4722869"
     },
     {
-      "path": "furniture-editor/library/models/onboard/walter-white-lab-suit-bryan-cranston.glb",
-      "bytes": 2604456,
-      "sha256": "4e8bd139c60d3de0d6cbdddbed1271ca845e207767335debd163deaae9e48fcd"
-    },
-    {
       "path": "furniture-editor/library/onboard-catalog.mjs",
-      "bytes": 21392,
-      "sha256": "8123ec8842b0b2e53d6c6d4725defcae7077735a7776c27844acd908a48013fb"
+      "bytes": 11408,
+      "sha256": "f26e23dd62b6fa11c7d266fa0bfe78263fecde9fded0d5480109145e9c0dc78b"
     },
     {
       "path": "furniture-editor/library/procedural-mesh.mjs",
@@ -750,11 +685,6 @@
       "sha256": "9bc79adb69dd38646b5567389cedbf0c9be662f609534b628c318fb2ada4b870"
     },
     {
-      "path": "furniture-editor/library/thumbs/onboard/doctor-lab.png",
-      "bytes": 7495,
-      "sha256": "57eb0e064e497a4d0976f4e2a195834b9ec90b85f77b10a44dfb4a7b22e1b958"
-    },
-    {
       "path": "furniture-editor/library/thumbs/onboard/door-frame-lod0.png",
       "bytes": 2864,
       "sha256": "3ec5cd504a41db2ff67f548277b3b48ab8399fdad12461db5837d0c06ad138c5"
@@ -770,54 +700,9 @@
       "sha256": "5948411256fe0e5ed4a53cce87f345f6ffebff24800c750647979bcbcb4827f0"
     },
     {
-      "path": "furniture-editor/library/thumbs/onboard/garbage-bags.png",
-      "bytes": 9969,
-      "sha256": "3bde1126d1288876f4f058690249f01bb360a31e93893ecdff6c7eb4f8866eb2"
-    },
-    {
       "path": "furniture-editor/library/thumbs/onboard/goose-low-poly.png",
       "bytes": 5560,
       "sha256": "39884f988afb6c6a5d67826300c48b95d619cfb81fd5476551027f67a1583c60"
-    },
-    {
-      "path": "furniture-editor/library/thumbs/onboard/lab-table.png",
-      "bytes": 9016,
-      "sha256": "1ff65dad77d966a58906c2aa384eb6bdc4d04fb6e908d74814bcfe9c60317876"
-    },
-    {
-      "path": "furniture-editor/library/thumbs/onboard/laboratory-drying-oven.png",
-      "bytes": 13330,
-      "sha256": "7efe441c98080cb75fbd76ec237072331ed18a5559aa5a68a56d04310d7b86f2"
-    },
-    {
-      "path": "furniture-editor/library/thumbs/onboard/low-poly-gun-pack-weapon-pack-assets.png",
-      "bytes": 4409,
-      "sha256": "440f93cacb93148163bb926c0c6aecf7a0f13f1f143a79dc80a082f2d12ac7be"
-    },
-    {
-      "path": "furniture-editor/library/thumbs/onboard/low-poly-vending-machine.png",
-      "bytes": 13806,
-      "sha256": "172d6fc06937677278a102247a18c294030064a4efe3da7a35aad327c2b6b970"
-    },
-    {
-      "path": "furniture-editor/library/thumbs/onboard/mfg-lab.png",
-      "bytes": 8120,
-      "sha256": "ba15e488285d16c0d780970e7cc8fa862ddb87a9539e606c87b99b197520f303"
-    },
-    {
-      "path": "furniture-editor/library/thumbs/onboard/ms-exel.png",
-      "bytes": 5175,
-      "sha256": "526694acbdb12d12280cd5dfa5fdf4ccae669724521f93f56385c7eeeda18e17"
-    },
-    {
-      "path": "furniture-editor/library/thumbs/onboard/office-chair.png",
-      "bytes": 7718,
-      "sha256": "34b3caf666278bda5d71a71e3557bca1709157900d737e0ca1ca81f3fe2c1b3b"
-    },
-    {
-      "path": "furniture-editor/library/thumbs/onboard/old-bed.png",
-      "bytes": 13508,
-      "sha256": "5e393893924f4d0599736212a5462384ce8e78e3262fcf97d657aa2c279fcbc5"
     },
     {
       "path": "furniture-editor/library/thumbs/onboard/patrol-carbine-lod0.png",
@@ -845,16 +730,6 @@
       "sha256": "bf7df4691be39c9f0d80c1d40a476389f6a2a6b599b4668b834773d282470ace"
     },
     {
-      "path": "furniture-editor/library/thumbs/onboard/soldat-2.png",
-      "bytes": 8105,
-      "sha256": "36bd5925b9ae3511407d398a62c5dd5a2ae3cb200860725e59576de13838e6e7"
-    },
-    {
-      "path": "furniture-editor/library/thumbs/onboard/trash-can-recycle-bin-16mb-4part.png",
-      "bytes": 11255,
-      "sha256": "47b6c54a9d6956b2c86a464a1c9112c5da1d48d0d2134a5e509e2f9827bf3973"
-    },
-    {
       "path": "furniture-editor/library/thumbs/onboard/tv-remote-psx.png",
       "bytes": 4738,
       "sha256": "04682a9af304bffc3404eb51b108a6fbea36b08f74e42518ad9ae86b45b6e636"
@@ -873,11 +748,6 @@
       "path": "furniture-editor/library/thumbs/onboard/wall-panel-lod0.png",
       "bytes": 3137,
       "sha256": "c9f3fbca4e48145742f4fed3c1554cbe955a0bcafd43f0844b4b5fc4465a3fe8"
-    },
-    {
-      "path": "furniture-editor/library/thumbs/onboard/walter-white-lab-suit-bryan-cranston.png",
-      "bytes": 8662,
-      "sha256": "52a945d0f6815c0bdf2baf44e1900ab449f9cd6e9098ed14d80967c02c8965f1"
     },
     {
       "path": "furniture-editor/library/zip.mjs",
@@ -1430,7 +1300,7 @@
       "sha256": "9b0c24534a47f2e1c9549a63a5e00a850577e22fe8d18dbc7a532008a027cb89"
     }
   ],
-  "bytes": 55932500,
+  "bytes": 22309104,
   "sourceDirectoriesExcluded": [
     "references",
     "reviews",

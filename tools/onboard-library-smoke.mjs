@@ -19,11 +19,11 @@ try{
   }}finally{renderer.dispose();}
   return {count,thumbs};
  },process.env.GENERATE_THUMBS==='1');
- for(const t of result.thumbs){mkdirSync('furniture-editor/library/thumbs/onboard',{recursive:true});writeFileSync(`furniture-editor/library/thumbs/onboard/${t.model}.png`,Buffer.from(t.data,'base64'));}delete result.thumbs;assert.equal(result.count,28);assert.deepEqual(errors,[]);
+ for(const t of result.thumbs){mkdirSync('furniture-editor/library/thumbs/onboard',{recursive:true});writeFileSync(`furniture-editor/library/thumbs/onboard/${t.model}.png`,Buffer.from(t.data,'base64'));}delete result.thumbs;assert.equal(result.count,15);assert.deepEqual(errors,[]);
  await page.locator('[data-tab="furnish"]').click();
  await page.locator('#catalogCategory').selectOption('onboard');
- assert.equal(await page.locator('.catalog-card').count(),28);
- await page.locator('#catalogSearch').fill('sackar');assert.equal(await page.locator('.catalog-card').count(),1);
+ assert.equal(await page.locator('.catalog-card').count(),15);
+ await page.locator('#catalogSearch').fill('gas');assert.equal(await page.locator('.catalog-card').count(),1);
  await page.locator('#catalogSearch').fill('mixer vortex');assert.equal(await page.locator('.catalog-card').count(),1);
  await page.locator('.catalog-card').click();
  const at=await page.evaluate(()=>__levelStudio.screenWorldPoint(5,5));await page.mouse.click(at.x,at.y);
