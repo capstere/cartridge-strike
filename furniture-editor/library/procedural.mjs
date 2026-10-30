@@ -21,7 +21,10 @@ export const PROCEDURAL_LIBRARY=Object.freeze([
  {id:'studio:monitor',name:'Datorskärm svart',category:'kontor',width:.55,depth:.19,height:.39,shape:'monitor',placement:'countertop'},
  {id:'studio:keyboard',name:'Tangentbord svart',category:'kontor',width:.45,depth:.16,height:.035,shape:'keyboard',placement:'countertop'},
  {id:'studio:printer',name:'Skrivare / etikettprinter',category:'kontor',width:.4,depth:.38,height:.26,shape:'printer',placement:'countertop'},
- {id:'studio:storage-cabinet',name:'Förvaringsskåp vitt',category:'labb',width:.8,depth:.52,height:1.8,shape:'cabinet',placement:'floor'}
+ {id:'studio:storage-cabinet',name:'Förvaringsskåp vitt',category:'labb',width:.8,depth:.52,height:1.8,shape:'cabinet',placement:'floor'},
+ {id:'studio:wall-picture',name:'Tavla med ram · blå',category:'dekor',width:.85,depth:.07,height:.62,shape:'wall-picture',placement:'wall'},
+ {id:'studio:wall-clock',name:'Väggklocka · rund',category:'dekor',width:.38,depth:.08,height:.38,shape:'wall-clock',placement:'wall'},
+ {id:'studio:wall-shelf',name:'Vägghylla · vit',category:'dekor',width:.9,depth:.25,height:.1,shape:'wall-shelf',placement:'wall'}
 ].map(o=>Object.freeze({...o,kind:o.kind||'prop',license:'Original · Designstudion, procedurbyggd',source:'Samma fyrbenta stolform som Floor 5 · inga extra filer',model:o.shape,thumb:null})));
 export const PROCEDURAL_MAP=new Map(PROCEDURAL_LIBRARY.map(o=>[o.id,o]));
 /** Correct only the mislabeled office-chair preset from editor 3.4 drafts. */
