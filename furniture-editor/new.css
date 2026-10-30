@@ -36,3 +36,79 @@
 .workspace.game-look .work-guide{max-width:calc(57% - 20px)}
 #gameLook.active{background:#278a70;border-color:#a3dfb9}
 @media(max-width:1000px){#gameLookPanel{top:94px}.workspace.game-look .work-guide{max-width:calc(57% - 20px)}}
+
+/* Studio UX: the scene is the work surface; tools are secondary. */
+header{gap:14px}header nav{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+header nav a{margin:0;font-size:.76rem;font-weight:750;padding:8px 10px;border-radius:8px}
+header nav a:hover{background:#29575a}
+button{border-radius:9px;min-height:38px}
+button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,summary:focus-visible{
+ outline:3px solid #a8eac5;outline-offset:2px}
+.catalog-cards{gap:10px}
+.catalog-card{border-radius:10px;padding:9px;gap:6px}
+.catalog-image{height:94px;border-radius:8px}
+.catalog-card strong{font-size:.82rem;line-height:1.35}
+.catalog-card small{font-size:.71rem}
+#stageFocus{background:#25474f;border-color:#568b91;font-weight:750}
+#stageFocus[aria-pressed=true]{background:#d7f6e6;color:#144c51}
+#quickSave{background:#2a876c;border-color:#78c9b0;font-weight:750}
+.mobile-studio-bar,.mobile-drawer-top{display:none}
+.mobile-backdrop{display:none}
+@media(min-width:1001px){
+ body.stage-focus main{grid-template-columns:300px minmax(0,1fr)}
+ body.stage-focus main>.checks{display:none}
+}
+@media(min-width:701px) and (max-width:1000px){
+ body.stage-focus main>.checks{display:none}
+}
+@media(max-width:700px){
+ header{display:flex;flex-direction:column;align-items:flex-start;padding:10px 12px;gap:7px}
+ header strong{font-size:.82rem}
+ header span{margin-left:9px;display:inline;font-size:.7rem}
+ header nav{max-width:100%;overflow-x:auto;flex-wrap:nowrap;gap:4px;scrollbar-width:thin}
+ header nav a{font-size:.69rem;white-space:nowrap;padding:6px 8px}
+ main{display:block;height:auto;min-height:0}
+ .workspace{height:calc(100dvh - 120px);min-height:430px;max-height:none;overflow:hidden}
+ .mobile-studio-bar{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:5px;padding:7px 9px;background:#152d32;flex:none}
+ .mobile-studio-bar button{font-size:.75rem;padding:8px 3px;min-width:0;min-height:42px;line-height:1.1}
+ .mobile-studio-bar button:last-child{background:#2a806c;border-color:#8ed6b9}
+ .toolbar{flex:none;min-height:52px;max-width:100%;flex-wrap:nowrap;overflow-x:auto;scrollbar-width:thin;padding:5px 7px}
+ .toolbar button{flex:none;white-space:nowrap;font-size:.72rem;padding:8px}
+ .toolbar .inline{flex:none}
+ #coordinates,#stageFocus,#quickSave{display:none!important}
+ .workspace canvas{min-height:0;height:auto;flex:1}
+ .foot{flex:none;min-height:42px;padding:9px 12px}
+ .foot span:last-child{display:none}
+ .work-guide{top:118px;left:8px;max-width:calc(100% - 16px);font-size:.7rem;padding:6px;flex-wrap:wrap}
+ .work-guide span{max-width:230px}
+ .move-pad{right:8px;bottom:49px}
+ .mobile-backdrop:not([hidden]){display:block;position:fixed;inset:0;border:0;border-radius:0;margin:0;padding:0;min-height:0;
+   z-index:49;background:#06181bc0;cursor:pointer}
+ main>aside.tool-panel,main>aside.checks{
+   position:fixed;left:0;right:0;bottom:0;top:auto;z-index:50;width:auto;
+   height:min(78dvh,720px);max-height:78dvh;min-height:0;
+   border:1px solid #668f8b;border-bottom:0;border-radius:20px 20px 0 0;
+   padding:20px 16px calc(20px + env(safe-area-inset-bottom));
+   background:#192e32;overflow-y:auto;
+   transform:translateY(110%);visibility:hidden;pointer-events:none;
+   box-shadow:0 -15px 55px #04181d80;transition:transform .2s ease,visibility .2s;
+ }
+ body[data-studio-sheet="tools"] main>.tool-panel,
+ body[data-studio-sheet="checks"] main>.checks{
+   transform:translateY(0);visibility:visible;pointer-events:auto;
+ }
+ .mobile-drawer-top{display:flex;align-items:center;justify-content:space-between;gap:12px;
+   position:sticky;top:-20px;z-index:3;padding:10px 0 12px;background:#192e32;border-bottom:1px solid #385b60;margin-bottom:14px}
+ .mobile-drawer-top strong{font-size:1rem}
+ .mobile-drawer-top button{background:#35565d;font-size:.84rem;min-height:40px;min-width:80px}
+ .catalog-cards{max-height:none;grid-template-columns:repeat(2,minmax(0,1fr));overflow:visible}
+ .catalog-image{height:110px}
+ .build-tools button{font-size:1.35rem;min-height:56px}
+ #gameLookPanel{top:50%;bottom:42px;width:100%;border-left:0;border-top:2px solid #69bb9f}
+ .workspace.game-look #scene3d{height:50%;width:100%;align-self:auto}
+ .workspace.game-look .move-pad{right:8px;bottom:calc(50% + 40px)}
+ .workspace.game-look .work-guide{max-width:calc(100% - 16px)}
+}
+@media(prefers-reduced-motion:reduce){
+ main>aside.tool-panel,main>aside.checks{transition:none}
+}
