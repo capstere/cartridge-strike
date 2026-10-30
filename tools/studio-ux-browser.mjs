@@ -50,7 +50,8 @@ try{
  assert.equal(await phone.locator('body').getAttribute('data-studio-sheet'),'none','Model selection closes the tool drawer');
  await phone.locator('#toolsPanel').waitFor({state:'hidden',timeout:5000});
  await phone.locator('#mobileSave').click();
- assert(await phone.locator('#savePanel').isVisible(),'Save and gameplay checks one tap away');
+ assert.equal(await phone.locator('body').getAttribute('data-studio-sheet'),'checks','Save button activates project panel');
+ await phone.locator('#savePanel').waitFor({state:'visible',timeout:5000});
  assert(await phone.locator('#save').isVisible());
  await phone.locator('#closeSave').click();
  await phone.locator('#savePanel').waitFor({state:'hidden',timeout:5000});
