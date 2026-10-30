@@ -16,7 +16,8 @@ const data=()=>page.evaluate(()=>structuredClone(__levelStudio.project));
 try{
  await page.goto(origin+'/furniture-editor/new.html?test=1');await page.waitForFunction(()=>!!window.__levelStudio);
  assert.equal(await page.locator('#firstBuild').getAttribute('data-step'),'0');
- await page.locator('#firstBuildNext').click();assert.equal(await page.locator('#tool').inputValue(),'room');
+ // This regression exercises manual precision drawing; the beginner guide now creates a complete room in one click.
+ await page.locator('#tool').selectOption('room');assert.equal(await page.locator('#tool').inputValue(),'room');
  await drag([2,2],[8,8]);
  assert.equal((await data()).ground.floors.length,1);
  assert.equal(await page.locator('#firstBuild').getAttribute('data-step'),'1');

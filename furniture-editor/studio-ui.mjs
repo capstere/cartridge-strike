@@ -61,3 +61,20 @@ focus.addEventListener('click',()=>{
 quickSave.addEventListener('click',()=>$('save').click());
 applyWide();
 openSheet();
+
+// Friendly visual category filters; same underlying catalog, no new storage or game state.
+const category=$('catalogCategory');
+const kidCategories=[...document.querySelectorAll('[data-kid-category]')];
+function syncCategories(){
+ for(const button of kidCategories)button.setAttribute('aria-pressed',String(button.dataset.kidCategory===category.value));
+}
+for(const button of kidCategories){
+ button.addEventListener('click',()=>{
+  category.value=button.dataset.kidCategory;
+  category.dispatchEvent(new Event('change',{bubbles:true}));
+  syncCategories();
+ });
+}
+category.addEventListener('change',syncCategories);
+$('resetCatalog').addEventListener('click',syncCategories);
+syncCategories();
