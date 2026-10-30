@@ -100,7 +100,8 @@ function applyDirectDrag(info,q){
 }
 function find(x,z){for(const d of decorations()){const at=decorationAt(d);if(at&&Math.hypot(x-at.x,z-at.z)<.3)return d;}for(const m of markers())if(dist(m,{x,z})<.35)return m;
  // Small and narrow objects must still be easy to pick at Floor 5 scale.
- for(const o of objects())if(inside(x,z,corners(o,.15)))return o;
+ // Prefer recently placed furniture when objects overlap in free-building mode.
+  for(const o of objects().slice().reverse())if(inside(x,z,corners(o,.15)))return o;
  for(const a of [...arch().filter(directInsert),...arch().filter(a=>!directInsert(a))]){
   const dx=a.b[0]-a.a[0],dz=a.b[1]-a.a[1],len=Math.hypot(dx,dz),t=clamp(((x-a.a[0])*dx+(z-a.a[1])*dz)/len**2,0,1);
   if(Math.hypot(x-a.a[0]-dx*t,z-a.a[1]-dz*t)<.18)return a;

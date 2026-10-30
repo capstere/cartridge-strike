@@ -766,8 +766,8 @@
     },
     {
       "path": "furniture-editor/new.mjs",
-      "bytes": 70919,
-      "sha256": "27fe4aed5e3b53a1b0ed54023f33c557af1b86a6da0e30b9a5817ed0c4840bac"
+      "bytes": 71019,
+      "sha256": "e8322cc1194d23511683bae7ec9919213ad9955c58f13c7c6c1aee407679084f"
     },
     {
       "path": "furniture-editor/selection-dock.mjs",
@@ -1325,7 +1325,7 @@
       "sha256": "9b0c24534a47f2e1c9549a63a5e00a850577e22fe8d18dbc7a532008a027cb89"
     }
   ],
-  "bytes": 22343213,
+  "bytes": 22343313,
   "sourceDirectoriesExcluded": [
     "references",
     "reviews",
