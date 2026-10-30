@@ -1,8 +1,8 @@
 import * as T from '../../vendor/three/three.module.js';
 import {addModelToGroup,getLocalFile,importLocalGLB} from '../library/models.mjs';
 import {assetHash} from '../library/glb-utils.mjs';
-import {proceduralOf} from '../library/procedural.mjs?v=3.5.0';
-import {populateProcedural,populateDiningChair} from '../library/procedural-mesh.mjs?v=3.5.0';
+import {proceduralOf} from '../library/procedural.mjs?v=4.4.0';
+import {populateProcedural,populateDiningChair} from '../library/procedural-mesh.mjs?v=4.4.0';
 import {locatePoster} from './posters.mjs';
 import {createPosterTexture} from './poster-art.mjs';
 import {treatmentPosition} from './treatments.mjs';
