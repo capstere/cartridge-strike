@@ -67,7 +67,7 @@ test('context furniture dock edits the actual model with real validation and und
  assert.match(editor,/installSelectionDock/);
  assert.match(editor,/selectionDock\.sync\(o/);
  assert.match(editor,/child\.elevation=/);
- assert.match(html,/src="new\.mjs\?v=4\.3\.0"/);
+ assert.match(html,/src="new\.mjs\?v=4\.4\.0"/);
 });
 
 test('free building defaults to optional smart placement, with explicit diagnostics',()=>{
@@ -128,4 +128,27 @@ test('Sims wall arrows are offered only for safe edges, and both 2D/3D use the s
  assert.match(editor,/mesh\.userData\.editHandle=handle/);
  assert.match(editor,/parsePosters\(p\(\)\.architecture\.posters\|\|\[\],result\.entries\)/);
  assert.match(planner,/export function planResizeFloorEdge\(/);
+});
+
+
+test('kid-friendly mounting is a real editor action, not decoration-only UI',()=>{
+ const html=source('furniture-editor/new.html');
+ const editor=source('furniture-editor/new.mjs');
+ const inspector=source('furniture-editor/selection-dock.mjs');
+ const smart=source('furniture-editor/smart-placement.mjs');
+ const walls=source('furniture-editor/wall-mounts.mjs');
+ const procedural=source('furniture-editor/library/procedural.mjs');
+ for(const id of ['placementMode','dockMountMode','dockWallY','dockWallHeightRow'])
+  assert.match(html,new RegExp('id="'+id+'"'));
+ for(const mode of ['auto','surface','wall','floor'])
+  assert(html.includes('value="'+mode+'"'));
+ assert.match(editor,/function mountPose\(/);
+ assert.match(editor,/onMountMode:mode/);
+ assert.match(editor,/onWallHeight:value/);
+ assert.match(editor,/syncWallMounts\(objects\(\),arch\(\)\)/);
+ assert.match(inspector,/mount\.addEventListener\('change'/);
+ assert.match(smart,/export function inferPlacementRole/);
+ assert.match(walls,/export function poseOnWall/);
+ for(const id of ['studio:wall-picture','studio:wall-clock','studio:wall-shelf'])
+  assert(procedural.includes(id));
 });
