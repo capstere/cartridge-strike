@@ -3,7 +3,7 @@
  * Does not mutate the project, open doorways or create colliders.
  * The caller performs the real makeFloor + planPaintOverWall atomically.
  */
-import {STANDARD_PASSAGE_WIDTH} from './build/architecture.mjs';
+import {STANDARD_PASSAGE_WIDTH} from './build/architecture.mjs?v=4.6.0';
 
 export const ADJACENT_SIDES=Object.freeze(['right','left','above','below']);
 const round=n=>Math.round(n*1000)/1000;
