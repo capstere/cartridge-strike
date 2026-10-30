@@ -2,7 +2,7 @@
  * All objects centered X/Z and resting on the floor; elevation applied by parent.
  */
 import * as T from '../../vendor/three/three.module.js';
-import {proceduralOf} from './procedural.mjs?v=3.5.0';
+import {proceduralOf} from './procedural.mjs?v=4.4.0';
 import {chairColors} from '../appearance.mjs';
 const circle=new T.CylinderGeometry(.5,.5,1,24);
 const metallic=new T.MeshStandardMaterial({color:0xaab6bd,metalness:.57,roughness:.43});
