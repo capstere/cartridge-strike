@@ -48,7 +48,7 @@ try{
  await beginner.locator('#kidRoom').click();
  await beginner.locator('#roomChoices').waitFor({state:'visible'});
  assert(await beginner.locator('[data-room-side="right"]').isEnabled());
- assert(await beginner.locator('[data-room-side="below"]').isDisabled(),
+ assert(await beginner.locator('[data-room-side="above"]').isDisabled(),
   'The starter rooms existing exterior doorway cannot be overwritten');
  await beginner.locator('[data-room-side="right"]').hover();
  await beginner.locator('[data-room-side="right"]').click();
@@ -76,7 +76,7 @@ try{
  await beginner.evaluate(()=>__levelStudio.select(__levelStudio.project.ground.floors[0].id));
  await beginner.locator('#kidRoom').click();
  assert(await beginner.locator('[data-room-side="right"]').isDisabled());
- assert(await beginner.locator('[data-room-side="above"]').isEnabled());
+ assert(await beginner.locator('[data-room-side="below"]').isEnabled());
  await beginner.locator('#roomChoiceClose').click();
  await beginner.locator('#kidFurnish').click();
  assert(await beginner.locator('[data-panel="furnish"]').isVisible());
