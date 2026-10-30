@@ -353,7 +353,7 @@ function draw3D(){if(!ensureRenderer())return;group.traverse(o=>{if(o.isMesh){o.
  if(chosen&&!chosen.source&&floors().includes(chosen))for(const [handle,q] of
   Object.entries({...rectCorners(chosen),...allowedEdgeHandles(chosen)})){
   const edge=handle.startsWith('edge-');
-  const mesh=box(q.x,.24,q.z,edge?.57:.34,edge?.42:.34,edge?.57:.34,
+  const mesh=box(q.x,.24,q.z,edge?0.57:0.34,edge?0.42:0.34,edge?0.57:0.34,
    edge?0x35ba87:0xf8a849,0,1,chosen.id);
   mesh.userData.editHandle=handle;
  }
