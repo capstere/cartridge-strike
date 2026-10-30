@@ -67,7 +67,7 @@ test('context furniture dock edits the actual model with real validation and und
  assert.match(editor,/installSelectionDock/);
  assert.match(editor,/selectionDock\.sync\(o/);
  assert.match(editor,/child\.elevation=/);
- assert.match(html,/src="new\.mjs\?v=4\.1\.0"/);
+ assert.match(html,/src="new\.mjs\?v=4\.2\.0"/);
 });
 
 test('free building defaults to optional smart placement, with explicit diagnostics',()=>{
@@ -98,4 +98,20 @@ test('four child-sized buttons expose a genuine one-click room and standard door
  assert.match(ui,/category\.dispatchEvent\(new Event\('change'/);
  assert.match(styles,/\.kid-steps button/);
  assert.match(styles,/@media\(max-width:700px\)/);
+});
+
+test('a ten-year-old can choose a side for an adjoining room, without losing precise room drawing',()=>{
+ const html=source('furniture-editor/new.html');
+ const js=source('furniture-editor/new.mjs');
+ const planner=source('furniture-editor/adjacent-room.mjs');
+ const css=source('furniture-editor/new.css');
+ for(const id of ['roomChoices','roomChoiceHint','roomChoiceClose','roomDrawCustom'])
+  assert(html.includes('id="'+id+'"'),'Room picker missing: '+id);
+ for(const side of ['above','right','below','left'])
+  assert(html.includes('data-room-side="'+side+'"'),'Room side missing: '+side);
+ assert.match(js,/function makeAdjacentRoom\(side\)/);
+ assert.match(js,/planPaintOverWall\(arch\(\),shared\.id,plan\.doorStart,plan\.doorEnd,'door'/);
+ assert.match(js,/function startCustomRoom\(\)/);
+ assert.match(planner,/export function planAdjacentRoom\(/);
+ assert.match(css,/\.room-choice-grid button/);
 });
