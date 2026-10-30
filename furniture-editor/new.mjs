@@ -162,7 +162,7 @@ function updateProps(){const o=lookup();$('selection').hidden=!o;$('posterText')
  $('w').value=o?(o.w??(o.x1!==undefined?o.x1-o.x0:o.b?Math.hypot(o.b[0]-o.a[0],o.b[1]-o.a[1]):'')):'';
  $('d').value=o?(o.d??(o.z1!==undefined?o.z1-o.z0:'')):'';
  for(const id of ['x','z','w','d','remove','rotate','duplicate'])$(id).disabled=!o;
- selectionDock.sync(o,{isFurniture:!!o&&objects().includes(o)});
+ selectionDock.sync(o,{isFurniture:!!o&&objects().includes(o)&&!pendingFurniture&&(tab!=='build'||$('tool').value==='select')});
 }
 function rotateWithChildren(o,delta){const c=Math.cos(delta),s=Math.sin(delta);for(const child of objects().filter(v=>v.mountId===o.id)){const dx=child.x-o.x,dz=child.z-o.z;child.x=o.x+c*dx+s*dz;child.z=o.z-s*dx+c*dz;child.yaw+=delta;}o.yaw=((o.yaw+delta+Math.PI)%(2*Math.PI)+2*Math.PI)%(2*Math.PI)-Math.PI;if(objects().includes(o))placementStatus(o);return true;}
 function moveObject(o,x,z){if(arch().includes(o)){
