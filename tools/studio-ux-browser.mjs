@@ -162,12 +162,43 @@ try{
  const supportId=await mountPage.evaluate(()=>__levelStudio.project.furniture.added.at(-1).id);
  assert.equal(await mountPage.evaluate(()=>__levelStudio.project.furniture.added.at(-1).elevation),0);
  await mountPage.locator('#catalogCards [data-asset="kenney:furniture-kit:kitchenmicrowave"]').click();
- placeAt=await mountPage.evaluate(()=>__levelStudio.screenWorldPoint(0,0));
- await mountPage.mouse.click(placeAt.x,placeAt.y);
+ await mountPage.locator('#threeView').click();
+ await mountPage.locator('#scene3d').waitFor({state:'visible'});
+ await mountPage.waitForFunction(id=>__levelStudio.visualColors.some(row=>row.id===id),
+  supportId,{timeout:30000});
+ const topPoint=await mountPage.evaluate(()=>__levelStudio.screen3DPoint(0,.899,0));
+ await mountPage.mouse.move(topPoint.x,topPoint.y);
+ await mountPage.waitForFunction(id=>__levelStudio.snapPreview.kind==='surface'&&
+  __levelStudio.snapPreview.targetId===id,supportId,{timeout:15000});
+ const topPreview=await mountPage.evaluate(()=>__levelStudio.snapPreview);
+ assert(topPreview.highlightCount>=2,'Actual table top has a transparent highlight and bright outline');
+ assert.match(topPreview.label,/Ovanpå/);
+ assert.match(await mountPage.locator('#activeHelp').textContent(),/Ovanpå/);
+ // Manual floor placement intentionally turns off snapping and target highlights.
+ await mountPage.locator('#placementMode').selectOption('floor');
+ await mountPage.mouse.move(topPoint.x+4,topPoint.y);
+ assert.equal(await mountPage.evaluate(()=>__levelStudio.snapPreview.kind),'floor');
+ assert.equal(await mountPage.evaluate(()=>__levelStudio.snapPreview.highlightCount),0);
+ await mountPage.locator('#placementMode').selectOption('auto');
+ await mountPage.mouse.move(topPoint.x,topPoint.y);
+ await mountPage.waitForFunction(id=>__levelStudio.snapPreview.targetId===id,
+  supportId,{timeout:15000});
+ await mountPage.mouse.click(topPoint.x,topPoint.y);
  const microwave=await mountPage.evaluate(()=>structuredClone(__levelStudio.project.furniture.added.at(-1)));
+ await mountPage.locator('#planView').click();
  assert.equal(microwave.mountId,supportId,'A normal imported GLB microwave snaps on top of a procedural counter');
  assert(microwave.elevation>.8,'Microwave base rests on counter top, not inside the floor');
  await mountPage.locator('#catalogCards [data-asset="studio:wall-picture"]').click();
+ await mountPage.locator('#threeView').click();
+ await mountPage.locator('#cutaway').uncheck();
+ const wallPoint=await mountPage.evaluate(()=>__levelStudio.screen3DPoint(4.055,1.55,0));
+ await mountPage.mouse.move(wallPoint.x,wallPoint.y);
+ await mountPage.waitForFunction(()=>__levelStudio.snapPreview.kind==='wall',{timeout:15000});
+ const wallPreview=await mountPage.evaluate(()=>__levelStudio.snapPreview);
+ assert(wallPreview.targetId?.startsWith('BYGG-V-'),'A real authored wall is highlighted');
+ assert(wallPreview.highlightCount>=2,'Wall plane and edge outline are both visible');
+ assert.match(wallPreview.label,/Väggen/);
+ await mountPage.locator('#planView').click();
  placeAt=await mountPage.evaluate(()=>__levelStudio.screenWorldPoint(3.82,0));
  await mountPage.mouse.click(placeAt.x,placeAt.y);
  const wallPictureId=await mountPage.evaluate(()=>__levelStudio.project.furniture.added.at(-1).id);
@@ -357,5 +388,5 @@ try{
 
  assert.deepEqual(errors,[],'No page-level exceptions in Studio navigation');
  console.log(JSON.stringify({status:'PASS',hub:true,wideScene:true,mobileDrawers:true,
-   oneClickRoom:true,adjoiningRoom:true,wallEdgeDragging:true,smartSurfaceAndWallMounts:true,sharedDoorAndNavigation:true,doorAndUndo:true,beginnerSaveWalk:true,contextualFurniture:true,autosaveAndUndo:true,characterTaskShortcuts:true,consoleErrors:errors.length}));
+   oneClickRoom:true,adjoiningRoom:true,wallEdgeDragging:true,smartSurfaceAndWallMounts:true,visual3DSnapTargets:true,sharedDoorAndNavigation:true,doorAndUndo:true,beginnerSaveWalk:true,contextualFurniture:true,autosaveAndUndo:true,characterTaskShortcuts:true,consoleErrors:errors.length}));
 }finally{await browser.close();}
