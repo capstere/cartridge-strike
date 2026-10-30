@@ -67,7 +67,7 @@ test('context furniture dock edits the actual model with real validation and und
  assert.match(editor,/installSelectionDock/);
  assert.match(editor,/selectionDock\.sync\(o/);
  assert.match(editor,/child\.elevation=/);
- assert.match(html,/src="new\.mjs\?v=4\.2\.0"/);
+ assert.match(html,/src="new\.mjs\?v=4\.3\.0"/);
 });
 
 test('free building defaults to optional smart placement, with explicit diagnostics',()=>{
@@ -114,4 +114,18 @@ test('a ten-year-old can choose a side for an adjoining room, without losing pre
  assert.match(js,/function startCustomRoom\(\)/);
  assert.match(planner,/export function planAdjacentRoom\(/);
  assert.match(css,/\.room-choice-grid button/);
+});
+
+test('Sims wall arrows are offered only for safe edges, and both 2D/3D use the same room resize plan',()=>{
+ const html=source('furniture-editor/new.html');
+ const editor=source('furniture-editor/new.mjs');
+ const planner=source('furniture-editor/build/direct-manipulation.mjs');
+ for(const label of ['gröna pilarna','orange hörnen'])assert(html.includes(label));
+ assert.match(editor,/function allowedEdgeHandles\(f\)/);
+ assert.match(editor,/planResizeFloorEdge\(info\.initialFloor/);
+ assert.match(editor,/handle\.startsWith\('edge-'\)/);
+ assert.match(editor,/ctx\.arc\(x,z,14\*dpr/);
+ assert.match(editor,/mesh\.userData\.editHandle=handle/);
+ assert.match(editor,/parsePosters\(p\(\)\.architecture\.posters\|\|\[\],result\.entries\)/);
+ assert.match(planner,/export function planResizeFloorEdge\(/);
 });
