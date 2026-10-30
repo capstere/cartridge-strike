@@ -71,3 +71,15 @@ test('wall-mounted duplicated objects do not accidentally keep old wall data on 
  const [copy]=duplicateFurnitureAssembly(m,[m],{x:1,z:1,yaw:0,mountId:null,elevation:0,wallMount:null});
  assert.equal(copy.wallMount,null);
 });
+
+
+test('a small wall shelf is both anchored to the wall and a support for books',()=>{
+ const wallShelf=item('studio:wall-shelf','Vägghylla',.9,.25,.1);
+ const wallPose=proposeSmartPose(wallShelf,{x:4,z:.1},[],{walls:[wall]});
+ assert(wallPose.wallMount);
+ const mounted={...wallShelf,...wallPose};
+ const books=item('kenney:furniture-kit:books','Böcker',.31,.28,.28);
+ const pose=proposeSmartPose(books,{x:mounted.x,z:mounted.z},[mounted],{walls:[wall]});
+ assert.equal(pose.mountId,mounted.id);
+ assert(pose.elevation>1.5);
+});
