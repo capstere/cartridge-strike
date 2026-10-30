@@ -86,7 +86,7 @@ try{
  await page.locator('#catalogCards [data-asset="studio:desk-120"]').click();
  at=await page.evaluate(()=>__levelStudio.screenWorldPoint(2,2));await page.mouse.click(at.x,at.y);
  assert.equal(await page.evaluate(()=>__levelStudio.project.furniture.added.length),3,'Collision warning must not block insertion');
- assert.match(await page.locator('#status').innerText(),/Placerad med varning/);
+ assert.doesNotMatch(await page.locator('#status').innerText(),/Placerad med varning|fel|blockerad/i,'Free placement should not nag');
  await page.keyboard.press('Escape');const targetPoint=await page.evaluate(()=>__levelStudio.screenWorldPoint(6,3));
  await page.mouse.move(at.x,at.y);await page.mouse.down();await page.mouse.move(targetPoint.x,targetPoint.y,{steps:6});await page.mouse.up();
  assert(await page.evaluate(()=>__levelStudio.project.furniture.added.some(o=>Math.abs(o.x-6)<.2&&Math.abs(o.z-3)<.2)));

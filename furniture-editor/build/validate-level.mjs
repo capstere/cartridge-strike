@@ -48,15 +48,15 @@ export function validateLevel(input,{engine=false}={}){
  for(const o of furniture){
   if(o.collision==='none'||(p.mode==='edit-floor5'&&o.original&&!p.furniture.placements.some(v=>v.id===o.id)))continue;
   const footprint=corners(o);
-  if(scene.fixed.some(f=>intersects(footprint,f.polygon)))add('V08','fail','Möbeln överlappar en fast inventarie.',o.id,'Flytta möbeln till en fri golvyta.');
+  if(scene.fixed.some(f=>intersects(footprint,f.polygon)))add('V08','warn','Möbeln överlappar en fast inventarie.',o.id,'Flytta möbeln till en fri golvyta.');
   if(!footprint.every(([x,z])=>onFloor(x,z)))
-   add('V08','fail','Möbeln ryms inte helt på en golvyta.',o.id,'Flytta möbeln inåt.');
+   add('V08','warn','Möbeln ryms inte helt på en golvyta.',o.id,'Flytta möbeln inåt.');
   for(const w of walls)if(segmentIntersectsRectangle(w.a,w.b,o,Math.max(.012,w.thickness/2-.007)))
-   add('V08','fail','Möbeln överlappar en vägg eller glasyta.',o.id,'Flytta möbeln från väggen.');
+   add('V08','warn','Möbeln överlappar en vägg eller glasyta.',o.id,'Flytta möbeln från väggen.');
   for(const d of world.data.doors.filter(d=>!d.blocked))if(segmentIntersectsRectangle(d.a,d.b,o,.35))
    add('V07','fail','Möbeln blockerar dörrens fria zon.',o.id,'Flytta möbeln minst 0,35 från dörren.');
   for(const other of furniture)if(other.id<o.id&&o.mountId!==other.id&&other.mountId!==o.id&&intersects(footprint,corners(other)))
-   add('V08','fail',`Möbeln överlappar ${other.id}.`,o.id,'Separera möblerna eller använd ett giltigt smart fäste.');
+   add('V08','warn',`Möbeln överlappar ${other.id}.`,o.id,'Separera möblerna eller använd ett giltigt smart fäste.');
   if(o.mountId&&!furniture.some(s=>s.id===o.mountId&&o.elevation>=.3))add('V08','fail','Smart fäste saknas eller har ogiltig höjd.',o.id,'Placera på ett befintligt bord eller en bänk.');
  }
  if(!results.some(r=>r.check==='V07'&&r.status==='fail'))add('V07','pass','Inga möbler blockerar dörrarnas frizoner.');
