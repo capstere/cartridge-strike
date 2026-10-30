@@ -133,7 +133,7 @@ try{
  await phone.locator('#toolsPanel').waitFor({state:'hidden',timeout:5000});
  await phone.locator('[data-mobile-tab="furnish"]').click();
  assert.equal(await phone.locator('body').getAttribute('data-studio-sheet'),'tools');
- assert(await phone.locator('#toolsPanel').isVisible(),'Furniture drawer opens');
+ await phone.locator('#toolsPanel').waitFor({state:'visible',timeout:5000}); // wait for mobile drawer animation
  assert((await phone.locator('.tool-panel [data-tab="furnish"]').getAttribute('class')).includes('active'));
  await phone.locator('#catalogSearch').fill('vortex');
  await phone.locator('#catalogCards .catalog-card').first().click();
