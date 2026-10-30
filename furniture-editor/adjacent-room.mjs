@@ -20,7 +20,7 @@ export function planAdjacentRoom(room,side,rooms,walls,bounds,{treatments=[]}={}
   return fail('Välj först ett rum du har byggt.');
  const w=round(room.x1-room.x0),h=round(room.z1-room.z0);
  if(w<STANDARD_PASSAGE_WIDTH+.5||h<STANDARD_PASSAGE_WIDTH+.5||
-    w>50||h>50)return fail('Det här rummet behöver en längre rak vägg.');
+    w>100||h>100)return fail('Rummet behöver minst en lång, rak vägg för en standarddörr.');
  const rect={x0:room.x0,x1:room.x1,z0:room.z0,z1:room.z1};
  let wallStart,wallEnd;
  if(side==='right'){
