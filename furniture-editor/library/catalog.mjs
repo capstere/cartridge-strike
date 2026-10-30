@@ -1,3 +1,4 @@
+import {ONBOARD_LIBRARY} from './onboard-catalog.mjs';
 import {PROCEDURAL_LIBRARY} from './procedural.mjs?v=3.5.0';
 /** License-audited, version-pinned reusable 3D furniture library.
  * Kenney source: https://kenney.nl/assets/furniture-kit (CC0 1.0).
@@ -1175,7 +1176,7 @@ export const LIBRARY = Object.freeze([
   }
 ]);
 export const BASE_LIBRARY = LIBRARY;
-export const LIBRARY_ALL = Object.freeze([...LIBRARY,...PROCEDURAL_LIBRARY]);
+export const LIBRARY_ALL = Object.freeze([...LIBRARY,...PROCEDURAL_LIBRARY,...ONBOARD_LIBRARY]);
 export const LIBRARY_MAP = new Map(LIBRARY_ALL.map(x=>[x.id,x]));
 export const LIBRARY_CATEGORIES = Object.freeze(["alla","stolar","bord","kontor","kok","badrum","labb","industri","dekor","hissrum12","egna"]);
 export const LIBRARY_SOURCE = Object.freeze({repository:"Hidencod/tge-assets",commit:"37f5baddf99899547ae661668880809c42b450f0",license:"CC0-1.0",creator:"Kenney"});

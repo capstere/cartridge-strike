@@ -1,3 +1,7 @@
+## Nytt 30 oktober: onboard-biblioteket
+
+15 nya objekt med förhandsbilder, bättre sökning och filtret **Används i banan**. Öppna **MÖBLERA → Nytt från onboard**. [Objekt, funktioner och nästa förbättringar](../docs/onboard-library.md).
+
 # Cartridge Strike Designstudion 3.6.0 — bygg i plan och 3D
 
 **[Öppna Designstudion](https://capstere.github.io/cartridge-strike/furniture-editor/new.html)** (dator och mus rekommenderas).

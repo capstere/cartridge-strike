@@ -55,7 +55,16 @@ try{
  await page.waitForFunction(()=>__furnitureEditor.getState().changed>=1);
  check('saved JSON can be imported and edited again',await page.evaluate(()=>__furnitureEditor.getState().changed>=1));
  // New V2 model library: real Kenney thumbnail + GLB must be served locally.
- check('original 104 GLB assets retained plus 22 procedural furniture/equipment models',await page.evaluate(()=>__furnitureEditor.catalogCount===126));
+ const catalogCounts=await page.evaluate(async()=>{
+  const [{LIBRARY,LIBRARY_ALL},{PROCEDURAL_LIBRARY},{ONBOARD_LIBRARY}]=await Promise.all([
+   import('./library/catalog.mjs'),import('./library/procedural.mjs?v=3.5.0'),import('./library/onboard-catalog.mjs')
+  ]);
+  return {original:LIBRARY.length,procedural:PROCEDURAL_LIBRARY.length,onboard:ONBOARD_LIBRARY.length,
+   total:LIBRARY_ALL.length,visible:__furnitureEditor.catalogCount};
+ });
+ check('104 original GLBs and 22 procedural objects retained alongside 15 verified onboard models',
+  catalogCounts.original===104&&catalogCounts.procedural===22&&catalogCounts.onboard===15&&
+  catalogCounts.total===141&&catalogCounts.visible===141);
  await page.locator('#openLibrary').click();
  check('library opens without loading FPS runtime',await page.locator('#libraryDialog').evaluate(e=>e.open));
  await page.locator('#librarySearch').fill('Liten växt');

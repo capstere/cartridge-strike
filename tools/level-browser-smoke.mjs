@@ -62,7 +62,7 @@ try{
  await page.locator('[data-tool="window"]').click();at=await page.evaluate(()=>__levelStudio.screenWorldPoint(8,5));await page.mouse.click(at.x,at.y);
  assert.equal(await page.evaluate(()=>__levelStudio.project.architecture.added.filter(e=>e.kind==='window').length),1);
  await page.locator('[data-tab="furnish"]').click();
- assert.equal(await page.locator('#catalogCards .catalog-card').count(),126);
+ assert.equal(await page.locator('#catalogCards .catalog-card').count(),141, '104 existing GLBs + 22 procedural + 15 verified onboard assets');
  assert(await page.locator('#catalogCards img').count()>90);
  await page.locator('#catalogCards [data-asset="studio:desk-120"]').click();
  at=await page.evaluate(()=>__levelStudio.screenWorldPoint(5,5));await page.mouse.click(at.x,at.y);
@@ -75,10 +75,10 @@ try{
  const beforeWalk=await walk.evaluate(()=>({x:__walk.actor.x,z:__walk.actor.z}));
  await walk.locator('#game').focus();assert(await walk.evaluate(()=>document.activeElement?.id==='game'));
  await page.keyboard.down('d');assert(await walk.evaluate(()=>__walk.keys.has('KeyD')));
- await page.waitForTimeout(500);await page.keyboard.up('d');
+ await walk.waitForFunction(before=>Math.hypot(__walk.actor.x-before.x,__walk.actor.z-before.z)>.03,beforeWalk,{timeout:30000});await page.keyboard.up('d');
  const afterWalk=await walk.evaluate(()=>({x:__walk.actor.x,z:__walk.actor.z}));
  assert.notDeepEqual(afterWalk,beforeWalk);
- await walk.locator('#exit').click();await page.locator('#plan').waitFor({state:'visible',timeout:5000});
+ await walk.locator('#exit').click();await page.locator('#plan').waitFor({state:'visible',timeout:30000});
  await page.keyboard.press('Escape');await page.locator('#undo').click();assert.equal(await page.evaluate(()=>__levelStudio.project.furniture.added.length),0);
  await page.locator('#redo').click();assert.equal(await page.evaluate(()=>__levelStudio.project.furniture.added.length),1);
  await page.locator('#duplicate').click();at=await page.evaluate(()=>__levelStudio.screenWorldPoint(6.8,6.8));await page.mouse.click(at.x,at.y);await page.keyboard.press('Escape');

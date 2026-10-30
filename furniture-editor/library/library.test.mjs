@@ -4,14 +4,14 @@ import {readFileSync} from 'node:fs';
 import {createRequire} from 'node:module';
 import {fileURLToPath} from 'node:url';
 import {dirname,resolve} from 'node:path';
-import {LIBRARY,LIBRARY_MAP,LIBRARY_SOURCE} from './catalog.mjs';
+import {LIBRARY,LIBRARY_ALL,LIBRARY_MAP,LIBRARY_SOURCE} from './catalog.mjs';
 import {crc32,makeZip,readZip} from './zip.mjs';
 import {inspectGLB,safeFilename} from './glb-utils.mjs';
 import {exportPatch,parsePatch,BASE_COMMIT} from '../core.mjs';
 const dir=dirname(fileURLToPath(import.meta.url)),root=resolve(dir,'../..');
 
 test('104 rights-audited, isolated models and supported model types',()=>{
- assert.equal(LIBRARY.length,104);assert.equal(LIBRARY_MAP.size,126);
+ assert.equal(LIBRARY.length,104);assert.equal(LIBRARY_MAP.size,LIBRARY_ALL.length);
  assert.equal(LIBRARY_SOURCE.commit,'37f5baddf99899547ae661668880809c42b450f0');
  assert.equal(LIBRARY.filter(o=>o.pack==='furniture-kit'||o.id.startsWith('kenney:')).length,72);
  for(const o of LIBRARY){

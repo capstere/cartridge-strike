@@ -40,3 +40,4 @@ jobs:
           timeout 220s xvfb-run -a node furniture-editor/build/build-browser.mjs
           timeout 360s xvfb-run -a node tools/level-browser-smoke.mjs
           timeout 420s xvfb-run -a node tools/direct-browser-smoke.mjs
+          timeout 420s xvfb-run -a node tools/onboard-library-smoke.mjs
