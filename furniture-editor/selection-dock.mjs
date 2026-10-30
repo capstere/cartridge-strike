@@ -7,9 +7,9 @@ const fieldIDs={x:'dockX',z:'dockZ',w:'dockWidth',d:'dockDepth'};
 const roundDisplay=value=>String(Math.round(Number(value)*1000)/1000);
 const $=id=>document.getElementById(id);
 
-export function installSelectionDock({getIssue,onHeight}){
+export function installSelectionDock({getIssue,onHeight,onMountMode,onWallHeight}){
  const panel=$('editDock'),reopen=$('editDockReopen'),name=$('editDockName'),message=$('editDockMessage');
- const collision=$('dockCollision'),height=$('dockHeight');
+ const collision=$('dockCollision'),height=$('dockHeight'),mount=$('dockMountMode'),wallY=$('dockWallY'),wallYRow=$('dockWallHeightRow');
  let itemId=null,collapsed=false;
 
  function showCollapsed(value){
@@ -26,6 +26,9 @@ export function installSelectionDock({getIssue,onHeight}){
    $(destination).value=roundDisplay(item[source]);
   height.value=roundDisplay(item.height);
   collision.value=item.collision==='none'?'none':'solid';
+  mount.value=item.wallMount?'wall':item.mountId?'surface':'floor';
+  wallYRow.hidden=!item.wallMount;
+  wallY.value=item.wallMount?roundDisplay(item.wallMount.y):'';
   const diagnostics=$('showPhysics').checked;
   const issue=diagnostics?getIssue(item):null;
   message.classList.toggle('issue',!!issue);
@@ -59,6 +62,19 @@ export function installSelectionDock({getIssue,onHeight}){
   onHeight(value);
  });
  collision.addEventListener('change',()=>changeNative('collisionMode',collision.value));
+ mount.addEventListener('change',()=>{
+  if(!itemId)return;
+  const ok=onMountMode?.(mount.value);
+  if(ok===false)message.textContent='Flytta objektet närmare bordet eller väggen och försök igen.';
+ });
+ wallY.addEventListener('change',()=>{
+  if(!itemId)return;
+  const value=Number(wallY.value);
+  if(!wallY.value.trim()||!Number.isFinite(value)||value<.1||value>5.9){
+   message.textContent='Välj en höjd från 0,1 till 5,9.';return;
+  }
+  onWallHeight?.(value);
+ });
  $('dockRotate').addEventListener('click',()=>$('rotate').click());
  $('dockDuplicate').addEventListener('click',()=>{
   // The player must see the scene when choosing a position for a duplicate.
