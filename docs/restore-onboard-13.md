@@ -6,9 +6,9 @@ Problemet var överföring via GitHub-anslutningen som kapade stora binärfiler 
 
 ## En körning i en arbetsmiljö med GitHub-inloggning
 
-Kör i ChatGPT Work med en dator som har autentiserad Git-åtkomst till **båda** repona. Alternativt går samma steg att köra lokalt eller i en Codespace med korrekt åtkomst.
+Kör i ChatGPT Work med en dator som har behörighet att hämta **båda** repona. Alternativt går samma steg lokalt eller i en Codespace. Om Git-kloning av privata `onboard` inte är tillgänglig kan du hämta ett fullständigt ZIP-arkiv av privata repot i en inloggad GitHub-webbläsare och packa upp det; SHA-256-verifieringen garanterar att filerna är exakt rätt.
 
-1. Klona `capstere/cartridge-strike` och privata `capstere/onboard` sida vid sida. Använd vanliga `gh repo clone` eller `git clone` (privat repo kräver autentisering). Basera återställningsgrenen på senaste `main`.
+1. Klona `capstere/cartridge-strike` och privata `capstere/onboard` sida vid sida med `gh repo clone`/`git clone`, eller packa upp privat `onboard`-arkiv i mappen `../onboard`. Basera återställningsgrenen på senaste `main`. Källan kan vara Git-checkout eller uppackad katalog, men måste innehålla de fullständiga filerna.
 2. Från mappen `cartridge-strike`, kör:
 
 ```bash
