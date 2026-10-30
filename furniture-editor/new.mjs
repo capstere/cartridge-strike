@@ -364,7 +364,7 @@ $('newBlank').onclick=()=>{if(!window.confirm('Töm hela NY BANA? Ångra med Ctr
  const before=JSON.stringify(p()),v=p();
  localStorage.removeItem(guideKey('walked'));localStorage.removeItem(guideKey('saved'));
  project=exportProject({projectId:v.projectId,name:v.name,ground:{...v.ground,floors:[]},createdAt:v.createdAt});
- selected=null;first=null;hover=null;drag=null;offset={x:0,z:0};zoom=1;view3dCenter=null;view3dZoom=1;commit(before);
+ selected=null;pendingFurniture=null;pendingTemplate=null;pendingYaw=0;first=null;hover=null;drag=null;offset={x:0,z:0};zoom=1;view3dCenter=null;view3dZoom=1;commit(before);
  status('Tom värld. Rita golv, väggar och öppningar. Kollision skapas automatiskt.');};
 $('remove').onclick=()=>{const o=lookup();if(!o)return;if(o.source&&o.polygon){status('Floor 5:s ursprungliga golv bevaras. Ändra väggar eller lägg till nya golvytor.');return;}const before=JSON.stringify(p());
  const removedIds=new Set([o.id,...(floors().includes(o)?roomBoundaryIds(o,arch(),floors().filter(f=>f.id!==o.id)):[])]);
@@ -432,7 +432,7 @@ $('save').onclick=async()=>{try{const files=new Map(),local=[];for(const id of n
 $('open').onchange=async e=>{const file=e.target.files?.[0];if(!file)return;try{let incoming,files=new Map();if(file.name.toLowerCase().endsWith('.zip'))({project:incoming,files}=await parseProjectZip(await file.arrayBuffer()));else incoming=parseProject(await file.text());
   for(const [path,bytes] of files)if(path.endsWith('.glb'))await importLocalGLB(new File([bytes],path.split('/').at(-1),{type:'model/gltf-binary'}));
   for(const asset of incoming.assets.local)if(!await getLocalFile(asset.assetId))throw Error('Egen GLB saknas. Öppna ZIP-filen i stället.');
-  if(view==='walk')leaveWalk();project=inheritFloor5Gameplay(correctOldOrangeChair(incoming));history=[];future=[];selected=null;first=null;view3dCenter=null;view3dZoom=1;zoom=1;offset={x:0,z:0};$('name').value=p().name;$('width').value=p().ground.bounds.x1-p().ground.bounds.x0;$('depth').value=p().ground.bounds.z1-p().ground.bounds.z0;
+  if(view==='walk')leaveWalk();project=inheritFloor5Gameplay(correctOldOrangeChair(incoming));history=[];future=[];selected=null;pendingFurniture=null;pendingTemplate=null;pendingYaw=0;first=null;view3dCenter=null;view3dZoom=1;zoom=1;offset={x:0,z:0};$('name').value=p().name;$('width').value=p().ground.bounds.x1-p().ground.bounds.x0;$('depth').value=p().ground.bounds.z1-p().ground.bounds.z0;
   localCatalog=await localLibrary();for(const entry of localCatalog)entry.size=(await getLocalFile(entry.id))?.size;renderCatalog();persist();redraw();queueGameLook();status('Projektet öppnat. Kontrollera spelbarhet före provspelning.');
  }catch(err){status('Kunde inte öppna: '+err.message);}e.target.value='';};
 $('preview').onclick=()=>{try{const report=validateLevel(p(),{engine:true});p().validation=report;if(!report.summary.playable)throw Error('Åtgärda '+report.summary.errors+' fel innan provspelning.');localStorage.setItem('cartridge-level-preview',JSON.stringify(p()));window.open('../fps/?level=preview','_blank','noopener');status('Privat provspelning öppnad från aktuellt projekt.');}catch(e){status(e.message);}};
@@ -485,7 +485,7 @@ window.addEventListener('message',e=>{if(e.origin!==location.origin||![ $('walkF
  if(e.data?.type==='cartridge-walk-close'&&e.source===$('walkFrame').contentWindow)leaveWalk();
  if(e.data?.type==='cartridge-walk-ready'){localStorage.setItem(guideKey('walked'),'1');updateFirstBuild();}
 });
-$('demo').onclick=async()=>{try{const response=await fetch('../levels/synthetic-demo.json');if(!response.ok)throw Error('Demobanan saknas.');const before=JSON.stringify(p());project=parseProject(await response.text());offset={x:0,z:0};zoom=1;view3dCenter=null;view3dZoom=1;$('name').value=p().name;commit(before);status('Syntetisk testbana öppnad. Den är separat från ditt sparade projekt.');}catch(e){status(e.message);}};
+$('demo').onclick=async()=>{try{const response=await fetch('../levels/synthetic-demo.json');if(!response.ok)throw Error('Demobanan saknas.');const before=JSON.stringify(p());project=parseProject(await response.text());selected=null;pendingFurniture=null;pendingTemplate=null;pendingYaw=0;first=null;offset={x:0,z:0};zoom=1;view3dCenter=null;view3dZoom=1;$('name').value=p().name;commit(before);status('Syntetisk testbana öppnad. Den är separat från ditt sparade projekt.');}catch(e){status(e.message);}};
 $('planView').onclick=()=>{if(view==='walk')leaveWalk();closeGameLook({render:false});first=null;drawGesture=null;view='plan';canvas.hidden=false;$('scene3d').hidden=true;$('planView').classList.add('active');$('threeView').classList.remove('active');redraw();};
 $('threeView').onclick=()=>{if(view==='walk')leaveWalk();if(!ensureRenderer())return;first=null;drawGesture=null;view3dCenter??=frameBuiltFloors();view='3d';canvas.hidden=true;$('scene3d').hidden=false;$('threeView').classList.add('active');$('planView').classList.remove('active');redraw();};
 $('fit').onclick=()=>{zoom=1;view3dZoom=1;view3dCenter=frameBuiltFloors();offset={x:0,z:0};redraw();};
