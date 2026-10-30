@@ -7,7 +7,7 @@ import {createFurnishings} from '../src/fps/furnishings.mjs';
 import {EDITOR_VERSION,GAME_VERSION,BASE_COMMIT,DEFAULT_ROOMS,ROOM_LABELS,
   EDITABLE_KINDS,bounds,centroid,inside,distanceSegment,catalog,normalizeAngle,
   round,validate,snapFurnitureToWall,exportPatch,parsePatch,isChanged} from './core.mjs';
-import {LIBRARY_ALL as LIBRARY,LIBRARY_MAP,LIBRARY_CATEGORIES} from './library/catalog.mjs';
+import {LIBRARY_ALL as LIBRARY,LIBRARY_MAP,LIBRARY_CATEGORIES} from './library/catalog.mjs?v=3.7.0';
 import {populateProcedural} from './library/procedural-mesh.mjs';
 import {proceduralOf,placementRole} from './library/procedural.mjs';
 import {proposeSmartPose,findSupport} from './smart-placement.mjs';

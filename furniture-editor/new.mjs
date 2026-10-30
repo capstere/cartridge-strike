@@ -12,7 +12,7 @@ import {exportProject,parseProject,parseProjectZip,exportProjectZip} from './bui
 import {validateLevel} from './build/validate-level.mjs?v=3.5.0';
 import {validate,corners,inside,segmentIntersectsRectangle,intersects} from './core.mjs';
 import {wallPieces,standardPassageSpan,standardDoorMarkerSpan,isDoor} from './build/architecture.mjs';
-import {LIBRARY_ALL} from './library/catalog.mjs?v=3.5.0';
+import {LIBRARY_ALL} from './library/catalog.mjs?v=3.7.0';
 import {upgradeLegacyOrangeChair} from './library/procedural.mjs?v=3.5.0';
 import {proposeSmartPose,duplicateFurnitureAssembly} from './smart-placement.mjs';
 import {importLocalGLB,getLocalFile,localLibrary} from './library/models.mjs';
@@ -306,21 +306,23 @@ $('firstBuildNext').onclick=()=>{switch(Number($('firstBuild').dataset.step)){
 function armFurniture(entry){pendingTemplate=null;pendingFurniture=entry;pendingYaw=0;first=null;$('catalog').value=entry.id;
  document.querySelectorAll('.catalog-card').forEach(card=>card.classList.toggle('active',card.dataset.asset===entry.id));
  status(`Klicka där ${entry.name} ska stå. Även en röd varning går att placera och flytta senare. R vrider · Esc avbryter.`);redraw();}
+const catalogWords=text=>String(text).normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLocaleLowerCase('sv').split(/\s+/).filter(Boolean);
 function renderCatalog(){const list=$('catalog'),cards=$('catalogCards'),query=$('catalogSearch').value.trim().toLocaleLowerCase('sv'),category=$('catalogCategory').value;
- list.replaceChildren();cards.replaceChildren();const entries=[...catalogEntries,...localCatalog].filter(e=>(category==='all'||e.category===category)&&(`${e.name} ${e.category}`.toLocaleLowerCase('sv').includes(query)));
+ list.replaceChildren();cards.replaceChildren();const entries=[...catalogEntries,...localCatalog].filter(e=>(category==='all'||e.category===category||(category==='onboard'&&e.pack==='onboard')||(category==='used'&&objects().some(o=>o.assetId===e.id)))&&catalogWords(query).every(word=>catalogWords(`${e.name} ${e.category} ${e.keywords||''}`).join(' ').includes(word)));
  for(const entry of entries){const opt=document.createElement('option');opt.value=entry.id;opt.textContent=entry.name+' · '+entry.category;list.append(opt);
-  const card=document.createElement('button');card.type='button';card.className='catalog-card';card.dataset.asset=entry.id;card.title=`Placera ${entry.name}`;card.setAttribute('aria-label',`Placera ${entry.name}`);
+  const card=document.createElement('button');card.type='button';card.className='catalog-card';card.dataset.asset=entry.id;card.title=`Placera ${entry.name}${entry.staticOnly?' · statiskt dekorobjekt':''}`;card.setAttribute('aria-label',`Placera ${entry.name}`);
   const image=document.createElement('span');image.className='catalog-image';if(entry.thumb){const img=document.createElement('img');img.src=entry.thumb;img.alt='';img.loading='lazy';image.append(img);}else if(entry.id==='studio:orange-kitchen-chair')image.innerHTML='<svg viewBox="0 0 100 80" aria-hidden="true"><path fill="#aab6bd" d="M22 47h5v27h-5zm48 0h5v27h-5zM35 49h5v27h-5zm47-7h5v28h-5z"/><path fill="#df753c" d="M22 10h49v32H22zM17 42h60l10 10H27z"/></svg>';else image.textContent=entry.category==='egna'?'3D':entry.category==='bord'?'▤':'▣';
   if(entry.featured){const badge=document.createElement('span');badge.className='catalog-color-badge';badge.textContent='ORANGE';image.append(badge);}
-  const name=document.createElement('strong');name.textContent=entry.name;const size=document.createElement('small');size.textContent=`${entry.width} × ${entry.depth} · ${entry.category}`;
+  const name=document.createElement('strong');name.textContent=entry.name;const size=document.createElement('small');size.textContent=`${entry.width} × ${entry.depth} × ${entry.height} · ${entry.category}${entry.staticOnly?' · dekor':''}`;
   card.append(image,name,size);card.onclick=()=>armFurniture(entry);card.classList.toggle('active',pendingFurniture?.id===entry.id);cards.append(card);
- }if(list.options.length&&!entries.some(e=>e.id===list.value))list.selectedIndex=0;$('catalogCount').textContent=`${entries.length} objekt`;
+ }if(list.options.length&&!entries.some(e=>e.id===list.value))list.selectedIndex=0;$('catalogCount').textContent=entries.length?`${entries.length} objekt · bredd × djup × höjd i modellenheter`:'Inga träffar. Prova färre sökord eller Alla kategorier.';
 }
 $('posterText').onchange=()=>{const o=lookup();if(!p().architecture.posters?.includes(o))return;const before=JSON.stringify(p());o.text=$('posterText').value.slice(0,140);commit(before);};
 $('selectedSurface').onchange=()=>{const o=lookup();if(!o||o.source)return;const before=JSON.stringify(p());o.surface=$('selectedSurface').value;commit(before);};$('selectedSill').onchange=()=>{const o=lookup();if(!o||o.kind!=='window')return;const value=Number($('selectedSill').value);if(!Number.isFinite(value)||value<0||value>o.height-.15)return;const before=JSON.stringify(p());o.sill=value;commit(before);};
 $('cutaway').onchange=redraw;$('showPhysics').onchange=redraw;$('selectedLabel').onchange=()=>{const o=lookup();if(!o||o.source)return;const before=JSON.stringify(p());o.name=$('selectedLabel').value.slice(0,60);commit(before);};
 $('catalogSearch').oninput=renderCatalog;
 $('catalogCategory').onchange=renderCatalog;
+$('resetCatalog').onclick=()=>{$('catalogSearch').value='';$('catalogCategory').value='all';renderCatalog();$('catalogSearch').focus();};
 function setBuildTool(tool){$('tool').value=tool;first=null;drawGesture=null;pendingFurniture=null;pendingTemplate=null;for(const b of document.querySelectorAll('[data-tool]'))b.classList.toggle('active',b.dataset.tool===tool);renderCatalog();redraw();}
 for(const button of document.querySelectorAll('[data-tool]'))button.onclick=()=>{const tool=$('tool').value===button.dataset.tool&&button.dataset.tool!=='select'?'select':button.dataset.tool;setBuildTool(tool);status(tool==='select'?'Välj en byggdel eller möbel. Delete tar bort den markerade delen.':button.title+' · Esc avslutar verktyget.');};
 for(const button of document.querySelectorAll('[data-tool="door"],[data-tool="window"],[data-tool="glazed"],[data-tool="opening"]')){
