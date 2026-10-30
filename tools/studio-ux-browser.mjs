@@ -47,12 +47,13 @@ try{
  assert((await phone.locator('.tool-panel [data-tab="furnish"]').getAttribute('class')).includes('active'));
  await phone.locator('#catalogSearch').fill('vortex');
  await phone.locator('#catalogCards .catalog-card').first().click();
- assert(await phone.locator('#toolsPanel').isHidden(),'Placing a model closes drawer for canvas work');
+ assert.equal(await phone.locator('body').getAttribute('data-studio-sheet'),'none','Model selection closes the tool drawer');
+ await phone.locator('#toolsPanel').waitFor({state:'hidden',timeout:5000});
  await phone.locator('#mobileSave').click();
  assert(await phone.locator('#savePanel').isVisible(),'Save and gameplay checks one tap away');
  assert(await phone.locator('#save').isVisible());
  await phone.locator('#closeSave').click();
- assert(await phone.locator('#savePanel').isHidden());
+ await phone.locator('#savePanel').waitFor({state:'hidden',timeout:5000});
  await phone.close();
 
  const character=await mobile.newPage();track(character);
