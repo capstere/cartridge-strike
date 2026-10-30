@@ -12,7 +12,7 @@ test('wall mirror sits against the wall, centered at eye height and faces outwar
  assert(near(p.x,4-(.11/2+.12/2+.012)));
  assert(near(p.z,4));
  assert(near(p.elevation+fixture.height/2,1.55));
- assert(near(p.yaw,-Math.PI/2));
+ assert(near(p.yaw,Math.PI/2));
  assert.equal(p.wallMount.wallId,wall.id);
  assert.equal(p.collision,'none','A wall mirror must not create an invisible player obstacle');
  assert.equal(p.mountId,null);
