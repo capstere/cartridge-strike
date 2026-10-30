@@ -17,6 +17,7 @@ import {upgradeLegacyOrangeChair} from './library/procedural.mjs?v=3.5.0';
 import {proposeSmartPose,duplicateFurnitureAssembly} from './smart-placement.mjs';
 import {importLocalGLB,getLocalFile,localLibrary} from './library/models.mjs';
 import {assetHash} from './library/glb-utils.mjs';
+import {installSelectionDock} from './selection-dock.mjs';
 
 const $=id=>document.getElementById(id),canvas=$('plan'),ctx=canvas.getContext('2d');
 const catalogEntries=LIBRARY_ALL;
@@ -143,11 +144,25 @@ function placeMarker(kind,x,z){if(!floorAt(x,z))throw Error('Placera spelpunkter
 const decorations=()=>[...(p().architecture.posters||[]),...(p().architecture.treatments||[])];
 function decorationAt(d){if(d.type){const at=treatmentPosition(d,arch());return at?{x:at.center[0],z:at.center[1]}:null;}return locatePoster(d,arch());}
 function lookup(){return [...decorations(),...floors(),...arch(),...objects(),...markers()].find(o=>o.id===selected);}
+const selectionDock=installSelectionDock({
+ getIssue:placementIssue,
+ onHeight:value=>{
+  const item=lookup();
+  if(!item||!objects().includes(item)||!Number.isFinite(value)||value<.1||value>8)return;
+  const before=JSON.stringify(p()),delta=value-item.height;
+  item.height=value;
+  // A countertop-mounted accessory stays on top when its supporting table changes height.
+  for(const child of objects().filter(child=>child.mountId===item.id&&Number.isFinite(child.elevation)))
+   child.elevation=Math.max(0,Math.round((child.elevation+delta)*1000)/1000);
+  placementStatus(item);commit(before);
+ }
+});
 function updateProps(){const o=lookup();$('selection').hidden=!o;$('posterText').disabled=!o||!p().architecture.posters?.includes(o);$('posterText').value=o?.text||'';$('selectedLabel').disabled=!o||!floors().some(f=>f.id===o.id)||!!o.source;$('selectedLabel').value=o?.name||'';$('selectedSurface').disabled=!o||!floors().includes(o)||!!o.source;$('selectedSurface').value=o?.surface||'carpet';$('selectedSill').disabled=!o||o.kind!=='window';$('selectedSill').value=o?.sill??.9;$('collisionSetting').hidden=!o||!objects().includes(o);$('collisionMode').value=o?.collision||'solid';$('selectionName').textContent=o?`${o.name||o.assetName||o.text||o.type||o.team||o.kind||o.role}`:'Ingenting';
  $('x').value=o?(o.x??o.x0??o.a?.[0]??''):'';$('z').value=o?(o.z??o.z0??o.a?.[1]??''):'';
  $('w').value=o?(o.w??(o.x1!==undefined?o.x1-o.x0:o.b?Math.hypot(o.b[0]-o.a[0],o.b[1]-o.a[1]):'')):'';
  $('d').value=o?(o.d??(o.z1!==undefined?o.z1-o.z0:'')):'';
  for(const id of ['x','z','w','d','remove','rotate','duplicate'])$(id).disabled=!o;
+ selectionDock.sync(o,{isFurniture:!!o&&objects().includes(o)});
 }
 function rotateWithChildren(o,delta){const c=Math.cos(delta),s=Math.sin(delta);for(const child of objects().filter(v=>v.mountId===o.id)){const dx=child.x-o.x,dz=child.z-o.z;child.x=o.x+c*dx+s*dz;child.z=o.z-s*dx+c*dz;child.yaw+=delta;}o.yaw=((o.yaw+delta+Math.PI)%(2*Math.PI)+2*Math.PI)%(2*Math.PI)-Math.PI;if(objects().includes(o))placementStatus(o);return true;}
 function moveObject(o,x,z){if(arch().includes(o)){
