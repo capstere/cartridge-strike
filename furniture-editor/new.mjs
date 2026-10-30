@@ -1,6 +1,6 @@
 import {makePoster,locatePoster} from './build/posters.mjs';
 import {createCurtain,createBlind,treatmentPosition} from './build/treatments.mjs';
-import {buildProjectFurniture,buildProjectDecorations} from './build/project-visuals.mjs?v=3.5.0';
+import {buildProjectFurniture,buildProjectDecorations} from './build/project-visuals.mjs?v=4.4.0';
 import {resolveProjectScene,writeProjectScene,floor5Baseline,projectWallPieces} from './build/project-scene.mjs';
 import {inheritFloor5Gameplay} from '../src/fps/world.mjs?v=3.5.0';
 import {wallAtPoint,planPaintOverWall} from './build/paint-over-wall.mjs';
@@ -8,18 +8,18 @@ import {planResizeFloor,planResizeFloorEdge,planSlideInsert,planMoveWallEnd,room
 import {parsePosters} from './build/posters.mjs';
 import {parseTreatments} from './build/treatments.mjs';
 import * as T from '../vendor/three/three.module.js';
-import {exportProject,parseProject,parseProjectZip,exportProjectZip} from './build/level-project.mjs?v=3.6.0';
-import {validateLevel} from './build/validate-level.mjs?v=3.5.0';
+import {exportProject,parseProject,parseProjectZip,exportProjectZip} from './build/level-project.mjs?v=4.4.0';
+import {validateLevel} from './build/validate-level.mjs?v=4.4.0';
 import {validate,corners,inside,segmentIntersectsRectangle,intersects} from './core.mjs';
 import {wallPieces,standardPassageSpan,standardDoorMarkerSpan,isDoor} from './build/architecture.mjs';
-import {LIBRARY_ALL} from './library/catalog.mjs?v=3.7.0';
-import {upgradeLegacyOrangeChair} from './library/procedural.mjs?v=3.5.0';
-import {proposeSmartPose,duplicateFurnitureAssembly} from './smart-placement.mjs';
-import {poseOnWall,syncWallMounts} from './wall-mounts.mjs';
+import {LIBRARY_ALL} from './library/catalog.mjs?v=4.4.0';
+import {upgradeLegacyOrangeChair} from './library/procedural.mjs?v=4.4.0';
+import {proposeSmartPose,duplicateFurnitureAssembly} from './smart-placement.mjs?v=4.4.0';
+import {poseOnWall,syncWallMounts} from './wall-mounts.mjs?v=4.4.0';
 import {findNearbyFreePlacement} from './soft-placement.mjs';
 import {importLocalGLB,getLocalFile,localLibrary} from './library/models.mjs';
 import {assetHash} from './library/glb-utils.mjs';
-import {installSelectionDock} from './selection-dock.mjs';
+import {installSelectionDock} from './selection-dock.mjs?v=4.4.0';
 import {planAdjacentRoom,ADJACENT_SIDES} from './adjacent-room.mjs';
 
 const $=id=>document.getElementById(id),canvas=$('plan'),ctx=canvas.getContext('2d');
