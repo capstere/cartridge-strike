@@ -5,10 +5,10 @@ import {assetHash} from '../library/glb-utils.mjs';
 import {makeZip,readZip,PROJECT_ZIP_MAX_BYTES} from '../library/zip.mjs';
 import {floor5Baseline} from './project-scene.mjs';
 import {parseArchitecture} from './architecture.mjs';
-import {LIBRARY_MAP} from '../library/catalog.mjs?v=3.7.0';
+import {LIBRARY_MAP} from '../library/catalog.mjs?v=4.4.0';
 import {parsePosters} from './posters.mjs';
 import {parseTreatments} from './treatments.mjs';
-import {collisionExport,aiAgentBrief} from './ai-export.mjs?v=3.3.1';
+import {collisionExport,aiAgentBrief} from './ai-export.mjs?v=4.4.0';
 import {validWallMount} from '../wall-mounts.mjs';
 
 export const LEVEL_FORMAT='cartridge-strike-level-project',LEVEL_SCHEMA=2;
