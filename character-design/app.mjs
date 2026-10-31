@@ -334,7 +334,7 @@ async function writeZip(){
   {name:'AI_INSTRUCTIONS.md',data:aiBrief(project,workbench.getClips(),workbench.getBones())},
   {name:'ANIMATION_CONTRACT.json',data:JSON.stringify(animationContract(project,workbench.getClips(),workbench.getBones()),null,2)},
   {name:'DESIGN_SHEET.png',data:new Uint8Array(await sheet.arrayBuffer())},
-  {name:'README.txt',data:'CARTRIDGE STRIKE CREATIVE DESIGN HANDOFF\n\nThis package is a 3D design brief, not an installed FPS character.\nPROJECT.json is editable source data. AI_INSTRUCTIONS.md explains final deliverables.\nFor characters BASE_RIG.glb is the unmodified original animated game skeleton.\nSTATIC_PROTOTYPE.glb is a STATIC mesh of your authored shapes; connect the shapes to the original bones in the final skinned model.\nFiles are for local AI collaboration only; nothing was uploaded by this studio.\n'}
+  {name:'README.txt',data:'CARTRIDGE STRIKE CHARACTER STUDIO 6.0 / BLENDER + SPEL HANDOFF\n\nSPEL_SOURCE.glb and PREVIEW.glb contain identical visible design prototypes.\nFor characters, read BLENDER_SPEL_GUIDE.md and SPEL_BRIDGE.json before import.\nBASE_RIG.glb is the unmodified original animated game skeleton.\nPROJECT.json stores editable controls and assets; AI_INSTRUCTIONS.md lists finishing requirements.\nSTATIC_PROTOTYPE.glb is a STATIC mesh of authored parts, not an animation-ready costume.\nThis handoff is NOT approved as FPS/game-ready or guaranteed SPEL Procreate-compatible.\nAll changes are local; the game runtime was not modified.\n'}
  ];
  if(project.kind==='character'){
   const url=new URL('../assets/fps/models/'+project.base.original_glb,import.meta.url);
@@ -492,8 +492,8 @@ function installEvents(){
  $('part-name').addEventListener('input',e=>{
   const p=selected();if(!p)return;p.name=e.target.value.slice(0,80);partEdited(false);
  });
- $('part-shape').addEventListener('change',e=>{const p=selected();if(!p)return;p.shape=e.target.value;delete p.preset;delete p.fitVersion;partEdited();});
- $('part-anchor').addEventListener('change',e=>{const p=selected();if(!p)return;p.anchor=e.target.value;partEdited();});
+ $('part-shape').addEventListener('change',e=>{const p=selected();if(!p)return;p.shape=e.target.value;delete p.preset;delete p.fitVersion;if(p.shape!=='glb')delete p.hairReplacement;partEdited();});
+ $('part-anchor').addEventListener('change',e=>{const p=selected();if(!p)return;p.anchor=e.target.value;if(p.hairReplacement&&p.anchor!=='Head'){delete p.hairReplacement;status('Nu är modellen ett vanligt tillbehör; originalhåret visas igen.');}partEdited();});
  $('part-color').addEventListener('input',e=>{const p=selected();if(!p)return;p.color=e.target.value;visualChange({rebuild:true,save:false});persist();});
  $('part-note').addEventListener('input',e=>{const p=selected();if(!p)return;p.note=e.target.value.slice(0,1000);persist();});
  for(const id of ['pos-x','pos-y','pos-z','size-x','size-y','size-z','rot-x','rot-y','rot-z'])$(id).addEventListener('input',e=>{
