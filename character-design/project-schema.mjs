@@ -1,4 +1,5 @@
 import {makeCreative,validateCreative,creativeBrief} from './creative-schema.mjs?v=53';
+import {bodyRegions} from './body-proportions.mjs';
 /** Portable, deterministic v2 concept format. No browser or 3D dependencies. */
 export const FORMAT='cartridge-strike-character-project';
 export const VERSION=2;
@@ -34,7 +35,7 @@ export function newProject({kind='character',newCharacter=false,gender='male',te
     intent:newCharacter?'create':'revise',
     base:{gender:gender==='female'?'female':'male',team:['analysts','counterAnalysts','hostage'].includes(team)?team:'analysts',template:PALETTES[template]?template:'analysts',
       original_glb:'quaternius-operator-'+(gender==='female'?'female':'male')+'.glb'},
-    palette:{...theme},body:{height:100,width:100},pose:'Idle_Loop',view_flip:false,
+    palette:{...theme},body:{height:100,width:100,shoulders:100,chest:100,arms:100,waist:100},pose:'Idle_Loop',view_flip:false,
     parts:[],creative:makeCreative(),notes:{face:'',clothes:'',shoes:'',gear:'',general:''},
     // Reference files are opt-in local attachments; bytes live outside this portable JSON.
     references:[]
@@ -82,6 +83,7 @@ export function validateProject(data){
   if(!['male','female'].includes(b.gender)||!['analysts','counterAnalysts','hostage'].includes(b.team)||!PALETTES[b.template]||b.original_glb!=='quaternius-operator-'+b.gender+'.glb')throw Error('Okänd grundmodell.');
   if(!data.palette||Object.keys(PALETTES.analysts).some(key=>!cssColor(data.palette[key])))throw Error('Ogiltiga klädfärger.');
   if(!data.body||!finite(data.body.height,80,120)||!finite(data.body.width,80,120))throw Error('Kroppsreglagen är utanför tillåtet område.');
+  bodyRegions(data.body); // Missing regional fields in older projects mean neutral (100%).
   if((typeof data.pose!=='string'||data.pose.length>64||!(/^[A-Za-z][A-Za-z0-9_]{0,63}$/.test(data.pose)))||data.view_flip!==undefined&&typeof data.view_flip!=='boolean')throw Error('Okänd pose eller vyinställning.');
   if(!Array.isArray(data.parts)||data.parts.length>60||new Set(data.parts.map(p=>p.id)).size!==data.parts.length)throw Error('För många eller duplicerade delar.');
   for(const p of data.parts){
@@ -99,6 +101,7 @@ export function validateProject(data){
   if(data.parts.some(p=>p.followsFace!==undefined&&typeof p.followsFace!=='boolean'))throw Error('Ogiltig passformsinställning.');
   if(data.parts.some(p=>p.preset!==undefined&&!Object.hasOwn(PRESETS,p.preset)||p.fitVersion!==undefined&&![0,1].includes(p.fitVersion)))throw Error('Okänt tillbehör.');
   if(data.parts.some(p=>p.mirrored!==undefined&&typeof p.mirrored!=='boolean'))throw Error('Ogiltig spegling.');
+  if(data.parts.some(p=>p.hairReplacement!==undefined&&(typeof p.hairReplacement!=='boolean'||p.hairReplacement&&(p.shape!=='glb'||p.anchor!=='Head'))))throw Error('Ersättningshår behöver vara en GLB fäst vid Head.');
   if(data.artwork?.portraitFraming!==undefined&&!['legacy-headbone-v4','anatomical-v5'].includes(data.artwork.portraitFraming))throw Error('Okänd porträttinramning.');
   if(data.creative!==undefined)validateCreative(data.creative);
   if(!data.notes||Object.keys(newProject().notes).some(k=>typeof data.notes[k]!=='string'||data.notes[k].length>3000))throw Error('Ogiltiga designanteckningar.');
@@ -117,6 +120,7 @@ export function animationContract(project,availableClips=[],availableBones=[]){
     canonical_axes:{units:'meters',up:'+Y',front:'+Z',game_holder_rotation_y:'PI (the game turns actors to face -Z)'},
     reference_height_m:character?1.69:null,
     dimensions_multiplier:character?{height:project.body.height/100,width:project.body.width/100}:null,
+    regional_body_shape_percent:character?bodyRegions(project.body):null,
     required_animation_clips:character?[...REQUIRED_CLIPS]:[],
     observed_animation_clips:character?[...availableClips]:[],
     observed_bone_names:character?[...availableBones]:[],
@@ -156,7 +160,7 @@ export function aiBrief(project,availableClips=[],availableBones=[]){
     'PROJECT.json is the canonical editable specification; ANIMATION_CONTRACT.json is the compatibility checklist.',
     '',
     '## Appearance',
-    ...(project.kind==='character'?['Body height: '+project.body.height+'% of original. Body width: '+project.body.width+'% of original.',...Object.entries(project.palette).map(([k,v])=>'Material '+k+': '+v)]:[]),
+    ...(project.kind==='character'?['Body height: '+project.body.height+'% of original. Body width: '+project.body.width+'% of original.', 'Regional bind-space torso/arm shape: '+JSON.stringify(bodyRegions(project.body))+'. Preserve mesh edits and source skin weights; test the skeleton and fit in every animation.', ...Object.entries(project.palette).map(([k,v])=>'Material '+k+': '+v)]:[]),
     ...Object.entries(project.notes).map(([k,v])=>k+': '+(v||'[unchanged / unspecified]')),
     ...(project.kind==='character'?creativeBrief(project.creative):[]),
     '',
