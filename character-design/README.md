@@ -1,6 +1,29 @@
-# Character Design Studio 5.3
+# Character Design Studio 6.0 – kropp & Blender/SPEL-överlämning
 
-Open [the studio](https://capstere.github.io/cartridge-strike/character-design/). The game and its existing characters are unchanged.
+Open [the studio](https://capstere.github.io/cartridge-strike/character-design/). The original game and its existing characters are unchanged.
+
+## 6.0 – what is actually implemented
+
+- **Real but conservative bind-space body edits:** Under **Färger & kropp → Forma kroppen**, adjust shoulder width (78–112%), chest (78–120%), upper arms (70–120%) and waist (78–120%). Unlike the old height/whole-width sliders these move vertices on the existing skinned torso/sleeve/trouser meshes while retaining bone weights, indices, UV and all 13 original motion clips. Original textures and source GLBs are untouched. Changes are smooth and bounded but not automatic muscular anatomy, joint-retargeting or certified clipping-free tailoring. Old saved projects without these fields load with neutral values of 100%.
+- **Your own hairstyle as GLB:** Under **Ansikte & hår**, choose **Välj eget hår som 3D-modell (.glb)**. It is added as a head-bone-attached reference, the original hairstyle is hidden and the mesh can be adjusted under **3D-delar**. GLB hair follows the head rigidly, not as physics strands or arbitrary new rigged hair; its source is embedded in the project ZIP. Changing its attachment away from Head turns it back into a regular accessory and restores the original hair.
+- **Separate weighted hoodie shell:** Choosing **Hoodie** now creates a distinct, skinned outer mesh cloned from the upper-garment geometry, with preserved skin indices/weights and a small outward offset. The jacket still has its existing weighted collar/zipper. The hoodie is a close-fitting *3D garment prototype*, not independently tailored cloth, self-colliding fabric or production-quality pattern geometry. Inspect fit at elbows, shoulders and all actions.
+- **Blender / SPEL pack:** **Hämta Blender/SPEL-paket (.zip)** includes the unchanged original `BASE_RIG.glb`, the rendered character design as `PREVIEW.glb`, a byte-identical easy-to-find `SPEL_SOURCE.glb`, `PROJECT.json`, `SPEL_BRIDGE.json`, `BLENDER_SPEL_GUIDE.md` and existing materials/AI/reference files. The manifest contains byte lengths and SHA-256 for each. The custom body shape and imported hair are described explicitly.
+
+### Simple Blender / SPEL workflow
+
+1. Build a character design, reduce shoulders/chest/arms, select a hairstyle or import your GLB hair, and preview Walk/Crouch/Reload.
+2. Click **Hämta Blender/SPEL-paket (.zip)** and unpack it.
+3. In Blender 4.5 LTS, import `SPEL_SOURCE.glb` via File → Import → glTF 2.0; alternatively use SPEL Asset Factory → Importera GLB. Play and inspect its original animation clips.
+4. Save it as a new `.blend` if you want to continue hand-modelling. To use Procreate, check **SPEL Character Paint compatibility** on the new model first; the preview may fail SPEL 0.8's compatibility checks (notably head-attached GLB accessories, material complexity or other additional skinned geometry). No automatic Procreate roundtrip is asserted for this custom model. If supported, **prepare a NEW Procreate export receipt**, paint, and re-import onto the same source working copy.
+5. Keep `BASE_RIG.glb` as fallback and do not overwrite original/game files. The handoff package is not automatically installed into the FPS game; runtime outfits/boots/vest are currently generated separately in `src/fps/character-library.mjs`.
+
+**Verification:** Node unit tests check slider bounds, geometry change, backward-compatible defaults, custom hair validation and Blender/SPEL metadata. The existing 13-animation browser regression additionally checks body sliders, saved projects, ZIP SHA integrity and exported `PREVIEW.glb`; consult CI for actual execution. No Blender/SPEL runtime roundtrip or physical iPad test is claimed here.
+
+---
+
+## 5.3 – previous coherent studio foundation
+
+
 
 ## 5.3: a coherent studio foundation
 
@@ -45,6 +68,9 @@ Mouse: drag to orbit, wheel/buttons to zoom, **Flytta vyn** or Shift-drag to pan
 |---|---|
 | `PROJECT.json` | Canonical editable design, parts, dimensions, notes, print transform, annotations and embedded assets |
 | `PREVIEW.glb` | Complete visible design prototype, original skeleton and all original animation clips; custom geometry/materials and rigid attachments |
+| `SPEL_SOURCE.glb` | Byte-identical PREVIEW.glb ready to import into Blender or SPEL; compatibility still must be checked |
+| `SPEL_BRIDGE.json` | Structured handoff with body deformation settings, available clips/bones and verification limits |
+| `BLENDER_SPEL_GUIDE.md` | Step-by-step import and verification instructions for Blender 4.5 and SPEL |
 | `BASE_RIG.glb` | Byte-for-byte unmodified original character GLB |
 | `STATIC_PROTOTYPE.glb` | Optional authored accessory/primitive parts and imports; static snapshot without host animation |
 | `DESIGN_SHEET.png` | Four full-body orthographic views with annotations, independent of the viewport's detail zoom |

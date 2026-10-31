@@ -37,3 +37,21 @@ test('AI handoff encodes all exact changes and existing required motion clips',(
  assert.equal(contract.reference_height_m,1.69);
  assert.ok(contract.observed_bone_names.includes('Head'));
 });
+
+test('version 6 body profiles preserve old saved files and reject unsupported extremes',()=>{
+ const p=newProject();
+ assert.deepEqual([p.body.shoulders,p.body.chest,p.body.arms,p.body.waist],[100,100,100,100]);
+ p.body={height:100,width:100};assert.equal(validateProject(p),p);
+ p.body.shoulders=82;p.body.arms=75;
+ assert.equal(animationContract(p).regional_body_shape_percent.shoulders,82);
+ assert.match(aiBrief(p),/Regional bind-space torso\/arm shape/);
+ p.body.chest=250;assert.throws(()=>validateProject(p),/Ogiltigt kroppsreglage/);
+});
+test('custom GLB hairstyle must remain attached to the Head',()=>{
+ const p=newProject(),hair=addPart(p,'box');
+ hair.shape='glb';hair.asset='hair.glb';hair.anchor='Head';hair.hairReplacement=true;
+ p.references.push({name:'hair.glb',type:'glb',bytes:3});p.embeddedReferences={'hair.glb':'AAAA'};
+ assert.equal(validateProject(p),p);
+ hair.anchor='spine_03';assert.throws(()=>validateProject(p),/Ersättningshår/);
+ hair.anchor='Head';hair.shape='sphere';assert.throws(()=>validateProject(p),/Ersättningshår/);
+});

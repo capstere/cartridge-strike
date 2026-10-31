@@ -1,8 +1,9 @@
 /** Easy UI for revising the FPS skeleton, authoring character props and independent 3D objects. */
 import {saveProject,loadProject,listProjects,bytesToData,dataToBytes} from './project-store.mjs?v=53';
 import {installStudioControls} from './studio-controls.mjs?v=53';
-import {DesignWorkbench} from './workbench.mjs?v=53';
-import {newProject,validateProject,PALETTES,PRESETS,SHAPES,addPart,clonePart,mirrorPart,aiBrief,animationContract,filename} from './project-schema.mjs?v=53';
+import {DesignWorkbench} from './workbench.mjs?v=60';
+import {newProject,validateProject,PALETTES,PRESETS,SHAPES,addPart,clonePart,mirrorPart,aiBrief,animationContract,filename} from './project-schema.mjs?v=60';
+import {makeSpelBridge,makeSpelGuide} from './spel-bridge.mjs';
 import {packZip} from './zip-export.mjs?v=53';
 import {inspectGLB} from '../furniture-editor/library/glb-utils.mjs';
 import {installCreativeControls} from './creative-controls.mjs?v=53';
@@ -61,7 +62,7 @@ function download(data,name,type='application/octet-stream'){
  document.body.appendChild(link);link.click();link.remove();
  setTimeout(()=>URL.revokeObjectURL(url),2000);
 }
-function projectSnapshot(){workbench.sculpt.store(project);return {...project,studioVersion:'5.3',artwork:ready?{...captureArtwork(),faceViews:creativeControls?.captureFaces()||{},portraitFraming:project.artwork?.portraitFraming||'anatomical-v5'}:project.artwork};}
+function projectSnapshot(){workbench.sculpt.store(project);return {...project,studioVersion:'6.0',artwork:ready?{...captureArtwork(),faceViews:creativeControls?.captureFaces()||{},portraitFraming:project.artwork?.portraitFraming||'anatomical-v5'}:project.artwork};}
 function refreshPrompt(){
  try{$('ai-prompt').textContent=aiBrief(project,workbench.getClips(),workbench.getBones());}
  catch(e){status('Fel i projektet: '+e.message,true);}
@@ -196,7 +197,7 @@ function updateModeVisual(){
  if(project.kind==='object'&&PRESETS[$('part-type').value])$('part-type').value='box';
  $('mode-label').textContent=project.kind==='object'?'Eget 3D-objekt':project.intent==='create'?'Ny karaktär':'Befintlig karaktär';
  $('rig-hint').textContent=project.kind==='object'?'Bygg ett eget objekt av enkla former. Exportera delarna som riktig statisk 3D-prototyp.':'Grundfiguren använder spelets verkliga skeleton, animationer och handfästen. Dina tillagda 3D-delar kan följa ett ben.';
- $('export-help').textContent=project.kind==='object'?'Prototyp-GLB är ett redigerbart statiskt 3D-utkast. AI:n färdigställer material, geometri och eventuella animationer.':'ZIP innehåller spelets orörda originalrigg med animationer. Formerna i prototyp-GLB är statiska och AI:n måste knyta dem till riggen och kontrollera spelets rörelser.';
+ $('export-help').textContent=project.kind==='object'?'ZIP innehåller SPEL_SOURCE.glb för Blender och en statisk prototyp. Kontrollera geometri, material och skala innan spelintegration.':'ZIP innehåller din riggade SPEL_SOURCE.glb, BASE_RIG.glb, material och en steg-för-steg-guide för Blender. SPEL måste godkänna Procreate-kompatibiliteten separat.';
  $('save-glb').disabled=!project.parts.some(p=>p.visible);
 }
 function refreshUI(){
@@ -208,6 +209,7 @@ function refreshUI(){
  for(const input of document.querySelectorAll('[data-color]'))input.value=project.palette[input.dataset.color];
  $('height').value=project.body.height;$('height-value').textContent=project.body.height+' %';
  $('width').value=project.body.width;$('width-value').textContent=project.body.width+' %';
+ for(const key of ['shoulders','chest','arms','waist']){const val=project.body[key]??100;$(key).value=val;$(key+'-value').textContent=val+' %';}
  for(const input of document.querySelectorAll('[data-note]'))input.value=project.notes[input.dataset.note];
  $('play').textContent='▶ Spela rörelsen';$('play').setAttribute('aria-pressed','false');
  selectedPart=project.parts.at(-1)?.id||null;
@@ -332,7 +334,7 @@ async function writeZip(){
   {name:'AI_INSTRUCTIONS.md',data:aiBrief(project,workbench.getClips(),workbench.getBones())},
   {name:'ANIMATION_CONTRACT.json',data:JSON.stringify(animationContract(project,workbench.getClips(),workbench.getBones()),null,2)},
   {name:'DESIGN_SHEET.png',data:new Uint8Array(await sheet.arrayBuffer())},
-  {name:'README.txt',data:'CARTRIDGE STRIKE CREATIVE DESIGN HANDOFF\n\nThis package is a 3D design brief, not an installed FPS character.\nPROJECT.json is editable source data. AI_INSTRUCTIONS.md explains final deliverables.\nFor characters BASE_RIG.glb is the unmodified original animated game skeleton.\nSTATIC_PROTOTYPE.glb is a STATIC mesh of your authored shapes; connect the shapes to the original bones in the final skinned model.\nFiles are for local AI collaboration only; nothing was uploaded by this studio.\n'}
+  {name:'README.txt',data:'CARTRIDGE STRIKE CHARACTER STUDIO 6.0 / BLENDER + SPEL HANDOFF\n\nSPEL_SOURCE.glb and PREVIEW.glb contain identical visible design prototypes.\nFor characters, read BLENDER_SPEL_GUIDE.md and SPEL_BRIDGE.json before import.\nBASE_RIG.glb is the unmodified original animated game skeleton.\nPROJECT.json stores editable controls and assets; AI_INSTRUCTIONS.md lists finishing requirements.\nSTATIC_PROTOTYPE.glb is a STATIC mesh of authored parts, not an animation-ready costume.\nThis handoff is NOT approved as FPS/game-ready or guaranteed SPEL Procreate-compatible.\nAll changes are local; the game runtime was not modified.\n'}
  ];
  if(project.kind==='character'){
   const url=new URL('../assets/fps/models/'+project.base.original_glb,import.meta.url);
@@ -348,14 +350,22 @@ async function writeZip(){
  if(workbench.getPartInstances().length)files.push({name:'STATIC_PROTOTYPE.glb',data:new Uint8Array(await workbench.exportParts())});
  if(workbench.cloth.mesh){files.push({name:'CLOTH_SIMULATION.json',data:JSON.stringify(workbench.cloth.handoff())});const solver=await fetch(new URL('./cloth-solver.mjs?v=53',import.meta.url));if(!solver.ok)throw Error('Tygsimuleringens källkod saknas.');files.push({name:'CLOTH_SOLVER.mjs',data:await solver.text()});}
  if(project.creative?.realism?.head==='scan'){for(const name of ['LeePerrySmith.glb','Map-COL.jpg','Infinite-Level_02_Tangent_SmoothUV.jpg','LeePerrySmith_License.txt']){const response=await fetch(new URL('./assets/scan/'+name,import.meta.url));if(!response.ok)throw Error('Skanningens originalfil saknas: '+name);files.push({name:'SCAN_SOURCE_'+name,data:new Uint8Array(await response.arrayBuffer())});}}
- files.push({name:'PREVIEW.glb',data:new Uint8Array(await workbench.exportPreview())});
+ const preview=new Uint8Array(await workbench.exportPreview());
+ files.push({name:'PREVIEW.glb',data:preview});
+ // An unchanged byte-for-byte alias makes the import target discoverable.
+ // Neither PREVIEW nor SPEL_SOURCE is claimed to be game- or paint-verified.
+ files.push({name:'SPEL_SOURCE.glb',data:preview});
+ if(project.kind==='character'){
+  files.push({name:'SPEL_BRIDGE.json',data:JSON.stringify(makeSpelBridge(project,workbench.getClips(),workbench.getBones()),null,2)});
+  files.push({name:'BLENDER_SPEL_GUIDE.md',data:makeSpelGuide(project)});
+ }
  if(project.kind==='character'&&creativeControls)files.push(...await creativeControls.exportEntries());
  for(let i=0;i<project.references.length;i++){
   const ref=project.references[i],bytes=attachments.get(ref.name);
   if(!bytes)throw Error('Referensfil saknas: '+ref.name+'. Lägg till den igen innan export.');
   files.push({name:'REFERENCE_'+String(i+1).padStart(2,'0')+'.'+ref.type,data:bytes});
  }
- const manifest={studioVersion:'5.2',prototypeOnly:true,project:project.name,references:project.references.map((r,i)=>({originalName:r.name,file:'REFERENCE_'+String(i+1).padStart(2,'0')+'.'+r.type})),files:[]};
+ const manifest={studioVersion:'6.0',prototypeOnly:true,project:project.name,references:project.references.map((r,i)=>({originalName:r.name,file:'REFERENCE_'+String(i+1).padStart(2,'0')+'.'+r.type})),files:[]};
  for(const file of files){const bytes=typeof file.data==='string'?new TextEncoder().encode(file.data):file.data;const hash=await crypto.subtle.digest('SHA-256',bytes);manifest.files.push({name:file.name,bytes:bytes.byteLength,sha256:[...new Uint8Array(hash)].map(b=>b.toString(16).padStart(2,'0')).join('')});}
  files.push({name:'MANIFEST.json',data:JSON.stringify(manifest,null,2)});
  return packZip(files);
@@ -364,9 +374,9 @@ async function exportZip(){
  const button=$('export-zip');button.disabled=true;button.textContent='Förbereder ZIP…';
  try{
   const zip=await writeZip();download(zip,filename(project.name)+'-ai-design.zip','application/zip');
-  status('AI-paket klart! Skicka ZIP-filen till din 3D-AI. Originalrigg, design, ritningar och tekniska krav ligger med.');
+  status('Blender/SPEL-paket klart! Packa upp ZIP och öppna SPEL_SOURCE.glb i Blender. Läs BLENDER_SPEL_GUIDE.md för karaktärer.');
  }catch(e){console.error(e);status('Exporten misslyckades: '+e.message,true);}
- finally{button.disabled=false;button.textContent='Hämta AI-paket (.zip)';}
+ finally{button.disabled=false;button.textContent='Hämta Blender/SPEL-paket (.zip)';}
 }
 async function addReferences(e,asAccessory=false){
  for(const file of e.target.files||[]){
@@ -424,9 +434,24 @@ function installEvents(){
  for(const input of document.querySelectorAll('[data-color]'))input.addEventListener('input',()=>{
   project.palette[input.dataset.color]=input.value;for(const peer of document.querySelectorAll('[data-color]'))if(peer.dataset.color===input.dataset.color)peer.value=input.value;visualChange({save:false});persist();
  });
- for(const [id,key] of [['height','height'],['width','width']])$(id).addEventListener('input',e=>{
+ for(const [id,key] of ['height','width','shoulders','chest','arms','waist'].map(key=>[key,key]))$(id).addEventListener('input',e=>{
   project.body[key]=Number(e.target.value);$(id+'-value').textContent=e.target.value+' %';
   visualChange({save:false});persist();
+ });
+ $('hair-glb-file').addEventListener('change',async e=>{
+  if(project.kind!=='character'){e.target.value='';status('Eget hår kräver en karaktär.',true);return;}
+  const before=project.parts.length;
+  await addReferences(e,true);
+  if(project.parts.length<=before)return;
+  const part=project.parts.at(-1);
+  if(!part||part.shape!=='glb')return;
+  part.anchor='Head';part.hairReplacement=true;
+  part.name=('Frisyr: '+part.name).slice(0,80);
+  // This is the original character's neutral root-space head location;
+  // fit and rotation remain user-adjustable under 3D-delar.
+  part.position=[0,1.74,0];part.dimensions=[.30,.20,.28];
+  visualChange({rebuild:true});persist();
+  status('Hårmodellen följer huvudet. Finjustera under 3D-delar och kontrollera animationerna.');
  });
  $('pose').addEventListener('change',e=>{
   project.pose=e.target.value;workbench.pose(project.pose,false);workbench.renderSheet();
@@ -467,8 +492,8 @@ function installEvents(){
  $('part-name').addEventListener('input',e=>{
   const p=selected();if(!p)return;p.name=e.target.value.slice(0,80);partEdited(false);
  });
- $('part-shape').addEventListener('change',e=>{const p=selected();if(!p)return;p.shape=e.target.value;delete p.preset;delete p.fitVersion;partEdited();});
- $('part-anchor').addEventListener('change',e=>{const p=selected();if(!p)return;p.anchor=e.target.value;partEdited();});
+ $('part-shape').addEventListener('change',e=>{const p=selected();if(!p)return;p.shape=e.target.value;delete p.preset;delete p.fitVersion;if(p.shape!=='glb')delete p.hairReplacement;partEdited();});
+ $('part-anchor').addEventListener('change',e=>{const p=selected();if(!p)return;p.anchor=e.target.value;if(p.hairReplacement&&p.anchor!=='Head'){delete p.hairReplacement;status('Nu är modellen ett vanligt tillbehör; originalhåret visas igen.');}partEdited();});
  $('part-color').addEventListener('input',e=>{const p=selected();if(!p)return;p.color=e.target.value;visualChange({rebuild:true,save:false});persist();});
  $('part-note').addEventListener('input',e=>{const p=selected();if(!p)return;p.note=e.target.value.slice(0,1000);persist();});
  for(const id of ['pos-x','pos-y','pos-z','size-x','size-y','size-z','rot-x','rot-y','rot-z'])$(id).addEventListener('input',e=>{

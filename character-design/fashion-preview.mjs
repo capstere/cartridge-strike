@@ -2,7 +2,8 @@
 import * as T from '../vendor/three/three.module.js';
 import {makeHair,makeBeard} from './anatomy-accessories.mjs?v=53';
 import {anatomy} from './anatomy-accessories.mjs?v=53';
-import {makeStudioHair,makeStudioJacket} from './studio-foundation.mjs?v=53';
+import {makeStudioHair,makeStudioJacket,makeSkinnedHoodieShell} from './studio-foundation.mjs?v=60';
+import {applyBodyRegions,bodyRegions} from './body-proportions.mjs';
 import {makeFiberHair} from './fiber-hair.mjs?v=53';
 import {fabricMaterial} from './cloth-preview.mjs?v=53';
 import {FABRICS} from './realism-schema.mjs?v=53';
@@ -27,8 +28,8 @@ export class FashionPreview{
  create(project,avatar,sculpt){
   if(!avatar||project.kind!=='character'){this.dispose();return;}
   const c=project.creative||makeCreative(),p=project.palette;
-  const headgear=project.parts.some(part=>part.visible&&['cap','helmet','hair'].includes(part.preset));
-  const signature=JSON.stringify({c,p,headgear,beardAccessory:project.parts.some(part=>part.visible&&part.preset==='beard')});
+  const headgear=project.parts.some(part=>part.visible&&(['cap','helmet','hair'].includes(part.preset)||part.hairReplacement));
+  const signature=JSON.stringify({c,p,body:bodyRegions(project.body),headgear,beardAccessory:project.parts.some(part=>part.visible&&part.preset==='beard')});
   if(this.avatar===avatar&&this.signature===signature)return;
   this.clear();if(this.avatar!==avatar)this.sources.clear();
   this.avatar=avatar;this.signature=signature;
@@ -103,6 +104,8 @@ export class FashionPreview{
    if(name==='boots-leather')mesh.material.color.set(p.boots);
    if(/fabric|vest/.test(name)){mesh.material.roughness=(c.roughness??85)/100; if(c.realism?.fabric&&c.realism.fabric!=='original')mesh.material.roughness=FABRICS[c.realism?.fabric||'cotton'].roughness;}
    if(name==='vest-shell'){mesh.visible=true;mesh.material.color.set(c.vest||c.outfit==='vest'?p.vest:p.jacket);}
+   // Real bind-space body geometry adjustment; no change to skeleton, UV or weights.
+   applyBodyRegions(pos,project.body,name);
    pos.needsUpdate=true;g.computeBoundingBox();g.computeBoundingSphere();
   }
   sculpt?.apply(project,avatar,this.sources);
@@ -121,6 +124,8 @@ export class FashionPreview{
   }
   if(c.outfit==='polo')for(const x of [-.055,.055])solid(new T.SphereGeometry(1,10,6),p.accent,'collar',[x,1.50,.066],[.06,.025,.065],chest);
   for(const shirt of shirts){if(shirt.material.name==='vest-shell'&&(c.vest||c.outfit==='vest')){shirt.material.map=null;shirt.material.color.set(p.vest);shirt.material.needsUpdate=true;}else this.makeArtwork(project,avatar,shirt,token);}
+  // A distinct weight-preserving prototype garment; source torso stays untouched.
+  if(c.outfit==='hoodie')for(const shell of makeSkinnedHoodieShell(avatar)){avatar.root.add(shell);this.parts.push(shell);}
  }
  syncAppearance(project,avatar){
   // Geometry is cached, appearance is not. Workbench may update twice when

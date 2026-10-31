@@ -96,7 +96,7 @@ jobs:
         run: |
           set -euo pipefail
           for i in $(seq 1 24); do
-            if curl -fsS "${CHARACTER_TEST_ORIGIN}/character-design/?verify=${GITHUB_SHA}" | grep -q 'class="edition">5.3'; then break; fi
+            if curl -fsS "${CHARACTER_TEST_ORIGIN}/character-design/?verify=${GITHUB_SHA}" | grep -q 'class="edition">6.0'; then break; fi
             sleep 5
           done
           timeout ${{ matrix.seconds }}s xvfb-run -a node character-design/${{ matrix.script }}

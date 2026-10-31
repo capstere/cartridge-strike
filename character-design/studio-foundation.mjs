@@ -110,3 +110,37 @@ export function makeStudioJacket(avatar,color,accent){
  parts.push(skinDetail(zipper,donor,new T.MeshStandardMaterial({color:accent,roughness:.6,metalness:.25,side:T.DoubleSide}),'studio-jacket-zipper'));
  return parts;
 }
+
+/** An actual, independently exported skinned mesh, copied from the existing
+ * weighted upper-garment surface. This is a snug prototyping shell (NOT
+ * tailored clothing or fabric simulation).  Skin indices/weights and UV are
+ * cloned unchanged; the original source mesh is never replaced.
+ */
+export function makeSkinnedHoodieShell(avatar){
+ const source=avatar.meshes.find(m=>m.isSkinnedMesh&&m.material?.name==='jacket-fabric');
+ if(!source||!source.geometry?.attributes?.position||!source.geometry?.attributes?.skinWeight||!source.geometry?.attributes?.skinIndex)return [];
+ const geometry=source.geometry.clone(),pos=geometry.attributes.position;
+ if(!geometry.attributes.normal)geometry.computeVertexNormals();
+ const normals=geometry.attributes.normal;
+ for(let i=0;i<pos.count;i++){
+  const x=pos.getX(i),y=pos.getY(i),z=pos.getZ(i);
+  // 6-8 mm clearance; continuous offset also covers the arms without
+  // cutting or detaching original garment triangles.
+  const padding=.006+.002*Math.max(0,1-Math.abs(y-1.35)/.42);
+  pos.setXYZ(i,x+normals.getX(i)*padding,y+normals.getY(i)*padding,z+normals.getZ(i)*padding);
+ }
+ pos.needsUpdate=true;
+ geometry.computeVertexNormals();geometry.computeBoundingBox();geometry.computeBoundingSphere();
+ const material=source.material.clone();
+ material.name='studio6-skinned-hoodie-shell';
+ material.side=T.FrontSide;
+ const shell=new T.SkinnedMesh(geometry,material);
+ shell.name='studio6-weighted-hoodie-shell';
+ shell.skeleton=source.skeleton;
+ shell.bindMatrix.copy(source.bindMatrix);
+ shell.bindMatrixInverse.copy(source.bindMatrixInverse);
+ shell.position.copy(source.position);shell.quaternion.copy(source.quaternion);shell.scale.copy(source.scale);
+ shell.frustumCulled=false;
+ shell.userData.studioGarment={kind:'hoodie',prototype:true,rigged:true,notTailored:true};
+ return [shell];
+}

@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="color-scheme" content="light">
-<title>Character Design Studio 5 · Cartridge Strike</title>
+<title>Character Design Studio 6 · Cartridge Strike</title>
 <meta name="description" content="Skapa personliga animerade FPS-karaktärer och egna 3D-objekt med enkla verktyg. Exportera AI-redo designprojekt.">
 <link rel="icon" href="data:,"><link rel="stylesheet" href="style.css?v=54">
 <script type="importmap">{"imports":{"three":"../vendor/three/three.module.js","three/addons/":"../vendor/three/addons/"}}</script>
@@ -12,7 +12,7 @@
 <body>
 <header class="masthead">
  <div><nav class="studio-header-links" aria-label="Växla mellan studior"><a class="back" href="../studio/">← Alla studior</a><a class="back" href="../fps/">Spela</a></nav><p class="eyebrow">CARTRIDGE STRIKE / CREATIVE STUDIO</p>
- <h1>Character Design Studio <span class="edition">5.3</span></h1>
+ <h1>Character Design Studio <span class="edition">6.0</span></h1>
  <p class="lead">Välj en grund. Forma din stil. Lämna över en exakt design till AI:n för att göra karaktären spelklar.</p></div>
  <div class="stamp">INGA 3D-KUNSKAPER<br><strong>BEHÖVS</strong></div>
 </header>
@@ -154,14 +154,20 @@
        <label>Skor<input type="color" data-color="boots"></label>
        <label>Detaljer<input type="color" data-color="accent"></label>
       </div>
-      <details class="simple-advanced"><summary>Lite mer personlighet – längd och bredd</summary>
+      <details class="simple-advanced" open><summary>Forma kroppen – axlar, armar och midja</summary>
        <label class="range-control">Längd <output id="height-value">100 %</output><input id="height" type="range" min="80" max="120" value="100"></label>
        <label class="range-control">Kroppsbredd <output id="width-value">100 %</output><input id="width" type="range" min="80" max="120" value="100"></label>
-       <p class="hint">Kroppsändringarna är designförslag. AI:n behöver anpassa collision och animationer vid spelintegration.</p>
+       <div class="slider-grid">
+        <label class="range-control">Axelbredd <output id="shoulders-value">100 %</output><input id="shoulders" type="range" min="78" max="112" value="100"></label>
+        <label class="range-control">Bröstkorg <output id="chest-value">100 %</output><input id="chest" type="range" min="78" max="120" value="100"></label>
+        <label class="range-control">Överarmar <output id="arms-value">100 %</output><input id="arms" type="range" min="70" max="120" value="100"></label>
+        <label class="range-control">Midja <output id="waist-value">100 %</output><input id="waist" type="range" min="78" max="120" value="100"></label>
+       </div>
+       <p class="hint">Dessa fyra reglage ändrar faktisk 3D-geometri på de riggade klädytorna, inte bara hela figurens skala. Originalriggen, vikter och animationer behålls. Kontrollera passform och rörelser i flera poser innan spelanvändning.</p>
       </details>
     </div>
     <div id="tab-fashion" class="editor-tab" hidden>
-     <p class="hint">Kläderna använder grundmodellens hudvikter och följer animationerna. Kombinera överdel, skor, handskar och väst. AI:n färdigställer din design för spelet.</p>
+     <p class="hint">Kläderna använder grundmodellens hudvikter och följer animationerna. Hoodie får nu en separat, riggad 3D-ytmodell (prototyp, inte skräddarsytt plagg). Kombinera överdel, skor, handskar och väst. Granska passform och klippning innan spelintegration.</p>
      <label>Välj klädesplagg<select id="outfit-style">
       <option value="original">Originaluniform</option><option value="tshirt">T-shirt</option>
       <option value="hoodie">Hoodie</option><option value="jacket">Jacka med dragkedja</option>
@@ -206,6 +212,10 @@
       <option value="curly">Lockigt</option><option value="bob">Page</option><option value="long">Långt</option>
       <option value="ponytail">Hästsvans</option><option value="mohawk">Mohawk</option>
      </select></label>
+     <label class="reference-box">Välj eget hår som 3D-modell (.glb)
+      <input id="hair-glb-file" type="file" accept=".glb,model/gltf-binary">
+     </label>
+     <p class="hint">Din hårmodell fästs automatiskt på huvudbenet och döljer originalhåret. Justera storlek och placering under 3D-delar. Stöd gäller fristående hårtillbehör, inte en ny animerad hår-rigg.</p>
      <div class="face-grid">
       <label>Ögonform<select data-face-field="eyes"></select></label>
       <label>Ögonbryn<select data-face-field="eyebrows"></select></label>
@@ -322,17 +332,17 @@
   </div>
  </section>
  <section class="panel export">
-  <div class="section-title"><div><p class="eyebrow">STEG 5 / EXPORTERA TILL AI</p><h2>Ge AI:n allt den behöver</h2></div></div>
+  <div class="section-title"><div><p class="eyebrow">STEG 5 / EXPORTERA TILL BLENDER / SPEL</p><h2>Hämta din riktiga 3D-design</h2></div></div>
   <p>Den stora exportknappen skapar en <strong>ZIP</strong> med hela den synliga, riggade designprototypen (PREVIEW.glb), filmanifest och originalets animerade GLB (för karaktärer), dina 3D-delar som prototyp-GLB, referensbilder, designprojekt och detaljerade instruktioner för en slutlig FPS-kompatibel karaktär.</p>
   <div class="downloads">
-   <button id="export-zip" class="primary hero-button" type="button">Hämta AI-paket (.zip)</button>
+   <button id="export-zip" class="primary hero-button" type="button">Hämta Blender/SPEL-paket (.zip)</button>
    <button id="save-json" type="button">Spara projekt (.json)</button>
    <button id="save-png" type="button">Hämta Design Sheet (.png)</button>
    <button id="save-glb" type="button">Hämta mina 3D-delar (.glb)</button>
    <button id="copy-ai" type="button">Kopiera AI-instruktionen</button>
    <button id="print-sheet" type="button">Skriv ut / PDF</button>
   </div>
-  <p id="export-help" class="hint">3D-prototypen är inte ensam en animerad spelkaraktär. AI:n får därför originalriggen och ett kontrakt för att skapa en riktig riggad GLB.</p>
+  <p id="export-help" class="hint">ZIP innehåller SPEL_SOURCE.glb, samma synliga riggade design som PREVIEW.glb, samt originalrigg, designprojekt och enkla Blender-instruktioner. SPEL kontrollerar själv om just denna modell är kompatibel för Procreate. Ingen automatisk spelpublicering.</p>
   <details><summary>Läs hela AI-instruktionen</summary><pre id="ai-prompt"></pre></details>
   <div class="model-downloads">
    <a href="../assets/fps/models/quaternius-operator-male.glb" download>Manlig originalrigg (.glb)</a>
@@ -344,6 +354,6 @@
   <p class="credits">Quaternius originalkaraktärer och animationer: CC0 1.0 · <a href="../licenses/quaternius-characters-CC0.txt">Licens</a>. Designen ligger lokalt i webbläsaren tills du exporterar. Inga filer laddas upp av studion.</p>
  </section>
 </main>
-<script type="module" src="app.mjs?v=54"></script>
+<script type="module" src="app.mjs?v=60"></script>
 </body>
 </html>
