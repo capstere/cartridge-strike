@@ -5,12 +5,12 @@ import {SculptEngine,prepareSculptGeometry} from './sculpt-engine.mjs?v=53';
 import * as T from '../vendor/three/three.module.js';
 import {loadCharacterLibrary,createAuthoredAvatar,disposeAvatar} from '../src/fps/character-library.mjs';
 import {makeAccessory,fitAccessory} from './anatomy-accessories.mjs?v=53';
-import {REQUIRED_CLIPS,upgradeAccessories} from './project-schema.mjs?v=53';
+import {REQUIRED_CLIPS,upgradeAccessories} from './project-schema.mjs?v=60';
 import {GLTFLoader} from '../vendor/three/addons/loaders/GLTFLoader.js';
 import {GLTFExporter} from '../vendor/three/addons/exporters/GLTFExporter.js';
 import {inspectGLB} from '../furniture-editor/library/glb-utils.mjs';
 import {dataToBytes} from './project-store.mjs?v=53';
-import {FashionPreview} from './fashion-preview.mjs?v=53';
+import {FashionPreview} from './fashion-preview.mjs?v=60';
 const RAD=Math.PI/180,SW=480,SH=680,PW=720,PH=660;
 function characterId(gender){
  for(let i=0;i<200;i++){
@@ -84,7 +84,7 @@ export class DesignWorkbench{
   if(!this.avatar||!this.project)return;
   const {palette:p,body,base}=this.project;const realism=this.project.creative?.realism;this.scene.environment=realism&&(realism.head==='scan'||realism.fiberHair||realism.fabric!=='original'||realism.garment!=='none')?this.studioEnvironment.texture:null;this.scene.environmentIntensity=.35;this.renderer.toneMappingExposure=realism?.head==='scan'?.95:1.3;this.hemi.intensity=realism?.head==='scan'?1.4:2.25;
   const customClothes=this.project.creative?.outfit&&this.project.creative.outfit!=='original';
-  const customHair=this.project.creative?.hair&&this.project.creative.hair!=='original'||this.project.parts.some(p=>p.visible&&['cap','helmet','hair'].includes(p.preset));
+  const customHair=this.project.creative?.hair&&this.project.creative.hair!=='original'||this.project.parts.some(p=>p.visible&&(['cap','helmet','hair'].includes(p.preset)||p.hairReplacement));
   const hideTactical=base.template==='blank'||base.template==='civilian'||customClothes;
   const seen=new Set();
   for(const mesh of this.avatar.meshes){
