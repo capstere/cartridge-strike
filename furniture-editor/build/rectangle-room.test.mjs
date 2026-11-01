@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {createRectangleRoom,rectangleFromDimensions} from './rectangle-room.mjs';
-import {exportArchitecture,parseArchitecture} from './architecture.mjs';
+import {createRectangleRoom,rectangleFromDimensions} from './rectangle-room.mjs?v=5.1.0';
+import {exportArchitecture,parseArchitecture} from './architecture.mjs?v=5.1.0';
 const a=[1.137,2.271],b=[7.137,6.271];
 test('rectangle creates four exact shared corners and a matching floor',()=>{
  const made=createRectangleRoom([],[],a,b,{height:3.1,thickness:.15,name:'Test'});

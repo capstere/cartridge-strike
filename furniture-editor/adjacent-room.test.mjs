@@ -1,8 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {planAdjacentRoom,ADJACENT_SIDES} from './adjacent-room.mjs';
-import {STANDARD_PASSAGE_WIDTH} from './build/architecture.mjs';
-import {planPaintOverWall} from './build/paint-over-wall.mjs';
+import {planAdjacentRoom,ADJACENT_SIDES} from './adjacent-room.mjs?v=5.1.0';
+import {STANDARD_PASSAGE_WIDTH} from './build/architecture.mjs?v=5.1.0';
+import {planPaintOverWall} from './build/paint-over-wall.mjs?v=5.1.0';
 
 const bounds={x0:-40,z0:-40,x1:40,z1:40};
 const room={id:'BYGG-G-0001',name:'Rum 1',role:'room',x0:-4,x1:4,z0:-4,z1:4};

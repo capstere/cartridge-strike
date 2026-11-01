@@ -72,6 +72,7 @@ export function validateEntry(entry,{isNew=false}={}){
  if(!finite(entry.height)||entry.height<.45||entry.height>6)throw Error('Byggdelens höjd måste vara 0,45–6 m.');
  if(!finite(entry.thickness)||entry.thickness<.025||entry.thickness>.7)throw Error('Väggtjockleken måste vara 0,025–0,70 m.');
  if(!finite(entry.sill)||entry.sill<0||entry.sill>entry.height-.15)throw Error('Fönsterbröstningen är inte giltig.');
+ if(entry.doorStyle!==undefined&&(!['door','card-door'].includes(entry.kind)||!['solid','frosted'].includes(entry.doorStyle)))throw Error('Välj vanlig dörr eller frostad glasdörr.');
  if(entry.finish!==undefined&&
    !((isWall(entry.kind)?WALL_FINISHES:DOOR_FINISHES).includes(entry.finish)))
   throw Error('Färgvalet passar inte byggdelen.');
@@ -87,11 +88,11 @@ export function validateFloorRect(e){
 }
 const eq=(a,b)=>Math.abs(a-b)<.0001;
 export function entryChanged(e,original){
- return e.kind!==original.kind||architecturalFinish(e.kind,e.finish)!==architecturalFinish(original.kind,original.finish)||!eq(e.height,original.height)||!eq(e.thickness,original.thickness)||!eq(e.sill,original.sill)||
+ return (e.doorStyle||'solid')!==(original.doorStyle||'solid')||e.kind!==original.kind||architecturalFinish(e.kind,e.finish)!==architecturalFinish(original.kind,original.finish)||!eq(e.height,original.height)||!eq(e.thickness,original.thickness)||!eq(e.sill,original.sill)||
   [...e.a,...e.b].some((v,i)=>!eq(v,[...original.a,...original.b][i]));
 }
 export const serializeEntry=e=>({id:e.id,kind:e.kind,a:e.a.map(roundPosition),b:e.b.map(roundPosition),
- height:roundPosition(e.height),thickness:roundPosition(e.thickness),sill:roundPosition(e.sill),finish:architecturalFinish(e.kind,e.finish)});
+ height:roundPosition(e.height),thickness:roundPosition(e.thickness),sill:roundPosition(e.sill),finish:architecturalFinish(e.kind,e.finish),...(e.doorStyle?{doorStyle:e.doorStyle}:{})});
 export function exportArchitecture(entries,baseline,floorRects=[]){
  const source=new Map(baseline.map(e=>[e.id,e])),edits=[],added=[],removed=[];
  for(const e of entries){const orig=source.get(e.id);if(e.deleted){if(orig)removed.push(e.id);continue;}

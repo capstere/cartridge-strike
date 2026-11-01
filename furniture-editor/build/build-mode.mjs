@@ -5,14 +5,14 @@ import * as THREE from '../../vendor/three/three.module.js';
 import {ARCHITECTURE_TYPES,ARCHITECTURE_NAMES,ARCHITECTURE_COLORS,readBaseline,
  cloneEntry,roundPosition,entryLength,validateEntry,validateFloorRect,pointToSegmentDistance,
  exportArchitecture,parseArchitecture,makeEntry,getNextId,doorOnWallSegment,floorRect,wallPieces,warningsForLayout,
- isDoor,isWall,standardPassageSpan,standardDoorMarkerSpan,STANDARD_PASSAGE_WIDTH} from './architecture.mjs';
-import {snapDraftPoint,dimensionsFromWall,joinNearbyEnds,straightenEntry} from './precision.mjs';
-import {createRectangleRoom,rectangleFromDimensions} from './rectangle-room.mjs';
+ isDoor,isWall,standardPassageSpan,standardDoorMarkerSpan,STANDARD_PASSAGE_WIDTH} from './architecture.mjs?v=5.1.0';
+import {snapDraftPoint,dimensionsFromWall,joinNearbyEnds,straightenEntry} from './precision.mjs?v=5.1.0';
+import {createRectangleRoom,rectangleFromDimensions} from './rectangle-room.mjs?v=5.1.0';
 import {FINISH_COLORS,architecturalFinish,WALL_FINISHES,DOOR_FINISHES} from '../appearance.mjs';
 import {makePoster,parsePosters,serializePosters,validatePoster,locatePoster,posterId,POSTER_MAX} from './posters.mjs';
 import {createPosterTexture,compressPosterImage} from './poster-art.mjs';
-import {PAINT_KINDS,wallAtPoint,projectToWall,planPaintOverWall} from './paint-over-wall.mjs';
-import {TREATMENTS_MAX,createCurtain,createBlind,parseTreatments,treatmentPosition,validateTreatment,nextTreatmentId} from './treatments.mjs';
+import {PAINT_KINDS,wallAtPoint,projectToWall,planPaintOverWall} from './paint-over-wall.mjs?v=5.1.0';
+import {TREATMENTS_MAX,createCurtain,createBlind,parseTreatments,treatmentPosition,validateTreatment,nextTreatmentId} from './treatments.mjs?v=5.1.0';
 const $=id=>document.getElementById(id);
 const DIST=1e-5;
 const floorKind='floor',roomKind='room-rect',posterKind='poster',paintKind='paint',curtainKind='curtain',blindKind='blind';

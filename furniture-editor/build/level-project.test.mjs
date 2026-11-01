@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {exportProject,parseProject,migrateV1,exportProjectZip,parseProjectZip} from './level-project.mjs';
+import {exportProject,parseProject,migrateV1,exportProjectZip,parseProjectZip} from './level-project.mjs?v=5.1.0';
 import {exportPatch,BASE_COMMIT} from '../core.mjs';
 import {assetHash} from '../library/glb-utils.mjs';
 import {makeZip,readZip} from '../library/zip.mjs';
@@ -64,7 +64,7 @@ test('ZIP rejects inconsistent central-directory filename even when local entry 
 });
 
 test('AI handoff ZIP validates derived collision map and accepts older ZIP',async()=>{
- const {collisionExport}=await import('./ai-export.mjs');
+ const {collisionExport}=await import('./ai-export.mjs?v=5.1.0');
  const p=exportProject(),zip=await exportProjectZip(p),files=readZip(zip),decode=new TextDecoder();
  assert.equal(JSON.parse(decode.decode(files.get('COLLISION_MAP.json'))).floor5Inherited,false);
  assert.equal(collisionExport(p).walkableFloors.length,0);

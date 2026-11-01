@@ -1,5 +1,5 @@
 import test from 'node:test';import assert from 'node:assert/strict';import {readFileSync,existsSync} from 'node:fs';import {createHash} from 'node:crypto';
-import {HOUSE_LIBRARY} from './house-catalog.mjs';import {LIBRARY_MAP} from './catalog.mjs';import {inspectGLB} from './glb-utils.mjs';import {exportProject,exportProjectZip,parseProjectZip} from '../build/level-project.mjs';
+import {HOUSE_LIBRARY} from './house-catalog.mjs';import {LIBRARY_MAP} from './catalog.mjs';import {inspectGLB} from './glb-utils.mjs';import {exportProject,exportProjectZip,parseProjectZip} from '../build/level-project.mjs?v=5.1.0';
 const report=JSON.parse(readFileSync(new URL('./models/house-interior/conversion-report.json',import.meta.url)));
 test('122 owner-approved static derivatives match pinned source and Blender 4.5 round-trip report',()=>{
  assert.equal(HOUSE_LIBRARY.length,122);assert.equal(report.blender,'4.5.3 LTS');assert.equal(report.files.length,123);assert.deepEqual(report.files.filter(f=>f.status==='FAILED').map(f=>f.source),['Drawer_4.blend']);

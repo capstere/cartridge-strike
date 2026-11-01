@@ -1,9 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
-import {levelProjectToWorldData} from './level-adapter.mjs';
-import {createWorld} from './world.mjs';
-import {validateLevel} from '../../furniture-editor/build/validate-level.mjs';
+import {levelProjectToWorldData} from './level-adapter.mjs?v=5.1.0';
+import {createWorld} from './world.mjs?v=5.1.0';
+import {validateLevel} from '../../furniture-editor/build/validate-level.mjs?v=5.1.0';
 import {Game} from './game.mjs';
 
 const project=JSON.parse(readFileSync(new URL('../../levels/synthetic-demo.json',import.meta.url),'utf8'));

@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {planPaintOverWall,wallAtPoint,projectToWall} from './paint-over-wall.mjs';
-import {exportArchitecture,parseArchitecture} from './architecture.mjs';
+import {planPaintOverWall,wallAtPoint,projectToWall} from './paint-over-wall.mjs?v=5.1.0';
+import {exportArchitecture,parseArchitecture} from './architecture.mjs?v=5.1.0';
 const old={id:'WALL-0001',source:true,kind:'wall',a:[1,2],b:[9,2],height:2.85,thickness:.11,sill:.9,finish:'gray'};
 const make=()=>[{...old,a:[...old.a],b:[...old.b]}];
 

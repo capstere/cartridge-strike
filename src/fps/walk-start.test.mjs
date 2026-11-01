@@ -1,8 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {exportProject,parseProject,exportProjectZip,parseProjectZip} from '../../furniture-editor/build/level-project.mjs';
-import {validateLevel} from '../../furniture-editor/build/validate-level.mjs';
-import {createWorld} from './world.mjs';
+import {exportProject,parseProject,exportProjectZip,parseProjectZip} from '../../furniture-editor/build/level-project.mjs?v=5.1.0';
+import {validateLevel} from '../../furniture-editor/build/validate-level.mjs?v=5.1.0';
+import {createWorld} from './world.mjs?v=5.1.0';
 import {findWalkStart} from './walk-start.mjs';
 
 const furniture={id:'NY-OBJ-0001',kind:'prop',assetId:'studio:desk-120',assetName:'Skrivbord',roomId:'',x:5,z:5,yaw:0,w:1.2,d:.7,height:.75};

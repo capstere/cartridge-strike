@@ -7,15 +7,15 @@ import { MinimapCache } from './minimap-cache.mjs';
 import { FocusHud, focusHudSettings } from './focus-hud.mjs';
 import { GrenadeAssist, grenadeSettingsMarkup } from './grenade-assist.mjs';
 import {CombatHUD} from './combat-hud.mjs';
-import { createWorld } from './world.mjs?v=5.0.0';
+import { createWorld } from './world.mjs?v=5.1.0';
 import { Game, TEAMS, WEAPONS, CONFIG, DIFFICULTIES } from './game.mjs';
-import { Renderer } from './render.mjs?v=5.0.0';
+import { Renderer } from './render.mjs?v=5.1.0';
 import { AudioSystem } from './riposte-audio.mjs';
 import {RADIO,isEndless} from './action-rules.mjs';
 import { MobileControls, isTouchDevice } from './mobile-controls.mjs';
 import { PlayerRecoil } from './riposte-recoil.mjs';
 import { TacticalControls } from './tactical-controls.mjs';
-import {parseProject} from '../../furniture-editor/build/level-project.mjs?v=5.0.0';
+import {parseProject} from '../../furniture-editor/build/level-project.mjs?v=5.1.0';
 
 const $=id=>document.getElementById(id),testMode=new URLSearchParams(location.search).has('test');
 const touchDevice=isTouchDevice();

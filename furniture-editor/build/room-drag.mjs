@@ -2,7 +2,7 @@
  * Never commit a partially-built room. Mouse/touch drags outside the drawing
  * surface stop at the closest map edge, as in child-friendly building tools.
  */
-import {validateFloorRect,validateEntry,roundPosition} from './architecture.mjs?v=4.6.0';
+import {validateFloorRect,validateEntry,roundPosition} from './architecture.mjs?v=5.1.0';
 
 const finite=n=>typeof n==='number'&&Number.isFinite(n);
 const clamped=(n,a,b)=>roundPosition(Math.max(a,Math.min(b,n)));

@@ -14,6 +14,7 @@ on:
       - 'tools/furniture-transform-browser.mjs'
       - 'tools/furniture-handles-browser.mjs'
       - 'tools/studio-spaces-browser.mjs'
+      - 'tools/studio-floor-door-browser.mjs'
       - 'tools/restore-onboard-large.mjs'
       - 'tools/onboard-large-source-catalog.json'
       - '.github/workflows/level-project.yml'
@@ -59,3 +60,4 @@ jobs:
           timeout 420s xvfb-run -a node tools/furniture-transform-browser.mjs
           timeout 420s xvfb-run -a node tools/furniture-handles-browser.mjs
           timeout 420s xvfb-run -a node tools/studio-spaces-browser.mjs
+          timeout 420s xvfb-run -a node tools/studio-floor-door-browser.mjs

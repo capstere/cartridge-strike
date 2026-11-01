@@ -1,10 +1,11 @@
+import {applyFloorEdits} from './floor-edge.mjs?v=5.1.0';
 import {closedAreas} from './walkable-spaces.mjs?v=5.0.0';
 /** Resolve editable geometry once for the studio, collision export and FPS adapter. */
 import '../../src/floor5-data.js';
 import '../../src/world.js';
 import {createFurnishings} from '../../src/fps/furnishings.mjs';
 import {catalog,inside,distanceSegment,EDITABLE_KINDS,exportPatch,isChanged} from '../core.mjs?v=5.0.0';
-import {readBaseline,parseArchitecture,exportArchitecture,wallPieces,isDoor} from './architecture.mjs?v=4.6.0';
+import {readBaseline,parseArchitecture,exportArchitecture,wallPieces,isDoor} from './architecture.mjs?v=5.1.0';
 
 /** Shared walls may overlap after adjacent rooms are drawn. A fitted window
  * replaces every underlying solid span, just as a door cuts every wall layer. */
@@ -41,7 +42,7 @@ export function resolveProjectScene(project){
  zones.push(...closed.filter(r=>opened.has(r.id)).map(r=>({...r,source:true,role:'room',status:'included',surface:'carpet',x0:Math.min(...r.polygon.map(p=>p[0])),x1:Math.max(...r.polygon.map(p=>p[0])),z0:Math.min(...r.polygon.map(p=>p[1])),z1:Math.max(...r.polygon.map(p=>p[1]))})));
  const extra=project.architecture.floors.filter(f=>!project.ground.floors.some(g=>g.id===f.id)).map(f=>({...f,role:'room',surface:'carpet'}));
  const fixed=project.legacyPatch?.emptyFixed?[]:base.data.obstacles.filter(o=>!EDITABLE_KINDS[o.kind]&&o.kind!=='uncertain-area');
- return {entries,items,closed:closed.filter(r=>!opened.has(r.id)),floors:[...zones,...project.ground.floors.map(rectangle),...extra.map(rectangle)],fixed,
+ return {entries,items,closed:closed.filter(r=>!opened.has(r.id)),floors:[...applyFloorEdits(zones,project.ground.floorEdits),...project.ground.floors.map(rectangle),...extra.map(rectangle)],fixed,
   baselineEntries:base.entries,baselineItems:base.items};
 }
 export function writeProjectScene(project,scene){

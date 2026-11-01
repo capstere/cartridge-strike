@@ -15,10 +15,10 @@ import {addModelToGroup,importLocalGLB,localLibrary,getLocalFile} from './librar
 import {makeZip,readZip,PROJECT_ZIP_MAX_BYTES} from './library/zip.mjs';
 import {readModelBundleZip} from './library/model-bundle.mjs';
 import {assetHash} from './library/glb-utils.mjs';
-import {createBuildMode} from './build/build-mode.mjs';
-import {parseArchitecture,standardDoorMarkerSpan} from './build/architecture.mjs';
+import {createBuildMode} from './build/build-mode.mjs?v=5.1.0';
+import {parseArchitecture,standardDoorMarkerSpan} from './build/architecture.mjs?v=5.1.0';
 import {parsePosters} from './build/posters.mjs';
-import {parseTreatments} from './build/treatments.mjs';
+import {parseTreatments} from './build/treatments.mjs?v=5.1.0';
 import {findCameraPlacement} from './placement.mjs';
 import {isTable,isChair,chairRole,chairColors,validateDimensions,FINISH_COLORS,cameraPanVector} from './appearance.mjs';
 const $=s=>document.querySelector(s),data=globalThis.SpelFloor5,worldSource=globalThis.SpelWorld;
