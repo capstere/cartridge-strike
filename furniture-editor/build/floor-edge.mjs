@@ -71,3 +71,20 @@ export function remainingSourceTiles(data,edits={}){
   });
  }return tiles;
 }
+/** Keep an existing doorway walkable when floor edges meet the wall faces.
+ * Only bridge the thickness of an aligned wall with floor on BOTH approaches.
+ * This does not open excluded areas or bridge arbitrary circulation gaps.
+ */
+export function thresholdFloorPolygons(entries,floors){
+ const polygons=floors.map(floorPolygon),inside=(x,z,p)=>{let yes=false;for(let i=0,j=p.length-1;i<p.length;j=i++){const a=p[i],b=p[j];if((a[1]>z)!==(b[1]>z)&&x<(b[0]-a[0])*(z-a[1])/(b[1]-a[1])+a[0])yes=!yes;}return yes;},covered=p=>polygons.some(poly=>inside(...p,poly)),out=[];
+ for(const door of entries.filter(e=>!e.deleted&&!e.originallyBlocked&&['door','card-door','opening'].includes(e.kind))){
+  const dx=door.b[0]-door.a[0],dz=door.b[1]-door.a[1],len=Math.hypot(dx,dz),ux=dx/len,uz=dz/len;
+  const walls=entries.filter(w=>!w.deleted&&['wall','window','glazed'].includes(w.kind)&&Math.abs((w.b[0]-w.a[0])*uz-(w.b[1]-w.a[1])*ux)<.01&&
+   Math.abs((w.a[0]-door.a[0])*uz-(w.a[1]-door.a[1])*ux)<.02&&
+   Math.max((w.a[0]-door.a[0])*ux+(w.a[1]-door.a[1])*uz,(w.b[0]-door.a[0])*ux+(w.b[1]-door.a[1])*uz)>=-.025&&
+   Math.min((w.a[0]-door.a[0])*ux+(w.a[1]-door.a[1])*uz,(w.b[0]-door.a[0])*ux+(w.b[1]-door.a[1])*uz)<=len+.025);
+  if(!walls.length)continue;const half=Math.max(...walls.map(w=>w.thickness))/2+.02,point=(t,n)=>[door.a[0]+dx*t-uz*n,door.a[1]+dz*t+ux*n];
+  if([.1,.5,.9].every(t=>covered(point(t,0)))||![.1,.5,.9].every(t=>covered(point(t,half))&&covered(point(t,-half))))continue;
+  out.push([point(0,-half),point(1,-half),point(1,half),point(0,half)]);
+ }return out;
+}

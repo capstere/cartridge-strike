@@ -50,3 +50,10 @@ test('frosted doors can be traversed with the actual player capsule in both dire
  for(const e of p.architecture.added)if(['door','card-door'].includes(e.kind))e.doorStyle='frosted';
  const rows=testDoorTraversal(createWorld({levelProject:p,fresh:true}));assert.equal(rows.length,4);assert(rows.every(r=>r.status==='pass'),JSON.stringify(rows));
 });
+
+test('floor-only snap on both sides cannot leave an invisible gap under the existing doorway',()=>{
+ const p=fixture();p.ground.floors=[{...floor,x1:3.947,z1:6},{...floor,id:'BYGG-G-0002',x0:4.053,z1:6}];p.architecture.added=[makeEntry('BYGG-V-0001','wall',[4,0],[4,6]),makeEntry('BYGG-D-0001','door',[4,2.4],[4,3.6])];
+ const world=createWorld({levelProject:p,fresh:true});assert(world.onFloor(4,3));assert(world.scopeAllowed(4,3));assert(!world.onFloor(4,1),'no automatic floor outside the doorway');
+ const rows=testDoorTraversal(world);assert.equal(rows.length,2);assert(rows.every(r=>r.status==='pass'),JSON.stringify(rows));
+ p.ground.floors.pop();assert(!createWorld({levelProject:p,fresh:true}).onFloor(4,3),'no bridge without floor on the other side');
+});

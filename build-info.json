@@ -501,8 +501,8 @@
     },
     {
       "path": "furniture-editor/build/ai-export.mjs",
-      "bytes": 4615,
-      "sha256": "9bc6d58b364b675994cc19da77bf9cc74f66e8ca7b659b021389dd110f2a8348"
+      "bytes": 4739,
+      "sha256": "93130873ca7876fac8b586d35f53257517ed5452212f599da4485c3136e422d4"
     },
     {
       "path": "furniture-editor/build/architecture-preview.mjs",
@@ -526,8 +526,8 @@
     },
     {
       "path": "furniture-editor/build/floor-edge.mjs",
-      "bytes": 5754,
-      "sha256": "61a79a38e827e6c6e5148a346aeb37a3e7f43f75d6428669ea37252554cde62f"
+      "bytes": 7328,
+      "sha256": "e2079b8e02dbfa1899722eefa2b7060b4aebd5a14387b4801bf3442994cdb4bd"
     },
     {
       "path": "furniture-editor/build/level-project.mjs",
@@ -2411,8 +2411,8 @@
     },
     {
       "path": "src/fps/level-adapter.mjs",
-      "bytes": 4409,
-      "sha256": "f649ae58922c6608dc8abe5f3f0f89886069acabfc984203f1c5953a6ea589bc"
+      "bytes": 4474,
+      "sha256": "79c1d53955d3e673957ac89004a77294e36512a70e2ca986888a950f55abebd2"
     },
     {
       "path": "src/fps/living-floor-art.mjs",
