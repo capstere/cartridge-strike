@@ -2,10 +2,10 @@ name: Private character match
 on:
   pull_request:
     branches: [main]
-    paths: ['character-design/**', 'src/fps/**', 'assets/fps/models/quaternius-*', '.github/workflows/private-character-match.yml']
+    paths: ['fps/**', 'character-design/**', 'src/fps/**', 'assets/fps/models/quaternius-*', '.github/workflows/private-character-match.yml']
   push:
     branches: [main]
-    paths: ['character-design/**', 'src/fps/**', 'assets/fps/models/quaternius-*', '.github/workflows/private-character-match.yml']
+    paths: ['fps/**', 'character-design/**', 'src/fps/**', 'assets/fps/models/quaternius-*', '.github/workflows/private-character-match.yml']
   workflow_dispatch:
 permissions:
   contents: read

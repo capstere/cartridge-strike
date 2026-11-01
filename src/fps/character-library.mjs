@@ -8,6 +8,7 @@ import {RoundedBoxGeometry} from '../../vendor/three/addons/geometries/RoundedBo
 import {WEAPONS} from './config.mjs';
 import {GLTFLoader} from '../../vendor/three/addons/loaders/GLTFLoader.js';
 let templates=null,pending=null,privateCharacter=null,privateViewAppearance=null;
+let privateActorIds=new Set(['analysts-0','analysts-1']);
 const live=new Set();
 export function charactersReady(){return !!templates;}
 export function installCharacterTemplates(male,female){
@@ -44,7 +45,7 @@ const upperName=n=>/^(clavicle_|upperarm_|lowerarm_|hand_|thumb_|index_|middle_|
 function upperClip(clip){return new T.AnimationClip('upper-'+clip.name,clip.duration,clip.tracks.filter(t=>upperName(t.name.split('.')[0])).map(t=>t.clone()));}
 function lowerClip(clip){return new T.AnimationClip('lower-'+clip.name,clip.duration,clip.tracks.filter(t=>!upperName(t.name.split('.')[0])).map(t=>t.clone()));}
 export function createAuthoredAvatar(team,id,isHostage=false){
- if(privateCharacter&&!isHostage&&['analysts-0','analysts-1'].includes(id))return createPrivateAvatar(id);
+ if(privateCharacterApplies(id)&&!isHostage)return createPrivateAvatar(id);
  if(!templates)throw Error('Character library must be loaded before actor creation');
  const seed=hash(id),gender=seed%3===0?'female':'male',asset=templates[gender],root=cloneSkinned(asset.scene),materials=new Map(),ownedGeometry=[],bones=new Map(),meshes=[],shoes=[];
  const palette=isHostage?{shirt:0xe0e7e2,pants:0x334552,vest:0xe4e7df,trim:0x468e8c}:team==='analysts'?{shirt:0x22435e,pants:0x202c3b,vest:0x132d42,trim:0x5aa8cf}:{shirt:0x9b967c,pants:0x454c3b,vest:0x505b42,trim:0xc9ad65};
@@ -118,7 +119,7 @@ function finishAvatar({asset,root,bones,materials,meshes,shoes,seed,gender,owned
  const bounds=posedBounds(root),scale=normalize?1.69/(bounds.max.y-bounds.min.y):1;holder.scale.setScalar(scale);holder.position.y=-bounds.min.y*scale+.004;
  const state={holder,root,bones,mixer,base,upper,clips,materials,meshes,shoes,scale,seed,gender,ownedGeometry,activeBase:'Idle_Loop',activeUpper:isHostage?null:'Pistol_Idle_Loop',time:null,x:null,z:null,motionSpeed:0,groundOffset:holder.position.y,isHostage,disposed:false,groundInverse:new T.Matrix4(),groundMatrix:new T.Matrix4(),hitBase:new T.Quaternion(),hitRotation:new T.Quaternion(),hitEuler:new T.Euler(),hitApplied:false};live.add(state);return state;
 }
-/** Only called for an explicit local rehearsal URL, after hash/GLB checks. */
+/** Called only after local hash/source/GLB checks, for a rehearsal or menu selection. */
 export function installPrivateCharacter(asset){
  if(!templates)throw Error('Originalkaraktärerna måste laddas först.');
  const original=templates.male.animations,clips=new Map(asset.animations.map(c=>[c.name,c]));
@@ -131,7 +132,9 @@ export function installPrivateCharacter(asset){
  asset.scene.traverse(o=>{if(o.isMesh){const p=o.geometry.attributes.position;if(!p||Array.from(p.array).some(v=>!Number.isFinite(v)))throw Error('Provkaraktären har ogiltig geometri.');if(o.isSkinnedMesh&&o.skeleton.bones.some(b=>bones.get(b.name)!==b))throw Error('Provkaraktärens benkoppling är ogiltig.');}});
  const appearance=createPrivateViewAppearance(asset);privateViewAppearance?.dispose();privateViewAppearance=appearance;privateCharacter=asset;
 }
-export function privateCharacterAppearance(id){return privateCharacter&&['analysts-0','analysts-1'].includes(id)?privateViewAppearance:null;}
+export function setPrivateCharacterActors(ids){privateActorIds=new Set(ids);}
+export function privateCharacterApplies(id){return !!privateCharacter&&privateActorIds.has(id);}
+export function privateCharacterAppearance(id){return privateCharacterApplies(id)?privateViewAppearance:null;}
 function createPrivateAvatar(id){
  const asset=privateCharacter,root=cloneSkinned(asset.scene),bones=new Map(),materials=new Map(),meshes=[],shoes=[];
  root.traverse(o=>{

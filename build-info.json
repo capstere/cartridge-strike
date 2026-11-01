@@ -471,13 +471,13 @@
     },
     {
       "path": "fps/index.html",
-      "bytes": 10432,
-      "sha256": "7d54ec9d3fd2cdb0386fcf7b60b2452151a6ce136c2dc28179a529c904c32213"
+      "bytes": 10962,
+      "sha256": "ba74297e73dcb435707b0c0d60f899dca4cce4054acdebbc4df57f240866cba2"
     },
     {
       "path": "fps/style.css",
-      "bytes": 29584,
-      "sha256": "b257d3585567e1367a7d69b2e815e32535d0ae3e62d71431de99ec50df575cc5"
+      "bytes": 29996,
+      "sha256": "deb5f649b51b6571d3f71f14ef3ab6c9e627ad05dc2da7f7eaa2d86e26637cd8"
     },
     {
       "path": "fps/walk.html",
@@ -926,8 +926,8 @@
     },
     {
       "path": "src/fps/app.mjs",
-      "bytes": 31038,
-      "sha256": "daddb7610d74b5f63aec6a7063af46e54effbd3181212821ede022843ff05418"
+      "bytes": 32214,
+      "sha256": "1f2c19349f97e8d53994dfaa7e0bc7f4d1b00051454e9ad3d50c000269d7f4ca"
     },
     {
       "path": "src/fps/audio.mjs",
@@ -956,13 +956,13 @@
     },
     {
       "path": "src/fps/character-actors.mjs",
-      "bytes": 6336,
-      "sha256": "d184bb08ceca69f024c3196081f7f28e12e2ff44b17cbe7f997e61be3565379a"
+      "bytes": 6785,
+      "sha256": "6da1410ef140ec7bf5d9e6d32988336437ba19bf2c2b9ba78c5c75825a9d8810"
     },
     {
       "path": "src/fps/character-library.mjs",
-      "bytes": 19317,
-      "sha256": "992e6b07b7e49568a92cc60fe916d898ad4164d2a3975e0bf886f1cd1da6d43a"
+      "bytes": 19499,
+      "sha256": "19a786e5320644f1259fad283536218bd7ab28abddc14b6bb570de83c1cef00c"
     },
     {
       "path": "src/fps/combat-audio.mjs",
@@ -1151,8 +1151,8 @@
     },
     {
       "path": "src/fps/private-character-store.mjs",
-      "bytes": 3813,
-      "sha256": "21d9026102a12409bad4e701cf10bb472e2cd680d89c9f8d93052061b740e432"
+      "bytes": 5976,
+      "sha256": "ad83bcc112bfb646ecffc39aa14f9928cc416f2eba9dbb3609641a5cf2a827d8"
     },
     {
       "path": "src/fps/render-budget.mjs",
@@ -1161,8 +1161,8 @@
     },
     {
       "path": "src/fps/render-engine.mjs",
-      "bytes": 30282,
-      "sha256": "c3c305d504c35aa649d870b46690a45e7c50f4933cf1753466d400f35d987545"
+      "bytes": 30387,
+      "sha256": "c1850511b209efc7f7ecc18859c3a2322a04676467674a30237aad0eb0b36a59"
     },
     {
       "path": "src/fps/render.mjs",
@@ -1353,9 +1353,14 @@
       "path": "src/fps/view-character-appearance.mjs",
       "bytes": 5633,
       "sha256": "9fbcf2bb016efc40e803b628a007b4acfca946f2ec517a7801b434c92318ccf2"
+    },
+    {
+      "path": "src/fps/character-selection.mjs",
+      "bytes": 3257,
+      "sha256": "be20b77ef515e1d637705ec501ef1abf0d28e518e019d4e0d0958645f7a51228"
     }
   ],
-  "bytes": 22602029,
+  "bytes": 22610303,
   "sourceDirectoriesExcluded": [
     "references",
     "reviews",

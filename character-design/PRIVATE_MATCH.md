@@ -8,7 +8,7 @@ Den här piloten kopplar ihop Character Design Studio med spelets befintliga kar
 4. Klicka **Starta match** i spelet. Du spelar på Analysts. Du och lagkamrat **A-02** använder din design. Se honom framifrån för att kontrollera trycket; följ honom när han går och hukar.
 5. För att ändra designen: gå tillbaka till menyn och välj **Tillbaka till min design**. För ett vanligt spel: **Spela med originalkaraktärerna**.
 
-Designen finns bara i den här webbläsaren på den här enheten. Den skickas inte till GitHub eller någon server. URL:en är ingen delningslänk. Spara gärna också **Spara projekt (.json)** som en egen säkerhetskopia. De tre senaste provmodellerna behålls; namngivna ateljéprojekt tas inte bort när en äldre provmodell rensas.
+Designen finns bara i den här webbläsaren på den här enheten. Den skickas inte till GitHub eller någon server. URL:en är ingen delningslänk. Spara gärna också **Spara projekt (.json)** som en egen säkerhetskopia. Upp till åtta spelkopior sparas tills du själv tar bort dem. Äldre provkopior visas också i spelmenyn. Spelkopior och ateljéprojekt är separata; radering i spelmenyn tar inte bort projektet i ateljén.
 
 ## Verifierad omfattning
 
@@ -50,3 +50,21 @@ Färgerna läses från den validerade GLB:n: handmaterialet, tröjans reserverad
 Detta är fortsatt Male/T-shirt-piloten, inte generell överföring av tatuerade händer, nya handformer eller godtyckliga Procreate-texturer. Handmodellens befintliga form och manschett behålls för att bevara grepp och fingerrörelse. Ingen ny prestandanivå eller fysisk mobilkontroll utlovas.
 
 `view-character-appearance.test.mjs` jämför vapen-, magasin-, hand- och fingertransforms samt mynningsposition vid 16 omladdnings-/skottlägen per vapentyp, för alla 13 utrustningstyper. Det kontrollerar färgrymd, oförändrad källdata, återställning av cachade modeller, resursstädning och att världsvapen inte påverkas. Det befintliga webbläsarflödet testar också privat/vanlig åskådarvy för alla 13, verklig ammunitionsförbrukning och omladdning samt sparar förstapersonsbilder för pistol, CR4, SMG och kniv. Bilderna med valda vapen är kontrollerade renderingsfall; `match.png` visar ordinarie matchstart.
+
+## Välj din karaktär i vanliga matcher
+
+1. Öppna ditt projekt i **Min ateljé** i Character Design Studio. Välj **Export / privat provmatch ↗ → Spara för spelet**. Studion använder samma kontrollerade GLB-export som provmatchen. Ett ateljéprojekt behöver sparas för spelet en gång innan det kan väljas där.
+2. Klicka **Öppna spelmenyn ↗**. Under **Min karaktär** väljer du din sparade design. Befintliga provkopior finns redan i listan.
+3. Spelet laddar och kontrollerar kopian. Välj valfritt lag och **Klassiska rundor** eller **Endless Action**, sedan **Starta match**. Bara din egen spelare får designen; botarnas lagutseenden behålls. Händerna följer samma val.
+4. Valet koms ihåg på denna enhet och i denna webbläsare. **Originalkaraktär** återställer standardutseendet. **Ta bort spelkopian** tar bort endast GLB-kopian, efter bekräftelse. Projektet i ateljén finns kvar.
+5. För att ändra en spelkopia: öppna det namngivna projektet från ateljéns lista, ändra designen och välj **Spara för spelet** igen. Då uppdateras samma spelkopia. Har du studion och spelet öppna i olika flikar behöver spelmenyn laddas om för att läsa den nya kopian.
+
+Ingen modell eller design skickas till en server. Dessa vanliga matcher är fortfarande spelets lokala botmatcher, inte nätverksmultiplayer. Stödet är samma verifierade Male/T-shirt-pilot; menyn lovar inte stöd för godtyckliga GLB-filer. Den separata **Prova i privat match**-knappen behåller Analysts + A-02 som tidigare för att inspektera designen utifrån.
+
+Biblioteket begränsas till åtta GLB-kopior, högst 24 MiB per kopia. Samma ateljéprojekt uppdateras på samma ID, även när biblioteket är fullt. Inga äldre modeller raderas automatiskt. Listan behåller bara metadata; endast vald modell parsas och laddas i GPU-minnet. Ett modellbyte laddar om spelvyn innan matchstart för att släppa den tidigare modellens resurser. Lagbyte i samma vy byter endast kosmetisk avatar; skelett/animationskällor, spelobjekt, vapenfästen och träfflogik förblir desamma.
+
+Saknad kopia, fel kontrollsumma eller ändrad källmodell blockerar **Starta match** med en svensk förklaring. Menyn förblir tillgänglig för att välja originalet eller en annan kopia. Det blir aldrig ett tyst byte till en annan figur. Nekad lokal lagring hindrar inte en vanlig match med originalkaraktären.
+
+`private-match-browser.mjs` kör också `saved-character-menu-browser.mjs`: Spara för spelet, val från menyn, båda lag, klassisk död/åskådarvy/ny runda, Endless-död/respawn, ihågkommet val, originalåterställning, skadad kontrollsumma, radering utan förlust av ateljéprojekt och kontroll att ingen uppladdning sker. Separata IndexedDB-transaktionstester kontrollerar åttagränsen, uppdatering vid fullt bibliotek och avsaknad av automatisk radering. Menybilder i bred och smal viewport samt en matchbild sparas lokalt. Headless-/viewporttester är inte verifiering på fysisk telefon.
+
+Lagringsversion 2 behåller befintliga provkopior men stoppar den gamla versionens automatiska radering. Ladda om både studion och spelet efter uppdateringen. Gamla flikar kan inte skriva till det uppdaterade biblioteket förrän de laddas om. Migration och blockering av äldre skrivare regressionstestas med verklig IndexedDB.
