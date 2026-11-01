@@ -3,10 +3,10 @@
  * imports. The scene/physics is unchanged; outputs are ordinary saved furniture.
  * Automatic suggestions can always be overridden by Auto/Surface/Wall/Floor.
  */
-import {placementRole,proceduralOf} from './library/procedural.mjs?v=4.4.0';
-import {LIBRARY_MAP} from './library/catalog.mjs?v=4.7.0';
-import {findWallMount,wallMountProblem} from './wall-mounts.mjs?v=4.7.0';
-import {round,normalizeAngle} from './core.mjs';
+import {placementRole,proceduralOf} from './library/procedural.mjs?v=5.0.0';
+import {LIBRARY_MAP} from './library/catalog.mjs?v=5.0.0';
+import {findWallMount,wallMountProblem} from './wall-mounts.mjs?v=5.0.0';
+import {round,normalizeAngle} from './core.mjs?v=5.0.0';
 
 const isSurface=o=>!o.deleted&&(!o.wallMount||proceduralOf(o)?.shape==='wall-shelf'&&Math.abs(o.wallRoll||0)<1e-6)&&(
  ['counter','desk','table','round','wall-shelf'].includes(proceduralOf(o)?.shape)||

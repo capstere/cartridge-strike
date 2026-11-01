@@ -10,7 +10,7 @@ export function createDoors(data,physics){
   const reason=source.removed?'removed-by-owner':source.lockedUntilImplemented?'fixed-'+source.doorType:source.blocked?'blocked':source.kind!=='door-aperture'||source.passageOpenConfirmed?'open-passage':null;
   if(reason){skipped.push({id:source.id,reason});continue;}
   const dx=source.b[0]-source.a[0],dz=source.b[1]-source.a[1],width=Math.hypot(dx,dz),ux=dx/width,uz=dz/width;
-  const door={id:source.id,x:source.center[0],z:source.center[1],width,ux,uz,nx:-uz,nz:ux,angle:0,target:0,sign:1,holdUntil:0,leaves:[],accessCard:source.accessCardConfirmed,type:source.doorType||'ordinary'};
+  const door={id:source.id,studioColor:source.studioColor,x:source.center[0],z:source.center[1],width,ux,uz,nx:-uz,nz:ux,angle:0,target:0,sign:1,holdUntil:0,leaves:[],accessCard:source.accessCardConfirmed,type:source.doorType||'ordinary'};
   // Pivot inside the jamb, not 5cm inside the clear aperture: narrow WC doors remain passable.
   const count=width>1.3?2:1,w=(width-.025)/count;
   for(let i=0;i<count;i++){

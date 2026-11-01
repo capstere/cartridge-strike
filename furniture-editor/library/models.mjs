@@ -1,7 +1,7 @@
 /** Editor-only lazy 3D model management. No game-runtime dependencies. */
 import * as T from '../../vendor/three/three.module.js';
 import {GLTFLoader} from '../../vendor/three/addons/loaders/GLTFLoader.js';
-import {LIBRARY_MAP} from './catalog.mjs?v=4.4.0';
+import {LIBRARY_MAP} from './catalog.mjs?v=5.0.0';
 import {isTable,isChair,chairColors,FINISH_COLORS,modelScale} from '../appearance.mjs';
 import {inspectGLB,assetHash,safeFilename,assetPut,assetGet,assetAll,GLB_MAX_BYTES} from './glb-utils.mjs';
 const loader=new GLTFLoader();

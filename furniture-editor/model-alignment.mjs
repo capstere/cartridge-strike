@@ -1,6 +1,6 @@
 import {isTable} from './appearance.mjs';
 /** Model-space front; bounds are measured from the unchanged GLB, before normalization. */
-import {LIBRARY_MAP} from './library/catalog.mjs?v=4.7.0';
+import {LIBRARY_MAP} from './library/catalog.mjs?v=5.0.0';
 export const MODEL_FRONTS=['-z','+z','+x','-x'];
 export function modelFront(item){return item.wallFacing||LIBRARY_MAP.get(item.assetId)?.wallFacing||'-z';}
 export function validModelAlignment(item){return (item.mirrored===undefined||typeof item.mirrored==='boolean')&&(item.wallRoll===undefined||Number.isFinite(item.wallRoll)&&Math.abs(item.wallRoll)<=Math.PI+1e-9)&&(item.wallFacing===undefined||MODEL_FRONTS.includes(item.wallFacing))&&

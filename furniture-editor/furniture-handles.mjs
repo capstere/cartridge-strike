@@ -1,6 +1,6 @@
 /** Small projected 3D handles; uses the editor camera and existing project/undo state. */
 import * as T from '../vendor/three/three.module.js';
-import {furnitureHandleFrame} from './furniture-translation.mjs';
+import {furnitureHandleFrame} from './furniture-translation.mjs?v=5.0.0';
 const vec=p=>new T.Vector3(p.x,p.y,p.z);
 export function installFurnitureHandles({canvas,camera,getSelection,getWalls,onBegin,onDrag,onFinish,onCancel,onHint,onCameraGesture,onWheel,isCameraGesture}){
  const root=document.createElement('div');root.id='furnitureHandles';root.className='furniture-handles';root.hidden=true;root.setAttribute('aria-label','Flytta markerad möbel i 3D');canvas.parentElement.append(root);

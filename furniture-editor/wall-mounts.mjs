@@ -4,7 +4,7 @@
  * This pure geometry is shared by plan/3D and preserves normal FPS furniture
  * serialization. A missing wall is never silently replaced by an invisible one.
  */
-import {wallFootprint} from './model-alignment.mjs';
+import {wallFootprint} from './model-alignment.mjs?v=5.0.0';
 const r=n=>Math.round(n*1000000)/1000000;
 const clamp=(n,a,b)=>Math.max(a,Math.min(b,n));
 const finite=n=>typeof n==='number'&&Number.isFinite(n);

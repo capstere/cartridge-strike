@@ -1,6 +1,6 @@
 /** Authored instance transforms only. Never modifies a shared mesh or source asset. */
-import {wallFootprint} from './model-alignment.mjs';
-import {poseOnWall} from './wall-mounts.mjs';
+import {wallFootprint} from './model-alignment.mjs?v=5.0.0';
+import {poseOnWall} from './wall-mounts.mjs?v=5.0.0';
 export const turnAngle=a=>Math.atan2(Math.sin(a),Math.cos(a));
 function descendants(root,items){const result=[root],seen=new Set([root.id]);for(let i=0;i<result.length;i++)for(const item of items)if(item.mountId===result[i].id&&!seen.has(item.id)){seen.add(item.id);result.push(item);}return result.slice(1);}
 export function rotateFurniture(item,items,walls,delta){

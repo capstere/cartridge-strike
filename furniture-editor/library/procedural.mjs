@@ -1,5 +1,16 @@
 /** Editor-only, procedural low-poly furnishings: no GLB download or external assets. */
 export const PROCEDURAL_LIBRARY=Object.freeze([
+ {id:'studio:reuse-barrel',name:'Ståltunna',category:'labb',width:0.59,depth:0.59,height:0.846,shape:'reuse',prefab:'barrel',placement:'floor',license:'MIT · Riposte / BenDBSS',source:'Befintlig Cartridge Strike-geometri · inga nya modellkopior'},
+ {id:'studio:reuse-jersey',name:'Betongbarriär',category:'labb',width:2,depth:0.48,height:0.78,shape:'reuse',prefab:'jersey',placement:'floor',license:'MIT · Riposte / BenDBSS',source:'Befintlig Cartridge Strike-geometri · inga nya modellkopior'},
+ {id:'studio:reuse-sandbags',name:'Sandsäckar',category:'labb',width:2.1036,depth:0.3804,height:0.6,shape:'reuse',prefab:'sandbags',placement:'floor',license:'MIT · Riposte / BenDBSS',source:'Befintlig Cartridge Strike-geometri · inga nya modellkopior'},
+ {id:'studio:reuse-rack',name:'Pallställ',category:'labb',width:2.675,depth:1.12,height:2.8,shape:'reuse',prefab:'rack',placement:'floor',license:'MIT · Riposte / BenDBSS',source:'Befintlig Cartridge Strike-geometri · inga nya modellkopior'},
+ {id:'studio:reuse-container',name:'Fraktcontainer',category:'labb',width:2.508,depth:6.1245,height:2.6,shape:'reuse',prefab:'container',placement:'floor',license:'MIT · Riposte / BenDBSS',source:'Befintlig Cartridge Strike-geometri · inga nya modellkopior'},
+ {id:'studio:reuse-hvac',name:'Ventilationsaggregat',category:'labb',width:1.26,depth:0.602,height:0.7275,shape:'reuse',prefab:'hvac',placement:'floor',license:'MIT · Riposte / BenDBSS',source:'Befintlig Cartridge Strike-geometri · inga nya modellkopior'},
+ {id:'studio:reuse-generator',name:'Generator',category:'labb',width:1.45,depth:0.9,height:1.09,shape:'reuse',prefab:'generator',placement:'floor',license:'MIT · Riposte / BenDBSS',source:'Befintlig Cartridge Strike-geometri · inga nya modellkopior'},
+ {id:'studio:reuse-reel',name:'Kabeltrumma',category:'labb',width:0.915,depth:1.1,height:1.1,shape:'reuse',prefab:'reel',placement:'floor',license:'MIT · Riposte / BenDBSS',source:'Befintlig Cartridge Strike-geometri · inga nya modellkopior'},
+ {id:'studio:reuse-bollard',name:'Skyddspollare',category:'labb',width:0.34,depth:0.34,height:0.9125,shape:'reuse',prefab:'bollard',placement:'floor',license:'MIT · Riposte / BenDBSS',source:'Befintlig Cartridge Strike-geometri · inga nya modellkopior'},
+ {id:'studio:reuse-jerrycan',name:'Dunk',category:'labb',width:0.4,depth:0.17,height:0.56,shape:'reuse',prefab:'jerrycan',placement:'floor',license:'MIT · Riposte / BenDBSS',source:'Befintlig Cartridge Strike-geometri · inga nya modellkopior'},
+ {id:'studio:reuse-worktable',name:'Verkstadsbord',category:'bord',width:1.8,depth:0.86,height:0.8,shape:'reuse',prefab:'worktable',placement:'floor',license:'MIT · Riposte / BenDBSS',source:'Befintlig Cartridge Strike-geometri · inga nya modellkopior'},
  {id:'studio:orange-kitchen-chair',name:'Orange köksstol · vanlig stol',category:'stolar',width:.48,depth:.48,height:.76,shape:'dining-chair',kind:'chair',chairRole:'kitchen',featured:true},
  {id:'studio:desk-120',name:'Skrivbord 120 × 70 · vitt/silver',category:'bord',width:1.2,depth:.7,height:.75,shape:'desk'},
  {id:'studio:desk-160',name:'Skrivbord 160 × 80 · vitt/silver',category:'kontor',width:1.6,depth:.8,height:.75,shape:'desk'},
@@ -25,7 +36,7 @@ export const PROCEDURAL_LIBRARY=Object.freeze([
  {id:'studio:wall-picture',name:'Tavla med ram · blå',category:'dekor',width:.85,depth:.07,height:.62,shape:'wall-picture',placement:'wall'},
  {id:'studio:wall-clock',name:'Väggklocka · rund',category:'dekor',width:.38,depth:.08,height:.38,shape:'wall-clock',placement:'wall'},
  {id:'studio:wall-shelf',name:'Vägghylla · vit',category:'dekor',width:.9,depth:.25,height:.1,shape:'wall-shelf',placement:'wall'}
-].map(o=>Object.freeze({...o,kind:o.kind||'prop',license:'Original · Designstudion, procedurbyggd',source:'Samma fyrbenta stolform som Floor 5 · inga extra filer',model:o.shape,thumb:null})));
+].map(o=>Object.freeze({...o,kind:o.kind||'prop',license:o.license||'Original · Designstudion, procedurbyggd',source:o.source||'Designstudions procedurmodeller · inga extra filer',model:o.shape,thumb:o.prefab?`./library/thumbs/reuse/${o.prefab}.webp`:null})));
 export const PROCEDURAL_MAP=new Map(PROCEDURAL_LIBRARY.map(o=>[o.id,o]));
 /** Correct only the mislabeled office-chair preset from editor 3.4 drafts. */
 export function upgradeLegacyOrangeChair(project){let count=0;
