@@ -595,6 +595,11 @@
       "sha256": "6cb332d5706eae40e436c6949c04cffef7943ead2527c0ab68e43a1774f219d8"
     },
     {
+      "path": "furniture-editor/furniture-clipboard.mjs",
+      "bytes": 3674,
+      "sha256": "fa118388d3ab3e011da135f5108386a428ee4b75813054d23dacf161b0b3c039"
+    },
+    {
       "path": "furniture-editor/furniture-handles.mjs",
       "bytes": 6748,
       "sha256": "1a8959f908696375341d6cda0ed76e6f0527b9f9c7a4fbb8c658352d3436b465"
@@ -2086,18 +2091,18 @@
     },
     {
       "path": "furniture-editor/new.css",
-      "bytes": 22820,
-      "sha256": "c0ef2190720b86b0c7586a0a2f24864baced282abcaf98625f7a281d1dd6df5b"
+      "bytes": 23490,
+      "sha256": "236bf935b9a48a33958a8a8a1cf5baa829372188dfffe6f374094b03d4c60590"
     },
     {
       "path": "furniture-editor/new.html",
-      "bytes": 19728,
-      "sha256": "0499c43c0131d7e2d6b0d5cab0591858ad447a9dbebc956479e4d5825af38801"
+      "bytes": 20271,
+      "sha256": "a60c9d09005c86f148586cb33d65fbdc1b7a96446b89b99631370a0537931abe"
     },
     {
       "path": "furniture-editor/new.mjs",
-      "bytes": 105069,
-      "sha256": "1747d8c0dfef32992537cb4eafa84daf0f40e700cb72618b8e4a9ae670ac631f"
+      "bytes": 110033,
+      "sha256": "0068cd34c223bcae552dcae3efdc82cbb967180611d796fb176ae673a1c4c402"
     },
     {
       "path": "furniture-editor/selection-dock.mjs",

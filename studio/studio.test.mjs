@@ -67,7 +67,7 @@ test('context furniture dock edits the actual model with real validation and und
  assert.match(editor,/installSelectionDock/);
  assert.match(editor,/selectionDock\.sync\(o/);
  assert.match(editor,/child\.elevation=/);
- assert.match(html,/src="new\.mjs\?v=5\.1\.0"/);
+ assert.match(html,/src="new\.mjs\?v=5\.2\.0"/);
 });
 
 test('free building defaults to optional smart placement, with explicit diagnostics',()=>{
@@ -177,7 +177,7 @@ test('large rooms are real, atomic and not rejected by the obsolete 50-unit limi
  const geometry=source('furniture-editor/build/room-drag.mjs');
  const architecture=source('furniture-editor/build/architecture.mjs');
  const suite=source('tools/studio-ux-browser.mjs');
- assert.match(html,/src="new\.mjs\?v=5\.1\.0"/);
+ assert.match(html,/src="new\.mjs\?v=5\.2\.0"/);
  assert.match(editor,/const \{rect,edges\}=planDraggedRoom\(a,b,p\(\)\.ground\.bounds\)/);
  assert.match(editor,/if\(role==='room'\)for\(const \[u,v\] of edges\)makeSegment\('wall',u,v\)/);
  assert.match(editor,/p\(\)\.ground\.floors\.length=beforeFloors/);
