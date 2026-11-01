@@ -39,6 +39,9 @@ try{
  const glb=result.glb;delete result.glb;console.log(JSON.stringify(result));
  assert.equal(result.bones,65);assert.equal(result.clips,13);assert.equal(result.actors,10);for(const key of ['weights','binds','materials','geometry','clipsEqual'])assert.equal(result[key],true,key);assert(result.movement>0);
  await writeFile('test-results/private-character/pilot.glb',Buffer.from(glb,'base64'));
+ // The natural starting match, looking at A-02; no repositioned actors.
+ await page.evaluate(()=>{__fps.start('analysts');const p=__fps.game.player,f=__fps.game.actors.find(a=>a.id==='analysts-1'),dx=f.x-p.x,dz=f.z-p.z;__fps.step({yaw:Math.atan2(-dx,-dz),pitch:Math.atan2((f.y+.9)-(p.y+1.6),Math.hypot(dx,dz))},1/60);});
+ await page.screenshot({path:'test-results/private-character/match.png'});
  // Render actual FPS avatar in isolated inspection lighting, without a second implementation.
  const images=await page.evaluate(async()=>{
   const T=await import('../vendor/three/three.module.js');const s=__fps.renderer.actors.get('analysts-1').userData.avatar;

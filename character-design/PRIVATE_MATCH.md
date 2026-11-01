@@ -38,3 +38,5 @@ blender --background --factory-startup --disable-autoexec --python-exit-code 1 -
 Webbläsartestet skapar designen via knapparna, sparar/öppnar den, startar matchen, jämför GLB med laddade avatarer och verifierar normal match efteråt. Det sparar bilder av den faktiska runtime-modellen i fem poser. Pointer lock ersätts i headless-testet; detta är ingen mätning av manuell muskontroll eller mobilprestanda.
 
 Blender 4.5 LTS importerar exporten, exporterar en ny GLB och återimporterar i en ren scen. Det jämför geometri, UV, benhierarki, bindpose och skin weights samt verkligt deformerade triangelhörn i fem tidpunkter i vart och ett av de 13 klippen. Bilder och testdata hamnar i ignorerade `test-results/private-character/`. GitHub Actions kör samma flöde utan att ladda upp stora artefakter.
+
+Direktvägen Studio → provmatch behåller vikter och animationskanaler exakt. Blender 4.5.3:s egen exporter tar bort enskilda vikter under 0,0001 och normaliserar om dem. I den kontrollerade returen var största viktskillnaden 0,0000767 och största positionsskillnaden 0,00000762 meter; klipplängderna var oförändrade. Blender-returen är alltså numeriskt jämförd, inte byteidentisk.
