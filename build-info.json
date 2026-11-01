@@ -551,8 +551,8 @@
     },
     {
       "path": "furniture-editor/build/project-visuals.mjs",
-      "bytes": 5263,
-      "sha256": "c630e90c53a55073c47e3769961ae1ddb3356e8f342a90cd595c792db85bbafd"
+      "bytes": 5242,
+      "sha256": "34fcd07b9d71546483f157daeee0270cffceac266e8bdb655dc3413825ace83a"
     },
     {
       "path": "furniture-editor/build/room-drag.mjs",
@@ -1370,7 +1370,7 @@
       "sha256": "9b0c24534a47f2e1c9549a63a5e00a850577e22fe8d18dbc7a532008a027cb89"
     }
   ],
-  "bytes": 22630094,
+  "bytes": 22630073,
   "sourceDirectoriesExcluded": [
     "references",
     "reviews",

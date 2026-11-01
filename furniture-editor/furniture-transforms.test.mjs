@@ -4,7 +4,7 @@ import * as T from '../vendor/three/three.module.js';
 import {rotateFurniture,mirrorFurniture} from './furniture-transforms.mjs';
 import {poseOnWall,syncWallMounts} from './wall-mounts.mjs';
 import {wallFootprint,fittedSize} from './model-alignment.mjs';
-import {applyFurnitureAppearance} from './build/project-visuals.mjs';
+import {applyFurnitureAppearance,buildProjectFurniture} from './build/project-visuals.mjs';
 import {exportProject,parseProject,exportProjectZip,parseProjectZip} from './build/level-project.mjs';
 import {resolveProjectScene,writeProjectScene,floor5Baseline} from './build/project-scene.mjs';
 const near=(a,b)=>assert(Math.abs(a-b)<1e-6,`${a} != ${b}`);
@@ -52,4 +52,9 @@ test('lazy preview geometry arriving after its frame receives the same mirror as
  const item={...furniture(),mirrored:true},holder=new T.Group();applyFurnitureAppearance(holder,item);
  const mesh=new T.Mesh(new T.BoxGeometry(.2,.2,.2),new T.MeshStandardMaterial());mesh.position.set(.5,.6,0);holder.add(mesh);applyFurnitureAppearance(holder,item);holder.updateMatrixWorld(true);
  near(mesh.getWorldPosition(new T.Vector3()).x,-.5);assert(mesh.matrixWorld.determinant()<0);assert.equal(holder.children.length,1);
+});
+
+test('a missing model cannot leave other mirrored instances visually untransformed',async()=>{
+ const root=new T.Group(),good={...furniture(),mirrored:true},bad={...furniture(),id:'missing',assetId:'unknown:missing'};
+ await assert.rejects(buildProjectFurniture([good,bad],root),/saknas/);root.updateMatrixWorld(true);let determinant=1;root.children[0].traverse(o=>{if(o.isMesh)determinant=o.matrixWorld.determinant();});assert(determinant<0);
 });
