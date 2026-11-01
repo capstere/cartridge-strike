@@ -29,7 +29,7 @@ try{
   await drag('x',35,0);let moved=await current();assert.notEqual(moved.x,raised.x);near(moved.z,raised.z);near(moved.elevation,raised.elevation);
   await drag('move',20,15);moved=await current();near(moved.elevation,raised.elevation);
   for(const cancel of ['escape','pointer','blur']){const before=await current();await drag('height',0,-25,{cancel});assert.deepEqual(await current(),before,`${cancel} restores complete pose`);}
-  const noMove=await current(),camera=await page.evaluate(()=>__levelStudio.viewState.threeCenter),b=await h('height').boundingBox();await page.keyboard.down('Control');await page.mouse.move(b.x+b.width/2,b.y+b.height/2);await page.mouse.down();await page.mouse.move(b.x+b.width/2+25,b.y+b.height/2+10,{steps:4});await page.mouse.up();await page.keyboard.up('Control');assert.deepEqual(await current(),noMove);assert.notDeepEqual(await page.evaluate(()=>__levelStudio.viewState.threeCenter),camera);
+  const noMove=await current(),camera=await page.evaluate(()=>__levelStudio.viewState.threeCenter),b=await h('height').boundingBox();await page.keyboard.down('Shift');await page.mouse.move(b.x+b.width/2,b.y+b.height/2);await page.mouse.down();await page.mouse.move(b.x+b.width/2+25,b.y+b.height/2+10,{steps:4});await page.mouse.up();await page.keyboard.up('Shift');assert.deepEqual(await current(),noMove);assert.notDeepEqual(await page.evaluate(()=>__levelStudio.viewState.threeCenter),camera);
   await h('height').focus();await page.keyboard.press('ArrowUp');near((await current()).elevation,noMove.elevation+.1);
   await page.screenshot({path:`${out}/${mode}-raised.png`});
   // Copying after a height change must not silently drop it to the floor.

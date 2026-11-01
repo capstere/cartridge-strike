@@ -21,3 +21,5 @@ Byta till frostat glas erbjuds för öppningsbara vanliga dörrar och passerkort
 - `studio-floor-door-browser.mjs`: riktiga musdrag i Chromium/WebGL i båda ingångarna, svart golv, snäppning, ångra/gör om/avbryt, frostad dörr, ZIP/omladdning, 390 px vy och FPS-rendering. Ingår i befintlig CI.
 - Befintliga editor-, bygg-, möbel-, dörr- och projektregressioner behålls. Testresultat och publiceringskontroll redovisas i PR:n.
 - Närbilder i `test-results/studio-floor-door/` jämför samma kamera och geometri före/efter, samt frostat glas stängt/öppet. Dessa är kontrollerade renderingar; de kompletterar de faktiska gränssnittstesterna.
+
+Nästa uppdatering: [5.2 – flerval och kopiera/klistra in](design-studio-5.2.md).
