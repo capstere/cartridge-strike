@@ -1,0 +1,44 @@
+name: Private character match
+on:
+  pull_request:
+    branches: [main]
+    paths: ['character-design/**', 'src/fps/**', 'assets/fps/models/quaternius-*', '.github/workflows/private-character-match.yml']
+  push:
+    branches: [main]
+    paths: ['character-design/**', 'src/fps/**', 'assets/fps/models/quaternius-*', '.github/workflows/private-character-match.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: private-character-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Unit and runtime contracts
+        run: |
+          node --experimental-loader ./tools/vendor-three-test-loader.mjs --test character-design/*.test.mjs src/fps/*.test.mjs
+          node tools/verify-owner-runtime.mjs
+      - name: Install pinned browser and Blender 4.5.3 LTS
+        run: |
+          npm ci --prefix frontline/source/tools/dev --ignore-scripts --no-audit --no-fund
+          node frontline/source/tools/dev/node_modules/playwright-core/cli.js install --with-deps chromium
+          curl --fail --location --retry 3 https://download.blender.org/release/Blender4.5/blender-4.5.3-linux-x64.tar.xz -o /tmp/blender.tar.xz
+          echo '975c58fcb244273838534bba771e64ad87739216b0f9b39a888531a49a72d845  /tmp/blender.tar.xz' | sha256sum --check
+          tar -xf /tmp/blender.tar.xz -C /tmp
+          echo '/tmp/blender-4.5.3-linux-x64' >> "$GITHUB_PATH"
+      - name: Design, save, reopen, play, export and clean Blender reimport
+        run: |
+          set -euo pipefail
+          python3 -m http.server 8765 --bind 127.0.0.1 >/tmp/private-character-http.log 2>&1 &
+          SERVER_PID=$!
+          trap 'kill "$SERVER_PID" || true' EXIT
+          node character-design/private-match-browser.mjs
+          blender --background --factory-startup --disable-autoexec --python-exit-code 1 --python character-design/private-match-blender.py
+      # Evidence is printed in the job log; no Actions artifacts consume storage quota.

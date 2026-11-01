@@ -1,3 +1,5 @@
+import {newMatchPilot,validateMatchPilot} from './private-match.mjs';
+import {savePrivateCharacter,characterHash} from '../src/fps/private-character-store.mjs';
 /** Easy UI for revising the FPS skeleton, authoring character props and independent 3D objects. */
 import {saveProject,loadProject,listProjects,bytesToData,dataToBytes} from './project-store.mjs?v=53';
 import {installStudioControls} from './studio-controls.mjs?v=53';
@@ -536,8 +538,33 @@ function animateLoop(time){
  animationFrame=requestAnimationFrame(animateLoop);
 }
 async function refreshSlots(){try{const rows=await listProjects();const menu=$('saved-projects');menu.replaceChildren(new Option('Öppna från ateljén…',''));for(const row of rows.filter(x=>x.id!=='autosave').sort((a,b)=>b.updated.localeCompare(a.updated)))menu.append(new Option(row.name+' · '+new Date(row.updated).toLocaleDateString('sv-SE'),row.id));}catch(e){status('Projektbiblioteket kunde inte öppnas: '+e.message,true);}}
+async function startPrivateMatch(){
+ if(!ready)return;
+ const main=document.querySelector('main');
+ try{
+  validateMatchPilot(project);main.inert=true;status('Kontrollerar och sparar din privata provkaraktär…');
+  await Promise.all(workbench.fashion.pendingImages);
+  slotId??=crypto.randomUUID();await saveProject(slotId,projectSnapshot());await saveProject('autosave',projectSnapshot());
+  const source=await fetch(new URL('../assets/fps/models/quaternius-operator-male.glb',import.meta.url));if(!source.ok)throw Error('Originalkaraktären kunde inte läsas.');
+  const sourceHash=await characterHash(await source.arrayBuffer());
+  const bytes=await workbench.exportPreview();
+  const id=await savePrivateCharacter({bytes,name:project.name,sourceHash});
+  location.assign('../fps/?character='+id);
+ }catch(e){status('Provmatchen kunde inte öppnas: '+e.message,true);}finally{main.inert=false;}
+}
+async function createMatchPilot(){
+ if(!ready)return;
+ const main=document.querySelector('main');main.inert=true;
+ try{
+  await saveProject(slotId||crypto.randomUUID(),projectSnapshot());
+  studioControls?.stopSculpt();slotId=null;project=newMatchPilot();attachments.clear();selectedPart=null;dirty=false;workbench.playing=false;
+  clearDrawing();await creativeControls.restoreFaces({});refreshUI();setTab('fashion');visualChange({recreate:true,rebuild:true});studioControls?.resetHistory();
+  await saveProject('autosave',projectSnapshot());await refreshSlots();status('Male-piloten är klar. Välj färger och tryck och klicka Prova i privat match. Föregående projekt finns i ateljén.');
+ }catch(e){status('Kunde inte skapa piloten: '+e.message,true);}finally{main.inert=false;}
+}
 async function start(){
  workbench.faceCanvas=$('face-base');
+ $('private-match').onclick=startPrivateMatch;$('new-match-pilot').onclick=createMatchPilot;
  creativeControls=installCreativeControls({getProject:()=>project,workbench,persist,visualChange,status,download});
  installEvents();setupQuickStudio();initDrawing();
  studioControls=installStudioControls({getProject:()=>project,workbench,persist,visualChange,status,selected,getSelectedId:()=>selectedPart,selectPart:id=>{selectedPart=id;setTab('parts');partsSummary();},refresh:refreshUI,restore:async p=>{project=p;restoreAttachments();await workbench.prepareAssets(p);refreshUI();visualChange({recreate:true,rebuild:true});saveLocal();}});
