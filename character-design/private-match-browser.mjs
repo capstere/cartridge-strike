@@ -9,7 +9,13 @@ await mkdir('test-results/private-character',{recursive:true});
 try{
  const context=await browser.newContext({viewport:{width:1280,height:900}}),page=await context.newPage(),errors=[];
  page.setDefaultTimeout(120000);page.on('pageerror',e=>errors.push(e.message));
- await page.addInitScript(()=>{HTMLCanvasElement.prototype.requestPointerLock=function(){return Promise.resolve();};});
+ await page.addInitScript(()=>{
+  HTMLCanvasElement.prototype.requestPointerLock=function(){return Promise.resolve();};
+  // Test-mode frames are advanced by __fps.step/render below. An unbounded
+  // live RAF loop otherwise queues GPU work faster than Linux SwiftShader can
+  // capture a screenshot; assertions and the game renderer remain unchanged.
+  if(location.pathname.endsWith('/fps/')&&new URLSearchParams(location.search).has('test'))window.requestAnimationFrame=()=>0;
+ });
  await page.goto(origin+'/character-design/');await page.waitForFunction(()=>document.querySelector('#status').textContent.includes('redo!'));
  await page.locator('#new-match-pilot').click();await page.waitForFunction(()=>document.querySelector('#status').textContent.startsWith('Male-piloten är klar'));
  await page.locator('#shirt-text').fill('MITT SPEL');await page.locator('#save-slot').click();await page.waitForFunction(()=>document.querySelector('#status').textContent.includes('sparad i ateljén'));
@@ -17,7 +23,7 @@ try{
  assert.equal(await page.locator('#outfit-style').inputValue(),'tshirt');assert.equal(await page.locator('#shoe-style').inputValue(),'sneakers');assert.equal(await page.locator('#shirt-text').inputValue(),'MITT SPEL');
  console.log('STUDIO_SAVED');await page.locator('#private-match').click();await page.waitForURL(/\/fps\/\?character=/);
  const url=page.url();await page.goto(url+'&test=1');
- await page.waitForFunction(()=>window.__fps||!document.querySelector('#fatal').hidden,null,{timeout:240000});
+ await page.waitForFunction(()=>window.__fps||!document.querySelector('#fatal').hidden,null,{timeout:240000,polling:100});
  assert.equal(await page.locator('#fatal').isHidden(),true,await page.locator('#fatal').textContent());
  assert.match(await page.locator('#private-character-note').textContent(),/A-02/);
  await page.locator('#start').click();
@@ -55,8 +61,8 @@ try{
   }renderer.dispose();if(!finite)throw Error('Non-finite animated vertices');return images;
  });
  for(const [name,data]of Object.entries(images))await writeFile('test-results/private-character/'+name+'.png',Buffer.from(data.split(',')[1],'base64'));
- await page.reload();await page.waitForFunction(()=>window.__fps||!document.querySelector('#fatal').hidden,null,{timeout:240000});assert(await page.locator('#fatal').isHidden());
- await page.locator('#original-character-match').click();await page.waitForFunction(()=>!document.querySelector('#start').disabled,null,{timeout:240000});assert.equal(await page.locator('#private-character-note').count(),0);
+ await page.reload();await page.waitForFunction(()=>window.__fps||!document.querySelector('#fatal').hidden,null,{timeout:240000,polling:100});assert(await page.locator('#fatal').isHidden());
+ await page.locator('#original-character-match').click();await page.waitForFunction(()=>!document.querySelector('#start').disabled,null,{timeout:240000,polling:100});assert.equal(await page.locator('#private-character-note').count(),0);
  await page.goto(origin+'/fps/?character=invalid');await page.locator('#fatal').waitFor({state:'visible'});assert.match(await page.locator('#fatal').innerText(),/Ogiltig privat karaktärslänk/);
  assert.deepEqual(errors,[]);await writeFile('test-results/private-character/result.json',JSON.stringify(result,null,2));console.log('PRIVATE_CHARACTER_MATCH_OK',JSON.stringify(result));
  await context.close();
