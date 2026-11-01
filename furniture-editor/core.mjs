@@ -2,7 +2,7 @@
  * This file deliberately has no imports from the active FPS, no mutations of game data,
  * and no storage or network side effects. The exported JSON is review-only.
  */
-import {LIBRARY_MAP} from './library/catalog.mjs?v=4.4.0';
+import {LIBRARY_MAP} from './library/catalog.mjs?v=5.0.0';
 import {editableDimensions,isChair,chairRole,validateDimensions,CHAIR_ROLES,ASSET_ROLES} from './appearance.mjs';
 export const EDITOR_VERSION = '2.0.0';
 export const GAME_VERSION = '0.17.0';

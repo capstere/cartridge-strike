@@ -1,6 +1,6 @@
 /** Portable collision handoff. The engine's physics remains authoritative. */
 import {wallPieces,isDoor,STANDARD_PASSAGE_WIDTH} from './architecture.mjs?v=4.6.0';
-import {resolveProjectScene,projectWallPieces} from './project-scene.mjs?v=4.6.0';
+import {resolveProjectScene,projectWallPieces} from './project-scene.mjs?v=5.0.0';
 
 export function collisionExport(p){
  const scene=resolveProjectScene(p),segments=scene.entries,floors=scene.floors;

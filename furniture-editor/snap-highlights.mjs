@@ -2,8 +2,8 @@
  * Presentation for smart placement; the pose comes from the same pure algorithm
  * used by the editor for actual placement. Highlights never create colliders.
  */
-import {wallFootprint} from './model-alignment.mjs';
-import {inferPlacementRole,proposeSmartPose} from './smart-placement.mjs?v=4.7.0';
+import {wallFootprint} from './model-alignment.mjs?v=5.0.0';
+import {inferPlacementRole,proposeSmartPose} from './smart-placement.mjs?v=5.0.0';
 
 const finite=n=>typeof n==='number'&&Number.isFinite(n);
 const normalWall=w=>w&&!w.deleted&&w.kind==='wall';

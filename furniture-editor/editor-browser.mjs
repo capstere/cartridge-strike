@@ -57,14 +57,14 @@ try{
  // New V2 model library: real Kenney thumbnail + GLB must be served locally.
  const catalogCounts=await page.evaluate(async()=>{
   const [{LIBRARY,LIBRARY_ALL},{PROCEDURAL_LIBRARY},{ONBOARD_LIBRARY}]=await Promise.all([
-   import('./library/catalog.mjs'),import('./library/procedural.mjs?v=3.5.0'),import('./library/onboard-catalog.mjs')
+   import('./library/catalog.mjs'),import('./library/procedural.mjs?v=5.0.0'),import('./library/onboard-catalog.mjs')
   ]);
   return {original:LIBRARY.length,procedural:PROCEDURAL_LIBRARY.length,onboard:ONBOARD_LIBRARY.length,
    total:LIBRARY_ALL.length,visible:__furnitureEditor.catalogCount};
  });
- check('104 original GLBs and 25 procedural objects retained alongside 15 verified onboard models',
-  catalogCounts.original===104&&catalogCounts.procedural===25&&catalogCounts.onboard===15&&
-  catalogCounts.total===144&&catalogCounts.visible===144);
+ check('104 original GLBs, 36 procedural objects, 15 onboard and 122 house models',
+  catalogCounts.original===104&&catalogCounts.procedural===36&&catalogCounts.onboard===15&&
+  catalogCounts.total===277&&catalogCounts.visible===277);
  await page.locator('#openLibrary').click();
  check('library opens without loading FPS runtime',await page.locator('#libraryDialog').evaluate(e=>e.open));
  await page.locator('#librarySearch').fill('Liten växt');

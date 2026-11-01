@@ -6,12 +6,12 @@ import * as T from '../vendor/three/three.module.js';
 import {createFurnishings} from '../src/fps/furnishings.mjs';
 import {EDITOR_VERSION,GAME_VERSION,BASE_COMMIT,DEFAULT_ROOMS,ROOM_LABELS,
   EDITABLE_KINDS,bounds,centroid,inside,distanceSegment,catalog,normalizeAngle,
-  round,validate,snapFurnitureToWall,exportPatch,parsePatch,isChanged} from './core.mjs';
-import {LIBRARY_ALL as LIBRARY,LIBRARY_MAP,LIBRARY_CATEGORIES} from './library/catalog.mjs?v=3.7.0';
-import {populateProcedural} from './library/procedural-mesh.mjs';
-import {proceduralOf,placementRole} from './library/procedural.mjs';
-import {proposeSmartPose,findSupport} from './smart-placement.mjs';
-import {addModelToGroup,importLocalGLB,localLibrary,getLocalFile} from './library/models.mjs';
+  round,validate,snapFurnitureToWall,exportPatch,parsePatch,isChanged} from './core.mjs?v=5.0.0';
+import {LIBRARY_ALL as LIBRARY,LIBRARY_MAP,LIBRARY_CATEGORIES} from './library/catalog.mjs?v=5.0.0';
+import {populateProcedural} from './library/procedural-mesh.mjs?v=5.0.0';
+import {proceduralOf,placementRole} from './library/procedural.mjs?v=5.0.0';
+import {proposeSmartPose,findSupport} from './smart-placement.mjs?v=5.0.0';
+import {addModelToGroup,importLocalGLB,localLibrary,getLocalFile} from './library/models.mjs?v=5.0.0';
 import {makeZip,readZip,PROJECT_ZIP_MAX_BYTES} from './library/zip.mjs';
 import {readModelBundleZip} from './library/model-bundle.mjs';
 import {assetHash} from './library/glb-utils.mjs';

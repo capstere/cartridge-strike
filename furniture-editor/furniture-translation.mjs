@@ -1,6 +1,6 @@
 /** Pure, bounded instance movement. Preview and commit share the same authored pose. */
-import {poseOnWall} from './wall-mounts.mjs';
-import {fittedSize,wallFootprint} from './model-alignment.mjs';
+import {poseOnWall} from './wall-mounts.mjs?v=5.0.0';
+import {fittedSize,wallFootprint} from './model-alignment.mjs?v=5.0.0';
 const clamp=(n,a,b)=>Math.max(a,Math.min(b,n));
 const rounded=n=>Math.round(n*1e6)/1e6;
 export function furnitureAssembly(item,items){const result=[item],seen=new Set([item.id]);for(let i=0;i<result.length;i++)for(const child of items)if(child.mountId===result[i].id&&!seen.has(child.id)){result.push(child);seen.add(child.id);}return result;}

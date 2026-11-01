@@ -1,19 +1,21 @@
-import {validModelAlignment} from '../model-alignment.mjs';
+import {validateSurfaceColors} from './surface-style.mjs?v=5.0.0';
+import {validateOpenedAreas,closedAreas} from './walkable-spaces.mjs?v=5.0.0';
+import {validModelAlignment} from '../model-alignment.mjs?v=5.0.0';
 /** Versioned level document. Parsing is deliberately independent of the renderer. */
-import {BASE_COMMIT,GAME_VERSION,PATCH_FORMAT,PATCH_SCHEMA} from '../core.mjs';
+import {BASE_COMMIT,GAME_VERSION,PATCH_FORMAT,PATCH_SCHEMA} from '../core.mjs?v=5.0.0';
 import {validateEntry,validateFloorRect} from './architecture.mjs?v=4.6.0';
 import {assetHash} from '../library/glb-utils.mjs';
 import {makeZip,readZip,PROJECT_ZIP_MAX_BYTES} from '../library/zip.mjs';
-import {floor5Baseline} from './project-scene.mjs?v=4.6.0';
+import {floor5Baseline} from './project-scene.mjs?v=5.0.0';
 import {parseArchitecture} from './architecture.mjs?v=4.6.0';
-import {LIBRARY_MAP} from '../library/catalog.mjs?v=4.4.0';
+import {LIBRARY_MAP} from '../library/catalog.mjs?v=5.0.0';
 import {parsePosters} from './posters.mjs';
 import {parseTreatments} from './treatments.mjs';
-import {collisionExport,aiAgentBrief} from './ai-export.mjs?v=4.4.0';
-import {validWallMount} from '../wall-mounts.mjs';
+import {collisionExport,aiAgentBrief} from './ai-export.mjs?v=5.0.0';
+import {validWallMount} from '../wall-mounts.mjs?v=5.0.0';
 
 export const LEVEL_FORMAT='cartridge-strike-level-project',LEVEL_SCHEMA=2;
-export const LEVEL_GAME_VERSION='0.18.0',LEVEL_BASE_COMMIT='f5c63a22483feeeb29583853dab0c0911af5c09a',LEVEL_EDITOR_VERSION='3.6.0';
+export const LEVEL_GAME_VERSION='0.18.0',LEVEL_BASE_COMMIT='f5c63a22483feeeb29583853dab0c0911af5c09a',LEVEL_EDITOR_VERSION='5.0.0';
 const emptyArchitecture=()=>({schemaVersion:1,edits:[],added:[],removed:[],floors:[],posters:[],treatments:[]});
 const within=n=>typeof n==='number'&&Number.isFinite(n)&&Math.abs(n)<=100;
 const rect=r=>r&&[r.x0,r.z0,r.x1,r.z1].every(within)&&r.x1>r.x0&&r.z1>r.z0;
@@ -106,6 +108,8 @@ export function parseProject(input,{allowLegacy=true}={}){
    for(const k of ['w','d','height'])if(o[k]!==undefined&&(!Number.isFinite(o[k])||o[k]<=0||o[k]>8))fail('möbelmått');unique(o.id);}
   for(const id of f.removed){if(!byId.has(id))fail('borttagen Floor 5-möbel');unique(id);}
  }
+ const sourceData=input.mode==='edit-floor5'?floor5Baseline().data:null;validateOpenedAreas(input,sourceData);
+ const paintIds=new Set([...a.added,...g.floors,...a.floors,...(sourceData?[...floor5Baseline().entries,...sourceData.rooms,...sourceData.corridors,...closedAreas(sourceData)]:[])].map(e=>e.id));validateSurfaceColors(input,paintIds);
  const play=input.gameplay;if(play?.mode!=='classic'||!play.counts||!Array.isArray(play.spawns)||play.spawns.length>10||
   !play.objectives||!Array.isArray(play.objectives.hostages))fail('spelregler');
  for(const team of ['analysts','counterAnalysts'])if(!Number.isInteger(play.counts[team])||play.counts[team]<1||play.counts[team]>5)fail('lagstorlek');

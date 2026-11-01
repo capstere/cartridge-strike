@@ -1,8 +1,9 @@
 /** Minimal primitive meshes: one unit box reused by editor, two shared circles.
  * All objects centered X/Z and resting on the floor; elevation applied by parent.
  */
+import {createPrefab} from '../../src/fps/riposte-procedural-props.mjs';
 import * as T from '../../vendor/three/three.module.js';
-import {proceduralOf} from './procedural.mjs?v=4.4.0';
+import {proceduralOf} from './procedural.mjs?v=5.0.0';
 import {chairColors} from '../appearance.mjs';
 const circle=new T.CylinderGeometry(.5,.5,1,24);
 const metallic=new T.MeshStandardMaterial({color:0xaab6bd,metalness:.57,roughness:.43});
@@ -29,6 +30,13 @@ export function populateDiningChair(item,put){
 export function populateProcedural(item,group,put){
  const entry=proceduralOf(item);if(!entry)return false;
  const w=item.w,d=item.d,h=item.height;
+ if(entry.shape==='reuse'){
+  const prefab=createPrefab(T,entry.prefab,{detail:1}),bounds=new T.Box3().setFromObject(prefab.group),size=bounds.getSize(new T.Vector3()),center=bounds.getCenter(new T.Vector3());
+  prefab.group.scale.set(w/size.x,h/size.y,d/size.z);
+  prefab.group.position.set(-center.x*w/size.x,-bounds.min.y*h/size.y,-center.z*d/size.z);
+  prefab.group.traverse(o=>{if(o.isMesh){o.userData.editId=item.id;o.userData.studioGeometry=true;for(const m of Array.isArray(o.material)?o.material:[o.material])m.userData.studioOwned=true;}});
+  group.add(prefab.group);return true;
+ }
  const box=(x,y,z,ww,hh,dd,mat)=>put(x,y,z,ww,hh,dd,mat);
  const legs=(top,legH=.045)=>{
   for(const x of [-w*.44,w*.44])for(const z of[-d*.4,d*.4])

@@ -32,10 +32,10 @@ export async function buildDoorVisuals(system){
   const non=parts.map(g=>g.index?g.toNonIndexed():g),merged=mergeGeometries(non),geometry=mergeVertices(merged,1e-8);merged.dispose();parts.forEach(g=>g.dispose());non.forEach(g=>g.dispose());
   const mesh=new T.InstancedMesh(geometry,material,leaves.length);mesh.name='doors-'+name;mesh.frustumCulled=false;mesh.receiveShadow=true;mesh.castShadow=true;
   mesh.instanceMatrix.setUsage(T.DynamicDrawUsage);root.add(mesh);batches.push(mesh);
-  if(name==='panel')for(let i=0;i<leaves.length;i++)mesh.setColorAt(i,new T.Color(leaves[i].door.accessCard?0x527b80:0xc4c3af));
+  if(name==='panel')for(let i=0;i<leaves.length;i++)mesh.setColorAt(i,new T.Color(leaves[i].door.studioColor||(leaves[i].door.accessCard?0x527b80:0xc4c3af)));
  }
  const transform=new T.Object3D(),frustum=new T.Frustum(),projection=new T.Matrix4(),sphere=new T.Sphere();
- const colors=leaves.map(l=>new T.Color(l.door.accessCard?0x527b80:0xc4c3af));let lastSignature='',visibleCount=leaves.length;
+ const colors=leaves.map(l=>new T.Color(l.door.studioColor||(l.door.accessCard?0x527b80:0xc4c3af)));let lastSignature='',visibleCount=leaves.length;
  function update(camera=null,lights=[]){
   if(camera){camera.updateMatrixWorld();frustum.setFromProjectionMatrix(projection.multiplyMatrices(camera.projectionMatrix,camera.matrixWorldInverse));}
   const shadows=[];
