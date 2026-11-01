@@ -1,6 +1,6 @@
 /** Editor-only curtains and blinds as lightweight wall-mounted architectural decorations. */
-import {isWall} from './architecture.mjs';
-import {projectToWall} from './paint-over-wall.mjs';
+import {isWall} from './architecture.mjs?v=5.1.0';
+import {projectToWall} from './paint-over-wall.mjs?v=5.1.0';
 const R=n=>Math.round(n*1000)/1000;
 export const TREATMENTS_MAX=120;
 export const TREATMENT_TYPES=Object.freeze(['curtain','blind']);

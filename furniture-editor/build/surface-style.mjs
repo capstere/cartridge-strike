@@ -11,6 +11,28 @@ export function validateSurfaceColors(project,ids){
 }
 /** The same source records feed studio preview and the FPS renderer. */
 export function paintDescription(description,data){
+ // The door cutter leaves 0.015 clearance on each side. Cover that clearance
+ // above the jamb only; use the backing wall's plane, depth, height and paint.
+ // A 0.0001 depth bias prevents coplanar internal end faces producing hairlines.
+ // Custom projects only: canonical Floor 5 collision/geometry stays untouched.
+ if(data.__custom)for(const door of data.doors){
+  const header=description.boxes.find(b=>b.id===door.id+'-lintel');if(!header)continue;
+  const dx=door.b[0]-door.a[0],dz=door.b[1]-door.a[1],len=Math.hypot(dx,dz),ux=dx/len,uz=dz/len;
+  const candidates=data.walls.filter(w=>w.surfaceType==='opaque'&&Math.abs((w.b[0]-w.a[0])*uz-(w.b[1]-w.a[1])*ux)<.01&&
+   [w.a,w.b].some(p=>Math.hypot(p[0]-door.a[0],p[1]-door.a[1])<.18||Math.hypot(p[0]-door.b[0],p[1]-door.b[1])<.18));
+  const wall=candidates.sort((a,b)=>Math.abs((a.a[0]-door.a[0])*uz-(a.a[1]-door.a[1])*ux)-Math.abs((b.a[0]-door.a[0])*uz-(b.a[1]-door.a[1])*ux))[0];
+  if(!description.boxes.some(b=>b.id===door.id+'-head-jamb'))description.boxes.push({...header,id:door.id+'-head-jamb',y:2.2875,h:.045,w:len+.065,d:.065,color:[.4,.41,.4]});
+  if(wall){const offset=(wall.a[0]-door.a[0])*(-uz)+(wall.a[1]-door.a[1])*ux;
+   // Source apertures can end before their neighboring solids (D26: .133/.028).
+   // Span the measured joining ends above the door, not just the cutter margin.
+   const ends=candidates.flatMap(w=>[w.a,w.b]).map(p=>(p[0]-door.a[0])*ux+(p[1]-door.a[1])*uz);
+   const left=ends.filter(t=>t<=.001&&t>=-.18),right=ends.filter(t=>t>=len-.001&&t<=len+.18);
+   const lo=Math.min(-.015,left.length?Math.max(...left):0)-.002,hi=Math.max(len+.015,right.length?Math.min(...right):len)+.002;
+   header.x=door.a[0]+ux*(lo+hi)/2-uz*offset;header.z=door.a[1]+uz*(lo+hi)/2+ux*offset;header.d=wall.thickness+.0001;header.w=hi-lo;
+   header.h=Math.max(.001,wall.height-2.29);header.y=2.29+header.h/2;
+   if(wall.studioColor)header.studioColor=wall.studioColor;
+  }
+ }
  for(const wall of data.walls)if(wall.studioColor)for(const box of description.boxes){
   if((box.id===wall.id||box.id.startsWith(wall.id+'-'))&&!['glass','frosted'].includes(box.material)&&!box.id.endsWith('-skirt'))box.studioColor=wall.studioColor;
  }

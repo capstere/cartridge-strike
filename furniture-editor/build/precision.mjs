@@ -1,5 +1,5 @@
 /** Deterministic, editor-only precision helpers. Never changes the canonical map. */
-import {entryLength,isWall,roundPosition,validateEntry,pointToSegmentDistance} from './architecture.mjs';
+import {entryLength,isWall,roundPosition,validateEntry,pointToSegmentDistance} from './architecture.mjs?v=5.1.0';
 
 const distance=(a,b)=>Math.hypot(a[0]-b[0],a[1]-b[1]);
 const rounded=p=>p.map(roundPosition);

@@ -1,15 +1,15 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import * as T from '../../vendor/three/three.module.js';
-import {exportProject,parseProject,exportProjectZip,parseProjectZip} from './level-project.mjs';
-import {floor5Baseline,resolveProjectScene} from './project-scene.mjs';
+import {exportProject,parseProject,exportProjectZip,parseProjectZip} from './level-project.mjs?v=5.1.0';
+import {floor5Baseline,resolveProjectScene} from './project-scene.mjs?v=5.1.0';
 import {floorGaps,gapFloor,closedAreas} from './walkable-spaces.mjs';
-import {architecturePreview} from './architecture-preview.mjs';
-import {createWorld} from '../../src/fps/world.mjs';
-import {reconcileSurfaceColors} from './surface-style.mjs';
-import {makeEntry} from './architecture.mjs';
+import {architecturePreview} from './architecture-preview.mjs?v=5.1.0';
+import {createWorld} from '../../src/fps/world.mjs?v=5.1.0';
+import {reconcileSurfaceColors} from './surface-style.mjs?v=5.1.0';
+import {makeEntry} from './architecture.mjs?v=5.1.0';
 import {PROCEDURAL_LIBRARY} from '../library/procedural.mjs';
-import {buildProjectFurniture} from './project-visuals.mjs';
+import {buildProjectFurniture} from './project-visuals.mjs?v=5.1.0';
 const floor={id:'BYGG-G-0001',name:'Rum',role:'room',surface:'carpet',x0:0,z0:0,x1:8,z1:8};
 function fixture(){const p=exportProject({ground:{bounds:{x0:-10,z0:-10,x1:10,z1:10},wallHeightDefault:2.85,floors:[floor]}});p.architecture.added=[makeEntry('BYGG-V-0001','wall',[0,0],[8,0]),makeEntry('BYGG-D-0001','door',[3,0],[4.2,0]),makeEntry('BYGG-V-0002','window',[0,8],[8,8])];return p;}
 test('surface colors survive ZIP, paint actual FPS surfaces/leaves, preserve clear window glass',async()=>{

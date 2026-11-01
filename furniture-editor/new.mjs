@@ -1,24 +1,25 @@
-import {architecturePreview} from './build/architecture-preview.mjs?v=5.0.0';
-import {surfaceColor,validPaint,reconcileSurfaceColors} from './build/surface-style.mjs?v=5.0.0';
+import {floorEdgeHandles,planFloorEdge} from './build/floor-edge.mjs?v=5.1.0';
+import {architecturePreview} from './build/architecture-preview.mjs?v=5.1.0';
+import {surfaceColor,validPaint,reconcileSurfaceColors} from './build/surface-style.mjs?v=5.1.0';
 import {floorGaps,gapFloor} from './build/walkable-spaces.mjs?v=5.0.0';
 import {installFurnitureHandles} from './furniture-handles.mjs?v=5.0.0';
 import {planFurnitureTranslation,furnitureAssembly} from './furniture-translation.mjs?v=5.0.0';
 import {rotateFurniture,mirrorFurniture} from './furniture-transforms.mjs?v=5.0.0';
 import {modelFront,MODEL_FRONTS,wallFootprint} from './model-alignment.mjs?v=5.0.0';
 import {makePoster,locatePoster} from './build/posters.mjs';
-import {createCurtain,createBlind,treatmentPosition} from './build/treatments.mjs';
-import {buildProjectFurniture,buildProjectDecorations,applyFurnitureAppearance} from './build/project-visuals.mjs?v=5.0.0';
-import {resolveProjectScene,writeProjectScene,floor5Baseline,projectWallPieces} from './build/project-scene.mjs?v=5.0.0';
-import {inheritFloor5Gameplay} from '../src/fps/world.mjs?v=5.0.0';
-import {wallAtPoint,planPaintOverWall} from './build/paint-over-wall.mjs?v=4.6.0';
-import {planResizeFloor,planResizeFloorEdge,planSlideInsert,planMoveWallEnd,roomBoundaryIds} from './build/direct-manipulation.mjs?v=4.6.0';
+import {createCurtain,createBlind,treatmentPosition} from './build/treatments.mjs?v=5.1.0';
+import {buildProjectFurniture,buildProjectDecorations,applyFurnitureAppearance} from './build/project-visuals.mjs?v=5.1.0';
+import {resolveProjectScene,writeProjectScene,floor5Baseline,projectWallPieces} from './build/project-scene.mjs?v=5.1.0';
+import {inheritFloor5Gameplay} from '../src/fps/world.mjs?v=5.1.0';
+import {wallAtPoint,planPaintOverWall} from './build/paint-over-wall.mjs?v=5.1.0';
+import {planResizeFloor,planResizeFloorEdge,planSlideInsert,planMoveWallEnd,roomBoundaryIds} from './build/direct-manipulation.mjs?v=5.1.0';
 import {parsePosters} from './build/posters.mjs';
-import {parseTreatments} from './build/treatments.mjs';
+import {parseTreatments} from './build/treatments.mjs?v=5.1.0';
 import * as T from '../vendor/three/three.module.js';
-import {exportProject,parseProject,parseProjectZip,exportProjectZip} from './build/level-project.mjs?v=5.0.0';
-import {validateLevel} from './build/validate-level.mjs?v=5.0.0';
+import {exportProject,parseProject,parseProjectZip,exportProjectZip} from './build/level-project.mjs?v=5.1.0';
+import {validateLevel} from './build/validate-level.mjs?v=5.1.0';
 import {validate,corners as baseCorners,inside,segmentIntersectsRectangle,intersects} from './core.mjs?v=5.0.0';
-import {wallPieces,standardPassageSpan,standardDoorMarkerSpan,isDoor} from './build/architecture.mjs?v=4.6.0';
+import {wallPieces,standardPassageSpan,standardDoorMarkerSpan,isDoor} from './build/architecture.mjs?v=5.1.0';
 import {LIBRARY_ALL} from './library/catalog.mjs?v=5.0.0';
 import {upgradeLegacyOrangeChair} from './library/procedural.mjs?v=5.0.0';
 import {proposeSmartPose,duplicateFurnitureAssembly} from './smart-placement.mjs?v=5.0.0';
@@ -28,8 +29,8 @@ import {findNearbyFreePlacement} from './soft-placement.mjs';
 import {importLocalGLB,getLocalFile,localLibrary,readLibraryAsset} from './library/models.mjs?v=5.0.0';
 import {assetHash} from './library/glb-utils.mjs';
 import {installSelectionDock} from './selection-dock.mjs?v=4.9.0';
-import {planAdjacentRoom,ADJACENT_SIDES} from './adjacent-room.mjs?v=4.6.0';
-import {planDraggedRoom} from './build/room-drag.mjs?v=4.6.0';
+import {planAdjacentRoom,ADJACENT_SIDES} from './adjacent-room.mjs?v=5.1.0';
+import {planDraggedRoom} from './build/room-drag.mjs?v=5.1.0';
 
 const $=id=>document.getElementById(id),canvas=$('plan'),ctx=canvas.getContext('2d');
 const catalogEntries=LIBRARY_ALL;
@@ -69,6 +70,8 @@ function point(e){const r=canvas.getBoundingClientRect(),b=p().ground.bounds,sca
 function screen(x,z){const b=p().ground.bounds,scale=Math.min(canvas.width/(b.x1-b.x0),canvas.height/(b.z1-b.z0))*zoom;
  return [canvas.width/2+(x-(b.x0+b.x1)/2+offset.x)*scale,canvas.height/2+(z-(b.z0+b.z1)/2+offset.z)*scale];}
 const dist=(a,b)=>Math.hypot(a.x-b.x,a.z-b.z);
+let floorOnly=false;
+const chosenFloorHandles=f=>floorOnly||f.source?floorEdgeHandles(f):{...rectCorners(f),...allowedEdgeHandles(f)};
 const rectCorners=f=>({nw:{x:f.x0,z:f.z0},ne:{x:f.x1,z:f.z0},se:{x:f.x1,z:f.z1},sw:{x:f.x0,z:f.z1}});
 const edgeHandles=f=>{
  const x=f.x0+(f.x1-f.x0)*.28,z=f.z0+(f.z1-f.z0)*.28;
@@ -99,26 +102,33 @@ const directInsert=o=>['door','card-door','opening','window','glazed'].includes(
 function editHandleAt(e){
  const item=lookup(),r=canvas.getBoundingClientRect(),dpr=canvas.width/r.width;
  const x=(e.clientX-r.left)*dpr,z=(e.clientY-r.top)*canvas.height/r.height;
- const candidates=item&&!item.source&&floors().includes(item)?
-  Object.entries({...rectCorners(item),...allowedEdgeHandles(item)}).map(([handle,q])=>({handle,q})):
+ const candidates=item&&floors().includes(item)?
+  Object.entries(chosenFloorHandles(item)).map(([handle,q])=>({handle,q})):
   item?.kind==='wall'&&arch().includes(item)?['a','b'].map(handle=>({handle,q:{x:item[handle][0],z:item[handle][1]}})):[];
  return candidates.find(({handle,q})=>{
-  const [sx,sz]=screen(q.x,q.z),radius=handle.startsWith('edge-')?22:13;
+  const [sx,sz]=screen(q.x,q.z),radius=(handle.startsWith('edge-')||handle.startsWith('floor-'))?22:13;
   return Math.hypot(x-sx,z-sz)<radius*dpr;
  })?.handle||null;
 }
 function beginDirectDrag(item,q,handle=null){
- const type=handle&&floors().includes(item)?(handle.startsWith('edge-')?'wall-edge':'resize'):
+ const type=handle&&floors().includes(item)?(handle.startsWith('floor-')?'floor-only':handle.startsWith('edge-')?'wall-edge':'resize'):
   handle&&item.kind==='wall'?'endpoint':directInsert(item)?'slide':null;
  if(!type)return null;
- const center=type==='slide'?insertCenter(item):null;
+ const center=type==='slide'?insertCenter(item):type==='floor-only'?floorEdgeHandles(item)[handle]:null;
  return {direct:true,type,id:item.id,handle,initialEntries:structuredClone(arch()),
-  initialFloor:['resize','wall-edge'].includes(type)?structuredClone(item):null,before:JSON.stringify(p()),
+  initialFloor:['resize','wall-edge','floor-only'].includes(type)?structuredClone(item):null,before:JSON.stringify(p()),
   dx:center?q.x-center.x:0,dz:center?q.z-center.z:0};
 }
 function applyDirectDrag(info,q){
  try{
   let planned;
+  if(info.type==='floor-only'){
+   const result=planFloorEdge(info.initialFloor,Number(info.handle.slice(6)),{x:q.x-info.dx,z:q.z-info.dz},info.initialEntries,{bounds:p().ground.bounds});
+   if(info.initialFloor.source){p().ground.floorEdits||={};p().ground.floorEdits[info.id]=result.polygon;}
+   else{const stored=p().ground.floors.find(f=>f.id===info.id)||p().architecture.floors.find(f=>f.id===info.id);if(!stored)throw Error('Golvet saknas.');const {x0,x1,z0,z1}=result;Object.assign(stored,{x0,x1,z0,z1});}
+   const live=floors().find(f=>f.id===info.id);Object.assign(live,{...(p().mode==='edit-floor5'?{polygon:result.polygon}:{}),x0:result.x0,x1:result.x1,z0:result.z0,z1:result.z1});
+   status(result.snapped?'Golvet snäpper tätt mot väggen. Väggar och dörrar står kvar.':'Golvkanten flyttad. Dra nära väggen för att snäppa.');redraw();return true;
+  }
   if(info.type==='resize'||info.type==='wall-edge'){
    const options={bounds:p().ground.bounds,otherFloors:floors().filter(f=>f.id!==info.id)};
    planned=info.type==='resize'?
@@ -231,6 +241,9 @@ function spaces(){const scene=model(),key=JSON.stringify([floors(),p().ground.op
 function updateSurfaceUI(o){
  const paintable=!!o&&(arch().includes(o)||floors().includes(o))&&o.kind!=='opening';$('surfaceDock').hidden=view==='walk'||!paintable||!!pendingFurniture;
  if(paintable){$('surfaceName').textContent=o.name||({'wall':'Vägg',window:'Fönster · bröstning',glazed:'Glasvägg',door:'Dörr','card-door':'Passerkortsdörr'}[o.kind]||o.kind||'Golvyta');$('surfaceColor').value=surfaceColor(p(),o);$('previewDoor').hidden=!['door','card-door'].includes(o.kind)||!!o.originallyBlocked;$('previewDoor').textContent=doorPreviewOpen?'Visa dörren stängd':'Visa dörren öppen';$('surfaceHint').textContent=o.kind==='glazed'?'Glaset behåller sin transparens. Färgvalet gäller ramen.':'Färgen följer med till ZIP och FPS-vyn.';}
+ $('floorDragMode').hidden=!o||!floors().includes(o);$('floorDragMode').textContent=floorOnly||o?.source?'Dra bara golvet ✓':'Dra bara golvet';$('floorDragMode').disabled=!!o?.source;
+ $('doorStyleLabel').hidden=!o||!['door','card-door'].includes(o.kind)||!!o.originallyBlocked;$('doorStyle').value=o?.doorStyle||'solid';
+ if(o&&floors().includes(o))$('surfaceHint').textContent=floorOnly||o.source?'Dra de gröna handtagen mot väggen. Bara golvkanten ändras.':'Dra bara golvet visar handtag som lämnar väggarna på plats.';
  const options=spaces(),key=options.map(s=>s.id).join('|');if($('spaceSelect').dataset.key!==key){$('spaceSelect').dataset.key=key;$('spaceSelect').replaceChildren(new Option('Välj en yta …',''),...options.map(s=>new Option(s.name,s.id)));}
  const area=options.find(s=>s.id===selected);$('spaceSelect').value=area?.id||'';$('openSpace').disabled=!area;$('openSpace').textContent=area?.kind==='floor-gap'?'Anslut golven':'Gör ytan gångbar';$('spaceHint').textContent=area?(area.kind==='floor-gap'?`Glipa: ${area.gap.toFixed(3)} modellenheter. En gångbar golvbit läggs till; väggar flyttas inte.`:'Öppnas endast i din bankopia. Väggar, dörrar och möbler är kvar.'):'Markera ett hinder i listan eller i 3D-vyn.';
 }
@@ -238,6 +251,8 @@ function setSurfacePaint(color){const o=lookup();if(!o||!validPaint(color)||!arc
 $('closeSurface').onclick=()=>{selected=null;redraw();};
 $('surfaceColor').onchange=e=>setSurfacePaint(e.target.value);document.querySelectorAll('[data-paint]').forEach(b=>b.onclick=()=>setSurfacePaint(b.dataset.paint));
 $('resetSurface').onclick=()=>{const o=lookup();if(!o)return;const before=JSON.stringify(p());if(p().surfaceColors)delete p().surfaceColors[o.id];commit(before);};
+$('floorDragMode').onclick=()=>{floorOnly=!floorOnly;redraw();};
+$('doorStyle').onchange=()=>{const o=lookup();if(!o||!['door','card-door'].includes(o.kind))return;const before=JSON.stringify(p());o.doorStyle=$('doorStyle').value;commit(before);};
 $('previewDoor').onclick=()=>{doorPreviewOpen=!doorPreviewOpen;redraw();};
 $('spaceSelect').onchange=()=>{selected=$('spaceSelect').value||null;$('showPhysics').checked=true;const area=spaces().find(s=>s.id===selected);if(area){const pts=area.polygon||[[area.x0,area.z0],[area.x1,area.z1]],xs=pts.map(p=>p[0]),zs=pts.map(p=>p[1]),x0=Math.min(...xs),x1=Math.max(...xs),z0=Math.min(...zs),z1=Math.max(...zs);view3dCenter={x:(x0+x1)/2,z:(z0+z1)/2,span:Math.max(7,(x1-x0)*1.4,(z1-z0)*1.4)};view3dZoom=1;$('threeView').click();}else redraw();};
 $('showSpaces').onclick=()=>{$('showPhysics').checked=true;$('threeView').click();};
@@ -361,19 +376,19 @@ function drawPlan(){const r=canvas.getBoundingClientRect(),dpr=Math.min(devicePi
  for(const o of objects()){const pts=corners(o).map(v=>screen(...v));ctx.beginPath();pts.forEach((v,i)=>i?ctx.lineTo(...v):ctx.moveTo(...v));ctx.closePath();ctx.fillStyle=selected===o.id?'#ffc874':'#5a7e88';ctx.fill();ctx.strokeStyle='#233e4a';ctx.stroke();if(selected===o.id){const [cx,cz]=screen(o.x,o.z),a=o.yaw+wallFootprint(o).frontAngle,[tx,tz]=screen(o.x+Math.sin(a)*Math.min(o.d,.6),o.z+Math.cos(a)*Math.min(o.d,.6));ctx.beginPath();ctx.moveTo(cx,cz);ctx.lineTo(tx,tz);ctx.strokeStyle='#fff';ctx.lineWidth=3*dpr;ctx.stroke();if(o.mirrored){ctx.fillStyle='#122f33';ctx.font=`bold ${14*dpr}px system-ui`;ctx.fillText('↔',cx+5*dpr,cz-5*dpr);}}}
  for(const m of markers()){const [x,z]=screen(m.x,m.z);ctx.beginPath();ctx.arc(x,z,selected===m.id?12*dpr:9*dpr,0,Math.PI*2);ctx.fillStyle=m.team==='analysts'?'#298bb7':m.team==='counterAnalysts'?'#d5684d':m.id.includes('BOMB')?'#dfb03e':m.id.includes('RESCUE')?'#41b89a':'#bf78b5';ctx.fill();ctx.strokeStyle='#fff';ctx.lineWidth=2;ctx.stroke();ctx.fillStyle='#16343b';ctx.font=`bold ${10*dpr}px system-ui`;ctx.fillText(m.team?String(m.index+1):m.id.includes('H')?'H':m.id.includes('BOMB')?'B':'R',x+11*dpr,z);}
  for(const d of decorations()){const at=decorationAt(d);if(!at)continue;const [x,z]=screen(at.x,at.z);ctx.fillStyle=selected===d.id?'#f0ae4a':d.type?'#7987a9':'#bb78a2';ctx.fillRect(x-5*dpr,z-5*dpr,10*dpr,10*dpr);}
- const chosen=lookup(),handles=chosen&&!chosen.source&&floors().includes(chosen)?
-  {...rectCorners(chosen),...allowedEdgeHandles(chosen)}:
+ const chosen=lookup(),handles=chosen&&floors().includes(chosen)?
+  chosenFloorHandles(chosen):
   chosen?.kind==='wall'&&arch().includes(chosen)?{
    a:{x:chosen.a[0],z:chosen.a[1]},b:{x:chosen.b[0],z:chosen.b[1]}}:{};
  for(const [key,q] of Object.entries(handles)){
-  const [x,z]=screen(q.x,q.z),edge=key.startsWith('edge-');
+  const [x,z]=screen(q.x,q.z),edge=key.startsWith('edge-')||key.startsWith('floor-');
   ctx.save();ctx.lineWidth=2*dpr;ctx.strokeStyle='#12383d';
   if(edge){
    ctx.beginPath();ctx.arc(x,z,14*dpr,0,Math.PI*2);
    ctx.fillStyle='#36b88c';ctx.fill();ctx.stroke();
    ctx.fillStyle='#093d31';ctx.font=`bold ${18*dpr}px system-ui`;
    ctx.textAlign='center';ctx.textBaseline='middle';
-   ctx.fillText(key==='edge-left'||key==='edge-right'?'↔':'↕',x,z);
+   ctx.fillText(key==='edge-left'||key==='edge-right'||q.axis===0?'↔':'↕',x,z);
   }else{
    ctx.fillStyle='#f6aa42';ctx.fillRect(x-6*dpr,z-6*dpr,12*dpr,12*dpr);
    ctx.strokeRect(x-6*dpr,z-6*dpr,12*dpr,12*dpr);
@@ -530,16 +545,23 @@ function draw3D(){if(!ensureRenderer())return;group.traverse(o=>{if(o.isMesh||o.
  }
  for(const m of markers())box(m.x,.25,m.z,.34,.5,.34,selected===m.id?0xf4ad42:m.team==='analysts'?0x298bb7:m.team==='counterAnalysts'?0xd5684d:m.id.includes('BOMB')?0xdfb03e:m.id.includes('RESCUE')?0x41b89a:0xbf78b5,0,1,m.id);
  const chosen=lookup();
- if(chosen&&!chosen.source&&floors().includes(chosen))for(const [handle,q] of
-  Object.entries({...rectCorners(chosen),...allowedEdgeHandles(chosen)})){
-  const edge=handle.startsWith('edge-');
-  const mesh=box(q.x,.24,q.z,edge?0.57:0.34,edge?0.42:0.34,edge?0.57:0.34,
+ if(chosen&&floors().includes(chosen))for(const [handle,q] of
+  Object.entries(chosenFloorHandles(chosen))){
+  const edge=handle.startsWith('edge-')||handle.startsWith('floor-');
+  const floorGrip=handle.startsWith('floor-');
+  const mesh=box(q.x,floorGrip?.1:.24,q.z,edge?0.57:0.34,floorGrip?.08:edge?0.42:0.34,edge?0.57:0.34,
    edge?0x35ba87:0xf8a849,0,1,chosen.id);
-  mesh.userData.editHandle=handle;
+  mesh.userData.editHandle=handle;if(handle.startsWith('floor-')){mesh.material=mesh.material.clone();mesh.material.userData.studioOwned=true;mesh.material.depthTest=false;mesh.renderOrder=20;
+   const shape=new T.Shape(),points=[[-.23,0],[-.10,.10],[-.10,.035],[.10,.035],[.10,.10],[.23,0],[.10,-.10],[.10,-.035],[-.10,-.035],[-.10,-.10]];points.forEach(([x,y],i)=>i?shape.lineTo(x,y):shape.moveTo(x,y));shape.closePath();
+   const mat=new T.MeshBasicMaterial({color:0xffffff,side:T.DoubleSide,depthTest:false});mat.userData.studioOwned=true;const arrow=new T.Mesh(new T.ShapeGeometry(shape),mat);arrow.position.set(q.x,.15,q.z);arrow.rotation.set(-Math.PI/2,0,q.axis===1?Math.PI/2:0);arrow.renderOrder=21;arrow.userData={editId:chosen.id,editHandle:handle};group.add(arrow);
+  }
  }
  if(chosen?.kind==='wall'&&arch().includes(chosen))for(const handle of ['a','b']){
   const q=chosen[handle],mesh=box(q[0],.22,q[1],.34,.44,.34,0xf8a849,0,1,chosen.id);
-  mesh.userData.editHandle=handle;
+  mesh.userData.editHandle=handle;if(handle.startsWith('floor-')){mesh.material=mesh.material.clone();mesh.material.userData.studioOwned=true;mesh.material.depthTest=false;mesh.renderOrder=20;
+   const shape=new T.Shape(),points=[[-.23,0],[-.10,.10],[-.10,.035],[.10,.035],[.10,.10],[.23,0],[.10,-.10],[.10,-.035],[-.10,-.035],[-.10,-.10]];points.forEach(([x,y],i)=>i?shape.lineTo(x,y):shape.moveTo(x,y));shape.closePath();
+   const mat=new T.MeshBasicMaterial({color:0xffffff,side:T.DoubleSide,depthTest:false});mat.userData.studioOwned=true;const arrow=new T.Mesh(new T.ShapeGeometry(shape),mat);arrow.position.set(q.x,.15,q.z);arrow.rotation.set(-Math.PI/2,0,q.axis===1?Math.PI/2:0);arrow.renderOrder=21;arrow.userData={editId:chosen.id,editHandle:handle};group.add(arrow);
+  }
  }
  refreshFurnitureVisuals();
  buildProjectDecorations(p(),arch(),group,()=>renderer.render(scene,camera));
@@ -940,8 +962,8 @@ function zoom3D(e){e.preventDefault();if(furnitureHandles.active)return;view3dZo
 $('scene3d').addEventListener('wheel',zoom3D,{passive:false});
 let orbitDrag=null,pan3d=null,drag3d=null;
 const ray3d=new T.Raycaster(),groundPlane=new T.Plane(new T.Vector3(0,1,0),0);
-function hit3d(e){const r=$('scene3d').getBoundingClientRect();ray3d.setFromCamera(new T.Vector2((e.clientX-r.left)/r.width*2-1,-(e.clientY-r.top)/r.height*2+1),camera);const v=new T.Vector3();return ray3d.ray.intersectPlane(groundPlane,v)?{x:snap(v.x),z:snap(v.z)}:null;}
-function pick3d(e){const ground=hit3d(e);const hit=ray3d.intersectObjects([...group.children,...(furnitureRoot?.children||[])],true).find(h=>{let node=h.object;while(node&&!node.userData.editId)node=node.parent;return !!node?.userData.editId;});
+function hit3d(e){const r=$('scene3d').getBoundingClientRect();ray3d.setFromCamera(new T.Vector2((e.clientX-r.left)/r.width*2-1,-(e.clientY-r.top)/r.height*2+1),camera);const v=new T.Vector3();return ray3d.ray.intersectPlane(groundPlane,v)?{x:drag3d?.type==='floor-only'?v.x:snap(v.x),z:drag3d?.type==='floor-only'?v.z:snap(v.z)}:null;}
+function pick3d(e){const ground=hit3d(e);const hits=ray3d.intersectObjects([...group.children,...(furnitureRoot?.children||[])],true);const hit=hits.find(h=>h.object.userData.editHandle?.startsWith('floor-'))||hits.find(h=>{let node=h.object;while(node&&!node.userData.editId)node=node.parent;return !!node?.userData.editId;});
  let node=hit?.object;while(node&&!node.userData.editId)node=node.parent;
  return {ground,id:node?.userData.editId||null,handle:node?.userData.editHandle||null,
   surface:hit?{x:hit.point.x,z:hit.point.z,y:hit.point.y,...(arch().some(w=>w.id===node?.userData.editId&&w.kind==='wall')?{wallId:node.userData.editId,normal:hit.face.normal.clone().transformDirection(hit.object.matrixWorld)}:{})}:null};}
@@ -997,6 +1019,7 @@ window.__levelStudio={get scene(){return model()},get project(){return p()},get 
  screen3DPoint:(x,y,z)=>{const p=new T.Vector3(x,y,z).project(camera),r=$('scene3d').getBoundingClientRect();return {x:r.left+(p.x+1)*r.width/2,y:r.top+(1-p.y)*r.height/2};},
  get pendingAsset(){return pendingFurniture?{id:pendingFurniture.id,ready:!pendingFurniture.loading&&!pendingFurniture.loadError,error:pendingFurniture.loadError}:null;},
  get visualFurniture(){return (furnitureRoot?.children||[]).map(holder=>{holder.updateWorldMatrix(true,true);const bounds=new T.Box3().setFromObject(holder);return {id:holder.userData.editId,realModel:!!holder.userData.realModel,meshes:(()=>{const out=[];holder.traverse(o=>{if(o.isMesh)out.push({name:o.name,position:o.getWorldPosition(new T.Vector3()).toArray(),determinant:o.matrixWorld.determinant()});});return out;})(),min:bounds.min.toArray(),max:bounds.max.toArray(),position:holder.position.toArray(),yaw:holder.rotation.y};});},
+ get floorHandles(){return group.children.filter(o=>o.isMesh&&o.geometry.type==='BoxGeometry'&&o.userData.editHandle?.startsWith('floor-')).map(o=>({handle:o.userData.editHandle,position:o.position.toArray()}));},
  get architectureVisuals(){const rows=[];group.traverse(o=>{if(o.userData.architecturePart)rows.push({id:o.userData.editId,part:o.userData.architecturePart,color:o.material.color.getHexString(),position:o.position.toArray(),size:o.geometry.parameters});});return rows;},
  get snapPreview(){return {kind:snapFeedback?.kind||null,targetId:snapFeedback?.targetId||null,
   label:snapFeedback?.label||'',pose:snapFeedback?.pose,ghostPose:ghostRoot?.children[0]?{position:ghostRoot.children[0].position.toArray(),yaw:ghostRoot.children[0].rotation.y}:null,ghostLoaded:!!ghostRoot?.children[0]?.userData.realModel,highlightCount:preview3d.children.filter(x=>x.userData.snapTargetId).length};},redraw};

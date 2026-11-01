@@ -1,11 +1,11 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {exportProject,exportProjectZip,parseProjectZip} from './level-project.mjs';
-import {resolveProjectScene,writeProjectScene} from './project-scene.mjs';
-import {collisionExport,aiAgentBrief} from './ai-export.mjs';
-import {inheritFloor5Gameplay,createWorld} from '../../src/fps/world.mjs';
-import {validateLevel} from './validate-level.mjs';
-import {planPaintOverWall} from './paint-over-wall.mjs';
+import {exportProject,exportProjectZip,parseProjectZip} from './level-project.mjs?v=5.1.0';
+import {resolveProjectScene,writeProjectScene} from './project-scene.mjs?v=5.1.0';
+import {collisionExport,aiAgentBrief} from './ai-export.mjs?v=5.1.0';
+import {inheritFloor5Gameplay,createWorld} from '../../src/fps/world.mjs?v=5.1.0';
+import {validateLevel} from './validate-level.mjs?v=5.1.0';
+import {planPaintOverWall} from './paint-over-wall.mjs?v=5.1.0';
 import {duplicateFurnitureAssembly} from '../smart-placement.mjs';
 
 test('Floor 5 is editable and exported through the same scene contract as new levels',async()=>{

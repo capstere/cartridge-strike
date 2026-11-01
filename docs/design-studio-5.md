@@ -1,5 +1,7 @@
 # Designstudio 5.0 – se, måla och möblera din bankopia
 
+Uppdatering: [5.1 – frostad dörr, svart golv och dra bara golvet](design-studio-5.1.md).
+
 Både **NY BANA** och **REDIGERA FLOOR 5** använder samma verktyg. Originalbanan och ursprungsmodellerna ändras inte.
 
 ## Prova

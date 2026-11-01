@@ -6,7 +6,7 @@ import {proceduralOf} from '../library/procedural.mjs?v=5.0.0';
 import {populateProcedural,populateDiningChair} from '../library/procedural-mesh.mjs?v=5.0.0';
 import {locatePoster} from './posters.mjs';
 import {createPosterTexture} from './poster-art.mjs';
-import {treatmentPosition} from './treatments.mjs';
+import {treatmentPosition} from './treatments.mjs?v=5.1.0';
 
 export function buildProjectDecorations(project,entries,root,onReady){
  for(const poster of project.architecture.posters||[]){

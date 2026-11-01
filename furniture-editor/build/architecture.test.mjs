@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readBaseline,parseArchitecture,exportArchitecture,makeEntry,wallPieces,
- validateEntry,validateFloorRect,floorRect,getNextId,entryLength,warningsForLayout} from './architecture.mjs';
+ validateEntry,validateFloorRect,floorRect,getNextId,entryLength,warningsForLayout} from './architecture.mjs?v=5.1.0';
 const data={walls:[
  {id:'WALL-001',a:[0,0],b:[10,0],height:2.85,thickness:.1},
  {id:'WALL-002',a:[0,2],b:[6,2],surfaceType:'glazed'},
@@ -104,7 +104,7 @@ test('invalid wall or door colors reject safely, legacy projects default predict
 });
 
 test('standard 1.20 span and leafless opening physically cut wall segments',async()=>{
- const {standardPassageSpan,STANDARD_PASSAGE_WIDTH}=await import('./architecture.mjs');
+ const {standardPassageSpan,STANDARD_PASSAGE_WIDTH}=await import('./architecture.mjs?v=5.1.0');
  assert.equal(STANDARD_PASSAGE_WIDTH,1.2);
  const span=standardPassageSpan([2,0],[8,0]);assert(Math.abs(entryLength(span)-1.2)<1e-9);
  assert.deepEqual(span.a,[4.4,0]);assert.deepEqual(span.b,[5.6,0]);
@@ -115,7 +115,7 @@ test('standard 1.20 span and leafless opening physically cut wall segments',asyn
 });
 
 test('STANDARD markers are 1.20 for all door types and source geometry is unchanged',async()=>{
- const {standardDoorMarkerSpan,STANDARD_PASSAGE_WIDTH,doorOnWallSegment}=await import('./architecture.mjs');
+ const {standardDoorMarkerSpan,STANDARD_PASSAGE_WIDTH,doorOnWallSegment}=await import('./architecture.mjs?v=5.1.0');
  assert.equal(STANDARD_PASSAGE_WIDTH,1.20);
  for(const kind of ['door','card-door','elevator-door','terrace-door','opening']){
   for(const [a,b] of [[[0,0],[.8,0]],[[0,0],[2.4,0]],[[2,3],[2,4.6]],[[1,1],[3,3]]]){

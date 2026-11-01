@@ -1,6 +1,6 @@
 import test from 'node:test';import assert from 'node:assert/strict';
-import {createCurtain,createBlind,parseTreatments,treatmentPosition} from './treatments.mjs';
-import {exportArchitecture,parseArchitecture} from './architecture.mjs';
+import {createCurtain,createBlind,parseTreatments,treatmentPosition} from './treatments.mjs?v=5.1.0';
+import {exportArchitecture,parseArchitecture} from './architecture.mjs?v=5.1.0';
 const wall={id:'WALL-0001',source:true,kind:'wall',a:[2,4],b:[8,4],height:2.85,thickness:.1,sill:.9,finish:'white'};
 const win={...wall,id:'WALL-0002',kind:'window',a:[2,8],b:[4,8]};
 test('dragging curtain line on an arbitrary wall creates ceiling-height attached decoration',()=>{

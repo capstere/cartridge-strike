@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {snapDraftPoint,dimensionsFromWall,joinNearbyEnds,straightenEntry} from './precision.mjs';
-import {makeEntry} from './architecture.mjs';
+import {snapDraftPoint,dimensionsFromWall,joinNearbyEnds,straightenEntry} from './precision.mjs?v=5.1.0';
+import {makeEntry} from './architecture.mjs?v=5.1.0';
 
 const a=makeEntry('BYGG-V-0001','wall',[1.137,2.271],[5.137,2.271]);
 a.height=3.25;a.thickness=.15;

@@ -1,5 +1,5 @@
 /** Atomic rectangle-room sketch generator. No source geometry, physics, or navmesh edits. */
-import {floorRect,getNextId,makeEntry,roundPosition,validateEntry,validateFloorRect} from './architecture.mjs';
+import {floorRect,getNextId,makeEntry,roundPosition,validateEntry,validateFloorRect} from './architecture.mjs?v=5.1.0';
 
 const bounded=(n,min,max,label)=>{
  if(typeof n!=='number'||!Number.isFinite(n)||n<min||n>max)throw Error(label+' måste vara '+min+'–'+max+' m.');

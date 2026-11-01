@@ -1,6 +1,7 @@
+import {thresholdFloorPolygons} from './floor-edge.mjs?v=5.1.0';
 /** Portable collision handoff. The engine's physics remains authoritative. */
-import {wallPieces,isDoor,STANDARD_PASSAGE_WIDTH} from './architecture.mjs?v=4.6.0';
-import {resolveProjectScene,projectWallPieces} from './project-scene.mjs?v=5.0.0';
+import {wallPieces,isDoor,STANDARD_PASSAGE_WIDTH} from './architecture.mjs?v=5.1.0';
+import {resolveProjectScene,projectWallPieces} from './project-scene.mjs?v=5.1.0';
 
 export function collisionExport(p){
  const scene=resolveProjectScene(p),segments=scene.entries,floors=scene.floors;
@@ -11,6 +12,7 @@ export function collisionExport(p){
    doorLeaf:'dynamic',opening:'leafless / no collision',window:'sill + header + breakable glass',
    floor:'walkable footprint; outside blocked',furniture:'solid by default; none is visual only'},
   walkableFloors:floors.map(f=>({id:f.id,role:f.role,polygon:f.polygon,rect:[f.x0,f.z0,f.x1,f.z1]})),
+  thresholdFloors:thresholdFloorPolygons(segments,floors),
   staticWalls:projectWallPieces(segments).map(w=>({id:w.id,kind:w.kind,a:w.a,b:w.b,height:w.height,thickness:w.thickness,sill:w.kind==='window'?w.sill:null,collision:w.kind==='window'||w.kind==='glazed'?'glass':'solid'})),
   passages:segments.filter(e=>isDoor(e.kind)).map(e=>({id:e.id,kind:e.kind,a:e.a,b:e.b,width:Math.hypot(e.b[0]-e.a[0],e.b[1]-e.a[1]),collision:e.kind==='opening'?'none':'dynamic-door-leaf'})),
   furniture:scene.items.map(o=>({id:o.id,kind:o.kind,assetName:o.assetName||null,assetId:o.assetId||null,x:o.x,z:o.z,yaw:o.yaw,mirrored:!!o.mirrored,wallRoll:o.wallRoll||0,wallFacing:o.wallFacing||null,modelSize:o.modelSize||null,w:o.w,d:o.d,height:o.height,elevation:o.elevation||0,mountId:o.mountId||null,wallMount:o.wallMount||null,snapRole:o.snapRole||null,collision:o.collision||'solid'})),

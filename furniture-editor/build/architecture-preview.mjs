@@ -1,8 +1,9 @@
 /** Real source wall/window/frame geometry and door poses, without a second game loop. */
+import {frostedDoorParts,frostedGlassMaterial} from '../../src/fps/frosted-door.mjs?v=5.1.0';
 import * as T from '../../vendor/three/three.module.js';
-import {sceneArchitectureData} from '../../src/fps/level-adapter.mjs?v=5.0.0';
-import {createDoors} from '../../src/fps/doors.mjs?v=5.0.0';
-import {paintDescription,surfaceColor} from './surface-style.mjs?v=5.0.0';
+import {sceneArchitectureData} from '../../src/fps/level-adapter.mjs?v=5.1.0';
+import {createDoors} from '../../src/fps/doors.mjs?v=5.1.0';
+import {paintDescription,surfaceColor} from './surface-style.mjs?v=5.1.0';
 export function architecturePreview(project,scene,{lowWalls=false,openDoors=false,selected=null}={}){
  const root=new T.Group();root.name='studio-architecture';
  const {zones,walls,doors}=sceneArchitectureData(project,scene);
@@ -13,14 +14,18 @@ export function architecturePreview(project,scene,{lowWalls=false,openDoors=fals
  function mesh(record,id){
   let h=record.h,y=record.y;const wall=wallMap.get(record.id);
   if(lowWalls&&wall?.surfaceType==='opaque'){h=Math.min(.8,h);y=h/2;}
-  const glass=['glass','frosted'].includes(record.material),material=new T.MeshStandardMaterial({color:record.studioColor||rgb(record.color),roughness:record.material==='metal'?.35:.8,metalness:record.material==='metal'?.4:0,transparent:glass,opacity:glass?.28:1,depthWrite:!glass,side:T.DoubleSide});material.userData.studioOwned=true;
+  const glass=['glass','frosted'].includes(record.material),material=record.material==='door-frosted'?frostedGlassMaterial():new T.MeshStandardMaterial({color:record.studioColor||rgb(record.color),roughness:record.material==='metal'?.35:.8,metalness:record.material==='metal'?.4:0,transparent:glass,opacity:glass?.28:1,depthWrite:!glass,side:T.DoubleSide});material.userData.studioOwned=true;
   const node=new T.Mesh(new T.BoxGeometry(record.w,h,record.d),material);node.position.set(record.x,y,record.z);node.rotation.y=record.angle||0;node.userData.editId=id;node.userData.architecturePart=record.id;root.add(node);
   if(id===selected){const line=new T.LineSegments(new T.EdgesGeometry(node.geometry),new T.LineBasicMaterial({color:0xf5a735}));line.material.userData.studioOwned=true;line.position.copy(node.position);line.rotation.copy(node.rotation);root.add(line);}
  }
  for(const b of desc.boxes){const source=sources.find(([key])=>b.id===key||b.id.startsWith(key+'-'));if(source)mesh(b,source[1]);}
  const system=createDoors(data,{staticCanOccupy:()=>true});
  for(const door of system.doors){system.pose(door,openDoors&&door.id===selected?Math.PI/3:0);for(const leaf of door.leaves){
-  const b=leaf.box,color=door.studioColor||'#c4c3af';mesh({...b,color},door.id);
+  const b=leaf.box,color=door.studioColor||(door.doorStyle==='frosted'?'#87989e':'#c4c3af');
+  if(door.doorStyle==='frosted'){
+   for(const p of frostedDoorParts(leaf.w)){const c=Math.cos(b.angle),s=Math.sin(b.angle);mesh({...p,id:b.id+'-'+p.part,x:leaf.x+c*p.x+s*p.z,z:leaf.z-s*p.x+c*p.z,angle:b.angle,color:p.part==='handle'?'#87989e':color,material:p.part==='glass'?'door-frosted':'metal'},door.id);}continue;
+  }
+  mesh({...b,color},door.id);
   // Handles, kickplate and panel follow the same hinge pose; no gameplay state is changed.
   const c=Math.cos(b.angle),s=Math.sin(b.angle),local=(x,z)=>({x:b.x+c*x+s*z,z:b.z-s*x+c*z});
   for(const side of [-1,1]){const at=local(leaf.w*.30,side*.065);mesh({id:b.id+'-handle'+side,...at,y:1.05,w:Math.min(.17,leaf.w*.3),h:.035,d:.04,angle:b.angle,color:'#87989e',material:'metal'},door.id);const kick=local(0,side*.044);mesh({id:b.id+'-kick'+side,...kick,y:.27,w:leaf.w*.88,h:.33,d:.009,angle:b.angle,color:'#87989e',material:'metal'},door.id);}

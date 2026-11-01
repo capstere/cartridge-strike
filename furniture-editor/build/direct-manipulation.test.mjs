@@ -1,11 +1,11 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {makeEntry,entryLength} from './architecture.mjs';
-import {planPaintOverWall} from './paint-over-wall.mjs';
-import {planResizeFloor,planResizeFloorEdge,planSlideInsert,planMoveWallEnd,roomBoundaryIds} from './direct-manipulation.mjs';
-import {exportProject,parseProject} from './level-project.mjs';
-import {projectWallPieces} from './project-scene.mjs';
-import {createWorld} from '../../src/fps/world.mjs';
+import {makeEntry,entryLength} from './architecture.mjs?v=5.1.0';
+import {planPaintOverWall} from './paint-over-wall.mjs?v=5.1.0';
+import {planResizeFloor,planResizeFloorEdge,planSlideInsert,planMoveWallEnd,roomBoundaryIds} from './direct-manipulation.mjs?v=5.1.0';
+import {exportProject,parseProject} from './level-project.mjs?v=5.1.0';
+import {projectWallPieces} from './project-scene.mjs?v=5.1.0';
+import {createWorld} from '../../src/fps/world.mjs?v=5.1.0';
 
 const wall=(n,a,b)=>makeEntry('BYGG-V-'+String(n).padStart(4,'0'),'wall',a,b);
 const floor={id:'BYGG-G-0001',name:'Kök',role:'room',surface:'vinyl',x0:2,z0:2,x1:8,z1:8};

@@ -1,8 +1,9 @@
 /** Pure conversion into the existing world/physics/navigation data contract. */
-import {parseProject} from '../../furniture-editor/build/level-project.mjs?v=5.0.0';
-import {wallPieces} from '../../furniture-editor/build/architecture.mjs?v=4.6.0';
+import {remainingSourceTiles,thresholdFloorPolygons} from '../../furniture-editor/build/floor-edge.mjs?v=5.1.0';
+import {parseProject} from '../../furniture-editor/build/level-project.mjs?v=5.1.0';
+import {wallPieces} from '../../furniture-editor/build/architecture.mjs?v=5.1.0';
 import {corners} from '../../furniture-editor/core.mjs?v=5.0.0';
-import {resolveProjectScene,floor5Baseline,projectWallPieces} from '../../furniture-editor/build/project-scene.mjs?v=5.0.0';
+import {resolveProjectScene,floor5Baseline,projectWallPieces} from '../../furniture-editor/build/project-scene.mjs?v=5.1.0';
 
 const polygon=r=>[[r.x0,r.z0],[r.x1,r.z0],[r.x1,r.z1],[r.x0,r.z1]];
 const point=p=>({x:p.x,y:0,z:p.z,yaw:p.yaw||0});
@@ -11,7 +12,7 @@ export function sceneArchitectureData(project,scene){
  const {floors,entries}=scene;
  const zones=floors.map(f=>({id:f.id,name:f.name,status:'included',surface:f.surface,studioColor:project.surfaceColors?.[f.id],polygon:f.polygon||polygon(f)}));
  const doors=entries.filter(e=>doorKind(e.kind)||e.kind==='opening').map(e=>({
-  id:e.id,studioColor:project.surfaceColors?.[e.id],name:e.id,a:e.a,b:e.b,center:[(e.a[0]+e.b[0])/2,(e.a[1]+e.b[1])/2],
+  id:e.id,doorStyle:e.doorStyle,studioColor:project.surfaceColors?.[e.id],name:e.id,a:e.a,b:e.b,center:[(e.a[0]+e.b[0])/2,(e.a[1]+e.b[1])/2],
   width:Math.hypot(e.b[0]-e.a[0],e.b[1]-e.a[1]),kind:e.kind==='opening'?'open-passage-no-leaf':'door-aperture',
   status:'included',accessCardConfirmed:e.kind==='card-door',blocked:!!e.originallyBlocked&&!project.architecture.edits.some(row=>row.id===e.id),
   passageOpenConfirmed:e.kind==='opening',height:e.height,doorType:e.kind==='card-door'?'card':e.kind==='elevator-door'?'elevator':e.kind==='terrace-door'?'terrace':'ordinary',
@@ -41,7 +42,7 @@ export function levelProjectToWorldData(input){
   rescue:objectives.rescue?{...point(objectives.rescue),radius:objectives.rescue.radius??1.65,doorId:objectives.rescue.doorId}:null,
   hostages:objectives.hostages.map(point)};
  const data={__custom:true,rooms:zones.filter((_,i)=>floors[i].role==='room'),corridors:zones.filter((_,i)=>floors[i].role==='corridor'),
-  excludedRooms:(legacy?.excludedRooms||[]).filter(r=>!(project.ground.openedAreas||[]).includes(r.id)),floorPolygons:[...(legacy?.floorPolygons||[]),...zones.map(z=>z.polygon)],walls,doors,obstacles,routes,
+  excludedRooms:(legacy?.excludedRooms||[]).filter(r=>!(project.ground.openedAreas||[]).includes(r.id)),floorPolygons:[...(legacy?remainingSourceTiles(legacy,project.ground.floorEdits):[]),...zones.map(z=>z.polygon),...thresholdFloorPolygons(entries,floors)],walls,doors,obstacles,routes,
   targets:[objectives.bomb&&{id:'L1',name:'Bomb',point:[objectives.bomb.x,objectives.bomb.z]},objectives.rescue&&{id:'L2',name:'Rescue',point:[objectives.rescue.x,objectives.rescue.z]}].filter(Boolean),
   spawn:anchors.analysts[0]||{x:0,z:0,yaw:0},layoutPresentation:{},ground:project.ground};
  return {data,anchors,project,scene};

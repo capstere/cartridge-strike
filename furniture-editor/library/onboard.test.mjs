@@ -5,7 +5,7 @@ test('owner-authorized onboard models are unique, bounded, self-contained and ha
  for(const entry of ONBOARD_LIBRARY){const bytes=readFileSync(new URL(entry.url,new URL('../',import.meta.url)));inspectGLB(bytes);assert.equal(createHash('sha256').update(bytes).digest('hex'),entry.sha256);assert.equal(bytes.length,entry.bytes);assert.equal(LIBRARY_MAP.get(entry.id),entry);for(const n of [entry.width,entry.depth,entry.height])assert(Number.isFinite(n)&&n>0&&n<=10,entry.id);}
 });
 
-import {exportProject,parseProject,exportProjectZip,parseProjectZip} from '../build/level-project.mjs';
+import {exportProject,parseProject,exportProjectZip,parseProjectZip} from '../build/level-project.mjs?v=5.1.0';
 test('all onboard IDs and sizes survive the real project ZIP roundtrip',async()=>{
  const furniture={added:ONBOARD_LIBRARY.map((e,i)=>({id:`NY-OBJ-${String(i+1).padStart(4,'0')}`,roomId:'',kind:'prop',assetId:e.id,assetName:e.name,x:2,z:2,yaw:0,w:e.width,d:e.depth,height:e.height})),placements:[],removed:[]};
  const p=exportProject({furniture,assets:{library:ONBOARD_LIBRARY.map(e=>e.id),local:[],posters:[]}});
