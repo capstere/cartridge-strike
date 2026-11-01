@@ -13,7 +13,15 @@ export function inspectPrivateGLB(bytes){
  if((doc.accessors||[]).some(a=>!Number.isInteger(a.count)||a.count<0||a.count>500000||a.sparse))throw Error('Provkaraktärens geometri eller animation är för stor eller inkompatibel.');
  return doc;
 }
-async function database(){return new Promise((resolve,reject)=>{const r=indexedDB.open('cartridge-private-characters',1);r.onupgradeneeded=()=>r.result.createObjectStore('drafts',{keyPath:'id'});r.onsuccess=()=>resolve(r.result);r.onerror=()=>reject(Error('Webbläsaren kunde inte öppna provkaraktären. Tillåt lokal lagring.'));});}
+// Version 2 preserves v1 rows but prevents old cached writers from silently pruning them.
+export const CHARACTER_DATABASE_VERSION=2;
+async function database(){return new Promise((resolve,reject)=>{
+ let blocked=false,r;const failure=()=>reject(Error('Webbläsaren kunde inte öppna sparade karaktärer. Tillåt lokal lagring.'));
+ try{r=indexedDB.open('cartridge-private-characters',CHARACTER_DATABASE_VERSION);}catch{failure();return;}
+ r.onupgradeneeded=()=>{if(!r.result.objectStoreNames.contains('drafts'))r.result.createObjectStore('drafts',{keyPath:'id'});};
+ r.onblocked=()=>{blocked=true;reject(Error('Stäng eller ladda om äldre spelflikar för att uppdatera karaktärsbiblioteket.'));};
+ r.onsuccess=()=>{const db=r.result;if(blocked){db.close();return;}db.onversionchange=()=>db.close();resolve(db);};r.onerror=failure;
+});}
 export const MAX_SAVED_CHARACTERS=8;
 export async function listPrivateCharacters(){
  const db=await database();

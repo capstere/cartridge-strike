@@ -1151,8 +1151,8 @@
     },
     {
       "path": "src/fps/private-character-store.mjs",
-      "bytes": 5474,
-      "sha256": "6fa30f906f860b16a09b3cd93088ad0dccb66b3d15bc8545663276674b8ed9df"
+      "bytes": 5976,
+      "sha256": "ad83bcc112bfb646ecffc39aa14f9928cc416f2eba9dbb3609641a5cf2a827d8"
     },
     {
       "path": "src/fps/render-budget.mjs",
@@ -1360,7 +1360,7 @@
       "sha256": "be20b77ef515e1d637705ec501ef1abf0d28e518e019d4e0d0958645f7a51228"
     }
   ],
-  "bytes": 22609801,
+  "bytes": 22610303,
   "sourceDirectoriesExcluded": [
     "references",
     "reviews",

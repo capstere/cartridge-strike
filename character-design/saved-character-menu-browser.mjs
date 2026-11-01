@@ -42,7 +42,7 @@ export async function verifySavedCharacterMenu(page,origin){
  assert(await page.evaluate(()=>__fps.game.actors.every(a=>!__fps.renderer.actors.get(a.id).userData.avatar.privateDesign)));
  assert.equal(await page.evaluate(()=>localStorage.getItem('cartridge-selected-character')),null);
  // A damaged saved copy must not silently substitute the original avatar.
- const bad=await page.evaluate(async id=>{const s=await import('../src/fps/private-character-store.mjs'),row=await s.loadPrivateCharacter(id);row.id=crypto.randomUUID();row.sha256='0'.repeat(64);row.name='Skadad testkopia';const db=await new Promise((resolve,reject)=>{const q=indexedDB.open('cartridge-private-characters',1);q.onsuccess=()=>resolve(q.result);q.onerror=reject;});await new Promise((resolve,reject)=>{const tx=db.transaction('drafts','readwrite');tx.objectStore('drafts').put(row);tx.oncomplete=resolve;tx.onerror=reject;});db.close();return row.id;},id);
+ const bad=await page.evaluate(async id=>{const s=await import('../src/fps/private-character-store.mjs'),row=await s.loadPrivateCharacter(id);row.id=crypto.randomUUID();row.sha256='0'.repeat(64);row.name='Skadad testkopia';const db=await new Promise((resolve,reject)=>{const q=indexedDB.open('cartridge-private-characters',s.CHARACTER_DATABASE_VERSION);q.onsuccess=()=>resolve(q.result);q.onerror=reject;});await new Promise((resolve,reject)=>{const tx=db.transaction('drafts','readwrite');tx.objectStore('drafts').put(row);tx.oncomplete=resolve;tx.onerror=reject;});db.close();return row.id;},id);
  await page.goto(origin+'/fps/?test=1&avatar='+bad);await ready();assert(await page.locator('#start').isDisabled());assert.match(await page.locator('#character-status').innerText(),/kontrollsumma/);assert(await page.locator('#player-character').isEnabled());
  await choose(id);assert(await page.locator('#start').isEnabled());
  assert.equal(await page.evaluate(async id=>(await (await import('../src/fps/private-character-store.mjs')).loadPrivateCharacter(id)).sha256,id),saved.sha);
@@ -64,7 +64,12 @@ export async function verifyCharacterStorage(browser,origin){
   const raw=new TextEncoder().encode(JSON.stringify({asset:{version:'2.0'},meshes:[{}],skins:[{}],animations:Array.from({length:13},()=>({}))})),n=Math.ceil(raw.length/4)*4,bytes=new ArrayBuffer(20+n),v=new DataView(bytes);
   [0x46546c67,2,bytes.byteLength,n,0x4e4f534a].forEach((x,i)=>v.setUint32(i*4,x,true));new Uint8Array(bytes,20).fill(32);new Uint8Array(bytes,20,raw.length).set(raw);
   const sourceHash='a'.repeat(64),projectId=crypto.randomUUID(),ids=[];
-  const first=await s.savePrivateCharacter({bytes,name:'A',sourceHash,projectId});const update=await s.savePrivateCharacter({bytes,name:'Uppdaterad',sourceHash,projectId});if(first!==update)throw Error('Duplicate copy for same project');ids.push(first);
+  const legacyId=crypto.randomUUID(),legacy={id:legacyId,schema:1,bytes,name:'Äldre provkopia',sourceHash,sha256:await s.characterHash(bytes),created:1,projectId};
+  const old=await new Promise((resolve,reject)=>{const r=indexedDB.open('cartridge-private-characters',1);r.onupgradeneeded=()=>r.result.createObjectStore('drafts',{keyPath:'id'});r.onsuccess=()=>resolve(r.result);r.onerror=reject;});
+  await new Promise((resolve,reject)=>{const tx=old.transaction('drafts','readwrite');tx.objectStore('drafts').put(legacy);tx.oncomplete=resolve;tx.onerror=reject;});old.close();
+  if((await s.loadPrivateCharacter(legacyId)).name!==legacy.name)throw Error('Migration lost old copy');
+  const oldWriterBlocked=await new Promise(resolve=>{const r=indexedDB.open('cartridge-private-characters',1);r.onerror=()=>resolve(r.error.name==='VersionError');r.onsuccess=()=>{r.result.close();resolve(false);};});if(!oldWriterBlocked)throw Error('Old pruning writer is still allowed');
+  const first=await s.savePrivateCharacter({bytes,name:'A',sourceHash,projectId});if(first!==legacyId)throw Error('Legacy identity changed');const update=await s.savePrivateCharacter({bytes,name:'Uppdaterad',sourceHash,projectId});if(first!==update)throw Error('Duplicate copy for same project');ids.push(first);
   for(let i=1;i<8;i++)ids.push(await s.savePrivateCharacter({bytes,name:'Test '+i,sourceHash}));
   let bounded=false;try{await s.savePrivateCharacter({bytes,name:'Overflow',sourceHash});}catch(e){bounded=/Åtta/.test(e.message);}if(!bounded)throw Error('Unbounded storage');
   const rows=await s.listPrivateCharacters();if(rows.length!==8||rows.some(r=>'bytes' in r))throw Error('Metadata listing retained payloads');
@@ -72,6 +77,6 @@ export async function verifyCharacterStorage(browser,origin){
   await s.savePrivateCharacter({bytes,name:'Uppdaterad igen',sourceHash,projectId});
   await s.deletePrivateCharacter(first);let missing=false;try{await s.loadPrivateCharacter(first);}catch(e){missing=/saknas/.test(e.message);}if(!missing)throw Error('Deleted copy still loads');
   const open=indexedDB.open;try{indexedDB.open=()=>{throw Error('blocked test');};document.body.innerHTML='<select id="player-character"></select><p id="character-status"></p><button id="delete-character"></button><button id="start"></button>';const menu=await (await import('./src/fps/character-selection.mjs')).setupCharacterMenu({getTeam:()=> 'analysts',getSeed:()=>42});if(menu.id!==''||document.getElementById('player-character').value!==''||!document.getElementById('character-status').textContent.includes('Originalkaraktär'))throw Error('Blocked storage removed original option');}finally{indexedDB.open=open;}
-  return {limit:s.MAX_SAVED_CHARACTERS,updateAtCapacity:true,metadataOnly:true,missing:true,blockedStorageRecovery:true};
+  return {limit:s.MAX_SAVED_CHARACTERS,updateAtCapacity:true,metadataOnly:true,missing:true,blockedStorageRecovery:true,legacyPreserved:true,oldWriterBlocked:true};
  });console.log('CHARACTER_STORAGE_OK',JSON.stringify(result));await context.close();
 }
