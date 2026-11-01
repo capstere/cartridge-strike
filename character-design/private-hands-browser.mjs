@@ -37,5 +37,9 @@ export async function verifyPrivateHands(page){
   await page.evaluate(({id,phase})=>{const g=__fps.game,r=__fps.renderer;g.state.time=20;const actor={...g.player,weapon:id,reloadUntil:phase==='reload'?21:0,inventory:{...g.player.inventory,primary:{id,ammo:0}},aimAmount:0};r.render(g,actor,1/60);r.switchAt=0;r.render(g,actor,1/60);},{id,phase});
   await page.screenshot({path:`test-results/private-character/hands-${id}-${phase}.png`});
  }
+ // Wider view of the same first-person meshes exposes the short sleeve boundary.
+ await page.evaluate(()=>{const r=__fps.renderer,g=__fps.game;const actor={...g.player,weapon:'p9',reloadUntil:0};r.render(g,actor,1/60);r.switchAt=0;r.render(g,actor,1/60);r.viewCamera.position.z=.65;r.viewCamera.updateMatrixWorld();r.renderer.autoClear=true;r.renderer.render(r.viewScene,r.viewCamera);r.renderer.getContext().finish();});
+ await page.screenshot({path:'test-results/private-character/hands-sleeve-inspection.png'});
+ await page.evaluate(()=>{__fps.renderer.viewCamera.position.z=0;__fps.renderer.viewCamera.updateMatrixWorld();});
  console.log('PRIVATE_HANDS_OK',JSON.stringify(report));return report;
 }

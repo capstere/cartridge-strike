@@ -1351,11 +1351,11 @@
     },
     {
       "path": "src/fps/view-character-appearance.mjs",
-      "bytes": 5361,
-      "sha256": "da5ab0491cd944ba4ca4a408cb59c6c4c969004603c92a3e325bef2f3bf205bc"
+      "bytes": 5633,
+      "sha256": "9fbcf2bb016efc40e803b628a007b4acfca946f2ec517a7801b434c92318ccf2"
     }
   ],
-  "bytes": 22601757,
+  "bytes": 22602029,
   "sourceDirectoriesExcluded": [
     "references",
     "reviews",

@@ -34,6 +34,7 @@ function weaponData(model){const a=[];model.userData.weapon.traverse(o=>{if(o.is
 for(const id of Object.keys(WEAPONS).filter(id=>WEAPONS[id].slot!=='armor'))test(`${id}: appearance preserves weapon, finger and reload transforms; cached restore`,()=>{
  const baseline=makeWeapon(id),custom=makeWeapon(id),p=createPrivateViewAppearance(fixture()),weapon=weaponData(custom),original=transforms(custom);
  syncWeaponAppearance(custom,p);const state=custom.userData.characterAppearance;assert(state.targets.length>=4,id);
+ for(const t of state.targets){assert.equal(t.mesh.visible,t.visible,'Do not hide wrist connectors');if(t.role==='cuff')for(let i=0;i<t.mesh.geometry.attributes.uv.count;i++)assert.equal(t.mesh.geometry.attributes.uv.getY(i),1);}
  const roles=new Set(state.targets.map(t=>t.role));assert(roles.has('hand'));assert(roles.has('sleeve')||roles.has('kit-sleeve'));
  for(const ammo of [0,3])for(const fraction of [0,.12,.35,.45,.64,.83,.99,1]){
   const duration=WEAPONS[id].reload||1,time=10+fraction*duration;

@@ -60,7 +60,12 @@ export function syncWeaponAppearance(model,profile){
  }
  for(const item of state.targets){const {mesh,role}=item;
   mesh.material=profile?(role==='hand'?profile.glove:profile.sleeve):item.material;
-  mesh.visible=profile&&role==='cuff'?false:item.visible;
+  mesh.visible=item.visible;
+  // Keep the legacy wrist connector: hiding it leaves a gap at the glove.
+  if(role==='cuff'){
+   if(profile&&!item.privateUV){item.privateUV=item.uv.clone();for(let i=0;i<item.privateUV.count;i++)item.privateUV.setXY(i,.5,1);}
+   mesh.geometry.setAttribute('uv',profile?item.privateUV:item.uv);
+  }
   if(role==='kit-sleeve'){
    if(profile&&!item.privateUV){item.privateUV=item.uv.clone();for(let i=0;i<item.privateUV.count;i++)item.privateUV.setXY(i,.5,1-item.uv.getY(i)/6);}
    mesh.geometry.setAttribute('uv',profile?item.privateUV:item.uv);
