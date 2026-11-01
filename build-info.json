@@ -575,9 +575,19 @@
       "sha256": "2c06fe9c4ef602f92edc09e805027dd70207f65bfc9ba66cc31733da5bec3b64"
     },
     {
+      "path": "furniture-editor/furniture-handles.mjs",
+      "bytes": 6740,
+      "sha256": "a347a5e8ddcf5fb54b4c41850dc4af0a55aef0d118c8b336b61ff6764b6bea78"
+    },
+    {
       "path": "furniture-editor/furniture-transforms.mjs",
       "bytes": 2064,
       "sha256": "ca247366607e641104489d737a6dc7e2cb05c27dd0601e372279776c84680ce1"
+    },
+    {
+      "path": "furniture-editor/furniture-translation.mjs",
+      "bytes": 3604,
+      "sha256": "69c11370c1103cd7b1ebeb9cec8d5a85e1fd52bd73bcb1aacf2cfa76192f1650"
     },
     {
       "path": "furniture-editor/index.html",
@@ -776,28 +786,28 @@
     },
     {
       "path": "furniture-editor/new.css",
-      "bytes": 20770,
-      "sha256": "be2f806d75621d34ebd70521a1cf79a78dc7561f943d72668d655a9fd8d2960d"
+      "bytes": 22091,
+      "sha256": "0594469248413bc95a9dad7de260d3fe866fb06461cc104261abf0470ee64e09"
     },
     {
       "path": "furniture-editor/new.html",
       "bytes": 17826,
-      "sha256": "56d8475315683351ac4630fa6ce840d87c06d59fec760e5efb1ef717f31d3984"
+      "sha256": "85bf2b647177ba0219e8f55b7f7872e61b8285eb27b5ffd06151fd553257f15a"
     },
     {
       "path": "furniture-editor/new.mjs",
-      "bytes": 94685,
-      "sha256": "0456684395c882e960ec354061c7654926505fa461df1e203d5e6ec0c85cf1d0"
+      "bytes": 97078,
+      "sha256": "6b94ef38ddffd8213016e0a4848c9990e6efbe77e99b7b4653bb2433ba90416f"
     },
     {
       "path": "furniture-editor/selection-dock.mjs",
-      "bytes": 4806,
-      "sha256": "7a89429fa024d5da6a970e5e68dc286e352e8a4f7b2454e439fd8b1742c569b1"
+      "bytes": 4868,
+      "sha256": "8a6aff366fc7f126339e4d8542c2016577acc4ae5b247f6b10d9f5bcfce2e55c"
     },
     {
       "path": "furniture-editor/smart-placement.mjs",
-      "bytes": 5980,
-      "sha256": "5ef3347b6f740bb50f26412ecb582f2e0a88664b67f6bd68b89a7660bbf4ae96"
+      "bytes": 6123,
+      "sha256": "2a858429f504f894bb816e4ee026a6c4bf60f56fe251e28338eefcfc2613b6b7"
     },
     {
       "path": "furniture-editor/snap-highlights.mjs",
@@ -1370,7 +1380,7 @@
       "sha256": "9b0c24534a47f2e1c9549a63a5e00a850577e22fe8d18dbc7a532008a027cb89"
     }
   ],
-  "bytes": 22630073,
+  "bytes": 22644336,
   "sourceDirectoriesExcluded": [
     "references",
     "reviews",

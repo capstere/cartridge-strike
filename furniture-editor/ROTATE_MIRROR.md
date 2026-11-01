@@ -21,4 +21,4 @@ Projektformatet är fortfarande schema 2. De valfria fälten `mirrored` (boolesk
 - `tools/furniture-transform-browser.mjs`: båda ingångarna, verklig asymmetrisk GLB med synligt sidodetaljbyte, TV-väggfäste, två rotationsriktningar, spegling, ångra/gör om, kopiering, ZIP/omladdning, originalbytes, FPS-rendering och smal viewport.
 - Befintliga vägg-, studio-, ban-, biblioteks- och dörrtester behålls. Bildresultat sparas lokalt under `test-results/furniture-transforms/`.
 
-Detta är knappar och genvägar i den befintliga editorn, inte nya 3D-handtag eller en separat editor. Fysisk telefon/styrplatta och prestandanivåer är inte verifierade av webbläsartesterna.
+Rotation och spegling använder knappar och genvägar i den befintliga editorn. För förflyttning och höjd finns nu även [3D-handtag](MOVE_HANDLES.md). Fysisk telefon/styrplatta och prestandanivåer är inte verifierade av webbläsartesterna.

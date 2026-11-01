@@ -16,11 +16,11 @@ export function installSelectionDock({getIssue,getMountIssue,onHeight,onMountMod
   collapsed=value;panel.hidden=value;reopen.hidden=!value;
   reopen.setAttribute('aria-label',value?'Redigera markerad möbel':'');
  }
- function sync(item,{isFurniture=false}={}){
+ function sync(item,{isFurniture=false,compact=false}={}){
   if(!isFurniture||!item){
    itemId=null;panel.hidden=true;reopen.hidden=true;return;
   }
-  if(itemId!==item.id){itemId=item.id;collapsed=false;}
+  if(itemId!==item.id){itemId=item.id;collapsed=compact;}
   name.textContent=item.assetName||item.name||item.kind||'Möbel';
   for(const [source,destination] of Object.entries(fieldIDs))
    $(destination).value=roundDisplay(item[source]);
@@ -91,5 +91,5 @@ export function installSelectionDock({getIssue,getMountIssue,onHeight,onMountMod
  $('dockDelete').addEventListener('click',()=>$('remove').click());
  $('editDockClose').addEventListener('click',()=>showCollapsed(true));
  reopen.addEventListener('click',()=>showCollapsed(false));
- return {sync};
+ return {sync,collapse:()=>{if(itemId)showCollapsed(true);}};
 }

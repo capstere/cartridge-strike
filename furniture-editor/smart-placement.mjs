@@ -85,6 +85,7 @@ export function duplicateFurnitureAssembly(root,objects,pose){
  return members.map((item,index)=>{const {original,source,...copy}=item,dx=item.x-root.x,dz=item.z-root.z;
   return {...copy,...(index===0?pose:{}),id:ids.get(item.id),source:'added',
    x:round(pose.x+c*dx+s*dz),z:round(pose.z-s*dx+c*dz),yaw:normalizeAngle(item.yaw+angle),
+   elevation:index===0?(pose.elevation??item.elevation??0):round((item.elevation||0)+(pose.elevation??root.elevation??0)-(root.elevation||0)),
    mountId:index===0?(pose.mountId||null):(ids.get(item.mountId)||item.mountId),
    wallMount:index===0?(pose.wallMount||null):(copy.wallMount||null)};
  });

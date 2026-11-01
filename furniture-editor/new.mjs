@@ -1,3 +1,5 @@
+import {installFurnitureHandles} from './furniture-handles.mjs';
+import {planFurnitureTranslation,furnitureAssembly} from './furniture-translation.mjs';
 import {rotateFurniture,mirrorFurniture} from './furniture-transforms.mjs';
 import {modelFront,MODEL_FRONTS,wallFootprint} from './model-alignment.mjs';
 import {makePoster,locatePoster} from './build/posters.mjs';
@@ -16,13 +18,13 @@ import {validate,corners as baseCorners,inside,segmentIntersectsRectangle,inters
 import {wallPieces,standardPassageSpan,standardDoorMarkerSpan,isDoor} from './build/architecture.mjs?v=4.6.0';
 import {LIBRARY_ALL} from './library/catalog.mjs?v=4.7.0';
 import {upgradeLegacyOrangeChair} from './library/procedural.mjs?v=4.4.0';
-import {proposeSmartPose,duplicateFurnitureAssembly} from './smart-placement.mjs?v=4.7.0';
+import {proposeSmartPose,duplicateFurnitureAssembly} from './smart-placement.mjs?v=4.9.0';
 import {poseOnWall,syncWallMounts} from './wall-mounts.mjs?v=4.7.0';
 import {placementPreview,preferredPlacementPoint} from './snap-highlights.mjs?v=4.7.0';
 import {findNearbyFreePlacement} from './soft-placement.mjs';
 import {importLocalGLB,getLocalFile,localLibrary,readLibraryAsset} from './library/models.mjs';
 import {assetHash} from './library/glb-utils.mjs';
-import {installSelectionDock} from './selection-dock.mjs?v=4.8.0';
+import {installSelectionDock} from './selection-dock.mjs?v=4.9.0';
 import {planAdjacentRoom,ADJACENT_SIDES} from './adjacent-room.mjs?v=4.6.0';
 import {planDraggedRoom} from './build/room-drag.mjs?v=4.6.0';
 
@@ -193,6 +195,7 @@ function easyFurniturePose(item){
 function pendingPlacement(q){
  const entry=pendingFurniture,base={...(pendingTemplate||{}),id:'ghost',kind:pendingTemplate?.kind||entry.kind||'prop',assetId:entry.assetId||entry.id,assetName:entry.name,x:q.x,z:q.z,yaw:pendingYaw,w:entry.width,d:entry.depth,height:entry.height,modelSize:entry.modelSize||pendingTemplate?.modelSize,wallFacing:entry.wallFacing||pendingTemplate?.wallFacing};
  const feedback=placementPreview(base,q,objects(),arch(),{mode:pendingTemplate?.wallMount?'wall':$('placementMode').value,floors:floors()});
+ if(pendingTemplate&&!base.wallMount&&!base.mountId&&!feedback.pose.wallMount&&!feedback.pose.mountId)feedback.pose.elevation=base.elevation||0;
  const fitted=easyFurniturePose({...base,...feedback.pose});return {item:fitted.item,feedback,adjusted:fitted.adjusted};
 }
 function addFurniture(entry,x,z,y=null,pointData={}){const floor=floorAt(x,z),id=nextId('NY-OBJ-');
@@ -267,7 +270,7 @@ function updateProps(){const o=lookup();$('selection').hidden=!o;$('posterText')
  $('w').value=o?(o.w??(o.x1!==undefined?o.x1-o.x0:o.b?Math.hypot(o.b[0]-o.a[0],o.b[1]-o.a[1]):'')):'';
  $('d').value=o?(o.d??(o.z1!==undefined?o.z1-o.z0:'')):'';
  for(const id of ['x','z','w','d','remove','rotate','duplicate'])$(id).disabled=!o;
- selectionDock.sync(o,{isFurniture:view!=='walk'&&!!o&&objects().includes(o)&&!pendingFurniture&&(tab!=='build'||$('tool').value==='select')});
+ selectionDock.sync(o,{compact:view==='3d'&&innerWidth<720,isFurniture:view!=='walk'&&!!o&&objects().includes(o)&&!pendingFurniture&&(tab!=='build'||$('tool').value==='select')});
 }
 async function transformSelected(action,delta=-Math.PI/12){const item=lookup();if(!item||!objects().includes(item)||pendingFurniture||view==='walk')return;
  const before=JSON.stringify(p());let issue=null,measured=false;
@@ -290,10 +293,11 @@ function moveObject(o,x,z,pointData={}){if(arch().includes(o)){
  if(o.kind&&objects().includes(o)){
   const requested=o.wallMount?'wall':o.mountId?'surface':'auto';
   const proposed=mountPose(o,{x,z,...pointData},requested);if(proposed.blocked){status(proposed.blocked);return false;}
+  if(!o.wallMount&&!o.mountId&&!proposed.wallMount&&!proposed.mountId)proposed.elevation=o.elevation||0;
   let candidate={...o,x,z,...proposed};
   candidate.roomId=floorAt(candidate.x,candidate.z)?.id||floor?.id||'';
-  const dx=candidate.x-o.x,dz=candidate.z-o.z;Object.assign(o,candidate);
-  for(const child of objects().filter(c=>c.mountId===o.id)){child.x=snap(child.x+dx);child.z=snap(child.z+dz);child.roomId=o.roomId;}placementStatus(o);return true;
+  const dx=candidate.x-o.x,dz=candidate.z-o.z,dy=(candidate.elevation||0)-(o.elevation||0),children=furnitureAssembly(o,objects()).slice(1);Object.assign(o,candidate);
+  for(const child of children){child.x+=dx;child.z+=dz;child.elevation=(child.elevation||0)+dy;child.roomId=o.roomId;}placementStatus(o);return true;
  }
  if(markers().includes(o)){if(!floor)return false;o.x=x;o.z=z;if(o.roomId)o.roomId=floor.id;return true;}
  return false;}
@@ -397,6 +401,21 @@ function ensureRenderer(){
 }
 scene.add(new T.HemisphereLight(0xffffff,0x819a97,2.2));const sun=new T.DirectionalLight(0xffffff,2);sun.position.set(5,15,6);scene.add(sun);const group=new T.Group(),preview3d=new T.Group();scene.add(group,preview3d);let hover3d=null;
 let furnitureRoot=null,furnitureSignature='';
+const furnitureHandles=installFurnitureHandles({canvas:$('scene3d'),camera,
+ getSelection:()=>view==='3d'&&!pendingFurniture&&objects().includes(lookup())&&(tab==='furnish'||tab==='build'&&$('tool').value==='select')?lookup():null,
+ getWalls:arch,onHint:status,isCameraGesture:()=>spaceHeld,onCameraGesture:e=>scenePointerDown(e),onWheel:e=>zoom3D(e),
+ onBegin:()=>{const item=lookup();if(!item||!objects().includes(item))return null;stopMovement();return {before:JSON.stringify(p()),items:structuredClone(objects()),id:item.id};},
+ onDrag:(start,delta)=>{try{
+  const item=start.items.find(o=>o.id===start.id),moved=planFurnitureTranslation(item,start.items,arch(),delta);
+  for(const pose of moved){const live=objects().find(o=>o.id===pose.id);if(live)Object.assign(live,pose,{roomId:floorAt(pose.x,pose.z)?.id||pose.roomId||''});}
+  // Update poses only during a gesture: do not reload GLBs or rebuild the scene per pixel.
+  for(const holder of furnitureRoot?.children||[]){const live=objects().find(o=>o.id===holder.userData.editId);if(live){holder.position.set(live.x,live.elevation||0,live.z);holder.rotation.y=live.yaw||0;}}
+  updateProps();update3DPreview();status(`Höjd över golvet: ${(moved[0].elevation||0).toFixed(2)} · Släpp för att spara · Esc avbryter.`);
+ }catch(e){status(e.message);}},
+ onFinish:start=>{commit(start.before);status('Placeringen sparad. Ångra återställer hela dragningen.');},
+ onCancel:start=>{project=JSON.parse(start.before);redraw();status('Dragningen avbruten. Möbeln är tillbaka på sin tidigare plats.');}
+});
+
 let ghostRoot=null,ghostKey='',ghostGeneration=0;
 function clearGhost(){ghostGeneration++;if(ghostRoot){scene.remove(ghostRoot);disposeGhost(ghostRoot);}ghostRoot=null;ghostKey='';}
 function disposeGhost(root){root.traverse(o=>{if(o.userData.studioGeometry||o.userData.ghostGeometry)o.geometry?.dispose();for(const m of Array.isArray(o.material)?o.material:[o.material])if(m?.userData?.ghostOwned||m?.userData?.studioOwned)m.dispose();});}
@@ -449,7 +468,7 @@ function update3DPreview(q=hover3d){preview3d.traverse(o=>{if(o.isMesh||o.isLine
   else{const len=Math.hypot(w,d),angle=-Math.atan2(b.z-a.z,b.x-a.x);previewBox(x,.8,z,len,1.6,.07,0x188d84,angle,.35);}
  }
  else if(q&&tab==='build'&&['door','card-door','opening','window','glazed'].includes($('tool').value)){const hit=wallAtPoint(arch(),[q.x,q.z],{radius:.4});if(hit){const w=isDoor($('tool').value)?1.2:Math.min(1.6,hit.length),angle=-Math.atan2(hit.wall.b[1]-hit.wall.a[1],hit.wall.b[0]-hit.wall.a[0]);previewBox(hit.point[0],.7,hit.point[1],w,1.4,.12,0xf4ad42,angle,.3);}}
- updateGuide();renderer.render(scene,camera);
+ updateGuide();furnitureHandles.update();renderer.render(scene,camera);
 }
 function frameBuiltFloors(){const polys=floors().map(f=>f.polygon||[[f.x0,f.z0],[f.x1,f.z0],[f.x1,f.z1],[f.x0,f.z1]]).flat();
  const b=p().ground.bounds,points=polys.length?polys:[[b.x0,b.z0],[b.x1,b.z1]];
@@ -457,7 +476,7 @@ function frameBuiltFloors(){const polys=floors().map(f=>f.polygon||[[f.x0,f.z0],
  return {x:(x0+x1)/2,z:(z0+z1)/2,span:Math.max(8,x1-x0+3,z1-z0+3)};
 }
 function position3DCamera(){const focus=view3dCenter??=frameBuiltFloors(),span=focus.span/view3dZoom;
- camera.position.set(focus.x+Math.sin(orbit)*span*.75,span*.72,focus.z+Math.cos(orbit)*span*.75);camera.lookAt(focus.x,0,focus.z);
+ camera.position.set(focus.x+Math.sin(orbit)*span*.75,span*.72,focus.z+Math.cos(orbit)*span*.75);camera.lookAt(focus.x,0,focus.z);camera.updateMatrixWorld(true);furnitureHandles.update();
 }
 function visibleSpan(){const b=p().ground.bounds;return view==='3d'?(view3dCenter??=frameBuiltFloors()).span/view3dZoom:Math.max(b.x1-b.x0,b.z1-b.z0)/zoom;}
 function moveView(direction,distance){if(view==='walk')return;
@@ -673,7 +692,7 @@ const tool=$('tool').value,active=tab==='build'&&tool!=='select',placing=!!pendi
 }
 function redraw(){
  $('modeHelp').textContent=p().mode==='edit-floor5'?'FLOOR 5: du arbetar på en lokal kopia. Originalgolv och spelregler bevaras. Möbler och byggändringar sparas i ditt projekt.':'NY BANA: skapa egna rum och möblera fritt. Lägg till startpunkter och mål när du vill spela med bottar.';
-if(view!=='3d')clearGhost();if(!pendingFurniture)snapFeedback=null;syncWallMounts(objects(),arch());updateKidSteps();$('modeLabel').textContent=p().mode==='edit-floor5'?'DESIGNSTUDION / FLOOR 5':'DESIGNSTUDION / NY BANA';updateProps();updateGuide();updateFirstBuild();$('undo').disabled=!history.length;$('redo').disabled=!future.length;if(view==='plan')drawPlan();else if(view==='3d')draw3D();}
+if(view!=='3d'){clearGhost();furnitureHandles.update();}if(!pendingFurniture)snapFeedback=null;syncWallMounts(objects(),arch());updateKidSteps();$('modeLabel').textContent=p().mode==='edit-floor5'?'DESIGNSTUDION / FLOOR 5':'DESIGNSTUDION / NY BANA';updateProps();updateGuide();updateFirstBuild();$('undo').disabled=!history.length;$('redo').disabled=!future.length;if(view==='plan')drawPlan();else if(view==='3d')draw3D();}
 function switchTab(t){closeRoomChoices();if(view==='walk')leaveWalk();tab=t;pendingFurniture=null;pendingTemplate=null;for(const b of document.querySelectorAll('[data-tab]'))b.classList.toggle('active',b.dataset.tab===t);for(const s of document.querySelectorAll('[data-panel]'))s.hidden=s.dataset.panel!==t;first=null;redraw();}
 document.querySelectorAll('[data-tab]').forEach(b=>b.onclick=()=>switchTab(b.dataset.tab));
 $('firstBuildDismiss').onclick=()=>{localStorage.setItem(guideKey('guide-hidden'),'1');updateFirstBuild();};
@@ -869,7 +888,7 @@ $('walkView').onclick=()=>{try{if(view==='walk')return;if(!floors().length)throw
  localStorage.setItem('cartridge-level-walk',JSON.stringify(parseProject(p())));
  walkReturnView=view;walkReturnLook=gameLook;walkPose=preferredWalkPose();if(gameLook)closeGameLook({render:false});
  if(view==='3d'&&renderer){renderer.dispose();renderer=null;}
- stopMovement();first=null;drawGesture=null;view='walk';selectionDock.sync(null);canvas.hidden=true;$('scene3d').hidden=true;$('movePad').hidden=true;$('workGuide').hidden=true;$('walkFrame').hidden=false;$('walkFrame').src=walkURL({pose:walkPose});
+ stopMovement();first=null;drawGesture=null;view='walk';selectionDock.sync(null);furnitureHandles.update();canvas.hidden=true;$('scene3d').hidden=true;$('movePad').hidden=true;$('workGuide').hidden=true;$('walkFrame').hidden=false;$('walkFrame').src=walkURL({pose:walkPose});
  for(const id of ['planView','threeView','walkView'])$(id).classList.toggle('active',id==='walkView');status('Promenadvy: samma renderare och kollision som FPS. W A S D för att gå, musen för att se dig omkring.');
  }catch(e){status(e.message);}};
 function leaveWalk(){if(view!=='walk')return;$('walkFrame').src='about:blank';$('walkFrame').hidden=true;$('movePad').hidden=false;$('workGuide').hidden=false;
@@ -882,7 +901,7 @@ window.addEventListener('message',e=>{if(e.origin!==location.origin||![ $('walkF
 });
 $('demo').onclick=async()=>{try{const response=await fetch('../levels/synthetic-demo.json');if(!response.ok)throw Error('Demobanan saknas.');const before=JSON.stringify(p());project=parseProject(await response.text());selected=null;pendingFurniture=null;pendingTemplate=null;pendingYaw=0;first=null;offset={x:0,z:0};zoom=1;view3dCenter=null;view3dZoom=1;$('name').value=p().name;commit(before);status('Syntetisk testbana öppnad. Den är separat från ditt sparade projekt.');}catch(e){status(e.message);}};
 $('planView').onclick=()=>{if(view==='walk')leaveWalk();closeGameLook({render:false});first=null;drawGesture=null;view='plan';canvas.hidden=false;$('scene3d').hidden=true;$('planView').classList.add('active');$('threeView').classList.remove('active');redraw();};
-$('threeView').onclick=()=>{if(view==='walk')leaveWalk();if(!ensureRenderer())return;first=null;drawGesture=null;view3dCenter??=frameBuiltFloors();view='3d';canvas.hidden=true;$('scene3d').hidden=false;$('threeView').classList.add('active');$('planView').classList.remove('active');redraw();};
+$('threeView').onclick=()=>{if(view==='walk')leaveWalk();if(!ensureRenderer())return;first=null;drawGesture=null;view3dCenter??=frameBuiltFloors();view='3d';canvas.hidden=true;$('scene3d').hidden=false;$('threeView').classList.add('active');$('planView').classList.remove('active');redraw();if(innerWidth<720)selectionDock.collapse();};
 $('fit').onclick=()=>{view3dZoom=1;view3dCenter=frameBuiltFloors();const b=p().ground.bounds;zoom=floors().length?clamp(Math.min(b.x1-b.x0,b.z1-b.z0)/view3dCenter.span,.5,10):1;offset=floors().length?{x:(b.x0+b.x1)/2-view3dCenter.x,z:(b.z0+b.z1)/2-view3dCenter.z}:{x:0,z:0};redraw();};
 let repeatDelay=0,repeatTimer=0,repeated=false;
 function stopMoveButton(){clearTimeout(repeatDelay);clearInterval(repeatTimer);repeatDelay=repeatTimer=0;}
@@ -895,7 +914,8 @@ for(const button of document.querySelectorAll('[data-move]')){
 }
 window.addEventListener('blur',stopMoveButton);
 canvas.addEventListener('wheel',e=>{e.preventDefault();const before=point(e);zoom=clamp(zoom*(e.deltaY<0?1.1:.9),.5,10);const after=point(e);offset.x+=after.x-before.x;offset.z+=after.z-before.z;redraw();},{passive:false});
-$('scene3d').addEventListener('wheel',e=>{e.preventDefault();view3dZoom=clamp(view3dZoom*(e.deltaY<0?1.15:.87),.5,10);redraw();},{passive:false});
+function zoom3D(e){e.preventDefault();if(furnitureHandles.active)return;view3dZoom=clamp(view3dZoom*(e.deltaY<0?1.15:.87),.5,10);redraw();}
+$('scene3d').addEventListener('wheel',zoom3D,{passive:false});
 let orbitDrag=null,pan3d=null,drag3d=null;
 const ray3d=new T.Raycaster(),groundPlane=new T.Plane(new T.Vector3(0,1,0),0);
 function hit3d(e){const r=$('scene3d').getBoundingClientRect();ray3d.setFromCamera(new T.Vector2((e.clientX-r.left)/r.width*2-1,-(e.clientY-r.top)/r.height*2+1),camera);const v=new T.Vector3();return ray3d.ray.intersectPlane(groundPlane,v)?{x:snap(v.x),z:snap(v.z)}:null;}
@@ -907,7 +927,7 @@ function wallDragPoint(e,item){const wall=arch().find(w=>w.id===item.wallMount?.
  hit3d(e);const dx=wall.b[0]-wall.a[0],dz=wall.b[1]-wall.a[1],normal=new T.Vector3(-dz,0,dx).normalize(),plane=new T.Plane().setFromNormalAndCoplanarPoint(normal,new T.Vector3(wall.a[0],0,wall.a[1]));
  const hit=ray3d.ray.intersectPlane(plane,new T.Vector3());return hit?{x:hit.x,z:hit.z,y:hit.y}:null;
 }
-$('scene3d').addEventListener('pointerdown',e=>{if(e.button===1||e.button===2||(e.button===0&&(spaceHeld||e.ctrlKey||e.metaKey||e.shiftKey))){e.preventDefault();$('scene3d').setPointerCapture(e.pointerId);pan3d={x:e.clientX,y:e.clientY};return;}if(e.button!==0)return;
+function scenePointerDown(e){if(furnitureHandles.active)return;if(e.button===1||e.button===2||(e.button===0&&(spaceHeld||e.ctrlKey||e.metaKey||e.shiftKey))){e.preventDefault();$('scene3d').setPointerCapture(e.pointerId);pan3d={x:e.clientX,y:e.clientY};return;}if(e.button!==0)return;
  $('scene3d').setPointerCapture(e.pointerId);if(e.altKey){orbitDrag={x:e.clientX};return;}
  const pick=pick3d(e),tool=tab==='build'?$('tool').value:tab==='play'?$('gameTool').value:'furnish';
  const onWall=arch().some(a=>a.id===pick.id&&['wall','window','glazed'].includes(a.kind));
@@ -924,7 +944,8 @@ $('scene3d').addEventListener('pointerdown',e=>{if(e.button===1||e.button===2||(
   if(drag3d&&item.wallMount){const hit=wallDragPoint(e,item);if(hit)drag3d.wall={x:hit.x-item.x,z:hit.z-item.z,y:hit.y-item.wallMount.y};}
   redraw();return;}
  if(tab==='furnish'){status('Välj en möbel i listan; klicka sedan i 3D för att placera den.');return;}
- selected=null;orbitDrag={x:e.clientX};redraw();});
+ selected=null;orbitDrag={x:e.clientX};redraw();}
+$('scene3d').addEventListener('pointerdown',scenePointerDown);
 $('scene3d').addEventListener('pointermove',e=>{if(drag3d){
   if(drag3d.wall){const hit=wallDragPoint(e,drag3d.item);if(hit&&moveObject(drag3d.item,hit.x-drag3d.wall.x,hit.z-drag3d.wall.z,{y:hit.y-drag3d.wall.y,wallId:drag3d.item.wallMount.wallId}))redraw();return;}
   const q=hit3d(e);

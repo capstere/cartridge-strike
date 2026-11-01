@@ -189,3 +189,7 @@ Ingen uppladdad ZIP eller modell gör automatiskt förändringar i FPS-spelet, k
 **SPELUTSEENDE** visar den riktiga FPS-renderaren bredvid den redigerbara 3D-vyn och uppdateras efter varje slutförd ändring. **GÅ RUNT I BANAN** öppnar helskärm nära ditt nuvarande fokus när platsen är fri och återvänder till samma byggvy. Den lilla guiden på vänster sida visar ett första femstegsbygge; den kan döljas eller öppnas igen. Esc avslutar verktyg och Delete/Backspace tar bort vald del. Ångra återställer en hel dragning, även väggarnas anslutningar.
 
 Originalgolven i Floor 5 är fortfarande legacy-polygonytor och har inga dragbara rektangelhörn; nya rum där kan storleksändras. Delade rumsväggar och tvetydiga korsningar skyddas med tydliga fel i stället för att skapa en osynlig glipa. Placering av möbler är fri även vid varning; **KONTROLLERA SPELBARHET** avgör när en bana är redo för match.
+
+## Flytta med handtag i 3D
+
+Markera en möbel i **Bygg i 3D** och dra **Flytta**, **Sidled**, **Djup** eller **Höjd**. Väggmöbler får **Längs vägg** och **Höjd**, med bibehållet väggfäste. Samma funktion gäller Ny bana och Floor 5. [Instruktioner och verifiering](MOVE_HANDLES.md).
