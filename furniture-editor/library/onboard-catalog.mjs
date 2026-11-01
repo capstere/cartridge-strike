@@ -255,6 +255,8 @@ export const ONBOARD_LIBRARY = Object.freeze([
   {
     "id": "onboard:tv-with-a-wall-mount",
     "name": "TV med väggfäste",
+    "placement": "wall",
+    "wallFacing": "+z",
     "category": "kontor",
     "kind": "prop",
     "width": 3.066,

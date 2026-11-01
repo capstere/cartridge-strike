@@ -2,7 +2,8 @@
  * Presentation for smart placement; the pose comes from the same pure algorithm
  * used by the editor for actual placement. Highlights never create colliders.
  */
-import {inferPlacementRole,proposeSmartPose} from './smart-placement.mjs';
+import {wallFootprint} from './model-alignment.mjs';
+import {inferPlacementRole,proposeSmartPose} from './smart-placement.mjs?v=4.7.0';
 
 const finite=n=>typeof n==='number'&&Number.isFinite(n);
 const normalWall=w=>w&&!w.deleted&&w.kind==='wall';
@@ -16,17 +17,20 @@ export function preferredPlacementPoint(pick,objects=[],walls=[]){
  return (support||onWall)&&pick.surface||pick.ground||null;
 }
 /** Recompute using exactly the same placement math as the final click. */
-export function placementPreview(item,point,objects=[],walls=[],{mode='auto'}={}){
+export function placementPreview(item,point,objects=[],walls=[],{mode='auto',floors=[]}={}){
  if(!item||!point||![point.x,point.z].every(finite))return null;
- const pose=proposeSmartPose(item,point,objects,{mode,walls});
+ const pose=proposeSmartPose(item,point,objects,{mode,walls,floors});
  if(pose.wallMount){
   const wall=walls.find(w=>w.id===pose.wallMount.wallId&&normalWall(w));
   if(wall){
+   const fit=wallFootprint(item),a=pose.wallMount.frame===1&&(wall.a[0]>wall.b[0]||wall.a[0]===wall.b[0]&&wall.a[1]>wall.b[1])?wall.b:wall.a,b=a===wall.a?wall.b:wall.a;
+   const dx=b[0]-a[0],dz=b[1]-a[1],len=Math.hypot(dx,dz),nx=-dz/len*pose.wallMount.side,nz=dx/len*pose.wallMount.side;
+   const back=fit.depth/2+.008;
    return {kind:'wall',targetId:wall.id,
     label:'Väggen är vald – klicka för att hänga upp',
     pose,
-    surface:{x:pose.x,z:pose.z,y:(pose.elevation||0)+item.height/2,
-     w:item.w+.13,d:.055,h:item.height+.13,yaw:pose.yaw||0}};
+    surface:{x:pose.x-nx*back,z:pose.z-nz*back,y:pose.wallMount.y,
+     w:fit.width+.13,d:.008,h:fit.height+.13,yaw:Math.atan2(nx,nz)}};
   }
  }
  if(pose.mountId){
@@ -43,8 +47,8 @@ export function placementPreview(item,point,objects=[],walls=[],{mode='auto'}={}
   mode==='floor'?'floor':inferPlacementRole(item);
  return {kind:desired==='wall'?'needs-wall':['countertop','desk-edge'].includes(desired)?'needs-surface':'floor',
   targetId:null,pose,
-  label:desired==='wall'?'Peka på en vägg – annars kan du ställa föremålet på golvet':
+  label:pose.blocked|| (desired==='wall'?'Peka på en hel väggyta':
    ['countertop','desk-edge'].includes(desired)?'Peka på en möbelyta – annars kan du placera på golvet':
-   'Fri placering på golvet',
+   'Fri placering på golvet'),
   surface:null};
 }

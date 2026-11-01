@@ -83,3 +83,18 @@ test('a small wall shelf is both anchored to the wall and a support for books',(
  assert.equal(pose.mountId,mounted.id);
  assert(pose.elevation>1.5);
 });
+
+test('explicit wall and surface failure is blocked, never a successful floor placement',()=>{
+ const o=item('local:'+'a'.repeat(64),'Import',2,.2,1);
+ const tooNarrow={...wall,b:[1,0]};
+ assert.match(proposeSmartPose(o,{x:.5,z:0},[],{mode:'wall',walls:[tooNarrow]}).blocked,/väggbredd/);
+ assert.match(proposeSmartPose(o,{x:4,z:0},[],{mode:'wall',walls:[{...wall,height:.5}]}).blocked,/vägghöjd/);
+ assert(proposeSmartPose(o,{x:4,z:4},[],{mode:'surface'}).blocked);
+ assert.equal(proposeSmartPose(o,{x:4,z:4},[],{mode:'floor'}).blocked,undefined);
+});
+test('catalog placement metadata works without name inference',()=>{
+ const tv=item('onboard:tv-with-a-wall-mount','Unrelated display name',3.066,.25,1.789);
+ assert.equal(inferPlacementRole(tv),'wall');
+ const pose=proposeSmartPose(tv,{x:4,z:.15},[],{walls:[wall]});
+ assert(Math.abs(pose.yaw)<1e-6,'Measured +Z TV screen faces +Z room');
+});

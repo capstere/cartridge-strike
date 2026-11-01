@@ -1,4 +1,4 @@
-import {ONBOARD_LIBRARY} from './onboard-catalog.mjs';
+import {ONBOARD_LIBRARY} from './onboard-catalog.mjs?v=4.7.0';
 import {PROCEDURAL_LIBRARY} from './procedural.mjs?v=4.4.0';
 /** License-audited, version-pinned reusable 3D furniture library.
  * Kenney source: https://kenney.nl/assets/furniture-kit (CC0 1.0).
@@ -741,6 +741,8 @@ export const LIBRARY = Object.freeze([
   },
   {
     "id": "kenney:furniture-kit:bathroommirror",
+    "placement": "wall",
+    "wallFacing": "+z",
     "name": "Badrumsspegel",
     "category": "badrum",
     "kind": "prop",

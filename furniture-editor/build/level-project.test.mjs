@@ -103,3 +103,12 @@ test('wall-hung furniture is saved exactly in JSON and ZIP with its height, face
  const both=structuredClone(p);both.furniture.added[0].mountId='NY-OBJ-0002';
  assert.throws(()=>parseProject(both),/väggfäste/);
 });
+
+test('calibrated GLB fronts and canonical anchors are optional, bounded and round-trip intact',async()=>{
+ const item={id:'NY-OBJ-0001',kind:'prop',assetId:'onboard:tv-with-a-wall-mount',x:0,z:0,yaw:0,w:3,d:.25,height:1.8,wallFacing:'+z',modelSize:[3.065,1.789,.2504],wallMount:{wallId:'BYGG-V-0001',t:.4,y:1.5,side:1,frame:1}};
+ const p=exportProject();p.furniture.added.push(item);p.assets.library.push(item.assetId);
+ assert.deepEqual(parseProject(JSON.stringify(p)).furniture.added[0],item);
+ assert.deepEqual((await parseProjectZip(await exportProjectZip(p))).project.furniture.added[0],item);
+ for(const bad of [{wallFacing:'up'},{modelSize:[0,1,1]},{modelSize:[1,Infinity,1]},{modelSize:[1,1]},{wallMount:{...item.wallMount,frame:2}}]){const copy=structuredClone(p);Object.assign(copy.furniture.added[0],bad);assert.throws(()=>parseProject(copy));}
+ const legacy=structuredClone(p);delete legacy.furniture.added[0].wallFacing;delete legacy.furniture.added[0].modelSize;delete legacy.furniture.added[0].wallMount.frame;assert.doesNotThrow(()=>parseProject(legacy));
+});

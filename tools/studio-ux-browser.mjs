@@ -207,6 +207,7 @@ try{
  assert(hanging.wallMount&&hanging.wallMount.wallId,'The picture has a stable real wall anchor');
  assert.equal(hanging.collision,'none','Wall decor never adds an invisible player blocker');
  assert(hanging.elevation>1);
+ await mountPage.locator('.dock-details summary').click();
  await mountPage.locator('#dockWallHeightRow').waitFor({state:'visible'});
  await mountPage.locator('#dockWallY').fill('1.9');
  await mountPage.locator('#dockWallY').dispatchEvent('change');
@@ -286,7 +287,9 @@ try{
   const start=await largePage.evaluate(q=>__levelStudio.screenWorldPoint(...q),a);
   const end=await largePage.evaluate(q=>__levelStudio.screenWorldPoint(...q),b);
   await largePage.mouse.move(start.x,start.y);
+  const canvasBefore=await largePage.locator('#plan').boundingBox();
   await largePage.mouse.down();
+  assert.deepEqual(await largePage.locator('#plan').boundingBox(),canvasBefore,'Status text must not resize the drawing surface mid-drag');
   await largePage.mouse.move(end.x,end.y,{steps:12});
   await largePage.mouse.up();
  };
@@ -357,6 +360,7 @@ try{
  await level.evaluate(()=>__levelStudio.select('NY-BORD-0001'));
  await level.locator('#editDock').waitFor({state:'visible'});
  assert.match(await level.locator('#editDockName').textContent(),/bord|table/i);
+ await level.locator('.dock-details summary').click();
  await level.locator('#dockWidth').fill('1.65');
  await level.locator('#dockWidth').dispatchEvent('change');
  assert.equal(await level.evaluate(()=>__levelStudio.project.furniture.added.find(o=>o.id==='NY-BORD-0001').w),1.65);
@@ -428,6 +432,7 @@ try{
  await phone.locator('#editDock').waitFor({state:'visible',timeout:5000});
  const dockRect=await phone.locator('#editDock').boundingBox();
  assert(dockRect && dockRect.x>=0 && dockRect.x+dockRect.width<=395,'Context inspector fits on phone');
+ await phone.locator('.dock-details summary').click();
  await phone.locator('#dockWidth').fill('0.7');
  await phone.locator('#dockWidth').dispatchEvent('change');
  assert.equal(await phone.evaluate(()=>__levelStudio.project.furniture.added.find(o=>o.id==='NY-STOL-0001').w),0.7);

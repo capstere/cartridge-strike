@@ -1,3 +1,4 @@
+import {validModelAlignment} from '../model-alignment.mjs';
 /** Versioned level document. Parsing is deliberately independent of the renderer. */
 import {BASE_COMMIT,GAME_VERSION,PATCH_FORMAT,PATCH_SCHEMA} from '../core.mjs';
 import {validateEntry,validateFloorRect} from './architecture.mjs?v=4.6.0';
@@ -85,6 +86,7 @@ export function parseProject(input,{allowLegacy=true}={}){
   f.placements.length+f.added.length+f.removed.length>350)fail('möbler');
  if(input.mode==='new-level'&&(f.placements.length||f.removed.length))fail('ny bana får inte ärva möbler');
  const checkMount=o=>{
+  if(!validModelAlignment(o))fail('modellens framåtriktning eller mått');
   if(o.elevation!==undefined&&(!Number.isFinite(o.elevation)||o.elevation<0||o.elevation>6))fail('höjd över golv');
   if(o.mountId!==undefined&&o.mountId!==null&&(typeof o.mountId!=='string'||o.mountId.length>100||o.mountId===o.id))fail('möbelfäste');
   if(o.wallMount!==undefined&&o.wallMount!==null&&(!validWallMount(o.wallMount)||o.mountId))fail('väggfäste');

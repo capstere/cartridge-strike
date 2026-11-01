@@ -67,7 +67,7 @@ test('context furniture dock edits the actual model with real validation and und
  assert.match(editor,/installSelectionDock/);
  assert.match(editor,/selectionDock\.sync\(o/);
  assert.match(editor,/child\.elevation=/);
- assert.match(html,/src="new\.mjs\?v=4\.6\.0"/);
+ assert.match(html,/src="new\.mjs\?v=4\.7\.0"/);
 });
 
 test('free building defaults to optional smart placement, with explicit diagnostics',()=>{
@@ -158,11 +158,12 @@ test('the highlighted 3D snap target is tied to actual tabletop/wall placement, 
  const preview=source('furniture-editor/snap-highlights.mjs');
  const browser=source('tools/studio-ux-browser.mjs');
  assert.match(editor,/preferredPlacementPoint\(pick,objects\(\),arch\(\)\)/);
- assert.match(editor,/snapFeedback=placementPreview\(pose,q,objects\(\),arch\(\)/);
+ assert.match(editor,/feedback=placementPreview\(base,q,objects\(\),arch\(\)/);
  assert.match(editor,/highlightSnapSurface\(snapFeedback\)/);
  assert.match(editor,/userData\.snapTargetId=spec\.targetId/);
- assert.match(editor,/previewBox\(fit\.x,\(fit\.elevation\|\|0\)\+fit\.height\/2/);
- assert.match(editor,/addFurniture\(pendingFurniture,q\.x,q\.z,q\.y\)/);
+ assert.match(editor,/showModelGhost\(calculated\.item\)/);
+ assert.match(editor,/buildProjectFurniture\(\[\{\.\.\.item,id:\x27ghost\x27\}\]/);
+ assert.match(editor,/addFurniture\(pendingFurniture,q\.x,q\.z,q\.y,q\)/);
  assert.match(editor,/ctx\.strokeStyle='#13b48d'/);
  assert.match(editor,/if\(edge\)/);
  assert.match(preview,/export function preferredPlacementPoint/);
@@ -176,7 +177,7 @@ test('large rooms are real, atomic and not rejected by the obsolete 50-unit limi
  const geometry=source('furniture-editor/build/room-drag.mjs');
  const architecture=source('furniture-editor/build/architecture.mjs');
  const suite=source('tools/studio-ux-browser.mjs');
- assert.match(html,/src="new\.mjs\?v=4\.6\.0"/);
+ assert.match(html,/src="new\.mjs\?v=4\.7\.0"/);
  assert.match(editor,/const \{rect,edges\}=planDraggedRoom\(a,b,p\(\)\.ground\.bounds\)/);
  assert.match(editor,/if\(role==='room'\)for\(const \[u,v\] of edges\)makeSegment\('wall',u,v\)/);
  assert.match(editor,/p\(\)\.ground\.floors\.length=beforeFloors/);

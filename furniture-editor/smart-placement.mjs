@@ -4,7 +4,8 @@
  * Automatic suggestions can always be overridden by Auto/Surface/Wall/Floor.
  */
 import {placementRole,proceduralOf} from './library/procedural.mjs?v=4.4.0';
-import {findWallMount} from './wall-mounts.mjs?v=4.4.0';
+import {LIBRARY_MAP} from './library/catalog.mjs?v=4.7.0';
+import {findWallMount,wallMountProblem} from './wall-mounts.mjs?v=4.7.0';
 import {round,normalizeAngle} from './core.mjs';
 
 const isSurface=o=>!o.deleted&&(!o.wallMount||proceduralOf(o)?.shape==='wall-shelf')&&(
@@ -25,6 +26,7 @@ const wallWords=/bathroommirror|mirror|spegel|wall.?clock|väggklock|poster|affi
 const tableWords=/microwave|mikro|coffee.?machine|kaffemaskin|tangentbord|keyboard|monitor|datorskärm|printer|skrivare|laptop|bok|books|pottedplant|plantsmall|bordslampa|table.?lamp|mug|cup|kopp|flaska|vase|vas|donut|food.?kit|small.?box|plasticboxsmall|kartongkniv|knife|telefon|phone.?portable/i;
 const floorWords=/golvlampa|floor.?lamp|sofa|chair|stol|hylla|shelf|locker|skåp|cabinet|fridge|kyl|frys|bin|sopkärl|cart|vagn|pall|pallet|bord|table|desk|bänk|counter|bed|säng|shower|dusch|toilet|toalett/i;
 export function inferPlacementRole(item){
+ if(LIBRARY_MAP.get(item?.assetId)?.placement)return LIBRARY_MAP.get(item.assetId).placement;
  const procedural=proceduralOf(item);
  if(procedural)return procedural.placement||'floor';
  const explicit=placementRole(item);
@@ -58,18 +60,18 @@ export function findSupport(item,point,objects,{radius=.38,role=inferPlacementRo
  }
  return best;
 }
-export function proposeSmartPose(item,point,objects,{enabled=true,mode='auto',walls=[]}={}){
+export function proposeSmartPose(item,point,objects,{enabled=true,mode='auto',walls=[],floors=[]}={}){
  const pos={x:round(point.x),z:round(point.z)};
  const floor={...pos,mountId:null,wallMount:null,elevation:0,snapRole:'floor'};
  if(!enabled)return {...pos,mountId:null,elevation:0}; // Legacy API contract
  if(mode==='floor')return floor;
  const role=mode==='wall'?'wall':mode==='surface'?'countertop':inferPlacementRole(item);
  if(role==='wall'){
-  const mount=findWallMount(item,point,walls);
-  return mount||floor;
+  const mount=findWallMount(item,point,walls,{floors});
+  return mount||{...floor,blocked:wallMountProblem(item,point,walls)};
  }
  const support=findSupport(item,pos,objects,{role});
- return support?{...support,wallMount:null}:floor;
+ return support?{...support,wallMount:null}:mode==='surface'?{...floor,blocked:'Peka på en bordsyta där föremålet får plats.'}:floor;
 }
 export function isMountedOn(item,other){
  return !!item.mountId&&item.mountId===other.id&&item.elevation>=Math.min(.45,other.height*.5);

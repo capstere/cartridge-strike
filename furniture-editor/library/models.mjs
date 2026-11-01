@@ -15,7 +15,7 @@ function recolorSemanticMesh(node,item){
    (leg?chairColors(item).legs:chairColors(item).body);
  const adjust=original=>{
   if(!original?.clone||!original.color)return original;
-  const material=original.clone();
+  const material=original.clone();material.userData={...material.userData,studioOwned:true};
   material.color.set(finish);
   // One GLB mesh cannot reliably separate a tabletop from its legs.
   // Discard only the base-color map on this preview clone so presets stay visible.
@@ -58,7 +58,7 @@ export async function addModelToGroup(item,group,onReady){
   const scale=isTable(item)?modelScale(originalSize,item):null;
   const scalar=scale?null:Math.min(item.w/originalSize.x,item.d/originalSize.z,item.height/originalSize.y);
   if(!scale&&(!Number.isFinite(scalar)||scalar<=0))throw Error('Modellen kunde inte skalas.');
-  const clone=scene.clone(true);
+  const clone=new T.Group();clone.add(scene.clone(true));
   if(scale)clone.scale.set(scale.x,scale.y,scale.z);
   else clone.scale.setScalar(scalar);
   const center=originalBounds.getCenter(new T.Vector3());
