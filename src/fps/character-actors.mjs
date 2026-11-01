@@ -1,6 +1,6 @@
 /** Bridges the authored skin to the unchanged game actor and weapon mechanisms. */
 import * as T from '../../vendor/three/three.module.js';
-import {createAuthoredAvatar,animateAuthored,posedBounds} from './character-library.mjs';
+import {createAuthoredAvatar,animateAuthored,posedBounds,privateCharacterApplies,disposeAvatar} from './character-library.mjs';
 import {WEAPONS} from './config.mjs';
 const V=()=>new T.Vector3(),Q=()=>new T.Quaternion();
 export function upgradeActor(model,team,id,isHostage){
@@ -10,6 +10,12 @@ export function upgradeActor(model,team,id,isHostage){
  for(const g of geometries)if(!g.userData.sharedWeapon)g.dispose();for(const m of materials){m.dispose();}
  d.avatar=createAuthoredAvatar(team,id,isHostage);d.frame.add(d.avatar.holder);d.frame.add(d.weaponSocket);if(d.bag)d.frame.add(d.bag);
  d.characterRevision='quaternius-uniform-v1';return model;
+}
+/** A team change only replaces the cosmetic avatar; game actors and sockets survive. */
+export function refreshActorCharacter(model,team,id){
+ const d=model.userData,old=d.avatar;if(!old||!!old.privateDesign===privateCharacterApplies(id))return;
+ const next=createAuthoredAvatar(team||'hostage',id,!team);
+ old.holder.removeFromParent();disposeAvatar(old);d.avatar=next;d.frame.add(next.holder);d.fall=null;
 }
 // Calls are synchronous; scratch vectors never escape into game/actor state.
 // Avoid dozens of short-lived vectors per visible rifle carrier and frame.

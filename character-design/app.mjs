@@ -538,7 +538,7 @@ function animateLoop(time){
  animationFrame=requestAnimationFrame(animateLoop);
 }
 async function refreshSlots(){try{const rows=await listProjects();const menu=$('saved-projects');menu.replaceChildren(new Option('Öppna från ateljén…',''));for(const row of rows.filter(x=>x.id!=='autosave').sort((a,b)=>b.updated.localeCompare(a.updated)))menu.append(new Option(row.name+' · '+new Date(row.updated).toLocaleDateString('sv-SE'),row.id));}catch(e){status('Projektbiblioteket kunde inte öppnas: '+e.message,true);}}
-async function startPrivateMatch(){
+async function saveGameCharacter(rehearsal=false){
  if(!ready)return;
  const main=document.querySelector('main');
  try{
@@ -548,9 +548,10 @@ async function startPrivateMatch(){
   const source=await fetch(new URL('../assets/fps/models/quaternius-operator-male.glb',import.meta.url));if(!source.ok)throw Error('Originalkaraktären kunde inte läsas.');
   const sourceHash=await characterHash(await source.arrayBuffer());
   const bytes=await workbench.exportPreview();
-  const id=await savePrivateCharacter({bytes,name:project.name,sourceHash});
-  location.assign('../fps/?character='+id);
- }catch(e){status('Provmatchen kunde inte öppnas: '+e.message,true);}finally{main.inert=false;}
+  const id=await savePrivateCharacter({bytes,name:project.name,sourceHash,projectId:slotId});
+  if(rehearsal)location.assign('../fps/?character='+id);
+  else{await refreshSlots();status('Karaktären är sparad för spelet på denna enhet. Öppna spelmenyn och välj den under Min karaktär.');}
+ }catch(e){status('Spelkopian kunde inte sparas: '+e.message,true);}finally{main.inert=false;}
 }
 async function createMatchPilot(){
  if(!ready)return;
@@ -564,7 +565,7 @@ async function createMatchPilot(){
 }
 async function start(){
  workbench.faceCanvas=$('face-base');
- $('private-match').onclick=startPrivateMatch;$('new-match-pilot').onclick=createMatchPilot;
+ $('private-match').onclick=()=>saveGameCharacter(true);$('save-game-character').onclick=()=>saveGameCharacter(false);$('new-match-pilot').onclick=createMatchPilot;
  creativeControls=installCreativeControls({getProject:()=>project,workbench,persist,visualChange,status,download});
  installEvents();setupQuickStudio();initDrawing();
  studioControls=installStudioControls({getProject:()=>project,workbench,persist,visualChange,status,selected,getSelectedId:()=>selectedPart,selectPart:id=>{selectedPart=id;setTab('parts');partsSummary();},refresh:refreshUI,restore:async p=>{project=p;restoreAttachments();await workbench.prepareAssets(p);refreshUI();visualChange({recreate:true,rebuild:true});saveLocal();}});

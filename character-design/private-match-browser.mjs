@@ -3,6 +3,7 @@ import {createRequire} from 'node:module';
 import {mkdir,writeFile} from 'node:fs/promises';
 import assert from 'node:assert/strict';
 import {verifyPrivateHands} from './private-hands-browser.mjs';
+import {verifySavedCharacterMenu,verifyCharacterStorage} from './saved-character-menu-browser.mjs';
 const require=createRequire(import.meta.url),{chromium}=require('../frontline/source/tools/dev/node_modules/playwright-core');
 const origin=process.env.CHARACTER_TEST_ORIGIN||'http://127.0.0.1:8765';
 const browser=await chromium.launch({headless:true,args:['--no-sandbox','--use-gl=angle','--use-angle=swiftshader','--enable-unsafe-swiftshader']});
@@ -22,7 +23,7 @@ try{
  await page.locator('#shirt-text').fill('MITT SPEL');await page.locator('#save-slot').click();await page.waitForFunction(()=>document.querySelector('#status').textContent.includes('sparad i ateljén'));
  await page.reload();await page.waitForFunction(()=>document.querySelector('#status').textContent.includes('redo!'));
  assert.equal(await page.locator('#outfit-style').inputValue(),'tshirt');assert.equal(await page.locator('#shoe-style').inputValue(),'sneakers');assert.equal(await page.locator('#shirt-text').inputValue(),'MITT SPEL');
- console.log('STUDIO_SAVED');await page.locator('#private-match').click();await page.waitForURL(/\/fps\/\?character=/);
+ console.log('STUDIO_SAVED');await page.locator('#save-game-character').click();await page.waitForFunction(()=>document.querySelector('#status').textContent.includes('sparad för spelet'));await page.locator('#private-match').click();await page.waitForURL(/\/fps\/\?character=/);
  const url=page.url();await page.goto(url+'&test=1');
  await page.waitForFunction(()=>window.__fps||!document.querySelector('#fatal').hidden,null,{timeout:240000,polling:100});
  assert.equal(await page.locator('#fatal').isHidden(),true,await page.locator('#fatal').textContent());
@@ -66,6 +67,6 @@ try{
  await page.reload();await page.waitForFunction(()=>window.__fps||!document.querySelector('#fatal').hidden,null,{timeout:240000,polling:100});assert(await page.locator('#fatal').isHidden());
  await page.locator('#original-character-match').click();await page.waitForFunction(()=>!document.querySelector('#start').disabled,null,{timeout:240000,polling:100});assert.equal(await page.locator('#private-character-note').count(),0);
  await page.goto(origin+'/fps/?character=invalid');await page.locator('#fatal').waitFor({state:'visible'});assert.match(await page.locator('#fatal').innerText(),/Ogiltig privat karaktärslänk/);
- assert.deepEqual(errors,[]);await writeFile('test-results/private-character/result.json',JSON.stringify(result,null,2));console.log('PRIVATE_CHARACTER_MATCH_OK',JSON.stringify(result));
+ await verifySavedCharacterMenu(page,origin);await verifyCharacterStorage(browser,origin);assert.deepEqual(errors,[]);await writeFile('test-results/private-character/result.json',JSON.stringify(result,null,2));console.log('PRIVATE_CHARACTER_MATCH_OK',JSON.stringify(result));
  await context.close();
 }finally{await browser.close();}

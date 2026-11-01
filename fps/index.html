@@ -22,6 +22,11 @@
       </section>
       <section class="selection card">
         <div class="mode-picker"><label for="game-mode">SPELLÄGE</label><select id="game-mode" aria-label="Spelläge"><option value="classic">Klassiska rundor · bomb och gisslan</option><option value="endless">Endless Action · oändlig auto-respawn</option></select><p id="mode-description">Klassiska rundor. Först till fem vinster.</p><label id="loadout-row" hidden>Startvapen <select id="loadout" aria-label="Startvapen"><option value="smg">Vector C</option><option value="shotgun">Pump 8</option><option value="sniper">Scope 5</option><option value="bazooka">Bazooka</option></select></label></div>
+        <div id="character-picker" class="mode-picker">
+          <label for="player-character">MIN KARAKTÄR</label><select id="player-character" aria-describedby="character-status"><option value="">Originalkaraktär</option></select>
+          <p id="character-status" role="status"></p><div class="character-actions"><a class="text-link" href="../character-design/">Öppna karaktärsstudion ↗</a>
+          <button id="delete-character" type="button" class="text-link" hidden>Ta bort spelkopian</button></div>
+        </div>
         <div class="card-top"><span>VÄLJ DITT LAG</span><span>5 V 5</span></div>
         <button class="team-option selected" data-team="analysts" aria-pressed="true"><span class="team-icon analysts">A</span><span><strong>Analysts</strong><small>Start i PQC · I02</small><em>Försvara, stoppa räddningen och desarmera.</em></span><span class="radio-dot"></span></button>
         <button class="team-option" data-team="counterAnalysts" aria-pressed="false"><span class="team-icon counter">CA</span><span><strong>Counter Analysts</strong><small>Start vid D06</small><em>Plantera i GX LAB 5 eller rädda båda gisslan.</em></span><span class="radio-dot"></span></button>

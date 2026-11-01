@@ -1,4 +1,5 @@
 import {syncWeaponAppearance} from './view-character-appearance.mjs';
+import {refreshActorCharacter} from './character-actors.mjs';
 import {privateCharacterAppearance} from './character-library.mjs';
 import { FrameTimeWindow } from './frame-time-window.mjs';
 import { TracerBatch } from './tracer-batch.mjs';
@@ -95,7 +96,7 @@ export class Renderer{
   if(changed&&shadows){this.renderer.shadowMap.needsUpdate=true;this.shadowAt=t;}
  }
  actorModel(a){
-  let model=this.actors.get(a.id);if(model)return model;
+  let model=this.actors.get(a.id);if(model){refreshActorCharacter(model,a.team,a.id);return model;}
   model=makeActor(a.team||'hostage',a.id,!a.team);model.traverse(o=>{if(o.isMesh)o.castShadow=false;});this.actors.set(a.id,model);this.scene.add(model);
   const shadow=new THREE.Mesh(new THREE.PlaneGeometry(.62,.62),this.contactMaterial);shadow.rotation.x=-Math.PI/2;this.scene.add(shadow);model.userData.contact=shadow;return model;
  }
