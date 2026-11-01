@@ -9,8 +9,19 @@ import {fabricMaterial} from './cloth-preview.mjs?v=53';
 import {FABRICS} from './realism-schema.mjs?v=53';
 import {makeCreative} from './creative-schema.mjs?v=53';
 const clamp=T.MathUtils.clamp;
+// The Quaternius clothing regions retain the original body-atlas UVs. Sample
+// that atlas before shirt artwork replaces the UVs, so exposed arms match skin.
+export function skinColorAt(pixels,u,v,flipY,tint){
+ const x=clamp(Math.floor(u*pixels.width),0,pixels.width-1),y=clamp(Math.floor((flipY?1-v:v)*pixels.height),0,pixels.height-1),i=(y*pixels.width+x)*4;
+ return new T.Color().setRGB(pixels.data[i]/255,pixels.data[i+1]/255,pixels.data[i+2]/255,T.SRGBColorSpace).multiply(tint);
+}
+function skinPixels(texture){
+ if(!texture?.image||typeof document==='undefined')return null;
+ const c=document.createElement('canvas');c.width=texture.image.width;c.height=texture.image.height;
+ const ctx=c.getContext('2d',{willReadFrequently:true});ctx.drawImage(texture.image,0,0);return ctx.getImageData(0,0,c.width,c.height);
+}
 export class FashionPreview{
- constructor(onRedraw=()=>{}){this.onRedraw=onRedraw;this.parts=[];this.textures=[];this.avatar=null;this.signature='';this.generation=0;this.sources=new Map();this.pendingImages=[];}
+ constructor(onRedraw=()=>{}){this.onRedraw=onRedraw;this.parts=[];this.textures=[];this.avatar=null;this.signature='';this.generation=0;this.sources=new Map();this.originalUVs=new Map();this.pendingImages=[];}
  clear(){
   this.generation++;
   for(const mesh of this.parts){mesh.removeFromParent();const materials=new Set();mesh.traverse(o=>{o.geometry?.dispose();for(const m of [o.material].flat())if(m)materials.add(m);});for(const m of materials){if(m.name?.startsWith('fiber-'))m.map?.dispose();if(m.name==='fiber-scalp')m.normalMap?.dispose();m.dispose();}}
@@ -21,6 +32,7 @@ export class FashionPreview{
   if(!this.sources.has(mesh)){
    const geometry=mesh.geometry.userData.sculptResolution?mesh.geometry:mesh.geometry.index?mesh.geometry.toNonIndexed():mesh.geometry.clone();if(!avatar.ownedGeometry.includes(geometry))avatar.ownedGeometry.push(geometry);
    mesh.geometry=geometry;
+   if(geometry.attributes.uv)this.originalUVs.set(mesh,geometry.attributes.uv.clone());
    this.sources.set(mesh,Float32Array.from(geometry.attributes.position.array));
   }
   return this.sources.get(mesh);
@@ -31,10 +43,11 @@ export class FashionPreview{
   const headgear=project.parts.some(part=>part.visible&&(['cap','helmet','hair'].includes(part.preset)||part.hairReplacement));
   const signature=JSON.stringify({c,p,body:bodyRegions(project.body),headgear,beardAccessory:project.parts.some(part=>part.visible&&part.preset==='beard')});
   if(this.avatar===avatar&&this.signature===signature)return;
-  this.clear();if(this.avatar!==avatar)this.sources.clear();
+  this.clear();if(this.avatar!==avatar){this.sources.clear();this.originalUVs.clear();}
   this.avatar=avatar;this.signature=signature;
   const token=this.generation;
   const faceMesh=avatar.meshes.find(m=>m.material?.name==='face-skin');
+  const skinTexture=faceMesh?.material.map,atlas=['tshirt','polo','vest'].includes(c.outfit)?skinPixels(skinTexture):null;
   const faceSource=faceMesh?this.source(faceMesh,avatar):null;let top=-Infinity;
   if(faceSource)for(let i=1;i<faceSource.length;i+=3)top=Math.max(top,faceSource[i]);
   const headShift=Number.isFinite(top)?top-1.8100767135620117:0;this.headShift=headShift;
@@ -64,9 +77,10 @@ export class FashionPreview{
      if(c.outfit==='labcoat'&&y<1.18&&Math.abs(x)<.24)pos.setY(i,y-.25*clamp((1.18-y)/.26,0,1));
     }
     // Short sleeves reveal skin using vertex colour on the original weighted arms.
-    const colors=new Float32Array(pos.count*3),skin=new T.Color(p.skin),baseColor=new T.Color(p.jacket),white=new T.Color(0xffffff);skin.setRGB(skin.r/Math.max(.001,baseColor.r),skin.g/Math.max(.001,baseColor.g),skin.b/Math.max(.001,baseColor.b));
+    const colors=new Float32Array(pos.count*3),tint=new T.Color(p.skin),white=new T.Color(0xffffff),originalUV=this.originalUVs.get(mesh);
     for(let i=0;i<pos.count;i++){
      const exposed=['tshirt','polo','vest'].includes(c.outfit)&&Math.abs(source[i*3])>.37;
+     const skin=exposed&&atlas&&originalUV?skinColorAt(atlas,originalUV.getX(i),originalUV.getY(i),skinTexture.flipY,tint):tint.clone();
      (exposed?skin:white).toArray(colors,i*3);
     }
     g.setAttribute('color',new T.BufferAttribute(colors,3));
@@ -145,7 +159,8 @@ export class FashionPreview{
  }
  makeArtwork(project,avatar,shirt,token){
   const c=project.creative,p=c.print,t=c.printTransform||{x:0,y:0,rotation:0,scale:100};
-  if(!p.text&&!p.imageData){shirt.material.map=null;shirt.material.color.set(project.palette.jacket);shirt.material.needsUpdate=true;return;}
+  const shortSleeves=['tshirt','polo','vest'].includes(c.outfit);
+  if(!p.text&&!p.imageData&&!shortSleeves){shirt.material.map=null;shirt.material.color.set(project.palette.jacket);shirt.material.needsUpdate=true;return;}
   const canvas=document.createElement('canvas');canvas.width=canvas.height=1024;const ctx=canvas.getContext('2d');
   const texture=new T.CanvasTexture(canvas);texture.colorSpace=T.SRGBColorSpace;this.textures.push(texture);
   // Generated planar UVs in bind space, transported by the source skin weights.
@@ -158,6 +173,8 @@ export class FashionPreview{
    uv[i*2+1]=side&&Math.abs(x)<.25?(y-this.headShift-.90)/.67:.005;
   }
   const ix=g.index;for(let n=0;n<(ix?ix.count:uv.length/2);n+=3){const ids=[0,1,2].map(k=>ix?ix.getX(n+k):n+k);const valid=ids.every(i=>{const x=source[i*3],z=source[i*3+2];return Math.abs(x)<.25&&(p.position==='front'?z>.025:z<-.025);});if(!valid)for(const i of ids){uv[i*2]=.005;uv[i*2+1]=.005;}}
+  // Exposed skin gets its own white texel, never the shirt colour/print.
+  if(shortSleeves)for(let i=0;i<uv.length/2;i++)if(Math.abs(source[i*3])>.37){uv[i*2]=.995;uv[i*2+1]=.005;}
   g.setAttribute('uv',new T.BufferAttribute(uv,2));
   shirt.material.map=texture;shirt.material.color.set('#ffffff');shirt.material.needsUpdate=true;
   const draw=img=>{
@@ -175,10 +192,10 @@ export class FashionPreview{
     ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillStyle=p.color;
     ctx.font='bold '+(p.size*2)+'px '+({sans:'Arial',serif:'Georgia',mono:'monospace'}[p.font]);ctx.fillText(p.text,0,0,940);
    }
-   ctx.restore();texture.needsUpdate=true;this.onRedraw();
+   ctx.restore();if(shortSleeves){ctx.fillStyle='#ffffff';ctx.fillRect(1008,1008,16,16);}texture.needsUpdate=true;this.onRedraw();
   };
   draw(null);
   if(p.imageData){const loaded=new Promise((resolve,reject)=>{const img=new Image();img.onload=()=>{draw(img);resolve();};img.onerror=()=>reject(Error('PNG-trycket kunde inte avkodas.'));img.src=p.imageData;});loaded.catch(()=>{});this.pendingImages.push(loaded);}
  }
- dispose(){this.clear();this.sources.clear();this.avatar=null;}
+ dispose(){this.clear();this.sources.clear();this.originalUVs.clear();this.avatar=null;}
 }

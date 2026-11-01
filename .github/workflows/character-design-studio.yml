@@ -70,7 +70,7 @@ jobs:
         run: |
           set -euo pipefail
           for f in character-design/*.mjs; do node --check "$f"; done
-          node --test character-design/*.test.mjs
+          node --experimental-loader ./tools/vendor-three-test-loader.mjs --test character-design/*.test.mjs
           node tools/verify-owner-runtime.mjs
       - name: Install existing pinned Chromium and WebGL runtime
         run: |

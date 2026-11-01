@@ -46,13 +46,14 @@
     </select></label>
   </div>
  </section>
+  <button id="new-match-pilot" type="button">Ny Male-pilot · T-shirt &amp; sneakers</button>
  <nav class="quick-jobs" aria-label="Vad vill du skapa just nu?">
   <span>JAG VILL…</span>
   <button type="button" data-jump="sculpt">Forma ansiktet</button>
   <button type="button" data-jump="fashion">Byta kläder</button>
   <button type="button" data-jump="face">Ändra hår &amp; ögon</button>
   <button type="button" data-jump="parts">Lägga till 3D-delar</button>
-  <button type="button" data-jump="export" class="quick-export">Hämta AI-paketet ↗</button>
+  <button type="button" data-jump="export" class="quick-export">Export / privat provmatch ↗</button>
  </nav>
  <div class="workspace">
   <section class="panel viewport-panel">
@@ -335,6 +336,7 @@
   <div class="section-title"><div><p class="eyebrow">STEG 5 / EXPORTERA TILL BLENDER / SPEL</p><h2>Hämta din riktiga 3D-design</h2></div></div>
   <p>Den stora exportknappen skapar en <strong>ZIP</strong> med hela den synliga, riggade designprototypen (PREVIEW.glb), filmanifest och originalets animerade GLB (för karaktärer), dina 3D-delar som prototyp-GLB, referensbilder, designprojekt och detaljerade instruktioner för en slutlig FPS-kompatibel karaktär.</p>
   <div class="downloads">
+   <button id="private-match" class="primary" type="button">Prova i privat match</button>
    <button id="export-zip" class="primary hero-button" type="button">Hämta Blender/SPEL-paket (.zip)</button>
    <button id="save-json" type="button">Spara projekt (.json)</button>
    <button id="save-png" type="button">Hämta Design Sheet (.png)</button>
@@ -342,6 +344,7 @@
    <button id="copy-ai" type="button">Kopiera AI-instruktionen</button>
    <button id="print-sheet" type="button">Skriv ut / PDF</button>
   </div>
+  <p class="hint">Privat provmatch: Male med originalproportioner, T-shirt, sneakers, färger och eget tryck. Ny Male-pilot sparar ditt nuvarande projekt först. Designen finns bara i denna webbläsare. Förstapersonshänderna behåller spelets originalutseende.</p>
   <p id="export-help" class="hint">ZIP innehåller SPEL_SOURCE.glb, samma synliga riggade design som PREVIEW.glb, samt originalrigg, designprojekt och enkla Blender-instruktioner. SPEL kontrollerar själv om just denna modell är kompatibel för Procreate. Ingen automatisk spelpublicering.</p>
   <details><summary>Läs hela AI-instruktionen</summary><pre id="ai-prompt"></pre></details>
   <div class="model-downloads">

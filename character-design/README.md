@@ -1,3 +1,5 @@
+> **Privat provmatch:** Quaternius Male med T-shirt, sneakers och eget tryck kan nu provas direkt i spelet. [Svensk steg-för-steg-guide och avgränsning](PRIVATE_MATCH.md).
+
 # Character Design Studio 6.0 – kropp & Blender/SPEL-överlämning
 
 Open [the studio](https://capstere.github.io/cartridge-strike/character-design/). The original game and its existing characters are unchanged.

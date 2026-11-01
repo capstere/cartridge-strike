@@ -6,7 +6,7 @@ import * as T from '../../vendor/three/three.module.js';
 import {RoundedBoxGeometry} from '../../vendor/three/addons/geometries/RoundedBoxGeometry.js';
 import {WEAPONS} from './config.mjs';
 import {GLTFLoader} from '../../vendor/three/addons/loaders/GLTFLoader.js';
-let templates=null,pending=null;
+let templates=null,pending=null,privateCharacter=null;
 const live=new Set();
 export function charactersReady(){return !!templates;}
 export function installCharacterTemplates(male,female){
@@ -43,6 +43,7 @@ const upperName=n=>/^(clavicle_|upperarm_|lowerarm_|hand_|thumb_|index_|middle_|
 function upperClip(clip){return new T.AnimationClip('upper-'+clip.name,clip.duration,clip.tracks.filter(t=>upperName(t.name.split('.')[0])).map(t=>t.clone()));}
 function lowerClip(clip){return new T.AnimationClip('lower-'+clip.name,clip.duration,clip.tracks.filter(t=>!upperName(t.name.split('.')[0])).map(t=>t.clone()));}
 export function createAuthoredAvatar(team,id,isHostage=false){
+ if(privateCharacter&&!isHostage&&['analysts-0','analysts-1'].includes(id))return createPrivateAvatar(id);
  if(!templates)throw Error('Character library must be loaded before actor creation');
  const seed=hash(id),gender=seed%3===0?'female':'male',asset=templates[gender],root=cloneSkinned(asset.scene),materials=new Map(),ownedGeometry=[],bones=new Map(),meshes=[],shoes=[];
  const palette=isHostage?{shirt:0xe0e7e2,pants:0x334552,vest:0xe4e7df,trim:0x468e8c}:team==='analysts'?{shirt:0x22435e,pants:0x202c3b,vest:0x132d42,trim:0x5aa8cf}:{shirt:0x9b967c,pants:0x454c3b,vest:0x505b42,trim:0xc9ad65};
@@ -106,13 +107,43 @@ export function createAuthoredAvatar(team,id,isHostage=false){
   attached(new T.PlaneGeometry(.205,.103),m,new T.Vector3(0,1.36,.177),chest,'chest-role-patch');
   const back=attached(new T.PlaneGeometry(.22,.11),m,new T.Vector3(0,1.37,-.145),chest,'back-role-patch');back.quaternion.copy(chest.getWorldQuaternion(new T.Quaternion()).invert().multiply(new T.Quaternion().setFromAxisAngle(new T.Vector3(0,1,0),Math.PI)));
  }
+ return finishAvatar({asset,root,bones,materials,meshes,shoes,seed,gender,ownedGeometry,isHostage,normalize:true});
+}
+function finishAvatar({asset,root,bones,materials,meshes,shoes,seed,gender,ownedGeometry,isHostage,normalize}){
  const mixer=new T.AnimationMixer(root),clips=new Map(asset.animations.map(c=>[c.name,c]));
  const base=new Map(),upper=new Map();for(const [name,clip]of clips){base.set(name,mixer.clipAction(isHostage?clip:lowerClip(clip)));if(!isHostage)upper.set(name,mixer.clipAction(upperClip(clip)));}
  const idle=base.get('Idle_Loop');idle.play();if(!isHostage)upper.get('Pistol_Idle_Loop').play();mixer.update(0);root.updateMatrixWorld(true);root.traverse(o=>{if(o.isSkinnedMesh)o.skeleton.update();});
  const holder=new T.Group();holder.name='authored-humanoid-'+gender;holder.rotation.y=Math.PI;holder.add(root);
- const bounds=posedBounds(root),scale=1.69/(bounds.max.y-bounds.min.y);holder.scale.setScalar(scale);holder.position.y=-bounds.min.y*scale+.004;
+ const bounds=posedBounds(root),scale=normalize?1.69/(bounds.max.y-bounds.min.y):1;holder.scale.setScalar(scale);holder.position.y=-bounds.min.y*scale+.004;
  const state={holder,root,bones,mixer,base,upper,clips,materials,meshes,shoes,scale,seed,gender,ownedGeometry,activeBase:'Idle_Loop',activeUpper:isHostage?null:'Pistol_Idle_Loop',time:null,x:null,z:null,motionSpeed:0,groundOffset:holder.position.y,isHostage,disposed:false,groundInverse:new T.Matrix4(),groundMatrix:new T.Matrix4(),hitBase:new T.Quaternion(),hitRotation:new T.Quaternion(),hitEuler:new T.Euler(),hitApplied:false};live.add(state);return state;
 }
+/** Only called for an explicit local rehearsal URL, after hash/GLB checks. */
+export function installPrivateCharacter(asset){
+ if(!templates)throw Error('Originalkaraktärerna måste laddas först.');
+ const original=templates.male.animations,clips=new Map(asset.animations.map(c=>[c.name,c]));
+ const sameArray=(a,b)=>a.length===b.length&&a.every((v,i)=>v===b[i]);
+ const sameClip=(a,b)=>b&&Math.abs(a.duration-b.duration)<1e-5&&a.tracks.length===b.tracks.length&&a.tracks.every(t=>{const u=b.tracks.find(v=>v.name===t.name);return u&&t.getInterpolation()===u.getInterpolation()&&sameArray(t.times,u.times)&&sameArray(t.values,u.values);});
+ if(clips.size!==13||original.some(c=>!sameClip(c,clips.get(c.name))))throw Error('Provkaraktären saknar originalets oförändrade 13 animationsklipp.');
+ const bones=new Map();let meshes=0;asset.scene.traverse(o=>{if(o.isBone)bones.set(o.name,o);if(o.isMesh)meshes++;});
+ const required=[];templates.male.scene.traverse(o=>{if(o.isBone)required.push(o.name);});
+ if(bones.size!==65||required.some(n=>!bones.has(n))||meshes>32||!asset.scene.getObjectByName('boot-sole-l')||!asset.scene.getObjectByName('boot-sole-r'))throw Error('Provkaraktärens skelett eller skor är inkompatibla.');
+ asset.scene.traverse(o=>{if(o.isMesh){const p=o.geometry.attributes.position;if(!p||Array.from(p.array).some(v=>!Number.isFinite(v)))throw Error('Provkaraktären har ogiltig geometri.');if(o.isSkinnedMesh&&o.skeleton.bones.some(b=>bones.get(b.name)!==b))throw Error('Provkaraktärens benkoppling är ogiltig.');}});
+ privateCharacter=asset;
+}
+function createPrivateAvatar(id){
+ const asset=privateCharacter,root=cloneSkinned(asset.scene),bones=new Map(),materials=new Map(),meshes=[],shoes=[];
+ root.traverse(o=>{
+  if(o.isBone)bones.set(o.name,o);
+  if(!o.isMesh)return;
+  meshes.push(o);o.frustumCulled=false;o.castShadow=false;o.receiveShadow=true;
+  const clone=m=>{if(!materials.has(m)){const c=m.clone();delete c.userData.ownedTexture;materials.set(m,c);}return materials.get(m);};
+  o.material=Array.isArray(o.material)?o.material.map(clone):clone(o.material);
+  if(o.name.startsWith('boot-sole-')){o.geometry.computeBoundingBox();shoes.push(o);}
+ });
+ const state=finishAvatar({asset,root,bones,materials,meshes,shoes,seed:hash(id),gender:'male',ownedGeometry:[],isHostage:false,normalize:false});
+ state.privateDesign=true;return state;
+}
+
 const v=new T.Vector3(),inv=new T.Matrix4();
 /** Actual posed vertices, not the undeformed bind-pose AABB. Used at creation/death only. */
 export function posedBounds(root){
@@ -186,6 +217,6 @@ export function disposeAvatar(state){
 }
 export function disposeCharacterLibrary(){
  for(const state of [...live])disposeAvatar(state);const geometries=new Set(),materials=new Set(),textures=new Set();
- if(templates)for(const asset of Object.values(templates))asset.scene.traverse(o=>{if(o.geometry)geometries.add(o.geometry);if(o.material)materials.add(o.material);});
- for(const m of materials){for(const value of Object.values(m))if(value?.isTexture)textures.add(value);m.dispose();}for(const g of geometries)g.dispose();for(const t of textures)t.dispose();fabric?.dispose();fabric=null;templates=null;pending=null;
+ if(templates)for(const asset of [...Object.values(templates),privateCharacter].filter(Boolean))asset.scene.traverse(o=>{if(o.geometry)geometries.add(o.geometry);if(o.material)materials.add(o.material);});
+ for(const m of materials){for(const value of Object.values(m))if(value?.isTexture)textures.add(value);m.dispose();}for(const g of geometries)g.dispose();for(const t of textures)t.dispose();fabric?.dispose();fabric=null;templates=null;pending=null;privateCharacter=null;
 }
