@@ -15,7 +15,7 @@ Designen finns bara i den här webbläsaren på den här enheten. Den skickas in
 - Quaternius Male med originalproportioner, passform 100 %, originalhuvud och originalfrisyr, T-shirt, sneakers, färger och tryck.
 - 65 ben och 13 befintliga animationsklipp. Spelet använder sin ordinarie gång, hukning, vapenrörelse och dödsanimation.
 - Kläderna använder studions befintliga viktade geometri. T-shirten har färgade korta ärmar och sneakers är studions befintliga skovariant. Detta är inte nysydd klädgeometri. Den gamla triangulerade midjeskarven blir synlig med starkt kontrasterande tröj- och byxfärg; startdesignen använder samma färg.
-- Förstapersonshänderna och vapnen är fortfarande spelets original. Andra botar använder vanliga lagutseenden. Det finns ingen nätverksmultiplayer eller offentlig publicering av din modell i detta flöde.
+- Förstapersonshänderna använder handfärgen från din sparade GLB. Armarna visar samma hudfärg och T-shirtfärg, med korta ärmar. Vapengeometri, handrigg och grepp är spelets befintliga; färgmatchningen ändrar inte handformen. Trycket sitter på kroppen och kopieras inte till armarna. Andra botar använder vanliga lagutseenden. Det finns ingen nätverksmultiplayer eller offentlig publicering av din modell i detta flöde.
 - Extra delar, ändrade kroppsproportioner, skulpterat huvud, ny frisyr och tygsimulering stoppas med en förklaring i denna pilot. De kan fortfarande användas i studions övriga arbetsflöden. Projektet förenklas aldrig automatiskt.
 - SPEL/Procreate är fortfarande en separat väg. Den här knappen laddar studions GLB direkt i provmatchen och utlovar inte generell Procreate-kompatibilitet.
 
@@ -40,3 +40,13 @@ Webbläsartestet skapar designen via knapparna, sparar/öppnar den, startar matc
 Blender 4.5 LTS importerar exporten, exporterar en ny GLB och återimporterar i en ren scen. Det jämför geometri, UV, benhierarki, bindpose och skin weights samt verkligt deformerade triangelhörn i fem tidpunkter i vart och ett av de 13 klippen. Bilder och testdata hamnar i ignorerade `test-results/private-character/`. GitHub Actions kör samma flöde utan att ladda upp stora artefakter.
 
 Direktvägen Studio → provmatch behåller vikter och animationskanaler exakt. Blender 4.5.3:s egen exporter tar bort enskilda vikter under 0,0001 och normaliserar om dem. I den kontrollerade returen var största viktskillnaden 0,0000767 och största positionsskillnaden 0,00000762 meter; klipplängderna var oförändrade. Blender-returen är alltså numeriskt jämförd, inte byteidentisk.
+
+## Matchande händer och korta ärmar
+
+Befintliga privata provmodeller får färgmatchningen när matchsidan laddas om. Ingen ny export behövs. Vill du ändra färger: **Tillbaka till min design → Kläder → Händer / färger → Prova i privat match → Starta match**. Prova att skjuta, ladda om och byta mellan pistol, gevär och kniv. Vapenhanteringen ska vara densamma.
+
+Färgerna läses från den validerade GLB:n: handmaterialet, tröjans reserverade otryckta UV-område och de viktade underarmarnas vertexfärg. Två material och två små 1 × 128-texturer återanvänds för alla vapen. Inga extra mesh läggs till. Vid åskådning används den betraktade spelarens utseende; vanliga lagkamrater får originalmaterialen tillbaka. Material/UV på karaktären och originalfilerna ändras inte.
+
+Detta är fortsatt Male/T-shirt-piloten, inte generell överföring av tatuerade händer, nya handformer eller godtyckliga Procreate-texturer. Handmodellens befintliga form och manschett behålls för att bevara grepp och fingerrörelse. Ingen ny prestandanivå eller fysisk mobilkontroll utlovas.
+
+`view-character-appearance.test.mjs` jämför vapen-, magasin-, hand- och fingertransforms samt mynningsposition vid 16 omladdnings-/skottlägen per vapentyp, för alla 13 utrustningstyper. Det kontrollerar färgrymd, oförändrad källdata, återställning av cachade modeller, resursstädning och att världsvapen inte påverkas. Det befintliga webbläsarflödet testar också privat/vanlig åskådarvy för alla 13, verklig ammunitionsförbrukning och omladdning samt sparar förstapersonsbilder för pistol, CR4, SMG och kniv. Bilderna med valda vapen är kontrollerade renderingsfall; `match.png` visar ordinarie matchstart.

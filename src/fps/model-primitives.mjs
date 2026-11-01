@@ -393,6 +393,7 @@ function buildWeapon(id = 'p9', { viewmodel = true } = {}) {
   let leftHand, rightHand;
   if (viewmodel) {
     const fabric = cloth(0x364b59), cuff = material(0x26353d, .86), gloveMat = material(0x4e554e, .83), rubber = material(refinedP9 ? 0x414a43 : 0x202b2d, refinedP9 ? .86 : .72);
+    fabric.userData.privateViewRole='sleeve';cuff.userData.privateViewRole='cuff';
     const right = parts.grip, left = parts.support;
     const rightArm = group(arms, 'right-forearm');
     sleeve(rightArm, [right.x + .16, -.37, .29], [right.x + .012, right.y - .05, right.z + .038], fabric, cuff,refinedP9?.040:.055);

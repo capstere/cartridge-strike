@@ -2,6 +2,7 @@
 import {createRequire} from 'node:module';
 import {mkdir,writeFile} from 'node:fs/promises';
 import assert from 'node:assert/strict';
+import {verifyPrivateHands} from './private-hands-browser.mjs';
 const require=createRequire(import.meta.url),{chromium}=require('../frontline/source/tools/dev/node_modules/playwright-core');
 const origin=process.env.CHARACTER_TEST_ORIGIN||'http://127.0.0.1:8765';
 const browser=await chromium.launch({headless:true,args:['--no-sandbox','--use-gl=angle','--use-angle=swiftshader','--enable-unsafe-swiftshader']});
@@ -38,7 +39,7 @@ try{
   const clipDiff=[];
   const clips=loaded.animations.every(c=>{const n=me.clips.get(c.name);if(n)for(let i=0;i<c.tracks.length;i++){const a=n.tracks[i],b=c.tracks[i];if(a.name!==b.name||JSON.stringify(Array.from(a.values))!==JSON.stringify(Array.from(b.values)))clipDiff.push([a.name,b.name,a.values.length,b.values.length]);}return n&&n.duration===c.duration&&JSON.stringify(n.tracks.map(t=>({name:t.name,times:Array.from(t.times),values:Array.from(t.values)})))===JSON.stringify(c.tracks.map(t=>({name:t.name,times:Array.from(t.times),values:Array.from(t.values)})));});
   for(let i=0;i<1000;i++)__fps.game.update(1/60,{});
-  const before={x:__fps.game.player.x,z:__fps.game.player.z};for(let i=0;i<30;i++)__fps.step({forward:1},1/60);
+  const before={x:__fps.game.player.x,z:__fps.game.player.z};for(let i=0;i<30;i++)__fps.game.update(1/60,{forward:1});__fps.render();
   const movement=Math.hypot(__fps.game.player.x-before.x,__fps.game.player.z-before.z);
   return {clipDiff,meshes,bones:me.bones.size,clips:me.clips.size,weights,binds,materials,geometry,clipsEqual:clips,actors:__fps.game.actors.length,movement,sha256:row.sha256,glb:await new Promise(resolve=>{const reader=new FileReader();reader.onload=()=>resolve(reader.result.split(',')[1]);reader.readAsDataURL(new Blob([row.bytes]));})};
  });
@@ -48,6 +49,7 @@ try{
  // The natural starting match, looking at A-02; no repositioned actors.
  await page.evaluate(()=>{__fps.start('analysts');const p=__fps.game.player,f=__fps.game.actors.find(a=>a.id==='analysts-1'),dx=f.x-p.x,dz=f.z-p.z;__fps.step({yaw:Math.atan2(-dx,-dz),pitch:Math.atan2((f.y+.9)-(p.y+1.6),Math.hypot(dx,dz))},1/60);});
  await page.screenshot({path:'test-results/private-character/match.png'});
+ result.firstPerson=await verifyPrivateHands(page);
  // Render actual FPS avatar in isolated inspection lighting, without a second implementation.
  const images=await page.evaluate(async()=>{
   const T=await import('../vendor/three/three.module.js');const s=__fps.renderer.actors.get('analysts-1').userData.avatar;

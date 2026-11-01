@@ -41,7 +41,7 @@ async function preparePrivateCharacter(){
  if(!original.ok||await characterHash(await original.arrayBuffer())!==privateCharacterDraft.sourceHash)throw Error('Originalkaraktären har uppdaterats. Skapa en ny provmatch i studion.');
  await loadCharacterLibrary();
  installPrivateCharacter(await new GLTFLoader().parseAsync(privateCharacterDraft.bytes.slice(0),''));
- const note=document.createElement('p');note.id='private-character-note';note.textContent='Privat provmatch: '+privateCharacterDraft.name+'. Du och lagkamrat A-02 använder din design. Förstapersonshänderna är spelets original. Inget laddas upp.';
+ const note=document.createElement('p');note.id='private-character-note';note.textContent='Privat provmatch: '+privateCharacterDraft.name+'. Du och lagkamrat A-02 använder din design. Händer och korta ärmar i förstaperson matchar din karaktär. Inget laddas upp.';
  document.querySelector('.intro').append(note);
  const exit=document.createElement('a');exit.id='original-character-match';exit.href='./';exit.textContent='Spela med originalkaraktärerna';document.querySelector('.intro').append(exit);
  const studio=document.createElement('a');studio.href='../character-design/';studio.textContent=' · Tillbaka till min design';document.querySelector('.intro').append(studio);

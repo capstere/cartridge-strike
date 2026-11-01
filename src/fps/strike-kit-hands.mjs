@@ -3,6 +3,7 @@
  * Sleeves join the glove's wrist frame, rather than stretching a cylinder/cuff.
  */
 import * as T from '../../vendor/three/three.module.js';
+import {SHIRT_FRACTION} from './view-character-appearance.mjs';
 import {AUTHORED_HANDS} from './authored-hand-data.mjs';
 const TAU=Math.PI*2,WRIST=-.101,SEGMENTS=24,RINGS=27;
 
@@ -98,7 +99,7 @@ export function fitKitSleeve(sleeve,hand,anchor){
    const angle=j/SEGMENTS*TAU,c=Math.cos(angle),s=Math.sin(angle);
    // Asymmetric compressed folds at wrist and elbow, with smooth broad fabric elsewhere.
    const wristFold=Math.exp(-Math.pow((t-.10)/.09,2))*Math.sin(t*60+Math.sin(angle)*.6),elbowFold=Math.exp(-Math.pow((t-.53)/.16,2))*Math.sin(t*42+Math.sin(angle)*1.1);
-   const fold=(wristFold*.0026+elbowFold*.0035)*Math.min(1,t*35),rx=width+fold,rz=heightRadius+fold*.7;
+   const fold=(wristFold*.0026+elbowFold*.0035)*Math.min(1,t*35)*(d.privateShortSleeves?T.MathUtils.clamp((t-(1-SHIRT_FRACTION))/.08,0,1):1),rx=width+fold,rz=heightRadius+fold*.7;
    const i=(r*(SEGMENTS+1)+j)*3;positions[i]=center.x+x.x*c*rx+z.x*s*rz;positions[i+1]=center.y+x.y*c*rx+z.y*s*rz;positions[i+2]=center.z+x.z*c*rx+z.z*s*rz;
   }
  }

@@ -926,8 +926,8 @@
     },
     {
       "path": "src/fps/app.mjs",
-      "bytes": 31020,
-      "sha256": "86edf223b4ae49fc980388febf8fd89b2f32c3a6c370a4bf42edc90a53c7acdb"
+      "bytes": 31038,
+      "sha256": "daddb7610d74b5f63aec6a7063af46e54effbd3181212821ede022843ff05418"
     },
     {
       "path": "src/fps/audio.mjs",
@@ -961,8 +961,8 @@
     },
     {
       "path": "src/fps/character-library.mjs",
-      "bytes": 18891,
-      "sha256": "9a1cedf0a0e55fe35d66010d4b9bd9156682e11d2dab389269f48f5dcfe2f344"
+      "bytes": 19317,
+      "sha256": "992e6b07b7e49568a92cc60fe916d898ad4164d2a3975e0bf886f1cd1da6d43a"
     },
     {
       "path": "src/fps/combat-audio.mjs",
@@ -1116,8 +1116,8 @@
     },
     {
       "path": "src/fps/model-primitives.mjs",
-      "bytes": 51447,
-      "sha256": "f0cc93f399843585fb4fc16815cfe55f7c7eb4a340cf11c3c5ec9ae04ba4ba15"
+      "bytes": 51530,
+      "sha256": "436c80929e147ce000fd0fd0a8dfcd37dfeabce41c29228384e362d914b0b3c6"
     },
     {
       "path": "src/fps/models.mjs",
@@ -1161,8 +1161,8 @@
     },
     {
       "path": "src/fps/render-engine.mjs",
-      "bytes": 30072,
-      "sha256": "52911e1868f903e79b590ca2f8403b93068a3e767b1cc25580c5e45f3233e6d5"
+      "bytes": 30282,
+      "sha256": "c3c305d504c35aa649d870b46690a45e7c50f4933cf1753466d400f35d987545"
     },
     {
       "path": "src/fps/render.mjs",
@@ -1226,8 +1226,8 @@
     },
     {
       "path": "src/fps/strike-kit-hands.mjs",
-      "bytes": 11071,
-      "sha256": "71f5e90011f4d38ec696becda91b9b974e7f7b422cf3ccb86385f1b3dfaa7226"
+      "bytes": 11211,
+      "sha256": "2aa74a78df04023a18d441539660d6b9a5431015ddefca8d61eddd6ae2b50060"
     },
     {
       "path": "src/fps/strike-kit-models.mjs",
@@ -1348,9 +1348,14 @@
       "path": "vendor/yuka/yuka.module.js",
       "bytes": 442887,
       "sha256": "9b0c24534a47f2e1c9549a63a5e00a850577e22fe8d18dbc7a532008a027cb89"
+    },
+    {
+      "path": "src/fps/view-character-appearance.mjs",
+      "bytes": 5361,
+      "sha256": "da5ab0491cd944ba4ca4a408cb59c6c4c969004603c92a3e325bef2f3bf205bc"
     }
   ],
-  "bytes": 22383717,
+  "bytes": 22601757,
   "sourceDirectoriesExcluded": [
     "references",
     "reviews",
