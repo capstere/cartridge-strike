@@ -50,7 +50,7 @@ export function writeProjectScene(project,scene){
  const patch=exportPatch(scene.items,scene.baselineItems);
  // Level-project overrides preserve the complete authored pose, including mounts.
  const originals=new Map(scene.baselineItems.map(o=>[o.id,o]));
- patch.placements=scene.items.filter(o=>{const b=originals.get(o.id);return b&&(isChanged(o,b)||['height','collision','mountId','elevation'].some(k=>o[k]!==b[k]));})
+ patch.placements=scene.items.filter(o=>{const b=originals.get(o.id);return b&&(isChanged(o,b)||['height','collision','mountId','elevation','mirrored','wallRoll','wallFacing','wallMount'].some(k=>o[k]!==b[k]));})
   .map(({original,source,...o})=>o);
  patch.added=scene.items.filter(o=>!originals.has(o.id)).map(({original,source,...o})=>o);
  project.furniture={placements:patch.placements,added:patch.added,removed:patch.removed};

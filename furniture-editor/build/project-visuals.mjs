@@ -1,3 +1,4 @@
+import {fittedSize,wallFootprint} from '../model-alignment.mjs';
 import * as T from '../../vendor/three/three.module.js';
 import {addModelToGroup,getLocalFile,importLocalGLB} from '../library/models.mjs';
 import {assetHash} from '../library/glb-utils.mjs';
@@ -55,5 +56,19 @@ export async function buildProjectFurniture(items,root,{assets=[]}={}){
   }else if(item.kind==='chair')populateDiningChair(item,put);
   else put(0,item.height/2,0,item.w,item.height,item.d,0x668c90);
  }
- await Promise.all(pending);return root;
+ await Promise.all(pending);for(const holder of root.children){const item=items.find(o=>o.id===holder.userData.editId);if(item)applyFurnitureAppearance(holder,item);}return root;
+}
+
+/** Wrapper transforms preserve GLB vertices, normals, UVs, materials and cached originals. */
+export function applyFurnitureAppearance(holder,item){
+ let frame=holder.children.find(o=>o.userData.furnitureFrame);
+ if(!frame&&!item.mirrored&&!(item.wallMount&&item.wallRoll))return;
+ if(!frame){frame=new T.Group();frame.userData.furnitureFrame=true;const content=new T.Group();content.add(...holder.children.slice());frame.add(content);holder.add(frame);}
+ const fit=fittedSize(item),wall=wallFootprint(item),content=frame.children[0];
+ // A lazy GLB may arrive after the preview frame was created.
+ content.add(...holder.children.filter(child=>child!==frame));
+ frame.position.y=item.wallMount?wall.height/2:fit.h/2;
+ frame.rotation.set(0,wall.frontAngle,item.wallMount?(item.wallRoll||0):0);
+ frame.scale.x=item.mirrored?-1:1;
+ content.rotation.y=-wall.frontAngle;content.position.y=-fit.h/2;
 }

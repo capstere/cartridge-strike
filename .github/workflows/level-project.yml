@@ -11,6 +11,7 @@ on:
       - 'tools/level-*'
       - 'tools/direct-*'
       - 'tools/wall-placement-browser.mjs'
+      - 'tools/furniture-transform-browser.mjs'
       - 'tools/restore-onboard-large.mjs'
       - 'tools/onboard-large-source-catalog.json'
       - '.github/workflows/level-project.yml'
@@ -53,3 +54,4 @@ jobs:
           timeout 420s xvfb-run -a node tools/direct-browser-smoke.mjs
           timeout 420s xvfb-run -a node tools/onboard-library-smoke.mjs
           timeout 420s xvfb-run -a node tools/wall-placement-browser.mjs
+          timeout 420s xvfb-run -a node tools/furniture-transform-browser.mjs
