@@ -2,11 +2,12 @@
  * Original models: Quaternius. Uniform geometry and rest-space retargeting are
  * reproducible in tools/characters/build_assets.py. This owns no game state.
  */
+import {createPrivateViewAppearance} from './view-character-appearance.mjs';
 import * as T from '../../vendor/three/three.module.js';
 import {RoundedBoxGeometry} from '../../vendor/three/addons/geometries/RoundedBoxGeometry.js';
 import {WEAPONS} from './config.mjs';
 import {GLTFLoader} from '../../vendor/three/addons/loaders/GLTFLoader.js';
-let templates=null,pending=null,privateCharacter=null;
+let templates=null,pending=null,privateCharacter=null,privateViewAppearance=null;
 const live=new Set();
 export function charactersReady(){return !!templates;}
 export function installCharacterTemplates(male,female){
@@ -128,8 +129,9 @@ export function installPrivateCharacter(asset){
  const required=[];templates.male.scene.traverse(o=>{if(o.isBone)required.push(o.name);});
  if(bones.size!==65||required.some(n=>!bones.has(n))||meshes>32||!asset.scene.getObjectByName('boot-sole-l')||!asset.scene.getObjectByName('boot-sole-r'))throw Error('Provkaraktärens skelett eller skor är inkompatibla.');
  asset.scene.traverse(o=>{if(o.isMesh){const p=o.geometry.attributes.position;if(!p||Array.from(p.array).some(v=>!Number.isFinite(v)))throw Error('Provkaraktären har ogiltig geometri.');if(o.isSkinnedMesh&&o.skeleton.bones.some(b=>bones.get(b.name)!==b))throw Error('Provkaraktärens benkoppling är ogiltig.');}});
- privateCharacter=asset;
+ const appearance=createPrivateViewAppearance(asset);privateViewAppearance?.dispose();privateViewAppearance=appearance;privateCharacter=asset;
 }
+export function privateCharacterAppearance(id){return privateCharacter&&['analysts-0','analysts-1'].includes(id)?privateViewAppearance:null;}
 function createPrivateAvatar(id){
  const asset=privateCharacter,root=cloneSkinned(asset.scene),bones=new Map(),materials=new Map(),meshes=[],shoes=[];
  root.traverse(o=>{
@@ -216,6 +218,7 @@ export function disposeAvatar(state){
  state.root.traverse(o=>{if(o.isSkinnedMesh)o.skeleton.dispose();});for(const m of new Set(state.materials.values())){m.userData.ownedTexture?.dispose();m.dispose();}for(const g of state.ownedGeometry)g.dispose();live.delete(state);
 }
 export function disposeCharacterLibrary(){
+ privateViewAppearance?.dispose();privateViewAppearance=null;
  for(const state of [...live])disposeAvatar(state);const geometries=new Set(),materials=new Set(),textures=new Set();
  if(templates)for(const asset of [...Object.values(templates),privateCharacter].filter(Boolean))asset.scene.traverse(o=>{if(o.geometry)geometries.add(o.geometry);if(o.material)materials.add(o.material);});
  for(const m of materials){for(const value of Object.values(m))if(value?.isTexture)textures.add(value);m.dispose();}for(const g of geometries)g.dispose();for(const t of textures)t.dispose();fabric?.dispose();fabric=null;templates=null;pending=null;privateCharacter=null;
