@@ -10,6 +10,7 @@ export async function verifySavedCharacterMenu(page,origin){
  const id=saved.rows[0].id;assert.equal(await page.locator('#player-character').inputValue(),'');
  await page.locator('#seed').fill('77');await choose(id);assert(await page.locator('#start').isEnabled());assert.equal(await page.locator('#seed').inputValue(),'77');
  assert.match(await page.locator('#character-status').innerText(),/Händerna matchar/);
+ assert(await page.evaluate(()=>document.getElementById('player-character').getBoundingClientRect().width>=document.getElementById('character-picker').clientWidth*.95));
  await page.screenshot({path:'test-results/private-character/menu-desktop.png'});
  await page.setViewportSize({width:390,height:844});await page.locator('#player-character').scrollIntoViewIfNeeded();
  assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1));

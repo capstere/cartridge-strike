@@ -476,8 +476,8 @@
     },
     {
       "path": "fps/style.css",
-      "bytes": 29981,
-      "sha256": "8f0054d298ca1bc875c441882aefdfd254345a802aa697c6a3df58b96d6ba099"
+      "bytes": 29996,
+      "sha256": "deb5f649b51b6571d3f71f14ef3ab6c9e627ad05dc2da7f7eaa2d86e26637cd8"
     },
     {
       "path": "fps/walk.html",
@@ -1356,11 +1356,11 @@
     },
     {
       "path": "src/fps/character-selection.mjs",
-      "bytes": 2909,
-      "sha256": "86e9375b51218d18eb8ae3844cfc33564741a966dfe7e0715250afa14c7b5c91"
+      "bytes": 3257,
+      "sha256": "be20b77ef515e1d637705ec501ef1abf0d28e518e019d4e0d0958645f7a51228"
     }
   ],
-  "bytes": 22609438,
+  "bytes": 22609801,
   "sourceDirectoriesExcluded": [
     "references",
     "reviews",

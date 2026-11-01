@@ -11,13 +11,18 @@ export function characterMenuURL(url,id,{team='analysts',seed=42}={}){
  next.searchParams.set('team',team==='counterAnalysts'?'counterAnalysts':'analysts');
  next.searchParams.set('seed',String(Math.min(999999,Math.max(1,Math.floor(Number(seed)||42)))));return next.href;
 }
+export function characterOptionLabel(row,rows){
+ const same=rows.filter(r=>r.name===row.name);if(same.length<2)return row.name;
+ const date=new Date(row.updated),stamp=Number.isFinite(date.getTime())?date.toLocaleString('sv-SE'):'okänd tid';
+ return row.name+' · '+stamp+' · kopia '+(same.findIndex(r=>r.id===row.id)+1);
+}
 export async function setupCharacterMenu({getTeam,getSeed}){
  const select=document.getElementById('player-character'),status=document.getElementById('character-status'),remove=document.getElementById('delete-character');
  const id=preferredCharacter(location.href,{getItem:key=>localStorage.getItem(key)});let rows=[];
  const say=text=>{status.textContent=text;};
  try{rows=await listPrivateCharacters();}catch(e){say('Kunde inte läsa lokala karaktärer. Du kan välja Originalkaraktär. '+e.message);}
  select.replaceChildren(new Option('Originalkaraktär',''));
- for(const row of rows){const option=new Option(row.name+(row.compatible?'':' · behöver sparas om'),row.id);select.append(option);}
+ for(const row of rows){const option=new Option(characterOptionLabel(row,rows)+(row.compatible?'':' · behöver sparas om'),row.id);select.append(option);}
  if(id&&!rows.some(r=>r.id===id))select.append(new Option('Sparad karaktär saknas på denna enhet',id));
  select.value=id;remove.hidden=!id||!rows.some(r=>r.id===id);
  if(!status.textContent)say(rows.length?'Sparade på denna enhet. Bara din spelare använder designen.':'Inga spelkopior ännu. Öppna studion och välj Spara för spelet.');
