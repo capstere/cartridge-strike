@@ -571,8 +571,8 @@
     },
     {
       "path": "furniture-editor/build/surface-style.mjs",
-      "bytes": 4090,
-      "sha256": "53d3477ea945153a2bc3446dae61ddf8c87a275d7e220182f3aee3a3ce72c04f"
+      "bytes": 4566,
+      "sha256": "517294fb18e5a14421cb1214eace289d79bbd2b927ee01981b7bde9f1f8c4957"
     },
     {
       "path": "furniture-editor/build/treatments.mjs",

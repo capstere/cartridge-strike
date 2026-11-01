@@ -57,3 +57,9 @@ test('floor-only snap on both sides cannot leave an invisible gap under the exis
  const rows=testDoorTraversal(world);assert.equal(rows.length,2);assert(rows.every(r=>r.status==='pass'),JSON.stringify(rows));
  p.ground.floors.pop();assert(!createWorld({levelProject:p,fresh:true}).onFloor(4,3),'no bridge without floor on the other side');
 });
+
+test('real Floor 5 D26 lintel reaches the actual wall ends, including the larger original source gaps',()=>{
+ const p=exportProject({mode:'edit-floor5'}),world=createWorld({levelProject:p,fresh:true}),h=world.description.boxes.find(b=>b.id==='D26-lintel');
+ assert(h.x-h.w/2<=38.556,'left source gap of 0.1326318 is covered');assert(h.x+h.w/2>=39.696,'right source gap of 0.028148 is covered');
+ assert(h.w<1.15,'only the adjoining over-door span is filled');assert(h.y-h.h/2>=2.29,'door passage stays untouched');
+});

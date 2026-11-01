@@ -23,7 +23,12 @@ export function paintDescription(description,data){
   const wall=candidates.sort((a,b)=>Math.abs((a.a[0]-door.a[0])*uz-(a.a[1]-door.a[1])*ux)-Math.abs((b.a[0]-door.a[0])*uz-(b.a[1]-door.a[1])*ux))[0];
   if(!description.boxes.some(b=>b.id===door.id+'-head-jamb'))description.boxes.push({...header,id:door.id+'-head-jamb',y:2.2875,h:.045,w:len+.065,d:.065,color:[.4,.41,.4]});
   if(wall){const offset=(wall.a[0]-door.a[0])*(-uz)+(wall.a[1]-door.a[1])*ux;
-   header.x=(door.a[0]+door.b[0])/2-uz*offset;header.z=(door.a[1]+door.b[1])/2+ux*offset;header.d=wall.thickness+.0001;header.w=len+.034;
+   // Source apertures can end before their neighboring solids (D26: .133/.028).
+   // Span the measured joining ends above the door, not just the cutter margin.
+   const ends=candidates.flatMap(w=>[w.a,w.b]).map(p=>(p[0]-door.a[0])*ux+(p[1]-door.a[1])*uz);
+   const left=ends.filter(t=>t<=.001&&t>=-.18),right=ends.filter(t=>t>=len-.001&&t<=len+.18);
+   const lo=Math.min(-.015,left.length?Math.max(...left):0)-.002,hi=Math.max(len+.015,right.length?Math.min(...right):len)+.002;
+   header.x=door.a[0]+ux*(lo+hi)/2-uz*offset;header.z=door.a[1]+uz*(lo+hi)/2+ux*offset;header.d=wall.thickness+.0001;header.w=hi-lo;
    header.h=Math.max(.001,wall.height-2.29);header.y=2.29+header.h/2;
    if(wall.studioColor)header.studioColor=wall.studioColor;
   }
