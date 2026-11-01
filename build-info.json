@@ -506,8 +506,8 @@
     },
     {
       "path": "furniture-editor/build/architecture-preview.mjs",
-      "bytes": 4094,
-      "sha256": "fb94940ac32f4ffa27cf1ecbdc8b70ed72e0d8a1d8be7a6727395aedad3e211c"
+      "bytes": 4133,
+      "sha256": "9bbd4e430f8e65577850384cb7f05e20a12940adfad2c2b87f29e56ae7618e3b"
     },
     {
       "path": "furniture-editor/build/architecture.mjs",

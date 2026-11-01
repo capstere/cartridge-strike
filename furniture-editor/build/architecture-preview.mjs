@@ -21,7 +21,7 @@ export function architecturePreview(project,scene,{lowWalls=false,openDoors=fals
  for(const b of desc.boxes){const source=sources.find(([key])=>b.id===key||b.id.startsWith(key+'-'));if(source)mesh(b,source[1]);}
  const system=createDoors(data,{staticCanOccupy:()=>true});
  for(const door of system.doors){system.pose(door,openDoors&&door.id===selected?Math.PI/3:0);for(const leaf of door.leaves){
-  const b=leaf.box,color=door.studioColor||'#c4c3af';
+  const b=leaf.box,color=door.studioColor||(door.doorStyle==='frosted'?'#87989e':'#c4c3af');
   if(door.doorStyle==='frosted'){
    for(const p of frostedDoorParts(leaf.w)){const c=Math.cos(b.angle),s=Math.sin(b.angle);mesh({...p,id:b.id+'-'+p.part,x:leaf.x+c*p.x+s*p.z,z:leaf.z-s*p.x+c*p.z,angle:b.angle,color:p.part==='handle'?'#87989e':color,material:p.part==='glass'?'door-frosted':'metal'},door.id);}continue;
   }
