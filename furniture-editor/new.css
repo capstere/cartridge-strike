@@ -239,3 +239,10 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,su
 #dockMountMode{min-height:42px}
 @media(max-width:700px){.placement-method{padding:10px;margin:9px 0}
  .edit-dock-fields .dock-attachment-setting{grid-column:span 2}}
+
+/* Common actions stay close to the scene; numbers are optional. */
+.dock-details{margin-top:10px}.dock-details summary{cursor:pointer;color:#b9e9da;font-size:.8rem;padding:5px 0}.dock-details[open] .edit-dock-fields{margin-top:8px}
+.edit-dock-actions button{min-height:44px}
+/* Status text must never resize the drawing canvas halfway through a drag. */
+.workspace>.foot{flex:0 0 48px;height:48px;min-height:48px}
+.workspace>.foot>span{flex:1;min-width:0;max-height:36px;overflow:auto}

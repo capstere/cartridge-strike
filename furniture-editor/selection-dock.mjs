@@ -7,7 +7,7 @@ const fieldIDs={x:'dockX',z:'dockZ',w:'dockWidth',d:'dockDepth'};
 const roundDisplay=value=>String(Math.round(Number(value)*1000)/1000);
 const $=id=>document.getElementById(id);
 
-export function installSelectionDock({getIssue,onHeight,onMountMode,onWallHeight}){
+export function installSelectionDock({getIssue,getMountIssue,onHeight,onMountMode,onWallHeight,onWallSide,onFacing}){
  const panel=$('editDock'),reopen=$('editDockReopen'),name=$('editDockName'),message=$('editDockMessage');
  const collision=$('dockCollision'),height=$('dockHeight'),mount=$('dockMountMode'),wallY=$('dockWallY'),wallYRow=$('dockWallHeightRow');
  let itemId=null,collapsed=false;
@@ -28,11 +28,13 @@ export function installSelectionDock({getIssue,onHeight,onMountMode,onWallHeight
   collision.value=item.collision==='none'?'none':'solid';
   mount.value=item.wallMount?'wall':item.mountId?'surface':'floor';
   wallYRow.hidden=!item.wallMount;
+  $('dockWallSide').hidden=!item.wallMount;$('dockFacing').hidden=!item.wallMount||!item.assetId;
+  $('dockRotate').disabled=!!item.wallMount;$('dockUp').hidden=$('dockDown').hidden=!item.wallMount;
   wallY.value=item.wallMount?roundDisplay(item.wallMount.y):'';
   const diagnostics=$('showPhysics').checked;
-  const issue=diagnostics?getIssue(item):null;
+  const mountIssue=getMountIssue?.(item),issue=mountIssue||(diagnostics?getIssue(item):null);
   message.classList.toggle('issue',!!issue);
-  message.textContent=issue?'Fysikkontroll: '+issue:'Placera fritt. Ändringarna sparas automatiskt.';
+  message.textContent=issue?(mountIssue||'Fysikkontroll: '+issue):'Placera fritt. Ändringarna sparas automatiskt.';
   showCollapsed(collapsed);
  }
  function changeNative(source,value){
@@ -75,6 +77,9 @@ export function installSelectionDock({getIssue,onHeight,onMountMode,onWallHeight
   }
   onWallHeight?.(value);
  });
+ $('dockWallSide').addEventListener('click',()=>onWallSide?.());
+ $('dockFacing').addEventListener('click',()=>onFacing?.());
+ for(const [id,delta] of [['dockUp',.1],['dockDown',-.1]])$(id).addEventListener('click',()=>{if(itemId&&wallY.value)onWallHeight?.(Number(wallY.value)+delta);});
  $('dockRotate').addEventListener('click',()=>$('rotate').click());
  $('dockDuplicate').addEventListener('click',()=>{
   // The player must see the scene when choosing a position for a duplicate.

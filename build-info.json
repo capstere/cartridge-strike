@@ -521,8 +521,8 @@
     },
     {
       "path": "furniture-editor/build/level-project.mjs",
-      "bytes": 13450,
-      "sha256": "e258b0e4ceba2469d67c6bfa4c09ab05e7f3a508a7b4b48080bc02ca537934c9"
+      "bytes": 13586,
+      "sha256": "3720d1b4acdb8a9342539cda0d57a1a94a52d21d86dc326e6c414f85e731da77"
     },
     {
       "path": "furniture-editor/build/level-project.schema.json",
@@ -581,8 +581,8 @@
     },
     {
       "path": "furniture-editor/library/catalog.mjs",
-      "bytes": 47772,
-      "sha256": "1005f54daa072c851654b4174f25f416a2e0774fd1a61ad6ce6ac43b8edabafd"
+      "bytes": 47829,
+      "sha256": "fa2071f7b029419dfb73ee62e2c571bd188b7458e79c4735658d1e7d87e10376"
     },
     {
       "path": "furniture-editor/library/glb-utils.mjs",
@@ -591,8 +591,8 @@
     },
     {
       "path": "furniture-editor/library/models.mjs",
-      "bytes": 6218,
-      "sha256": "7faa52ad6418142adb053c90e269c6f90cf559f7b50a6bbdafbe5fdd74a3cd76"
+      "bytes": 6301,
+      "sha256": "c8e725f419f15d72d1338b617cf832c3a706fa97670d5580d73c62c65f479ed7"
     },
     {
       "path": "furniture-editor/library/models/onboard/ammo-box-lod0.glb",
@@ -671,8 +671,8 @@
     },
     {
       "path": "furniture-editor/library/onboard-catalog.mjs",
-      "bytes": 11408,
-      "sha256": "f26e23dd62b6fa11c7d266fa0bfe78263fecde9fded0d5480109145e9c0dc78b"
+      "bytes": 11457,
+      "sha256": "aa61d6cb5f03065a93c6db53b683daaa31a433576d602b7eb255ab37c745502b"
     },
     {
       "path": "furniture-editor/library/procedural-mesh.mjs",
@@ -766,33 +766,33 @@
     },
     {
       "path": "furniture-editor/new.css",
-      "bytes": 20143,
-      "sha256": "e0af99226f74f1b3829e5f4e1271811afc4053ad398eae74d3c36cffc6ec6707"
+      "bytes": 20631,
+      "sha256": "f342263736a5a6d10840ced1787d4b68fc764f4e4f92f6e9184a135536f71bed"
     },
     {
       "path": "furniture-editor/new.html",
-      "bytes": 17103,
-      "sha256": "f3d2dcffbee4d70a87db1796da23fd767b8ad5919d5cab4ff43022aaf9e82e78"
+      "bytes": 17558,
+      "sha256": "f055c7b3ba7734144a8430f5d264663adf39872674e35f03306452d5c7897a46"
     },
     {
       "path": "furniture-editor/new.mjs",
-      "bytes": 86171,
-      "sha256": "138533551dafb2c18ca1838c861dd46f9a73eb3955fab34b112f67fd0eab2fa7"
+      "bytes": 92201,
+      "sha256": "6f4dbf37dd9f5a8d12dacce7550bbcae3f9bc6784bf0e542d92b50fac56779d2"
     },
     {
       "path": "furniture-editor/selection-dock.mjs",
-      "bytes": 3807,
-      "sha256": "b73cc522fe679e5ea34d4f5c683a24c654cbed8cee18c5660651de8a82434450"
+      "bytes": 4390,
+      "sha256": "236dcffe1c774a61aed1f9a1c797eb8819695a3bbc7d4a0d81674c5b99ecb5ad"
     },
     {
       "path": "furniture-editor/smart-placement.mjs",
-      "bytes": 5625,
-      "sha256": "b47dda4748513c2a55d41a55dc3e0672e58a97c28fa306a3451cd80dbb0f6a3b"
+      "bytes": 5950,
+      "sha256": "97818f4d3f485300bbc0c56b20f82bddd97c73cd64adb3a3c74bc342b065d20b"
     },
     {
       "path": "furniture-editor/snap-highlights.mjs",
-      "bytes": 2378,
-      "sha256": "10169add6c63415ff995c4477106a1e4bef89390d42d247f1399661366c4664d"
+      "bytes": 2758,
+      "sha256": "0f098cdb09de48889f374654d378bac3d4958e9130d571988a910446d7f693f3"
     },
     {
       "path": "furniture-editor/soft-placement.mjs",
@@ -806,8 +806,8 @@
     },
     {
       "path": "furniture-editor/wall-mounts.mjs",
-      "bytes": 3631,
-      "sha256": "645035f2c7ce7a8c5c04eec048b2157916a42e058c5e24324af073c07e74a8fe"
+      "bytes": 6776,
+      "sha256": "4c0c6e53ae6917e2151d58c14d824d4c4c01541b633788feb433d2ad3ec6e292"
     },
     {
       "path": "index.html",
@@ -1358,9 +1358,14 @@
       "path": "src/fps/character-selection.mjs",
       "bytes": 3257,
       "sha256": "be20b77ef515e1d637705ec501ef1abf0d28e518e019d4e0d0958645f7a51228"
+    },
+    {
+      "path": "furniture-editor/model-alignment.mjs",
+      "bytes": 1069,
+      "sha256": "b28f69c3433b2397d2189566622a8d8ebcb7e3cf6a97582753f7c25dad3b6857"
     }
   ],
-  "bytes": 22610303,
+  "bytes": 22623103,
   "sourceDirectoriesExcluded": [
     "references",
     "reviews",
