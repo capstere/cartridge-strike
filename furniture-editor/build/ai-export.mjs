@@ -13,7 +13,7 @@ export function collisionExport(p){
   walkableFloors:floors.map(f=>({id:f.id,role:f.role,polygon:f.polygon,rect:[f.x0,f.z0,f.x1,f.z1]})),
   staticWalls:projectWallPieces(segments).map(w=>({id:w.id,kind:w.kind,a:w.a,b:w.b,height:w.height,thickness:w.thickness,sill:w.kind==='window'?w.sill:null,collision:w.kind==='window'||w.kind==='glazed'?'glass':'solid'})),
   passages:segments.filter(e=>isDoor(e.kind)).map(e=>({id:e.id,kind:e.kind,a:e.a,b:e.b,width:Math.hypot(e.b[0]-e.a[0],e.b[1]-e.a[1]),collision:e.kind==='opening'?'none':'dynamic-door-leaf'})),
-  furniture:scene.items.map(o=>({id:o.id,kind:o.kind,assetName:o.assetName||null,assetId:o.assetId||null,x:o.x,z:o.z,yaw:o.yaw,w:o.w,d:o.d,height:o.height,elevation:o.elevation||0,mountId:o.mountId||null,wallMount:o.wallMount||null,snapRole:o.snapRole||null,collision:o.collision||'solid'})),
+  furniture:scene.items.map(o=>({id:o.id,kind:o.kind,assetName:o.assetName||null,assetId:o.assetId||null,x:o.x,z:o.z,yaw:o.yaw,mirrored:!!o.mirrored,wallRoll:o.wallRoll||0,wallFacing:o.wallFacing||null,modelSize:o.modelSize||null,w:o.w,d:o.d,height:o.height,elevation:o.elevation||0,mountId:o.mountId||null,wallMount:o.wallMount||null,snapRole:o.snapRole||null,collision:o.collision||'solid'})),
   spawns:p.gameplay.spawns.map(s=>({id:s.id,team:s.team,x:s.x,z:s.z,yaw:s.yaw})),
   objectives:p.gameplay.objectives,fixedObstacles:scene.fixed,floor5Inherited:p.mode==='edit-floor5'};
 }

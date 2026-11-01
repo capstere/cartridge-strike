@@ -1,3 +1,4 @@
+import {fittedSize,wallFootprint} from '../model-alignment.mjs';
 import * as T from '../../vendor/three/three.module.js';
 import {addModelToGroup,getLocalFile,importLocalGLB} from '../library/models.mjs';
 import {assetHash} from '../library/glb-utils.mjs';
@@ -48,12 +49,27 @@ export async function buildProjectFurniture(items,root,{assets=[]}={}){
    if(typeof material==='number')m.userData.studioOwned=true;
    const mesh=new T.Mesh(new T.BoxGeometry(w,h,d),m);mesh.userData.studioGeometry=true;mesh.userData.editId=item.id;mesh.position.set(x,y,z);holder.add(mesh);return mesh;};
   if(proceduralOf(item))populateProcedural(item,holder,put);
-  else if(item.assetId)pending.push(addModelToGroup(item,holder).then(ok=>{if(!ok)throw Error(`Modellen ${item.assetName||item.id} saknas: ${holder.userData.modelError}`);}));
+  else if(item.assetId)pending.push(addModelToGroup(item,holder).then(ok=>{if(!ok)throw Error(`Modellen ${item.assetName||item.id} saknas: ${holder.userData.modelError}`);applyFurnitureAppearance(holder,item);}));
   else if(['table','desk','coffee-table'].includes(item.kind)){
    put(0,item.height-.04,0,item.w,.08,item.d,0xd5d4c9);
    for(const x of [-1,1])for(const z of [-1,1])put(x*(item.w/2-.06),item.height/2,z*(item.d/2-.06),.05,item.height,.05,0x68777c);
   }else if(item.kind==='chair')populateDiningChair(item,put);
   else put(0,item.height/2,0,item.w,item.height,item.d,0x668c90);
+  applyFurnitureAppearance(holder,item);
  }
  await Promise.all(pending);return root;
+}
+
+/** Wrapper transforms preserve GLB vertices, normals, UVs, materials and cached originals. */
+export function applyFurnitureAppearance(holder,item){
+ let frame=holder.children.find(o=>o.userData.furnitureFrame);
+ if(!frame&&!item.mirrored&&!(item.wallMount&&item.wallRoll))return;
+ if(!frame){frame=new T.Group();frame.userData.furnitureFrame=true;const content=new T.Group();holder.children.slice().forEach(child=>content.add(child));frame.add(content);holder.add(frame);}
+ const fit=fittedSize(item),wall=wallFootprint(item),content=frame.children[0];
+ // A lazy GLB may arrive after the preview frame was created.
+ holder.children.filter(child=>child!==frame).forEach(child=>content.add(child));
+ frame.position.y=item.wallMount?wall.height/2:fit.h/2;
+ frame.rotation.set(0,wall.frontAngle,item.wallMount?(item.wallRoll||0):0);
+ frame.scale.x=item.mirrored?-1:1;
+ content.rotation.y=-wall.frontAngle;content.position.y=-fit.h/2;
 }

@@ -98,3 +98,7 @@ test('catalog placement metadata works without name inference',()=>{
  const pose=proposeSmartPose(tv,{x:4,z:.15},[],{walls:[wall]});
  assert(Math.abs(pose.yaw)<1e-6,'Measured +Z TV screen faces +Z room');
 });
+test('a rolled wall shelf is not offered as a horizontal support',()=>{
+ const shelf={...desk,assetId:'studio:wall-shelf',kind:'wall-shelf',height:.5,wallMount:{wallId:wall.id,t:.5,side:1,y:1.5},wallRoll:.25};
+ assert.equal(findSupport(item('local:fixture','Kopp',.2,.2,.2),{x:3,z:3},[shelf]),null);
+});

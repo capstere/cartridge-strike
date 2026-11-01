@@ -8,7 +8,7 @@ import {LIBRARY_MAP} from './library/catalog.mjs?v=4.7.0';
 import {findWallMount,wallMountProblem} from './wall-mounts.mjs?v=4.7.0';
 import {round,normalizeAngle} from './core.mjs';
 
-const isSurface=o=>!o.deleted&&(!o.wallMount||proceduralOf(o)?.shape==='wall-shelf')&&(
+const isSurface=o=>!o.deleted&&(!o.wallMount||proceduralOf(o)?.shape==='wall-shelf'&&Math.abs(o.wallRoll||0)<1e-6)&&(
  ['counter','desk','table','round','wall-shelf'].includes(proceduralOf(o)?.shape)||
  ['desk','table','coffee-table'].includes(o.kind)||
  /counter|bench|worktop|table|desk|skrivbord|bänk|kitchen.?sink|diskbänk/i.test(o.assetName||'')

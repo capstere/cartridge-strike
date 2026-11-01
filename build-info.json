@@ -501,8 +501,8 @@
     },
     {
       "path": "furniture-editor/build/ai-export.mjs",
-      "bytes": 4512,
-      "sha256": "56a52572781cc959f23b0024db1e188014e801ed0442f0810250c88f038a4daa"
+      "bytes": 4615,
+      "sha256": "0796040995501fff159dc48aa59629d431cf3266f551bf34383a055436d6ad8d"
     },
     {
       "path": "furniture-editor/build/architecture.mjs",
@@ -546,13 +546,13 @@
     },
     {
       "path": "furniture-editor/build/project-scene.mjs",
-      "bytes": 4483,
-      "sha256": "80d08d9284417d84bc36a76ea027e22057d0f4dce1a6acd1df2fad703f4e1cb0"
+      "bytes": 4530,
+      "sha256": "4f4199439034c13eef0c05990aaecc7c3209d9fe685e62ff5545958678ef8184"
     },
     {
       "path": "furniture-editor/build/project-visuals.mjs",
-      "bytes": 4162,
-      "sha256": "f7847e247710944604fb47aea4d4a8e6cb60be5367e7c7f53d1d8429f204bc10"
+      "bytes": 5242,
+      "sha256": "34fcd07b9d71546483f157daeee0270cffceac266e8bdb655dc3413825ace83a"
     },
     {
       "path": "furniture-editor/build/room-drag.mjs",
@@ -573,6 +573,11 @@
       "path": "furniture-editor/core.mjs",
       "bytes": 13519,
       "sha256": "2c06fe9c4ef602f92edc09e805027dd70207f65bfc9ba66cc31733da5bec3b64"
+    },
+    {
+      "path": "furniture-editor/furniture-transforms.mjs",
+      "bytes": 2064,
+      "sha256": "ca247366607e641104489d737a6dc7e2cb05c27dd0601e372279776c84680ce1"
     },
     {
       "path": "furniture-editor/index.html",
@@ -765,29 +770,34 @@
       "sha256": "902974e6eba6ef4f80acd1fe4a07d51d9a4b64e7633e475e528eeb1051091871"
     },
     {
+      "path": "furniture-editor/model-alignment.mjs",
+      "bytes": 1408,
+      "sha256": "838c4c625907285237088f1490b666ac420a8aba253f952005091abf3b088560"
+    },
+    {
       "path": "furniture-editor/new.css",
-      "bytes": 20631,
-      "sha256": "f342263736a5a6d10840ced1787d4b68fc764f4e4f92f6e9184a135536f71bed"
+      "bytes": 20770,
+      "sha256": "be2f806d75621d34ebd70521a1cf79a78dc7561f943d72668d655a9fd8d2960d"
     },
     {
       "path": "furniture-editor/new.html",
-      "bytes": 17558,
-      "sha256": "f055c7b3ba7734144a8430f5d264663adf39872674e35f03306452d5c7897a46"
+      "bytes": 17826,
+      "sha256": "56d8475315683351ac4630fa6ce840d87c06d59fec760e5efb1ef717f31d3984"
     },
     {
       "path": "furniture-editor/new.mjs",
-      "bytes": 92201,
-      "sha256": "6f4dbf37dd9f5a8d12dacce7550bbcae3f9bc6784bf0e542d92b50fac56779d2"
+      "bytes": 94685,
+      "sha256": "0456684395c882e960ec354061c7654926505fa461df1e203d5e6ec0c85cf1d0"
     },
     {
       "path": "furniture-editor/selection-dock.mjs",
-      "bytes": 4390,
-      "sha256": "236dcffe1c774a61aed1f9a1c797eb8819695a3bbc7d4a0d81674c5b99ecb5ad"
+      "bytes": 4806,
+      "sha256": "7a89429fa024d5da6a970e5e68dc286e352e8a4f7b2454e439fd8b1742c569b1"
     },
     {
       "path": "furniture-editor/smart-placement.mjs",
-      "bytes": 5950,
-      "sha256": "97818f4d3f485300bbc0c56b20f82bddd97c73cd64adb3a3c74bc342b065d20b"
+      "bytes": 5980,
+      "sha256": "5ef3347b6f740bb50f26412ecb582f2e0a88664b67f6bd68b89a7660bbf4ae96"
     },
     {
       "path": "furniture-editor/snap-highlights.mjs",
@@ -963,6 +973,11 @@
       "path": "src/fps/character-library.mjs",
       "bytes": 19499,
       "sha256": "19a786e5320644f1259fad283536218bd7ab28abddc14b6bb570de83c1cef00c"
+    },
+    {
+      "path": "src/fps/character-selection.mjs",
+      "bytes": 3257,
+      "sha256": "be20b77ef515e1d637705ec501ef1abf0d28e518e019d4e0d0958645f7a51228"
     },
     {
       "path": "src/fps/combat-audio.mjs",
@@ -1270,6 +1285,11 @@
       "sha256": "dc59fbe793294a0358ea393e74e409ca6c0a3b98a5e9f1b8153760d298790a3d"
     },
     {
+      "path": "src/fps/view-character-appearance.mjs",
+      "bytes": 5633,
+      "sha256": "9fbcf2bb016efc40e803b628a007b4acfca946f2ec517a7801b434c92318ccf2"
+    },
+    {
       "path": "src/fps/view-surface.mjs",
       "bytes": 3960,
       "sha256": "fa23a5872d33ccff8d85404e18d35920d94cc18b78dfc60c20fc1bbcbc8cd418"
@@ -1348,24 +1368,9 @@
       "path": "vendor/yuka/yuka.module.js",
       "bytes": 442887,
       "sha256": "9b0c24534a47f2e1c9549a63a5e00a850577e22fe8d18dbc7a532008a027cb89"
-    },
-    {
-      "path": "src/fps/view-character-appearance.mjs",
-      "bytes": 5633,
-      "sha256": "9fbcf2bb016efc40e803b628a007b4acfca946f2ec517a7801b434c92318ccf2"
-    },
-    {
-      "path": "src/fps/character-selection.mjs",
-      "bytes": 3257,
-      "sha256": "be20b77ef515e1d637705ec501ef1abf0d28e518e019d4e0d0958645f7a51228"
-    },
-    {
-      "path": "furniture-editor/model-alignment.mjs",
-      "bytes": 1069,
-      "sha256": "b28f69c3433b2397d2189566622a8d8ebcb7e3cf6a97582753f7c25dad3b6857"
     }
   ],
-  "bytes": 22623103,
+  "bytes": 22630073,
   "sourceDirectoriesExcluded": [
     "references",
     "reviews",
