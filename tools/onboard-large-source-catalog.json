@@ -510,6 +510,8 @@
     },
     {
       "id": "onboard:tv-with-a-wall-mount",
+      "placement": "wall",
+      "wallFacing": "+z",
       "name": "TV med väggfäste",
       "category": "kontor",
       "kind": "prop",
