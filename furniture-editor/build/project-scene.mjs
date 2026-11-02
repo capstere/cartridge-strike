@@ -2,7 +2,7 @@ import {applyFloorEdits} from './floor-edge.mjs?v=5.1.0';
 import {closedAreas} from './walkable-spaces.mjs?v=5.0.0';
 /** Resolve editable geometry once for the studio, collision export and FPS adapter. */
 import '../../src/floor5-data.js';
-import '../../src/world.js';
+import '../../src/world.js?v=5.3.0';
 import {createFurnishings} from '../../src/fps/furnishings.mjs';
 import {catalog,inside,distanceSegment,EDITABLE_KINDS,exportPatch,isChanged} from '../core.mjs?v=5.0.0';
 import {readBaseline,parseArchitecture,exportArchitecture,wallPieces,isDoor} from './architecture.mjs?v=5.1.0';
