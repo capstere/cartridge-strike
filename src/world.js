@@ -198,6 +198,7 @@
     for(const side of [-1,1])scene.labels.push({text:title+'\n'+d.id+(d.accessCardConfirmed?' · PASSERKORT':''),x:c[0]+n[0]*.095*side,y:2.45,z:c[1]+n[1]*.095*side,yaw:Math.atan2(n[0]*side,n[1]*side),width:Math.max(1.05,Math.min(2.2,width+.55)),height:.35,color:'#ecf2eb',accent:d.blocked?'#536360':'#245b57'});
    }
   }
+  if(!D.__custom||!D.shellOnly){
   // Ceiling lighting follows the geographical polygons, with no extra partitions.
   for(const r of [...D.rooms.filter(r=>r.status!=='uncertain'),...D.corridors]){
    const [x0,z0,x1,z1]=bounds(r.polygon),spanX=x1-x0,spanZ=z1-z0,nx=Math.max(1,Math.round(spanX/2.4)),nz=Math.max(1,Math.round(spanZ/2.4));
@@ -215,6 +216,7 @@
    box('pantry-blue-wall',(x0+x1)/2,1.5,z0+.07,x1-x0-.1,2.65,.04,[.22,.31,.40]);
    box('pantry-display',(x0+x1)/2,1.75,z0+.105,1.10,.65,.04,[.14,.20,.25]);
    box('pantry-display-lit',(x0+x1)/2,1.75,z0+.13,1.01,.57,.012,[.64,.80,.82],'emissive');
+  }
   }
   // Exact target is a free standing place beside the desk, not inside its excluded volume.
   const k=D.targets.find(t=>t.id==='K');if(k)scene.labels.push({text:'KONTORSPLATS',x:k.point[0]+.8,y:1.35,z:k.point[1]+.55,yaw:0,width:1.25,height:.25,color:'#f6f2e7',accent:'#245b57'});
