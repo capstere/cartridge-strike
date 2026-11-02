@@ -61,8 +61,9 @@ try {
    assert(frame,'walk iframe missing');
    const summary=await frame.evaluate(()=>{
     const {world,renderer}=window.__walk;
-    return {office:world.doors.doors.filter(d=>d.doorStyle==='office').length,
-     panel:!!renderer.doorVisuals.root.getObjectByName('BYGG-D-0001-office'),
+    const office=world.doors.doors.filter(d=>d.doorStyle==='office');
+    return {office:office.length,
+     panel:office.every(d=>{const group=renderer.doorVisuals.root.getObjectByName(d.id+'-office');return !!group?.getObjectByName('office-panel');}),
      signal:world.description.boxes.filter(b=>b.material==='blue-graphic').length};
    });
    assert(summary.office>=1);assert(summary.panel);assert(summary.signal>=3);
