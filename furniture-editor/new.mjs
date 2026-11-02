@@ -1,4 +1,5 @@
 import {captureFurniture,pasteFurniture} from './furniture-clipboard.mjs?v=5.2.0';
+import {clearFloor5Interior,restoreFloor5Interior} from './build/empty-interior.mjs?v=5.3.0';
 import {floorEdgeHandles,planFloorEdge} from './build/floor-edge.mjs?v=5.1.0';
 import {architecturePreview} from './build/architecture-preview.mjs?v=5.1.0';
 import {surfaceColor,validPaint,reconcileSurfaceColors} from './build/surface-style.mjs?v=5.1.0';
@@ -788,7 +789,14 @@ const tool=$('tool').value,active=tab==='build'&&tool!=='select',placing=!!pendi
   chosen?.kind==='wall'?'Dra en orange ändpunkt för att ändra en fri vägg.':'Ctrl/⌘-klick: välj fler möbler. Ctrl/⌘+C / V: kopiera / klistra in.';
  $('cancelAction').hidden=!active&&!placing&&!first;$('deleteAction').disabled=!lookup()&&multiSelected.size<2;
 }
-function redraw(){
+function updateFloor5InteriorUI(){
+ const isFloor5=p().mode==='edit-floor5',empty=isFloor5&&p().legacyPatch?.emptyFixed===true;
+ $('floor5InteriorTools').hidden=!isFloor5;
+ $('newBlank').hidden=isFloor5;
+ $('restoreFloor5Interior').hidden=!empty;
+ $('clearFloor5Interior').disabled=!isFloor5||(empty&&objects().length===0&&decorations().length===0);
+}
+function redraw(){updateFloor5InteriorUI();
  normalizeSelection();updateClipboardUI();
  $('modeHelp').textContent=p().mode==='edit-floor5'?'FLOOR 5: du arbetar på en lokal kopia. Originalgolv och spelregler bevaras. Möbler och byggändringar sparas i ditt projekt.':'NY BANA: skapa egna rum och möblera fritt. Lägg till startpunkter och mål när du vill spela med bottar.';
 if(view!=='3d'){clearGhost();furnitureHandles.update();}if(!pendingFurniture)snapFeedback=null;syncWallMounts(objects(),arch());updateKidSteps();$('modeLabel').textContent=p().mode==='edit-floor5'?'DESIGNSTUDION / FLOOR 5':'DESIGNSTUDION / NY BANA';updateProps();updateGuide();updateFirstBuild();$('undo').disabled=!history.length;$('redo').disabled=!future.length;if(view==='plan')drawPlan();else if(view==='3d')draw3D();}
@@ -857,6 +865,25 @@ $('doorInWall').onclick=()=>{const wall=arch().find(e=>e.id===selected&&['wall',
 $('collisionMode').onchange=()=>{const o=lookup();if(!o||!objects().includes(o))return;
  const before=JSON.stringify(p());o.collision=$('collisionMode').value;commit(before);
  status(o.collision==='none'?'Möbeln är dekorativ: ingen gångkollision i FPS.':'Möbeln blockerar spelare i FPS.');};
+$('clearFloor5Interior').onclick=()=>{
+ if(p().mode!=='edit-floor5')return;
+ const count=objects().length,immovable=model().fixed.length,decor=decorations().length;
+ if(!count&&!immovable&&!decor){status('Floor 5 är redan tom på inredning.');return;}
+ if(!window.confirm('Göra din Floor 5-kopia helt tom? '+count+' möbler, '+immovable+' fasta inventarier och '+decor+' dekorationer tas bort ur projektkopian. Golv, väggar, fönster, dörrar och spelpunkter bevaras. Ångra eller Återställ ursprungsinredningen om du vill.'))return;
+ const before=JSON.stringify(p()),result=clearFloor5Interior(p(),model());
+ selected=null;multiSelected.clear();pendingFurniture=null;pendingTemplate=null;furnitureClipboard=null;
+ first=null;hover=null;hover3d=null;p().validation={};
+ commit(before);
+ status('Tom Floor 5-kopia: '+result.furniture+' möbler och '+result.fixed+' fasta inventarier borttagna. Byggnad och spelpunkter bevarade. Spara ZIP som säkerhetskopia.');
+};
+$('restoreFloor5Interior').onclick=()=>{
+ if(p().mode!=='edit-floor5')return;
+ if(!window.confirm('Återställa alla ursprungliga möbler och fasta inventarier? Egna tillagda möbler behålls, men de kan hamna ovanpå ursprungsinredningen. Golv och byggdelar påverkas inte.'))return;
+ const before=JSON.stringify(p()),result=restoreFloor5Interior(p(),model());
+ selected=null;multiSelected.clear();pendingFurniture=null;pendingTemplate=null;first=null;p().validation={};
+ commit(before);
+ status('Återställde '+result.furniture+' originalmöbler och '+result.fixed+' fasta inventarier. '+result.personalPreserved+' egna möbler behölls.');
+};
 $('newBlank').onclick=()=>{if(!window.confirm('Töm hela NY BANA? Ångra med Ctrl+Z innan du laddar om sidan.'))return;
  const before=JSON.stringify(p()),v=p();
  localStorage.removeItem(guideKey('walked'));localStorage.removeItem(guideKey('saved'));
