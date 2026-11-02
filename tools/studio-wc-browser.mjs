@@ -43,7 +43,7 @@ try{
   await page.locator('#save').click();
   await page.locator('#walkView').click();
   await wait(()=>document.querySelector('#walkFrame').contentWindow.__walk?.renderer?.doorVisuals?.root);
-  const frame=page.frame({url:/\\/fps\\/walk\\.html/});
+  const frame=page.frames().find(frame=>frame.url().includes('/fps/walk.html'));assert(frame,'FPS walk iframe not found');
   const state=await frame.evaluate(id=>{
    const w=window.__walk?.world,r=window.__walk?.renderer;
    const door=w?.doors.doors.find(d=>d.id===id);
