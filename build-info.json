@@ -511,8 +511,8 @@
     },
     {
       "path": "furniture-editor/build/architecture.mjs",
-      "bytes": 13812,
-      "sha256": "9a3c5d8a2227d3dd462df3618d80d8186c6d0d0652f5e83094859b7d87dfc640"
+      "bytes": 13896,
+      "sha256": "ebe3defeda219e2aa141d2bcd67746e3e581a1ef79ffdc8d437b42ea6885ca4c"
     },
     {
       "path": "furniture-editor/build/direct-manipulation.mjs",
@@ -546,8 +546,8 @@
     },
     {
       "path": "furniture-editor/build/paint-over-wall.mjs",
-      "bytes": 6242,
-      "sha256": "fe26f005165dad4846c41493d75d8e3a845bd4ba9ed17d038838a9657d213182"
+      "bytes": 6336,
+      "sha256": "d341885133d74d510cc7408e39643c6feff4d6792116418fa3ff582a5ae8ea84"
     },
     {
       "path": "furniture-editor/build/poster-art.mjs",
