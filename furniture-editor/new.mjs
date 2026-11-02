@@ -2,7 +2,7 @@ import {captureFurniture,pasteFurniture} from './furniture-clipboard.mjs?v=5.2.0
 import {clearFloor5Interior,restoreFloor5Interior} from './build/empty-interior.mjs?v=5.3.0';
 import {floorEdgeHandles,planFloorEdge} from './build/floor-edge.mjs?v=5.1.0';
 import {architecturePreview} from './build/architecture-preview.mjs?v=5.5.0';
-import {surfaceColor,validPaint,reconcileSurfaceColors} from './build/surface-style.mjs?v=5.5.0';
+import {surfaceColor,validPaint,reconcileSurfaceColors} from './build/surface-style.mjs?v=5.6.0';
 import {floorGaps,gapFloor} from './build/walkable-spaces.mjs?v=5.0.0';
 import {installFurnitureHandles} from './furniture-handles.mjs?v=5.0.0';
 import {planFurnitureTranslation,furnitureAssembly} from './furniture-translation.mjs?v=5.0.0';
@@ -66,7 +66,7 @@ function updateFirstBuild(){
 }
 const floorAt=(x,z)=>floors().find(f=>inside(x,z,f.polygon||[[f.x0,f.z0],[f.x1,f.z0],[f.x1,f.z1],[f.x0,f.z1]]));
 const nextId=prefix=>{let i=1;const ids=new Set([...floors(),...arch(),...objects()].map(o=>o.id));while(ids.has(prefix+String(i).padStart(4,'0')))i++;return prefix+String(i).padStart(4,'0');};
-function commit(before){if(p().surfaceColors){const previous=JSON.parse(before);reconcileSurfaceColors(p(),previous,arch(),resolveProjectScene(previous).entries,floors());}syncWallMounts(objects(),arch());if(p().mode==='edit-floor5')writeProjectScene(p(),model());if(before===JSON.stringify(p()))return;if(view==='walk')leaveWalk();history.push(before);if(history.length>60)history.shift();future=[];persist();redraw();queueGameLook();}
+function commit(before){if(p().surfaceColors||p().surfaceMaterials){const previous=JSON.parse(before);reconcileSurfaceColors(p(),previous,arch(),resolveProjectScene(previous).entries,floors());}syncWallMounts(objects(),arch());if(p().mode==='edit-floor5')writeProjectScene(p(),model());if(before===JSON.stringify(p()))return;if(view==='walk')leaveWalk();history.push(before);if(history.length>60)history.shift();future=[];persist();redraw();queueGameLook();}
 function persist(){try{localStorage.setItem(p().mode==='edit-floor5'?'cartridge-floor5-level-v2':'cartridge-new-level-v2',JSON.stringify(p()));$('autosave').textContent='Ändringar sparade lokalt.';}catch{$('autosave').textContent='Lokal lagring är full. Spara ZIP nu.';}}
 function point(e){const r=canvas.getBoundingClientRect(),b=p().ground.bounds,scale=Math.min(canvas.width/(b.x1-b.x0),canvas.height/(b.z1-b.z0))*zoom;
  return {x:snap(((e.clientX-r.left)*canvas.width/r.width-canvas.width/2)/scale+(b.x0+b.x1)/2-offset.x),z:snap(((e.clientY-r.top)*canvas.height/r.height-canvas.height/2)/scale+(b.z0+b.z1)/2-offset.z)};}
@@ -251,7 +251,7 @@ function updateSurfaceUI(o){
  if(paintable){$('surfaceName').textContent=o.name||({'wall':'Vägg',window:'Fönster · bröstning',glazed:'Glasvägg',door:'Dörr','card-door':'Passerkortsdörr'}[o.kind]||o.kind||'Golvyta');$('surfaceColor').value=surfaceColor(p(),o);$('previewDoor').hidden=!['door','card-door'].includes(o.kind)||!!o.originallyBlocked;$('previewDoor').textContent=doorPreviewOpen?'Visa dörren stängd':'Visa dörren öppen';$('surfaceHint').textContent=o.kind==='glazed'?'Glaset behåller sin transparens. Färgvalet gäller ramen.':'Färgen följer med till ZIP och FPS-vyn.';}
  $('floorDragMode').hidden=!o||!floors().includes(o);$('floorDragMode').textContent=floorOnly||o?.source?'Dra bara golvet ✓':'Dra bara golvet';$('floorDragMode').disabled=!!o?.source;
  $('doorStyleLabel').hidden=!o||!['door','card-door'].includes(o.kind)||!!o.originallyBlocked;$('doorStyle').value=o?.doorStyle||'solid';
- $('glazingStyleLabel').hidden=!o||o.kind!=='glazed';$('glazingStyle').value=o?.glazingStyle||'standard';
+ $('glazingStyleLabel').hidden=!o||o.kind!=='glazed';$('glazingStyle').value=o?.glazingStyle||'standard';$('wallPatternLabel').hidden=!o||o.kind!=='wall';$('wallPattern').value=p().surfaceMaterials?.[o?.id]||'default';
  if(o&&floors().includes(o))$('surfaceHint').textContent=floorOnly||o.source?'Dra de gröna handtagen mot väggen. Bara golvkanten ändras.':'Dra bara golvet visar handtag som lämnar väggarna på plats.';
  const options=spaces(),key=options.map(s=>s.id).join('|');if($('spaceSelect').dataset.key!==key){$('spaceSelect').dataset.key=key;$('spaceSelect').replaceChildren(new Option('Välj en yta …',''),...options.map(s=>new Option(s.name,s.id)));}
  const area=options.find(s=>s.id===selected);$('spaceSelect').value=area?.id||'';$('openSpace').disabled=!area;$('openSpace').textContent=area?.kind==='floor-gap'?'Anslut golven':'Gör ytan gångbar';$('spaceHint').textContent=area?(area.kind==='floor-gap'?`Glipa: ${area.gap.toFixed(3)} modellenheter. En gångbar golvbit läggs till; väggar flyttas inte.`:'Öppnas endast i din bankopia. Väggar, dörrar och möbler är kvar.'):'Markera ett hinder i listan eller i 3D-vyn.';
@@ -265,6 +265,7 @@ $('doorStyle').onchange=()=>{const o=lookup();if(!o||!['door','card-door'].inclu
  const selectedStyle=$('doorStyle').value;
  if(selectedStyle!=='wc'&&!o.source&&Math.hypot(o.b[0]-o.a[0],o.b[1]-o.a[1])<1.1){status('Den smala öppningen kräver WC-utförande. Välj WC eller bredda dörren.');redraw();return;}
  const before=JSON.stringify(p());o.doorStyle=selectedStyle;if(selectedStyle==='wc')o.finish='white';if(selectedStyle==='office')o.finish='gray';commit(before);};
+$('wallPattern').onchange=()=>{const o=lookup();if(o?.kind!=='wall')return;const before=JSON.stringify(p());p().surfaceMaterials||={};if($('wallPattern').value==='default')delete p().surfaceMaterials[o.id];else{p().surfaceMaterials[o.id]=$('wallPattern').value;if(p().surfaceColors)delete p().surfaceColors[o.id];}commit(before);status('Väggmaterialet sparas i bankopian och visas även i FPS.');};
 $('glazingStyle').onchange=()=>{const o=lookup();if(!o||o.kind!=='glazed')return;const before=JSON.stringify(p());o.glazingStyle=$('glazingStyle').value;commit(before);};
 $('previewDoor').onclick=()=>{doorPreviewOpen=!doorPreviewOpen;redraw();};
 $('spaceSelect').onchange=()=>{selected=$('spaceSelect').value||null;$('showPhysics').checked=true;const area=spaces().find(s=>s.id===selected);if(area){const pts=area.polygon||[[area.x0,area.z0],[area.x1,area.z1]],xs=pts.map(p=>p[0]),zs=pts.map(p=>p[1]),x0=Math.min(...xs),x1=Math.max(...xs),z0=Math.min(...zs),z1=Math.max(...zs);view3dCenter={x:(x0+x1)/2,z:(z0+z1)/2,span:Math.max(7,(x1-x0)*1.4,(z1-z0)*1.4)};view3dZoom=1;$('threeView').click();}else redraw();};
@@ -427,7 +428,7 @@ canvas.addEventListener('pointercancel',()=>{planPan=null;if(drag?.before){proje
 canvas.addEventListener('contextmenu',e=>e.preventDefault());
 function drawPlan(){const r=canvas.getBoundingClientRect(),dpr=Math.min(devicePixelRatio||1,2);canvas.width=Math.round(r.width*dpr);canvas.height=Math.round(r.height*dpr);ctx.clearRect(0,0,canvas.width,canvas.height);ctx.fillStyle='#e6efea';ctx.fillRect(0,0,canvas.width,canvas.height);
  const b=p().ground.bounds;ctx.strokeStyle='#bfd1ca';ctx.lineWidth=1;for(let x=b.x0;x<=b.x1;x++)for(let z=b.z0;z<=b.z1;z++){const [sx,sz]=screen(x,z);if(sx>=0&&sx<canvas.width&&sz>=0&&sz<canvas.height)ctx.fillRect(sx,sz,1,1);}
- for(const f of floors()){const poly=(f.polygon||[[f.x0,f.z0],[f.x1,f.z0],[f.x1,f.z1],[f.x0,f.z1]]).map(v=>screen(...v));ctx.beginPath();poly.forEach((v,i)=>i?ctx.lineTo(...v):ctx.moveTo(...v));ctx.closePath();ctx.fillStyle=p().surfaceColors?.[f.id]||(f.surface==='office-carpet'?'#6e6765':f.surface==='vinyl'?'#d3e8e3':'#f3e4d0');ctx.fill();ctx.strokeStyle=selected===f.id?'#ed993a':'#adc3b8';ctx.lineWidth=selected===f.id?3:1;ctx.stroke();if(zoom>1||!f.source){ctx.fillStyle='#426367';ctx.font=`${12*dpr}px system-ui`;const [x,z]=screen(f.x0,f.z0);ctx.fillText(f.name,x+8,z+17*dpr);}}
+ for(const f of floors()){const poly=(f.polygon||[[f.x0,f.z0],[f.x1,f.z0],[f.x1,f.z1],[f.x0,f.z1]]).map(v=>screen(...v));ctx.beginPath();poly.forEach((v,i)=>i?ctx.lineTo(...v):ctx.moveTo(...v));ctx.closePath();ctx.fillStyle=surfaceColor(p(),f);ctx.fill();ctx.strokeStyle=selected===f.id?'#ed993a':'#adc3b8';ctx.lineWidth=selected===f.id?3:1;ctx.stroke();if(zoom>1||!f.source){ctx.fillStyle='#426367';ctx.font=`${12*dpr}px system-ui`;const [x,z]=screen(f.x0,f.z0);ctx.fillText(f.name,x+8,z+17*dpr);}}
  if(roomPreview&&view==='plan'){
   const r=roomPreview.rect,pts=[[r.x0,r.z0],[r.x1,r.z0],[r.x1,r.z1],[r.x0,r.z1]].map(q=>screen(...q));
   ctx.save();ctx.beginPath();pts.forEach((v,i)=>i?ctx.lineTo(...v):ctx.moveTo(...v));ctx.closePath();
