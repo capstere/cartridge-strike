@@ -41,7 +41,7 @@ test('ordinary passages keep 1.10 minimum, while WC has a 0.65 minimum',()=>{
  assert.equal(WC_MIN_PASSAGE_WIDTH,.65);
  assert(Math.abs(entryLength(standardPassageSpan([0,0],[2,0]))-1.2)<1e-9);
  assert.throws(()=>standardPassageSpan([0,0],[2,0],.85),/1,10/);
- assert.equal(entryLength(standardPassageSpan([0,0],[2,0],.85,{minWidth:WC_MIN_PASSAGE_WIDTH})),.85);
+ assert(Math.abs(entryLength(standardPassageSpan([0,0],[2,0],.85,{minWidth:WC_MIN_PASSAGE_WIDTH}))-.85)<1e-9);
  assert.throws(()=>standardPassageSpan([0,0],[2,0],.64,{minWidth:WC_MIN_PASSAGE_WIDTH}),/0,65/);
  const wc=fixture().project.architecture.added.find(d=>d.doorStyle==='wc');
  assert(wc&&entryLength(wc)>=WC_MIN_PASSAGE_WIDTH);
