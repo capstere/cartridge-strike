@@ -28,8 +28,9 @@ export function floor5Baseline(){
 }
 const rectangle=f=>({...f,polygon:[[f.x0,f.z0],[f.x1,f.z0],[f.x1,f.z1],[f.x0,f.z1]]});
 export function resolveProjectScene(project){
+ const finish=f=>project.floorFinishes?.[f.id]?{...f,surface:project.floorFinishes[f.id]}:f;
  if(project.mode==='new-level')return {entries:project.architecture.added,items:project.furniture.added,
-  floors:project.ground.floors.map(rectangle),fixed:[],baselineEntries:[],baselineItems:[]};
+  floors:project.ground.floors.map(rectangle).map(finish),fixed:[],baselineEntries:[],baselineItems:[]};
  const base=floor5Baseline(),patch=project.furniture;
  const overrides=new Map(patch.placements.map(o=>[o.id,o])),removed=new Set(patch.removed);
  const items=base.items.filter(o=>!removed.has(o.id)).map(o=>({...o,...overrides.get(o.id),original:{...o}}));
@@ -42,7 +43,7 @@ export function resolveProjectScene(project){
  zones.push(...closed.filter(r=>opened.has(r.id)).map(r=>({...r,source:true,role:'room',status:'included',surface:'carpet',x0:Math.min(...r.polygon.map(p=>p[0])),x1:Math.max(...r.polygon.map(p=>p[0])),z0:Math.min(...r.polygon.map(p=>p[1])),z1:Math.max(...r.polygon.map(p=>p[1]))})));
  const extra=project.architecture.floors.filter(f=>!project.ground.floors.some(g=>g.id===f.id)).map(f=>({...f,role:'room',surface:'carpet'}));
  const fixed=project.legacyPatch?.emptyFixed?[]:base.data.obstacles.filter(o=>!EDITABLE_KINDS[o.kind]&&o.kind!=='uncertain-area');
- const finish=f=>project.floorFinishes?.[f.id]?{...f,surface:project.floorFinishes[f.id]}:f;
+
  return {entries,items,closed:closed.filter(r=>!opened.has(r.id)),floors:[...applyFloorEdits(zones,project.ground.floorEdits).map(finish),...project.ground.floors.map(rectangle).map(finish),...extra.map(rectangle).map(finish)],fixed,
   baselineEntries:base.entries,baselineItems:base.items};
 }
