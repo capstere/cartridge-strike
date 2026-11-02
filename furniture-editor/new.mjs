@@ -11,14 +11,14 @@ import {modelFront,MODEL_FRONTS,wallFootprint} from './model-alignment.mjs?v=5.0
 import {makePoster,locatePoster} from './build/posters.mjs';
 import {createCurtain,createBlind,treatmentPosition} from './build/treatments.mjs?v=5.1.0';
 import {buildProjectFurniture,buildProjectDecorations,applyFurnitureAppearance} from './build/project-visuals.mjs?v=5.1.0';
-import {resolveProjectScene,writeProjectScene,floor5Baseline,projectWallPieces} from './build/project-scene.mjs?v=5.1.0';
-import {inheritFloor5Gameplay} from '../src/fps/world.mjs?v=5.1.0';
+import {resolveProjectScene,writeProjectScene,floor5Baseline,projectWallPieces} from './build/project-scene.mjs?v=5.3.0';
+import {inheritFloor5Gameplay} from '../src/fps/world.mjs?v=5.3.0';
 import {wallAtPoint,planPaintOverWall} from './build/paint-over-wall.mjs?v=5.1.0';
 import {planResizeFloor,planResizeFloorEdge,planSlideInsert,planMoveWallEnd,roomBoundaryIds} from './build/direct-manipulation.mjs?v=5.1.0';
 import {parsePosters} from './build/posters.mjs';
 import {parseTreatments} from './build/treatments.mjs?v=5.1.0';
 import * as T from '../vendor/three/three.module.js';
-import {exportProject,parseProject,parseProjectZip,exportProjectZip} from './build/level-project.mjs?v=5.1.0';
+import {exportProject,parseProject,parseProjectZip,exportProjectZip} from './build/level-project.mjs?v=5.3.0';
 import {validateLevel} from './build/validate-level.mjs?v=5.1.0';
 import {validate,corners as baseCorners,inside,segmentIntersectsRectangle,intersects} from './core.mjs?v=5.0.0';
 import {wallPieces,standardPassageSpan,standardDoorMarkerSpan,isDoor} from './build/architecture.mjs?v=5.1.0';
