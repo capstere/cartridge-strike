@@ -2632,7 +2632,7 @@
     {
       "path": "src/fps/world.mjs",
       "bytes": 8804,
-      "sha256": "c8719df683b6047cc9efb1411d947e9f14cba42092721e332cbcd099bdaaff88"
+      "sha256": "8c9dfd1d8ce0c8707f3068b1b94e7e7a9ca5b8c68a9521f264f92f39ed3ae179"
     },
     {
       "path": "src/world.js",
