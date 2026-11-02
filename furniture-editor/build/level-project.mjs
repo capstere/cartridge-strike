@@ -12,7 +12,7 @@ import {floor5Baseline} from './project-scene.mjs?v=5.5.0';
 import {parseArchitecture} from './architecture.mjs?v=5.5.0';
 import {LIBRARY_MAP} from '../library/catalog.mjs?v=5.0.0';
 import {parsePosters} from './posters.mjs';
-import {parseTreatments} from './treatments.mjs?v=5.1.0';
+import {parseTreatments} from './treatments.mjs?v=5.6.0';
 import {collisionExport,aiAgentBrief} from './ai-export.mjs?v=5.5.0';
 import {validWallMount} from '../wall-mounts.mjs?v=5.0.0';
 
