@@ -19,7 +19,7 @@ export function sceneArchitectureData(project,scene){
   removed:false,lockedUntilImplemented:['elevator-door','terrace-door'].includes(e.kind)
  }));
  const wallIds=new Map();
- const walls=projectWallPieces(entries.map(e=>({...e,source:false}))).map(e=>({id:`${e.id}-${wallIds.set(e.id,(wallIds.get(e.id)||0)+1).get(e.id)}`,sourceId:e.id,studioColor:project.surfaceColors?.[e.id],a:e.a,b:e.b,height:e.height,thickness:e.thickness,sill:e.sill,
+ const walls=projectWallPieces(entries.map(e=>({...e,source:false}))).map(e=>({id:`${e.id}-${wallIds.set(e.id,(wallIds.get(e.id)||0)+1).get(e.id)}`,sourceId:e.id,studioColor:project.surfaceColors?.[e.id],studioPattern:e.kind==='wall'?project.surfaceMaterials?.[e.id]:undefined,a:e.a,b:e.b,height:e.height,thickness:e.thickness,sill:e.sill,
   glazingStyle:e.kind==='glazed'?e.glazingStyle:undefined,surfaceType:e.kind==='glazed'||e.kind==='window'?e.kind:'opaque'}));
  return {zones,doors,walls};
 }
