@@ -6,6 +6,7 @@ import * as THREE from '../../vendor/three/three.module.js';
 
 export const MATERIAL_LIBRARY = Object.freeze({
   carpet: { source: 'Fabric045', metres: [.65,.65], color: 0x496179, roughness: 1, normal: .38 },
+  'office-carpet': {source:'Fabric045',metres:[.50,.50],color:0x6e6765,roughness:1,normal:.23,colorMapStrength:.18},
   fabric: { source: 'Fabric045', metres: [.38,.38], color: 0x334c63, roughness: 1, normal: .24 },
   vinyl: { source: 'Concrete034', metres: [1.1,.55], color: 0xd6dfd7, roughness: .52, normal: .11 },
   labVinyl: { source: 'Concrete034', metres: [1.1,.55], color: 0xb9c9ca, roughness: .67, normal: .055, colorMapStrength: .24 },

@@ -94,7 +94,7 @@ export function createPhysics(description,data){
   for(const o of data.obstacles)if(o.collision!=='none')addPolygon(navObstacleIndex,o.polygon);
   // Decorative objects remain visible but never enter the physical broadphase.
   const decorativeIds=data.__custom?new Set(data.obstacles.filter(o=>o.collision==='none').map(o=>o.id)):new Set();
-  const staticBoxes=description.boxes.filter(b=>b.w>0&&b.h>0&&b.d>0&&!decorativeIds.has(b.id)).map(b=>({...b,cos:Math.cos(b.angle||0),sin:Math.sin(b.angle||0)}));
+  const staticBoxes=description.boxes.filter(b=>b.w>0&&b.h>0&&b.d>0&&!decorativeIds.has(b.id)&&!b.decorative).map(b=>({...b,cos:Math.cos(b.angle||0),sin:Math.sin(b.angle||0)}));
   for(const b of staticBoxes)boxIndex.insert(b,boxBounds(b));
   let dynamicBoxes=[],dynamicIndex=new SpatialIndex();
   const dynamicScratch=[],motionScratch=[];

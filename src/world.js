@@ -5,7 +5,7 @@
  const H=2.85,RADIUS=.20,doorsById=new Map(D.doors.map(d=>[d.id,d]));
  const PHOTO_GLAZING=new Set(['WALL-124']);
  // Photo-supported finishes only: these IDs retain their reviewed boundary and collider.
- const palette={wall:[.96,.965,.96],trim:[.40,.41,.40],floor:[.20,.23,.27],lab:[.84,.85,.84],office:[.20,.23,.27],ceiling:[.96,.965,.955],teal:[.35,.37,.37],blocked:[.38,.39,.39],wood:[.64,.59,.49],metal:[.64,.66,.66],dark:[.065,.078,.088],white:[.96,.965,.955],blue:[.11,.19,.33]};
+ const palette={wall:[.96,.965,.96],trim:[.40,.41,.40],floor:[.20,.23,.27],lab:[.84,.85,.84],office:[.20,.23,.27],officeCarpet:[.431,.404,.396],ceiling:[.96,.965,.955],teal:[.35,.37,.37],blocked:[.38,.39,.39],wood:[.64,.59,.49],metal:[.64,.66,.66],dark:[.065,.078,.088],white:[.96,.965,.955],blue:[.11,.19,.33]};
  const distanceSegment=(x,z,a,b)=>{const dx=b[0]-a[0],dz=b[1]-a[1],t=Math.max(0,Math.min(1,((x-a[0])*dx+(z-a[1])*dz)/(dx*dx+dz*dz||1)));return Math.hypot(x-a[0]-t*dx,z-a[1]-t*dz);};
  function inside(x,z,p){let yes=false;for(let i=0,j=p.length-1;i<p.length;j=i++){const a=p[i],b=p[j];if(((a[1]>z)!==(b[1]>z))&&x<(b[0]-a[0])*(z-a[1])/(b[1]-a[1])+a[0])yes=!yes;}return yes;}
  function touchPoly(x,z,r,p){if(inside(x,z,p))return true;return p.some((a,i)=>distanceSegment(x,z,a,p[(i+1)%p.length])<r-1e-5);}
@@ -14,7 +14,7 @@
  const onFloor=(x,z)=>floorAreas.some(a=>x>=a.bounds[0]-1e-7&&x<=a.bounds[2]+1e-7&&z>=a.bounds[1]-1e-7&&z<=a.bounds[3]+1e-7&&(inside(x,z,a.polygon)||a.polygon.some((p,i)=>distanceSegment(x,z,p,a.polygon[(i+1)%a.polygon.length])<1e-6)));
  function zone(s){const r=D.rooms.find(r=>r.status!=='uncertain'&&inside(s.x,s.z,r.polygon));if(r)return r;const c=D.corridors.find(r=>inside(s.x,s.z,r.polygon));return c||{id:'corridor',name:'Korridor · våning 5'};}
  const labRoom=r=>['I01','I02','I03','I04','I29'].includes(r.id);
- const roomColor=r=>D.__custom?(r.surface==='vinyl'?palette.lab:palette.floor):labRoom(r)?palette.lab:/RESTROOM|STÄD|PENTRY/.test(r.name)?[.49,.49,.46]:palette.floor;
+ const roomColor=r=>D.__custom?(r.surface==='vinyl'?palette.lab:r.surface==='office-carpet'?palette.officeCarpet:palette.floor):labRoom(r)?palette.lab:/RESTROOM|STÄD|PENTRY/.test(r.name)?[.49,.49,.46]:palette.floor;
  let cachedKey='',cachedScene=null;
  const geometryKey=s=>D.doors.filter(d=>d.accessCardConfirmed).map(d=>`${d.id}:${!!s.doors[d.id]}`).join('|');
  function build(s){
@@ -24,10 +24,25 @@
   const segmentBox=(id,a,b,y,h,thickness,color,material='wall')=>{const dx=b[0]-a[0],dz=b[1]-a[1];box(id,(a[0]+b[0])/2,y,(a[1]+b[1])/2,Math.hypot(dx,dz),h,thickness,color,material,-Math.atan2(dz,dx));};
   D.floorPolygons.forEach((p,i)=>{scene.surfaces.push({id:'floor-'+i,polygon:p,y:0,color:palette.floor,material:'carpet'},{id:'ceiling-'+i,polygon:p,y:H,color:palette.ceiling,material:'ceiling'});});
   [...D.rooms.filter(r=>r.status!=='uncertain'),...(D.__custom?D.corridors:[])].forEach(r=>scene.surfaces.push({id:'finish-'+r.id,polygon:r.polygon,y:.006,color:roomColor(r),material:D.__custom?r.surface:labRoom(r)||/RESTROOM|STÄD|PENTRY/.test(r.name)?'vinyl':'carpet'}));
-  function glazed(id,a,b,height=H){
+  function glazed(id,a,b,height=H,glazingStyle='standard'){
    const length=Math.hypot(b[0]-a[0],b[1]-a[1]);
    segmentBox(id,a,b,height/2,height,.035,[.72,.81,.81],'glass');
-   segmentBox(id+'-frost',a,b,1.22,.46,.044,[.84,.87,.83],'frosted');
+   segmentBox(id+'-frost',a,b,glazingStyle==='office-band'?1.43:1.22,glazingStyle==='office-band'?.68:.46,.044,glazingStyle==='office-band'?[.80,.82,.80]:[.84,.87,.83],'frosted');
+   if(glazingStyle==='office-band'){
+    // Generic stacked signal-bars, not a copied logo. They do not affect collision.
+    const dx=b[0]-a[0],dz=b[1]-a[1],length=Math.hypot(dx,dz),ux=dx/length,uz=dz/length;
+    const count=Math.max(1,Math.round(length/1.60));
+    for(let i=0;i<count;i++){
+     const t=(i+.5)/count,cx=a[0]+dx*t,cz=a[1]+dz*t;
+     for(let j=0;j<3;j++){
+      const bar=.13+j*.07,shift=(j-1)*.12;
+      const u=[cx+ux*(shift-bar/2),cz+uz*(shift-bar/2)];
+      const v=[cx+ux*(shift+bar/2),cz+uz*(shift+bar/2)];
+      segmentBox(id+'-signal-'+i+'-'+j,u,v,1.31+j*.12,.045,.056,[.06,.34,.62],'blue-graphic');
+      scene.boxes.at(-1).decorative=true;
+     }
+    }
+   }
    segmentBox(id+'-top',a,b,height-.06,.12,.10,'trim','metal');
    segmentBox(id+'-base',a,b,.045,.09,.10,'trim','metal');
    const panels=Math.max(1,Math.round(length/1.12));
@@ -36,7 +51,7 @@
   for(const w of D.walls){
    const height=w.height||H,thickness=w.thickness||.11;
    if(w.surfaceType==='glazed'){
-    glazed(w.id,w.a,w.b,height);
+    glazed(w.id,w.a,w.b,height,w.glazingStyle);
    }else if(w.surfaceType==='window'){
     const a=w.a,b=w.b,dx=b[0]-a[0],dz=b[1]-a[1],length=Math.hypot(dx,dz);
     const sill=D.__custom?w.sill??.9:.84,header=D.__custom?Math.min(.3,height-sill-.15):.30;
@@ -169,8 +184,8 @@
    if(d.lockedUntilImplemented)scene.colliders.push({id:d.id,a,b,thickness:.08,kind:d.doorType});
    if(!pass){
     segmentBox(d.id+'-threshold',a,b,.012,.024,.13,[.62,.52,.33],'metal');
-    for(const [i,p] of [a,b].entries())box(d.id+'-jamb'+i,p[0],1.15,p[1],.065,2.3,.065,'trim');
-    segmentBox(d.id+'-lintel',a,b,2.57,.56,.12,'wall');
+    for(const [i,p] of [a,b].entries())box(d.id+'-jamb'+i,p[0],1.15,p[1],.065,2.3,.065,d.doorStyle==='office'?[.45,.44,.43]:'trim');
+    segmentBox(d.id+'-lintel',a,b,2.57,.56,.12,d.doorStyle==='office'?[.55,.53,.52]:'wall');
     if(d.doorType==='elevator'){
      segmentBox(d.id+'-sealed-leaf',a,b,1.14,2.28,.08,'metal','metal');
      // Two brushed-metal sliding panels; no imaginary open shaft or floor travel.

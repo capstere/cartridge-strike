@@ -1,4 +1,4 @@
-import {buildDoorVisuals} from './door-visuals.mjs?v=5.4.0';
+import {buildDoorVisuals} from './door-visuals.mjs?v=5.5.0';
 import {buildFacilityDetails} from './facility-details-view.mjs';
 import {GlassVisuals} from './glass-visuals.mjs';
 import {buildRiposteProps} from './riposte-props.mjs';
@@ -15,7 +15,7 @@ import {CombatVisuals} from './combat-visuals.mjs';
  * from authoritative movement, combat, death and respawn state.
  */
 import * as THREE from '../../vendor/three/three.module.js';
-import { Renderer as EngineRenderer } from './render-engine.mjs';
+import { Renderer as EngineRenderer } from './render-engine.mjs?v=5.5.0';
 import {loadCharacterLibrary,disposeCharacterLibrary} from './character-library.mjs';
 import { bakeLightfield } from './presentation-lightfield.mjs';
 import {ActionVisuals} from './action-visuals.mjs';
@@ -167,7 +167,7 @@ export class Renderer extends EngineRenderer {
     }
   }
   materialFor(b){
-    if(this.world.newLevel&&b.studioColor)return this.registry.get(['carpet','vinyl','metal'].includes(b.material)?b.material:'wall',{color:b.studioColor,side:THREE.DoubleSide});
+    if(this.world.newLevel&&b.studioColor)return this.registry.get(['carpet','office-carpet','vinyl','metal'].includes(b.material)?b.material:'wall',{color:b.studioColor,side:THREE.DoubleSide});
     if(b.id==='finish-I12')return this.registry.get('vinyl',{color:0x56676d,roughness:.53,normalScale:new THREE.Vector2(.08,.08)});
     if(['finish-I13','finish-I21','finish-I38'].includes(b.id))return this.registry.get('vinyl',{color:b.id==='finish-I12'?0x777f7d:0x8d9998,roughness:.86});
     return super.materialFor(b);

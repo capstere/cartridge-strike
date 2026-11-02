@@ -1,9 +1,25 @@
 /** Real source wall/window/frame geometry and door poses, without a second game loop. */
 import {frostedDoorParts,frostedGlassMaterial,createWcDoorBadge} from '../../src/fps/frosted-door.mjs?v=5.4.0';
 import * as T from '../../vendor/three/three.module.js';
-import {sceneArchitectureData} from '../../src/fps/level-adapter.mjs?v=5.4.0';
+import {sceneArchitectureData} from '../../src/fps/level-adapter.mjs?v=5.5.0';
 import {createDoors} from '../../src/fps/doors.mjs?v=5.1.0';
-import {paintDescription,surfaceColor} from './surface-style.mjs?v=5.1.0';
+import {paintDescription,surfaceColor} from './surface-style.mjs?v=5.5.0';
+let officeCarpetWeave=null;
+function officeWeave(){
+ if(officeCarpetWeave||typeof document==='undefined')return officeCarpetWeave;
+ const c=document.createElement('canvas');c.width=c.height=96;const ctx=c.getContext('2d');
+ const pixels=ctx.createImageData(96,96);let seed=0x9c783fd;
+ for(let y=0;y<96;y++)for(let x=0;x<96;x++){
+  seed=(Math.imul(seed,1664525)+1013904223)>>>0;
+  const grain=219+(seed%25)-12+((x+y)%3===0?3:0),p=(y*96+x)*4;
+  pixels.data[p]=grain;pixels.data[p+1]=grain;pixels.data[p+2]=grain;pixels.data[p+3]=255;
+ }
+ ctx.putImageData(pixels,0,0);
+ officeCarpetWeave=new T.CanvasTexture(c);officeCarpetWeave.name='office-carpet-weave';
+ officeCarpetWeave.colorSpace=T.SRGBColorSpace;officeCarpetWeave.wrapS=officeCarpetWeave.wrapT=T.RepeatWrapping;
+ officeCarpetWeave.repeat.set(1.5,1.5);
+ return officeCarpetWeave;
+}
 export function architecturePreview(project,scene,{lowWalls=false,openDoors=false,selected=null}={}){
  const root=new T.Group();root.name='studio-architecture';
  const {zones,walls,doors}=sceneArchitectureData(project,scene);
@@ -21,7 +37,7 @@ export function architecturePreview(project,scene,{lowWalls=false,openDoors=fals
  for(const b of desc.boxes){const source=sources.find(([key])=>b.id===key||b.id.startsWith(key+'-'));if(source)mesh(b,source[1]);}
  const system=createDoors(data,{staticCanOccupy:()=>true});
  for(const door of system.doors){system.pose(door,openDoors&&door.id===selected?Math.PI/3:0);for(const leaf of door.leaves){
-  const b=leaf.box,color=door.studioColor||(door.doorStyle==='frosted'?'#87989e':door.doorStyle==='wc'?'#f3f3ef':'#c4c3af');
+  const b=leaf.box,color=door.studioColor||(door.doorStyle==='frosted'?'#87989e':door.doorStyle==='wc'?'#f3f3ef':door.doorStyle==='office'?'#817c78':'#c4c3af');
   if(door.doorStyle==='frosted'){
    for(const p of frostedDoorParts(leaf.w)){const c=Math.cos(b.angle),s=Math.sin(b.angle);mesh({...p,id:b.id+'-'+p.part,x:leaf.x+c*p.x+s*p.z,z:leaf.z-s*p.x+c*p.z,angle:b.angle,color:p.part==='handle'?'#87989e':color,material:p.part==='glass'?'door-frosted':'metal'},door.id);}continue;
   }
@@ -33,8 +49,8 @@ export function architecturePreview(project,scene,{lowWalls=false,openDoors=fals
   }
   // Handles, kickplate and panel follow the same hinge pose; no gameplay state is changed.
   const c=Math.cos(b.angle),s=Math.sin(b.angle),local=(x,z)=>({x:b.x+c*x+s*z,z:b.z-s*x+c*z});
-  for(const side of [-1,1]){const at=local(leaf.w*.30,side*.065);mesh({id:b.id+'-handle'+side,...at,y:1.05,w:Math.min(.17,leaf.w*.3),h:.035,d:.04,angle:b.angle,color:'#87989e',material:'metal'},door.id);const kick=local(0,side*.044);mesh({id:b.id+'-kick'+side,...kick,y:.27,w:leaf.w*.88,h:.33,d:.009,angle:b.angle,color:'#87989e',material:'metal'},door.id);}
+  for(const side of [-1,1]){const at=local(leaf.w*(door.doorStyle==='office'?.80:.30),side*.065);mesh({id:b.id+'-handle'+side,...at,y:1.05,w:Math.min(.17,leaf.w*.3),h:.035,d:.04,angle:b.angle,color:'#87989e',material:'metal'},door.id);const kick=local(0,side*.044);if(door.doorStyle!=='office')mesh({id:b.id+'-kick'+side,...kick,y:.27,w:leaf.w*.88,h:.33,d:.009,angle:b.angle,color:'#87989e',material:'metal'},door.id);}
  }}
- for(const f of scene.floors){const shape=new T.Shape(),points=f.polygon||[[f.x0,f.z0],[f.x1,f.z0],[f.x1,f.z1],[f.x0,f.z1]];points.forEach(([x,z],i)=>i?shape.lineTo(x,z):shape.moveTo(x,z));shape.closePath();const material=new T.MeshStandardMaterial({color:surfaceColor(project,f),roughness:f.surface==='vinyl'?.48:.95,side:T.DoubleSide});material.userData.studioOwned=true;const node=new T.Mesh(new T.ShapeGeometry(shape),material);node.rotation.x=Math.PI/2;node.position.y=-.025;node.userData.editId=f.id;node.userData.architecturePart='floor';root.add(node);}
+ for(const f of scene.floors){const shape=new T.Shape(),points=f.polygon||[[f.x0,f.z0],[f.x1,f.z0],[f.x1,f.z1],[f.x0,f.z1]];points.forEach(([x,z],i)=>i?shape.lineTo(x,z):shape.moveTo(x,z));shape.closePath();const material=new T.MeshStandardMaterial({color:surfaceColor(project,f),roughness:f.surface==='vinyl'?.48:1,side:T.DoubleSide,...(f.surface==='office-carpet'&&officeWeave()?{map:officeWeave()}: {})});material.userData.studioOwned=true;const node=new T.Mesh(new T.ShapeGeometry(shape),material);node.rotation.x=Math.PI/2;node.position.y=-.025;node.userData.editId=f.id;node.userData.architecturePart='floor';root.add(node);}
  return root;
 }

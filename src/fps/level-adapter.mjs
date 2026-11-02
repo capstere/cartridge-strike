@@ -1,9 +1,9 @@
 /** Pure conversion into the existing world/physics/navigation data contract. */
 import {remainingSourceTiles,thresholdFloorPolygons} from '../../furniture-editor/build/floor-edge.mjs?v=5.1.0';
-import {parseProject} from '../../furniture-editor/build/level-project.mjs?v=5.4.0';
-import {wallPieces} from '../../furniture-editor/build/architecture.mjs?v=5.4.0';
+import {parseProject} from '../../furniture-editor/build/level-project.mjs?v=5.5.0';
+import {wallPieces} from '../../furniture-editor/build/architecture.mjs?v=5.5.0';
 import {corners} from '../../furniture-editor/core.mjs?v=5.0.0';
-import {resolveProjectScene,floor5Baseline,projectWallPieces} from '../../furniture-editor/build/project-scene.mjs?v=5.4.0';
+import {resolveProjectScene,floor5Baseline,projectWallPieces} from '../../furniture-editor/build/project-scene.mjs?v=5.5.0';
 
 const polygon=r=>[[r.x0,r.z0],[r.x1,r.z0],[r.x1,r.z1],[r.x0,r.z1]];
 const point=p=>({x:p.x,y:0,z:p.z,yaw:p.yaw||0});
@@ -20,7 +20,7 @@ export function sceneArchitectureData(project,scene){
  }));
  const wallIds=new Map();
  const walls=projectWallPieces(entries.map(e=>({...e,source:false}))).map(e=>({id:`${e.id}-${wallIds.set(e.id,(wallIds.get(e.id)||0)+1).get(e.id)}`,sourceId:e.id,studioColor:project.surfaceColors?.[e.id],a:e.a,b:e.b,height:e.height,thickness:e.thickness,sill:e.sill,
-  surfaceType:e.kind==='glazed'||e.kind==='window'?e.kind:'opaque'}));
+  glazingStyle:e.kind==='glazed'?e.glazingStyle:undefined,surfaceType:e.kind==='glazed'||e.kind==='window'?e.kind:'opaque'}));
  return {zones,doors,walls};
 }
 export function levelProjectToWorldData(input){
