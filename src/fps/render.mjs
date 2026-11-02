@@ -1,4 +1,4 @@
-import {buildDoorVisuals} from './door-visuals.mjs?v=5.1.0';
+import {buildDoorVisuals} from './door-visuals.mjs?v=5.4.0';
 import {buildFacilityDetails} from './facility-details-view.mjs';
 import {GlassVisuals} from './glass-visuals.mjs';
 import {buildRiposteProps} from './riposte-props.mjs';

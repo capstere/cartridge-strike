@@ -1,7 +1,7 @@
 import {captureFurniture,pasteFurniture} from './furniture-clipboard.mjs?v=5.2.0';
 import {clearFloor5Interior,restoreFloor5Interior} from './build/empty-interior.mjs?v=5.3.0';
 import {floorEdgeHandles,planFloorEdge} from './build/floor-edge.mjs?v=5.1.0';
-import {architecturePreview} from './build/architecture-preview.mjs?v=5.1.0';
+import {architecturePreview} from './build/architecture-preview.mjs?v=5.4.0';
 import {surfaceColor,validPaint,reconcileSurfaceColors} from './build/surface-style.mjs?v=5.1.0';
 import {floorGaps,gapFloor} from './build/walkable-spaces.mjs?v=5.0.0';
 import {installFurnitureHandles} from './furniture-handles.mjs?v=5.0.0';
@@ -11,17 +11,17 @@ import {modelFront,MODEL_FRONTS,wallFootprint} from './model-alignment.mjs?v=5.0
 import {makePoster,locatePoster} from './build/posters.mjs';
 import {createCurtain,createBlind,treatmentPosition} from './build/treatments.mjs?v=5.1.0';
 import {buildProjectFurniture,buildProjectDecorations,applyFurnitureAppearance} from './build/project-visuals.mjs?v=5.1.0';
-import {resolveProjectScene,writeProjectScene,floor5Baseline,projectWallPieces} from './build/project-scene.mjs?v=5.3.0';
-import {inheritFloor5Gameplay} from '../src/fps/world.mjs?v=5.3.0';
-import {wallAtPoint,planPaintOverWall} from './build/paint-over-wall.mjs?v=5.1.0';
-import {planResizeFloor,planResizeFloorEdge,planSlideInsert,planMoveWallEnd,roomBoundaryIds} from './build/direct-manipulation.mjs?v=5.1.0';
+import {resolveProjectScene,writeProjectScene,floor5Baseline,projectWallPieces} from './build/project-scene.mjs?v=5.4.0';
+import {inheritFloor5Gameplay} from '../src/fps/world.mjs?v=5.4.0';
+import {wallAtPoint,planPaintOverWall} from './build/paint-over-wall.mjs?v=5.4.0';
+import {planResizeFloor,planResizeFloorEdge,planSlideInsert,planMoveWallEnd,roomBoundaryIds} from './build/direct-manipulation.mjs?v=5.4.0';
 import {parsePosters} from './build/posters.mjs';
 import {parseTreatments} from './build/treatments.mjs?v=5.1.0';
 import * as T from '../vendor/three/three.module.js';
-import {exportProject,parseProject,parseProjectZip,exportProjectZip} from './build/level-project.mjs?v=5.3.0';
-import {validateLevel} from './build/validate-level.mjs?v=5.1.0';
+import {exportProject,parseProject,parseProjectZip,exportProjectZip} from './build/level-project.mjs?v=5.4.0';
+import {validateLevel} from './build/validate-level.mjs?v=5.4.0';
 import {validate,corners as baseCorners,inside,segmentIntersectsRectangle,intersects} from './core.mjs?v=5.0.0';
-import {wallPieces,standardPassageSpan,standardDoorMarkerSpan,isDoor} from './build/architecture.mjs?v=5.1.0';
+import {wallPieces,standardPassageSpan,standardDoorMarkerSpan,isDoor,STANDARD_PASSAGE_WIDTH,WC_PASSAGE_WIDTH,WC_MIN_PASSAGE_WIDTH} from './build/architecture.mjs?v=5.4.0';
 import {LIBRARY_ALL} from './library/catalog.mjs?v=5.0.0';
 import {upgradeLegacyOrangeChair} from './library/procedural.mjs?v=5.0.0';
 import {proposeSmartPose,duplicateFurnitureAssembly} from './smart-placement.mjs?v=5.0.0';
@@ -183,9 +183,11 @@ function makeFloor(a,b,role){
  }
 }
 function makeSegment(kind,a,b){
+ const wc=kind==='wc-door';if(wc)kind='door';
  if(kind==='wall'&&arch().some(e=>e.kind==='wall'&&((dist({x:e.a[0],z:e.a[1]},{x:a[0],z:a[1]})<.01&&dist({x:e.b[0],z:e.b[1]},{x:b[0],z:b[1]})<.01)||(dist({x:e.b[0],z:e.b[1]},{x:a[0],z:a[1]})<.01&&dist({x:e.a[0],z:e.a[1]},{x:b[0],z:b[1]})<.01))))return arch().find(e=>e.kind==='wall');const len=Math.hypot(a[0]-b[0],a[1]-b[1]);if(len<.25||len>100)throw Error('Byggdelen måste vara 0,25–100 modellenheter lång.');
- const span=isDoor(kind)?standardPassageSpan(a,b):{a,b};
+ const span=isDoor(kind)?standardPassageSpan(a,b,wc?WC_PASSAGE_WIDTH:STANDARD_PASSAGE_WIDTH,{minWidth:wc?WC_MIN_PASSAGE_WIDTH:1.10}):{a,b};
  const id=nextId(['wall','window','glazed'].includes(kind)?'BYGG-V-':'BYGG-D-'),entry={id,kind,...span,height:isDoor(kind)?2.4:2.85,thickness:.11,sill:Number($('sill').value)||.9,finish:'white'};
+ if(wc)entry.doorStyle='wc';
  arch().push(entry);return entry;}
 function occupyData(){const zones=floors().map(f=>({id:f.id,status:'included',polygon:f.polygon||[[f.x0,f.z0],[f.x1,f.z0],[f.x1,f.z1],[f.x0,f.z1]]}));
  return {rooms:zones,excludedRooms:[],obstacles:model().fixed,walls:projectWallPieces(arch()),doors:arch().filter(a=>['door','card-door','opening'].includes(a.kind)).map(a=>({...a,blocked:false}))};}
@@ -255,7 +257,10 @@ $('closeSurface').onclick=()=>{selected=null;redraw();};
 $('surfaceColor').onchange=e=>setSurfacePaint(e.target.value);document.querySelectorAll('[data-paint]').forEach(b=>b.onclick=()=>setSurfacePaint(b.dataset.paint));
 $('resetSurface').onclick=()=>{const o=lookup();if(!o)return;const before=JSON.stringify(p());if(p().surfaceColors)delete p().surfaceColors[o.id];commit(before);};
 $('floorDragMode').onclick=()=>{floorOnly=!floorOnly;redraw();};
-$('doorStyle').onchange=()=>{const o=lookup();if(!o||!['door','card-door'].includes(o.kind))return;const before=JSON.stringify(p());o.doorStyle=$('doorStyle').value;commit(before);};
+$('doorStyle').onchange=()=>{const o=lookup();if(!o||!['door','card-door'].includes(o.kind))return;
+ const selectedStyle=$('doorStyle').value;
+ if(selectedStyle!=='wc'&&!o.source&&Math.hypot(o.b[0]-o.a[0],o.b[1]-o.a[1])<1.1){status('Den smala öppningen kräver WC-utförande. Välj WC eller bredda dörren.');redraw();return;}
+ const before=JSON.stringify(p());o.doorStyle=selectedStyle;if(selectedStyle==='wc')o.finish='white';commit(before);};
 $('previewDoor').onclick=()=>{doorPreviewOpen=!doorPreviewOpen;redraw();};
 $('spaceSelect').onchange=()=>{selected=$('spaceSelect').value||null;$('showPhysics').checked=true;const area=spaces().find(s=>s.id===selected);if(area){const pts=area.polygon||[[area.x0,area.z0],[area.x1,area.z1]],xs=pts.map(p=>p[0]),zs=pts.map(p=>p[1]),x0=Math.min(...xs),x1=Math.max(...xs),z0=Math.min(...zs),z1=Math.max(...zs);view3dCenter={x:(x0+x1)/2,z:(z0+z1)/2,span:Math.max(7,(x1-x0)*1.4,(z1-z0)*1.4)};view3dZoom=1;$('threeView').click();}else redraw();};
 $('showSpaces').onclick=()=>{$('showPhysics').checked=true;$('threeView').click();};
@@ -397,7 +402,7 @@ function finishBuild(a,q,tool){try{const before=JSON.stringify(p());
  }catch(err){first=null;drawGesture=null;status(err.message);redraw();}}
 function handleBuild(q,tool,gesture){try{
  if(['poster','curtain','blind'].includes(tool)){const hit=wallAtPoint(arch(),[q.x,q.z],{radius:.4});if(!hit)throw Error('Klicka på en vägg eller ett fönster för att fästa tillbehöret.');const before=JSON.stringify(p());p().architecture.posters||=[];p().architecture.treatments||=[];let fresh;if(tool==='poster'){fresh=makePoster(hit.wall,p().architecture.posters,hit.t);p().architecture.posters.push(fresh);}else if(tool==='blind'){fresh=createBlind(arch(),p().architecture.treatments,hit.wall.id);p().architecture.treatments.push(fresh);}else{const w=hit.wall,L=hit.length,half=Math.min(.45,3/L),t=clamp(hit.t,half,1-half),pt=v=>w.a.map((n,i)=>n+(w.b[i]-n)*v);fresh=createCurtain(arch(),p().architecture.treatments,w.id,pt(t-half),pt(t+half));p().architecture.treatments.push(fresh);}selected=fresh.id;commit(before);return;}
- if(!first&&['door','card-door','opening','window','glazed'].includes(tool)){const nearest=wallAtPoint(arch(),[q.x,q.z],{radius:.4});if(nearest){if((p().architecture.treatments||[]).some(t=>t.wallId===nearest.wall.id))throw Error('Ta bort gardinen eller persiennen innan du delar väggen. Ångra återställer båda.');const before=JSON.stringify(p()),w=nearest.wall,len=nearest.length,width=isDoor(tool)?1.2:Math.min(1.6,len),t=clamp(nearest.t,width/2/len,1-width/2/len),span=(v)=>w.a.map((n,i)=>n+(w.b[i]-n)*v);const plan=planPaintOverWall(arch(),w.id,span(t-width/2/len),span(t+width/2/len),tool,{posters:p().architecture.posters||[]});arch().splice(0,arch().length,...plan.entries.filter(e=>!e.deleted));p().architecture.posters=plan.posters;selected=plan.paintedId;const part=lookup();if(part&&tool==='window')part.sill=Number($('sill').value);commit(before);status('Infäst i väggen. Öppningen och fysiken uppdateras automatiskt.');return;}
+ if(!first&&['door','wc-door','card-door','opening','window','glazed'].includes(tool)){const nearest=wallAtPoint(arch(),[q.x,q.z],{radius:.4});if(nearest){if((p().architecture.treatments||[]).some(t=>t.wallId===nearest.wall.id))throw Error('Ta bort gardinen eller persiennen innan du delar väggen. Ångra återställer båda.');const before=JSON.stringify(p()),w=nearest.wall,len=nearest.length,width=tool==='wc-door'?WC_PASSAGE_WIDTH:isDoor(tool)?1.2:Math.min(1.6,len),t=clamp(nearest.t,width/2/len,1-width/2/len),span=(v)=>w.a.map((n,i)=>n+(w.b[i]-n)*v);const plan=planPaintOverWall(arch(),w.id,span(t-width/2/len),span(t+width/2/len),tool==='wc-door'?'door':tool,{posters:p().architecture.posters||[],doorWidth:width});arch().splice(0,arch().length,...plan.entries.filter(e=>!e.deleted));p().architecture.posters=plan.posters;selected=plan.paintedId;const part=lookup();if(part&&tool==='wc-door'){part.doorStyle='wc';part.finish='white';}if(part&&tool==='window')part.sill=Number($('sill').value);commit(before);status('Infäst i väggen. Öppningen och fysiken uppdateras automatiskt.');return;}
   if(tool!=='glazed')throw Error('Klicka på en synlig vägg först. Dörr och fönster skapar öppningen automatiskt.');}
  if(!first){first=q;drawGesture=gesture;status('Startpunkt vald. Klicka slutpunkt eller dra. Esc avbryter.');redraw();return;}
  finishBuild(first,q,tool);
@@ -464,8 +469,8 @@ function drawPlan(){const r=canvas.getBoundingClientRect(),dpr=Math.min(devicePi
   ctx.fillStyle=ghost.blocked?'#cf536566':'#36b98b88';ctx.fill();ctx.strokeStyle='#14785b';ctx.lineWidth=2*dpr;ctx.stroke();
   updateGuide();
  }
- if(hover&&tab==='build'&&!first&&['door','card-door','opening','window','glazed'].includes($('tool').value)){
-  const hit=wallAtPoint(arch(),[hover.x,hover.z],{radius:.4});if(hit){const width=isDoor($('tool').value)?1.2:Math.min(1.6,hit.length),fraction=clamp(hit.t,width/2/hit.length,1-width/2/hit.length);
+ if(hover&&tab==='build'&&!first&&['door','wc-door','card-door','opening','window','glazed'].includes($('tool').value)){
+  const hit=wallAtPoint(arch(),[hover.x,hover.z],{radius:.4});if(hit){const width=$('tool').value==='wc-door'?WC_PASSAGE_WIDTH:isDoor($('tool').value)?1.2:Math.min(1.6,hit.length),fraction=clamp(hit.t,width/2/hit.length,1-width/2/hit.length);
    const x=hit.wall.a[0]+(hit.wall.b[0]-hit.wall.a[0])*fraction,z=hit.wall.a[1]+(hit.wall.b[1]-hit.wall.a[1])*fraction;
    const vx=(hit.wall.b[0]-hit.wall.a[0])/hit.length,vz=(hit.wall.b[1]-hit.wall.a[1])/hit.length;
    ctx.beginPath();ctx.moveTo(...screen(x-vx*width/2,z-vz*width/2));ctx.lineTo(...screen(x+vx*width/2,z+vz*width/2));
@@ -560,7 +565,7 @@ function update3DPreview(q=hover3d){preview3d.traverse(o=>{if(o.isMesh||o.isLine
   if(room)previewBox(x,.035,z,w,.06,d,0x188d84,0,.28);
   else{const len=Math.hypot(w,d),angle=-Math.atan2(b.z-a.z,b.x-a.x);previewBox(x,.8,z,len,1.6,.07,0x188d84,angle,.35);}
  }
- else if(q&&tab==='build'&&['door','card-door','opening','window','glazed'].includes($('tool').value)){const hit=wallAtPoint(arch(),[q.x,q.z],{radius:.4});if(hit){const w=isDoor($('tool').value)?1.2:Math.min(1.6,hit.length),angle=-Math.atan2(hit.wall.b[1]-hit.wall.a[1],hit.wall.b[0]-hit.wall.a[0]);previewBox(hit.point[0],.7,hit.point[1],w,1.4,.12,0xf4ad42,angle,.3);}}
+ else if(q&&tab==='build'&&['door','wc-door','card-door','opening','window','glazed'].includes($('tool').value)){const hit=wallAtPoint(arch(),[q.x,q.z],{radius:.4});if(hit){const w=$('tool').value==='wc-door'?WC_PASSAGE_WIDTH:isDoor($('tool').value)?1.2:Math.min(1.6,hit.length),angle=-Math.atan2(hit.wall.b[1]-hit.wall.a[1],hit.wall.b[0]-hit.wall.a[0]);previewBox(hit.point[0],.7,hit.point[1],w,1.4,.12,0xf4ad42,angle,.3);}}
  updateGuide();furnitureHandles.update();renderer.render(scene,camera);
 }
 function frameBuiltFloors(){const polys=floors().map(f=>f.polygon||[[f.x0,f.z0],[f.x1,f.z0],[f.x1,f.z1],[f.x0,f.z1]]).flat();
@@ -777,7 +782,7 @@ $('kidWalk').addEventListener('click',()=>{
 });
 $('kidSave').addEventListener('click',()=>{closeRoomChoices();$('save').click();});
 
-const toolLabels={select:'VÄLJ',room:'RUM',corridor:'GOLV',wall:'VÄGG',door:'DÖRR','card-door':'KORTDÖRR',opening:'ÖPPNING',window:'FÖNSTER',glazed:'GLAS',poster:'AFFISCH',curtain:'GARDIN',blind:'PERSIENN'};
+const toolLabels={select:'VÄLJ',room:'RUM',corridor:'GOLV',wall:'VÄGG',door:'DÖRR','wc-door':'WC-DÖRR','card-door':'KORTDÖRR',opening:'ÖPPNING',window:'FÖNSTER',glazed:'GLAS',poster:'AFFISCH',curtain:'GARDIN',blind:'PERSIENN'};
 function updateGuide(){
  $('placeRotate').hidden=!pendingFurniture||snapFeedback?.kind==='wall'||$('placementMode').value==='wall';
 const tool=$('tool').value,active=tab==='build'&&tool!=='select',placing=!!pendingFurniture,chosen=lookup();
@@ -844,14 +849,14 @@ $('placementMode').addEventListener('change',()=>{
 });
 function setBuildTool(tool){$('tool').value=tool;first=null;drawGesture=null;pendingFurniture=null;pendingTemplate=null;for(const b of document.querySelectorAll('[data-tool]'))b.classList.toggle('active',b.dataset.tool===tool);renderCatalog();redraw();}
 for(const button of document.querySelectorAll('[data-tool]'))button.onclick=()=>{const tool=$('tool').value===button.dataset.tool&&button.dataset.tool!=='select'?'select':button.dataset.tool;setBuildTool(tool);status(tool==='select'?'Välj en byggdel eller möbel. Delete tar bort den markerade delen.':button.title+' · Esc avslutar verktyget.');};
-for(const button of document.querySelectorAll('[data-tool="door"],[data-tool="window"],[data-tool="glazed"],[data-tool="opening"]')){
+for(const button of document.querySelectorAll('[data-tool="door"],[data-tool="wc-door"],[data-tool="window"],[data-tool="glazed"],[data-tool="opening"]')){
  button.draggable=true;
  button.addEventListener('dragstart',e=>{setBuildTool(button.dataset.tool);e.dataTransfer.setData('text/plain',button.dataset.tool);e.dataTransfer.effectAllowed='copy';});
 }
 for(const surface of [canvas,$('scene3d')]){
- surface.addEventListener('dragover',e=>{if(!['door','window','glazed','opening'].includes($('tool').value))return;e.preventDefault();e.dataTransfer.dropEffect='copy';
+ surface.addEventListener('dragover',e=>{if(!['door','wc-door','window','glazed','opening'].includes($('tool').value))return;e.preventDefault();e.dataTransfer.dropEffect='copy';
   if(surface===canvas){hover=point(e);drawPlan();}else{const pick=pick3d(e);hover3d=pick.surface||pick.ground;update3DPreview();}});
- surface.addEventListener('drop',e=>{const tool=e.dataTransfer.getData('text/plain');if(!['door','window','glazed','opening'].includes(tool))return;e.preventDefault();
+ surface.addEventListener('drop',e=>{const tool=e.dataTransfer.getData('text/plain');if(!['door','wc-door','window','glazed','opening'].includes(tool))return;e.preventDefault();
   const q=surface===canvas?point(e):(()=>{const hit=pick3d(e);return hit.surface||hit.ground;})();
   if(q)handleBuild(q,tool,null);});
 }
@@ -1062,7 +1067,7 @@ function scenePointerDown(e){if(furnitureHandles.active)return;if(e.button===0&&
  $('scene3d').setPointerCapture(e.pointerId);if(e.altKey){orbitDrag={x:e.clientX};return;}
  const pick=pick3d(e),tool=tab==='build'?$('tool').value:tab==='play'?$('gameTool').value:'furnish';
  const onWall=arch().some(a=>a.id===pick.id&&['wall','window','glazed'].includes(a.kind));
- const attachesToWall=tab==='build'&&['door','card-door','opening','window','glazed','poster','curtain','blind'].includes(tool);
+ const attachesToWall=tab==='build'&&['door','wc-door','card-door','opening','window','glazed','poster','curtain','blind'].includes(tool);
  const q=pendingFurniture?preferredPlacementPoint(pick,objects(),arch()):
   onWall&&attachesToWall&&pick.surface?pick.surface:pick.ground;if(!q)return;
  if(pendingFurniture){try{const before=JSON.stringify(p());addFurniture(pendingFurniture,q.x,q.z,q.y,q);commit(before);}catch(err){status(err.message);}return;}
@@ -1087,7 +1092,7 @@ $('scene3d').addEventListener('pointermove',e=>{if(drag3d){
   focus.x+=(-dx*right.x+dy*forward.x)*scale;focus.z+=(-dx*right.z+dy*forward.z)*scale;position3DCamera();renderer.render(scene,camera);return;}
  if(orbitDrag){orbit+=(e.clientX-orbitDrag.x)*.005;orbitDrag.x=e.clientX;position3DCamera();renderer.render(scene,camera);return;}
  const pick=pick3d(e),onWall=arch().some(a=>a.id===pick.id&&['wall','window','glazed'].includes(a.kind));
- const tool=tab==='build'?$('tool').value:null,attachesToWall=['door','card-door','opening','window','glazed','poster','curtain','blind'].includes(tool);
+ const tool=tab==='build'?$('tool').value:null,attachesToWall=['door','wc-door','card-door','opening','window','glazed','poster','curtain','blind'].includes(tool);
  hover3d=pendingFurniture?preferredPlacementPoint(pick,objects(),arch()):
   onWall&&attachesToWall&&pick.surface?pick.surface:pick.ground;
  if(hover3d)$('coordinates').textContent=`X ${hover3d.x.toFixed(1)} · Z ${hover3d.z.toFixed(1)}`;update3DPreview();});

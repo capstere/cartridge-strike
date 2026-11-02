@@ -1,7 +1,7 @@
 /** Real source wall/window/frame geometry and door poses, without a second game loop. */
-import {frostedDoorParts,frostedGlassMaterial} from '../../src/fps/frosted-door.mjs?v=5.1.0';
+import {frostedDoorParts,frostedGlassMaterial,createWcDoorBadge} from '../../src/fps/frosted-door.mjs?v=5.4.0';
 import * as T from '../../vendor/three/three.module.js';
-import {sceneArchitectureData} from '../../src/fps/level-adapter.mjs?v=5.1.0';
+import {sceneArchitectureData} from '../../src/fps/level-adapter.mjs?v=5.4.0';
 import {createDoors} from '../../src/fps/doors.mjs?v=5.1.0';
 import {paintDescription,surfaceColor} from './surface-style.mjs?v=5.1.0';
 export function architecturePreview(project,scene,{lowWalls=false,openDoors=false,selected=null}={}){
@@ -21,11 +21,16 @@ export function architecturePreview(project,scene,{lowWalls=false,openDoors=fals
  for(const b of desc.boxes){const source=sources.find(([key])=>b.id===key||b.id.startsWith(key+'-'));if(source)mesh(b,source[1]);}
  const system=createDoors(data,{staticCanOccupy:()=>true});
  for(const door of system.doors){system.pose(door,openDoors&&door.id===selected?Math.PI/3:0);for(const leaf of door.leaves){
-  const b=leaf.box,color=door.studioColor||(door.doorStyle==='frosted'?'#87989e':'#c4c3af');
+  const b=leaf.box,color=door.studioColor||(door.doorStyle==='frosted'?'#87989e':door.doorStyle==='wc'?'#f3f3ef':'#c4c3af');
   if(door.doorStyle==='frosted'){
    for(const p of frostedDoorParts(leaf.w)){const c=Math.cos(b.angle),s=Math.sin(b.angle);mesh({...p,id:b.id+'-'+p.part,x:leaf.x+c*p.x+s*p.z,z:leaf.z-s*p.x+c*p.z,angle:b.angle,color:p.part==='handle'?'#87989e':color,material:p.part==='glass'?'door-frosted':'metal'},door.id);}continue;
   }
   mesh({...b,color},door.id);
+  if(door.doorStyle==='wc'){
+   const badge=createWcDoorBadge(leaf.w);badge.group.position.set(leaf.x,0,leaf.z);badge.group.rotation.y=b.angle;
+   for(const disc of badge.group.children){disc.userData.editId=door.id;disc.userData.architecturePart=door.id+'-WC-sign';}
+   root.add(badge.group);
+  }
   // Handles, kickplate and panel follow the same hinge pose; no gameplay state is changed.
   const c=Math.cos(b.angle),s=Math.sin(b.angle),local=(x,z)=>({x:b.x+c*x+s*z,z:b.z-s*x+c*z});
   for(const side of [-1,1]){const at=local(leaf.w*.30,side*.065);mesh({id:b.id+'-handle'+side,...at,y:1.05,w:Math.min(.17,leaf.w*.3),h:.035,d:.04,angle:b.angle,color:'#87989e',material:'metal'},door.id);const kick=local(0,side*.044);mesh({id:b.id+'-kick'+side,...kick,y:.27,w:leaf.w*.88,h:.33,d:.009,angle:b.angle,color:'#87989e',material:'metal'},door.id);}

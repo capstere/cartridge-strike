@@ -4,15 +4,15 @@ import {validateOpenedAreas,closedAreas} from './walkable-spaces.mjs?v=5.0.0';
 import {validModelAlignment} from '../model-alignment.mjs?v=5.0.0';
 /** Versioned level document. Parsing is deliberately independent of the renderer. */
 import {BASE_COMMIT,GAME_VERSION,PATCH_FORMAT,PATCH_SCHEMA} from '../core.mjs?v=5.0.0';
-import {validateEntry,validateFloorRect} from './architecture.mjs?v=5.1.0';
+import {validateEntry,validateFloorRect} from './architecture.mjs?v=5.4.0';
 import {assetHash} from '../library/glb-utils.mjs';
 import {makeZip,readZip,PROJECT_ZIP_MAX_BYTES} from '../library/zip.mjs';
-import {floor5Baseline} from './project-scene.mjs?v=5.3.0';
+import {floor5Baseline} from './project-scene.mjs?v=5.4.0';
 import {parseArchitecture} from './architecture.mjs?v=5.1.0';
 import {LIBRARY_MAP} from '../library/catalog.mjs?v=5.0.0';
 import {parsePosters} from './posters.mjs';
 import {parseTreatments} from './treatments.mjs?v=5.1.0';
-import {collisionExport,aiAgentBrief} from './ai-export.mjs?v=5.3.0';
+import {collisionExport,aiAgentBrief} from './ai-export.mjs?v=5.4.0';
 import {validWallMount} from '../wall-mounts.mjs?v=5.0.0';
 
 export const LEVEL_FORMAT='cartridge-strike-level-project',LEVEL_SCHEMA=2;

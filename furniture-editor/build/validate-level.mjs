@@ -1,9 +1,9 @@
-import {parseProject} from './level-project.mjs?v=5.1.0';
-import {levelProjectToWorldData} from '../../src/fps/level-adapter.mjs?v=5.1.0';
-import {createWorld,inheritFloor5Gameplay} from '../../src/fps/world.mjs?v=5.1.0';
-import {resolveProjectScene,projectWallPieces} from './project-scene.mjs?v=5.1.0';
+import {parseProject} from './level-project.mjs?v=5.4.0';
+import {levelProjectToWorldData} from '../../src/fps/level-adapter.mjs?v=5.4.0';
+import {createWorld,inheritFloor5Gameplay} from '../../src/fps/world.mjs?v=5.4.0';
+import {resolveProjectScene,projectWallPieces} from './project-scene.mjs?v=5.4.0';
 import {corners,inside,intersects,segmentIntersectsRectangle} from '../core.mjs?v=5.0.0';
-import {wallPieces} from './architecture.mjs?v=5.1.0';
+import {wallPieces,minDoorWidth} from './architecture.mjs?v=5.4.0';
 import {testDoorTraversal} from './door-traversal.mjs';
 import {parsePosters} from './posters.mjs';
 import {parseTreatments} from './treatments.mjs?v=5.1.0';
@@ -35,7 +35,7 @@ export function validateLevel(input,{engine=false}={}){
  add('V05','pass','ID och datatyper kontrollerade av projektparsern.');
  for(const e of entries.filter(e=>edited(e)&&['door','card-door','opening'].includes(e.kind))){
   const width=Math.hypot(e.a[0]-e.b[0],e.a[1]-e.b[1]);
-  if(width<1.10-1e-6)add('V06','fail',`${e.kind} är ${width.toFixed(2)} modellenheter bred.`,e.id,'Öka till minst 1,10 modellenheter.');
+  if(width<minDoorWidth(e)-1e-6)add('V06','fail',`${e.kind} är ${width.toFixed(2)} modellenheter bred.`,e.id,`Öka till minst ${minDoorWidth(e).toFixed(2)} modellenheter.`);
  }
  if(!results.some(r=>r.check==='V06'))add('V06','pass','Nya dörrar och passager når 1,10 modellenheter nominellt.');
  add('V09','pass','Dörrar använder motorns automatiska gångjärn och svängriktning.');
