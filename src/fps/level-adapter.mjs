@@ -1,9 +1,9 @@
 /** Pure conversion into the existing world/physics/navigation data contract. */
 import {remainingSourceTiles,thresholdFloorPolygons} from '../../furniture-editor/build/floor-edge.mjs?v=5.1.0';
-import {parseProject} from '../../furniture-editor/build/level-project.mjs?v=5.1.0';
+import {parseProject} from '../../furniture-editor/build/level-project.mjs?v=5.3.0';
 import {wallPieces} from '../../furniture-editor/build/architecture.mjs?v=5.1.0';
 import {corners} from '../../furniture-editor/core.mjs?v=5.0.0';
-import {resolveProjectScene,floor5Baseline,projectWallPieces} from '../../furniture-editor/build/project-scene.mjs?v=5.1.0';
+import {resolveProjectScene,floor5Baseline,projectWallPieces} from '../../furniture-editor/build/project-scene.mjs?v=5.3.0';
 
 const polygon=r=>[[r.x0,r.z0],[r.x1,r.z0],[r.x1,r.z1],[r.x0,r.z1]];
 const point=p=>({x:p.x,y:0,z:p.z,yaw:p.yaw||0});
@@ -41,7 +41,7 @@ export function levelProjectToWorldData(input){
   bomb:objectives.bomb?{...point(objectives.bomb),radius:objectives.bomb.radius??1.1,roomId:objectives.bomb.roomId}:null,
   rescue:objectives.rescue?{...point(objectives.rescue),radius:objectives.rescue.radius??1.65,doorId:objectives.rescue.doorId}:null,
   hostages:objectives.hostages.map(point)};
- const data={__custom:true,rooms:zones.filter((_,i)=>floors[i].role==='room'),corridors:zones.filter((_,i)=>floors[i].role==='corridor'),
+ const data={__custom:true,shellOnly:project.mode==='edit-floor5'&&project.legacyPatch?.emptyFixed===true,rooms:zones.filter((_,i)=>floors[i].role==='room'),corridors:zones.filter((_,i)=>floors[i].role==='corridor'),
   excludedRooms:(legacy?.excludedRooms||[]).filter(r=>!(project.ground.openedAreas||[]).includes(r.id)),floorPolygons:[...(legacy?remainingSourceTiles(legacy,project.ground.floorEdits):[]),...zones.map(z=>z.polygon),...thresholdFloorPolygons(entries,floors)],walls,doors,obstacles,routes,
   targets:[objectives.bomb&&{id:'L1',name:'Bomb',point:[objectives.bomb.x,objectives.bomb.z]},objectives.rescue&&{id:'L2',name:'Rescue',point:[objectives.rescue.x,objectives.rescue.z]}].filter(Boolean),
   spawn:anchors.analysts[0]||{x:0,z:0,yaw:0},layoutPresentation:{},ground:project.ground};

@@ -1,7 +1,7 @@
 import {thresholdFloorPolygons} from './floor-edge.mjs?v=5.1.0';
 /** Portable collision handoff. The engine's physics remains authoritative. */
 import {wallPieces,isDoor,STANDARD_PASSAGE_WIDTH} from './architecture.mjs?v=5.1.0';
-import {resolveProjectScene,projectWallPieces} from './project-scene.mjs?v=5.1.0';
+import {resolveProjectScene,projectWallPieces} from './project-scene.mjs?v=5.3.0';
 
 export function collisionExport(p){
  const scene=resolveProjectScene(p),segments=scene.entries,floors=scene.floors;
@@ -27,6 +27,7 @@ export function aiAgentBrief(p){
   '','## Implementation contract',
   'Read project.json first. COLLISION_MAP.json is derived reference data, not the source of truth.',
   p.mode==='edit-floor5'?'Resolve Floor 5 from the pinned baseline, then apply ALL edits, additions and removals. COLLISION_MAP.json includes the resolved geometry.':'Build an FPS map from the user-created geometry; do NOT inherit Floor 5 architecture or physics.',
+  p.mode==='edit-floor5'&&p.legacyPatch?.emptyFixed===true?'EMPTY FLOOR 5: inherited furniture and fixed obstacles intentionally removed. Keep existing floors, walls, glass, doors and game objectives. Do not recreate desks, chairs, kitchen counters or procedural decoration from the unedited source.':'',
   'x/z are horizontal, y is vertical. Model units are not verified real-world metres.',
   'Floors are walkable only within their footprints; walls and glazed spans block movement.',
   'Collinear doors and openings split the wall collider; do not retain an invisible wall in the gap.',

@@ -1,3 +1,10 @@
+
+### Floor 5 helt tom på inredning (Designstudio 5.3)
+
+Öppna **REDIGERA FLOOR 5 → MÖBLERA → TÖM INREDNINGEN · BEHÅLL BYGGNADEN** och bekräfta. På projektkopian tas alla 107 förprogrammerade möbler bort ur scenen/ZIP-projektets `furniture.removed`, och de 52 fasta inventarierna döljs även från spelvärldens kollision med den befintliga `legacyPatch.emptyFixed`-flaggan. Egna möbler, affischer och gardiner tas också bort från just det utkastet. Själva golven, väggarna, fönstren, dörrarna och spelpunkterna lämnas intakta; originalet i GitHub ändras aldrig.
+
+Välj **ÅTERSTÄLL URSPRUNGSINREDNINGEN** för att få tillbaka källmöbler och fasta inventarier utan att förlora egna senare tillagda möbler (kontrollera eventuella överlapp). **Ångra** fungerar även direkt efter tömning; spara ZIP om du vill ha en hållbar säkerhetskopia. I en tom Floor 5-kopia undertrycks även automatiskt inlagda takarmaturer och pentry-display i FPS-förhandsvisningen, men konstruktion och dörrmekanik bevaras. Den här funktionen finns inte i NY BANA-läget, där projektet redan börjar tomt.
+
 ## Nytt 30 oktober: onboard-biblioteket
 
 15 nya objekt med förhandsbilder, bättre sökning och filtret **Används i banan**. Öppna **MÖBLERA → Nytt från onboard**. [Objekt, funktioner och nästa förbättringar](../docs/onboard-library.md).
