@@ -1,6 +1,6 @@
-import {paintDescription} from '../../furniture-editor/build/surface-style.mjs?v=5.1.0';
+import {paintDescription} from '../../furniture-editor/build/surface-style.mjs?v=5.5.0';
 import '../floor5-data.js';
-import '../world.js?v=5.3.0';
+import '../world.js?v=5.5.0';
 import { createPhysics, ACTOR_RADIUS, insidePolygon, distanceSegment, SpatialIndex, circleHitsBox } from './physics.mjs?v=5.5.0';
 import { createDoors } from './doors.mjs?v=5.1.0';
 import { createNavigation } from './navigation.mjs';
