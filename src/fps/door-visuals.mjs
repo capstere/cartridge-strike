@@ -1,7 +1,7 @@
 /** Panel/hinge/handle construction adapted from Riposte panelDoor, 02d-archi.js
  * (MIT, BenDBSS 2026). Instanced, fitted to existing source apertures.
  */
-import {frostedDoorParts,frostedGlassMaterial} from './frosted-door.mjs?v=5.1.0';
+import {frostedDoorParts,frostedGlassMaterial,createWcDoorBadge} from './frosted-door.mjs?v=5.1.0';
 import * as T from '../../vendor/three/three.module.js';
 import {RoundedBoxGeometry} from '../../vendor/three/addons/geometries/RoundedBoxGeometry.js';
 import {mergeGeometries,mergeVertices} from '../../vendor/three/addons/utils/BufferGeometryUtils.js';
@@ -30,18 +30,20 @@ export async function buildDoorVisuals(system){
  for(const y of [.28,1.14,2.05]){const g=new T.CylinderGeometry(.022,.022,.12,10);g.translate(.012,y,0);metal.push(g);}
  const leaves=system.doors.filter(d=>d.doorStyle!=='frosted').flatMap(d=>d.leaves),batches=[];
  const frosted=system.doors.filter(d=>d.doorStyle==='frosted').flatMap(d=>d.leaves),glass=frosted.length?frostedGlassMaterial():null;
+ const wcBadges=system.doors.filter(d=>d.doorStyle==='wc').flatMap(d=>d.leaves.map(leaf=>{const badge=createWcDoorBadge(leaf.w);badge.group.name=leaf.door.id+'-wc-badge';root.add(badge.group);return {leaf,...badge};}));
  const glassGroups=frosted.map(leaf=>{const group=new T.Group();group.name=leaf.door.id+'-frosted';const frame=new T.MeshStandardMaterial({color:leaf.door.studioColor||0x87989e,roughness:.4,metalness:.5});
   for(const p of frostedDoorParts(leaf.w)){const mesh=new T.Mesh(new T.BoxGeometry(p.w,p.h,p.d),p.part==='glass'?glass:frame);mesh.name=p.part;mesh.position.set(p.x,p.y,p.z);mesh.castShadow=p.part!=='glass';mesh.receiveShadow=true;group.add(mesh);}root.add(group);return {leaf,group,frame};});
  for(const [name,parts,material] of [['panel',body,paint],['hardware',metal,steel],['seal',seals,rubber]]){
   const non=parts.map(g=>g.index?g.toNonIndexed():g),merged=mergeGeometries(non),geometry=mergeVertices(merged,1e-8);merged.dispose();parts.forEach(g=>g.dispose());non.forEach(g=>g.dispose());
   const mesh=new T.InstancedMesh(geometry,material,leaves.length);mesh.name='doors-'+name;mesh.frustumCulled=false;mesh.receiveShadow=true;mesh.castShadow=true;
   mesh.instanceMatrix.setUsage(T.DynamicDrawUsage);root.add(mesh);batches.push(mesh);
-  if(name==='panel')for(let i=0;i<leaves.length;i++)mesh.setColorAt(i,new T.Color(leaves[i].door.studioColor||(leaves[i].door.accessCard?0x527b80:0xc4c3af)));
+  if(name==='panel')for(let i=0;i<leaves.length;i++)mesh.setColorAt(i,new T.Color(leaves[i].door.studioColor||(leaves[i].door.doorStyle==='wc'?0xf3f3ef:leaves[i].door.accessCard?0x527b80:0xc4c3af)));
  }
  const transform=new T.Object3D(),frustum=new T.Frustum(),projection=new T.Matrix4(),sphere=new T.Sphere();
- const colors=leaves.map(l=>new T.Color(l.door.studioColor||(l.door.accessCard?0x527b80:0xc4c3af)));let lastSignature='',visibleCount=leaves.length;
+ const colors=leaves.map(l=>new T.Color(l.door.studioColor||(l.door.doorStyle==='wc'?0xf3f3ef:l.door.accessCard?0x527b80:0xc4c3af)));let lastSignature='',visibleCount=leaves.length;
  function update(camera=null,lights=[]){
   for(const {leaf,group} of glassGroups){group.position.set(leaf.x,0,leaf.z);group.rotation.y=leaf.box.angle;}
+   for(const {leaf,group} of wcBadges){group.position.set(leaf.x,0,leaf.z);group.rotation.y=leaf.box.angle;}
   if(camera){camera.updateMatrixWorld();frustum.setFromProjectionMatrix(projection.multiplyMatrices(camera.projectionMatrix,camera.matrixWorldInverse));}
   const shadows=[];
   for(const light of lights)if(light.visible&&light.castShadow){light.updateMatrixWorld();light.target.updateMatrixWorld();light.shadow.updateMatrices(light);shadows.push(light.shadow.getFrustum());}
@@ -58,5 +60,5 @@ export async function buildDoorVisuals(system){
   for(const batch of batches){batch.count=visible.length;batch.instanceMatrix.needsUpdate=true;}
   if(batches[0].instanceColor)batches[0].instanceColor.needsUpdate=true;return true;
  }
- update();return {root,update,get visibleCount(){return visibleCount+glassGroups.length;},report:system.report,dispose(){root.removeFromParent();for(const b of batches){b.geometry.dispose();b.dispose();}for(const h of handles)h.release();rubber.dispose();for(const {group,frame} of glassGroups){group.children.forEach(m=>m.geometry.dispose());frame.dispose();}glass?.dispose();pbr.dispose();}};
+ update();return {root,update,get visibleCount(){return visibleCount+glassGroups.length+wcBadges.length;},report:system.report,dispose(){root.removeFromParent();for(const b of batches){b.geometry.dispose();b.dispose();}for(const h of handles)h.release();rubber.dispose();for(const {group,frame} of glassGroups){group.children.forEach(m=>m.geometry.dispose());frame.dispose();}for(const badge of wcBadges)badge.dispose();glass?.dispose();pbr.dispose();}};
 }
