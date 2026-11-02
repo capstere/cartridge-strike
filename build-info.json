@@ -550,6 +550,16 @@
       "sha256": "d341885133d74d510cc7408e39643c6feff4d6792116418fa3ff582a5ae8ea84"
     },
     {
+      "path": "furniture-editor/build/pattern-materials.mjs",
+      "bytes": 2639,
+      "sha256": "5f2021c9f8226558c0c5288a0173b2d66ace813c17e3d1814f06104981b3af5b"
+    },
+    {
+      "path": "furniture-editor/build/pattern-presets.mjs",
+      "bytes": 995,
+      "sha256": "100daf97163382b85d75cc46abf16b1ea45b7e2ae3a664cce3901bdf2a5f1b85"
+    },
+    {
       "path": "furniture-editor/build/poster-art.mjs",
       "bytes": 3442,
       "sha256": "6b5b8e32702ed1739cee069b43e4fc2a81d5692429951ac89e7b7754abe28a08"
@@ -566,8 +576,8 @@
     },
     {
       "path": "furniture-editor/build/project-visuals.mjs",
-      "bytes": 5266,
-      "sha256": "857d7e389d7aa8d868491156b7073664a40bf235cb384326db9ebec46b9624e1"
+      "bytes": 5950,
+      "sha256": "37d77ca9a998722d366c72f9bd062883ce0a45328d03599242b3a8e5e0ef7cf4"
     },
     {
       "path": "furniture-editor/build/room-drag.mjs",
@@ -576,13 +586,13 @@
     },
     {
       "path": "furniture-editor/build/surface-style.mjs",
-      "bytes": 4622,
-      "sha256": "fb9b7545f459ba47ae13bbff9791f9ec4a1630284ffca58ae0f9888cd13149bf"
+      "bytes": 5599,
+      "sha256": "ddb3fc0760faf690ae731f6bf88ff5db352e8463db0c576722a2392c46afae4a"
     },
     {
       "path": "furniture-editor/build/treatments.mjs",
-      "bytes": 3415,
-      "sha256": "4a0a7edf8598a0f98e8f0c08c7a039fef3a3878785215da08d24f27ac987a066"
+      "bytes": 4871,
+      "sha256": "b111bd34dcb1ce2cdb8107cdb28101eb7a497febba8a95af5533b52349f6f12c"
     },
     {
       "path": "furniture-editor/build/validate-level.mjs",
@@ -2101,8 +2111,8 @@
     },
     {
       "path": "furniture-editor/new.html",
-      "bytes": 21790,
-      "sha256": "505a12b31c3589bccd082ddbf2d2fa1223d86513e927948e0fcbcc1dc38a99bc"
+      "bytes": 22770,
+      "sha256": "1d4ee9e3f8be908aae35ae03ccfb3c09ed8b976f2098524b25999bcf77961135"
     },
     {
       "path": "furniture-editor/new.mjs",
