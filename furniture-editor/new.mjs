@@ -1,24 +1,24 @@
 import {captureFurniture,pasteFurniture} from './furniture-clipboard.mjs?v=5.2.0';
 import {clearFloor5Interior,restoreFloor5Interior} from './build/empty-interior.mjs?v=5.3.0';
 import {floorEdgeHandles,planFloorEdge} from './build/floor-edge.mjs?v=5.1.0';
-import {architecturePreview} from './build/architecture-preview.mjs?v=5.6.0';
-import {surfaceColor,validPaint,reconcileSurfaceColors} from './build/surface-style.mjs?v=5.6.0';
+import {architecturePreview} from './build/architecture-preview.mjs?v=5.6.1';
+import {surfaceColor,validPaint,reconcileSurfaceColors} from './build/surface-style.mjs?v=5.6.1';
 import {floorGaps,gapFloor} from './build/walkable-spaces.mjs?v=5.0.0';
 import {installFurnitureHandles} from './furniture-handles.mjs?v=5.0.0';
 import {planFurnitureTranslation,furnitureAssembly} from './furniture-translation.mjs?v=5.0.0';
 import {rotateFurniture,mirrorFurniture} from './furniture-transforms.mjs?v=5.0.0';
 import {modelFront,MODEL_FRONTS,wallFootprint} from './model-alignment.mjs?v=5.0.0';
 import {makePoster,locatePoster} from './build/posters.mjs';
-import {createCurtain,createBlind,treatmentPosition,curtainSideForHit} from './build/treatments.mjs?v=5.6.0';
-import {buildProjectFurniture,buildProjectDecorations,applyFurnitureAppearance} from './build/project-visuals.mjs?v=5.6.0';
-import {resolveProjectScene,writeProjectScene,floor5Baseline,projectWallPieces} from './build/project-scene.mjs?v=5.5.0';
-import {inheritFloor5Gameplay} from '../src/fps/world.mjs?v=5.6.0';
+import {createCurtain,createBlind,treatmentPosition,curtainSideForHit} from './build/treatments.mjs?v=5.6.1';
+import {buildProjectFurniture,buildProjectDecorations,applyFurnitureAppearance} from './build/project-visuals.mjs?v=5.6.1';
+import {resolveProjectScene,writeProjectScene,floor5Baseline,projectWallPieces} from './build/project-scene.mjs?v=5.6.1';
+import {inheritFloor5Gameplay} from '../src/fps/world.mjs?v=5.6.1';
 import {wallAtPoint,planPaintOverWall} from './build/paint-over-wall.mjs?v=5.4.0';
 import {planResizeFloor,planResizeFloorEdge,planSlideInsert,planMoveWallEnd,roomBoundaryIds} from './build/direct-manipulation.mjs?v=5.4.0';
 import {parsePosters} from './build/posters.mjs';
 import {parseTreatments} from './build/treatments.mjs?v=5.1.0';
 import * as T from '../vendor/three/three.module.js';
-import {exportProject,parseProject,parseProjectZip,exportProjectZip} from './build/level-project.mjs?v=5.6.0';
+import {exportProject,parseProject,parseProjectZip,exportProjectZip} from './build/level-project.mjs?v=5.6.1';
 import {validateLevel} from './build/validate-level.mjs?v=5.5.0';
 import {validate,corners as baseCorners,inside,segmentIntersectsRectangle,intersects} from './core.mjs?v=5.0.0';
 import {wallPieces,standardPassageSpan,standardDoorMarkerSpan,isDoor,STANDARD_PASSAGE_WIDTH,WC_PASSAGE_WIDTH,WC_MIN_PASSAGE_WIDTH} from './build/architecture.mjs?v=5.5.0';
@@ -44,7 +44,7 @@ if(project.mode==='edit-floor5')project.ground.bounds={x0:-48,z0:-33,x1:52,z1:40
 let multiSelected=new Set(),furnitureClipboard=null,pasteStep=0;
 let roomPreview=null,pendingFurniture=null,pendingTemplate=null,pendingYaw=0,snapFeedback=null,drawGesture=null,planPan=null,spaceHeld=false,view3dZoom=1,view3dCenter=null;
 let gameLook=false,gameLookTimer=0,walkReturnView='plan',walkReturnLook=false,walkPose=null;
-let sceneModel,sceneProject;function model(){if(sceneProject!==project){sceneProject=project;sceneModel=resolveProjectScene(project);}return sceneModel;}
+let sceneModel,sceneProject;function model(){if(project.mode==='new-level')return resolveProjectScene(project);if(sceneProject!==project){sceneProject=project;sceneModel=resolveProjectScene(project);}return sceneModel;}
 const p=()=>project,arch=()=>model().entries,floors=()=>p().mode==='new-level'?p().ground.floors:model().floors,objects=()=>model().items,markers=()=>[...p().gameplay.spawns,...[p().gameplay.objectives.bomb,p().gameplay.objectives.rescue,...p().gameplay.objectives.hostages].filter(Boolean)];
 const snap=n=>Math.round(n*10)/10,clamp=(n,a,b)=>Math.max(a,Math.min(b,n));
 const status=s=>$('status').textContent=s;
@@ -363,7 +363,7 @@ const selectionDock=installSelectionDock({
   return true;
  }
 });
-function updateProps(){const o=lookup();updateSurfaceUI(o);$('selection').hidden=!o&&multiSelected.size<2;$('posterText').disabled=!o||!p().architecture.posters?.includes(o);$('posterText').value=o?.text||'';$('selectedLabel').disabled=!o||!floors().some(f=>f.id===o.id)||!!o.source;$('selectedLabel').value=o?.name||'';$('selectedSurface').disabled=!o||!floors().includes(o);$('selectedSurface').value=o?.surface||'carpet';$('curtainStyleLabel').hidden=o?.type!=='curtain';$('curtainFlip').hidden=!['curtain','blind'].includes(o?.type);$('curtainStyle').value=o?.style||'sheer';$('selectedSill').disabled=!o||o.kind!=='window';$('selectedSill').value=o?.sill??.9;$('collisionSetting').hidden=!o||!objects().includes(o);$('collisionMode').value=o?.collision||'solid';$('selectionName').textContent=o?`${o.name||o.assetName||o.text||o.type||o.team||o.kind||o.role}`:multiSelected.size>1?`${multiSelected.size} möbler`:'Ingenting';
+function updateProps(){const o=lookup();updateSurfaceUI(o);$('selection').hidden=!o&&multiSelected.size<2;$('posterText').disabled=!o||!p().architecture.posters?.includes(o);$('posterText').value=o?.text||'';$('selectedLabel').disabled=!o||!floors().some(f=>f.id===o.id)||!!o.source;$('selectedLabel').value=o?.name||'';$('selectedSurface').disabled=!o||!floors().includes(o);$('selectedSurface').value=p().floorFinishes?.[o?.id]||o?.surface||'carpet';$('curtainStyleLabel').hidden=o?.type!=='curtain';$('curtainFlip').hidden=!['curtain','blind'].includes(o?.type);$('curtainStyle').value=o?.style||'sheer';$('selectedSill').disabled=!o||o.kind!=='window';$('selectedSill').value=o?.sill??.9;$('collisionSetting').hidden=!o||!objects().includes(o);$('collisionMode').value=o?.collision||'solid';$('selectionName').textContent=o?`${o.name||o.assetName||o.text||o.type||o.team||o.kind||o.role}`:multiSelected.size>1?`${multiSelected.size} möbler`:'Ingenting';
  $('x').value=o?(o.x??o.x0??o.a?.[0]??''):'';$('z').value=o?(o.z??o.z0??o.a?.[1]??''):'';
  $('w').value=o?(o.w??(o.x1!==undefined?o.x1-o.x0:o.b?Math.hypot(o.b[0]-o.a[0],o.b[1]-o.a[1]):'')):'';
  $('d').value=o?(o.d??(o.z1!==undefined?o.z1-o.z0:'')):'';
@@ -604,7 +604,7 @@ function animateMovement(now){movementFrame=0;if(!heldMovement.size||view==='wal
  movementFrame=requestAnimationFrame(animateMovement);
 }
 function stopMovement(){heldMovement.clear();if(movementFrame)cancelAnimationFrame(movementFrame);movementFrame=0;}
-function draw3D(){if(!ensureRenderer())return;group.traverse(o=>{if(o.isMesh||o.isLineSegments){o.geometry?.dispose();if(o.material?.userData?.studioOwned){o.material.map?.dispose();o.material.dispose();}}});group.clear();
+function draw3D(){if(!ensureRenderer())return;group.traverse(o=>{if(o.isMesh||o.isLineSegments){o.geometry?.dispose();if(o.material?.userData?.studioOwned){if(!o.material.map?.userData?.studioShared)o.material.map?.dispose();o.material.dispose();}}});group.clear();
  group.add(architecturePreview(p(),{...model(),floors:floors()},{lowWalls:$('cutaway').checked,openDoors:doorPreviewOpen,selected}));
  if($('showPhysics').checked)for(const area of spaces()){
   if(area.kind==='floor-gap'){const dx=area.b[0]-area.a[0],dz=area.b[1]-area.a[1];box((area.a[0]+area.b[0])/2,.045,(area.a[1]+area.b[1])/2,Math.hypot(dx,dz),.07,.18,selected===area.id?0xffbd46:0xdf3d83,-Math.atan2(dz,dx),.85,area.id);}
@@ -848,6 +848,8 @@ $('posterText').onchange=()=>{const o=lookup();if(!p().architecture.posters?.inc
 $('selectedSurface').onchange=()=>{const o=lookup();if(!o||!floors().includes(o))return;
  const before=JSON.stringify(p()),finish=$('selectedSurface').value;
  p().floorFinishes||={};p().floorFinishes[o.id]=finish;o.surface=finish;
+ // A newly chosen finish replaces the previous flat paint, just like wall materials.
+ if(p().surfaceColors)delete p().surfaceColors[o.id];
  for(const f of p().ground.floors)if(f.id===o.id)f.surface=finish;
  commit(before);status('Golvfinish ändrad utan att väggar eller gångyta flyttas.');};$('selectedSill').onchange=()=>{const o=lookup();if(!o||o.kind!=='window')return;const value=Number($('selectedSill').value);if(!Number.isFinite(value)||value<0||value>o.height-.15)return;const before=JSON.stringify(p());o.sill=value;commit(before);};
 $('cutaway').onchange=redraw;$('showPhysics').onchange=redraw;$('selectedLabel').onchange=()=>{const o=lookup();if(!o||o.source)return;const before=JSON.stringify(p());o.name=$('selectedLabel').value.slice(0,60);commit(before);};
@@ -1124,6 +1126,6 @@ window.__levelStudio={get scene(){return model()},get project(){return p()},get 
  get pendingAsset(){return pendingFurniture?{id:pendingFurniture.id,ready:!pendingFurniture.loading&&!pendingFurniture.loadError,error:pendingFurniture.loadError}:null;},
  get visualFurniture(){return (furnitureRoot?.children||[]).map(holder=>{holder.updateWorldMatrix(true,true);const bounds=new T.Box3().setFromObject(holder);return {id:holder.userData.editId,realModel:!!holder.userData.realModel,meshes:(()=>{const out=[];holder.traverse(o=>{if(o.isMesh)out.push({name:o.name,position:o.getWorldPosition(new T.Vector3()).toArray(),determinant:o.matrixWorld.determinant()});});return out;})(),min:bounds.min.toArray(),max:bounds.max.toArray(),position:holder.position.toArray(),yaw:holder.rotation.y};});},
  get floorHandles(){return group.children.filter(o=>o.isMesh&&o.geometry.type==='BoxGeometry'&&o.userData.editHandle?.startsWith('floor-')).map(o=>({handle:o.userData.editHandle,position:o.position.toArray()}));},
- get architectureVisuals(){const rows=[];group.traverse(o=>{if(o.userData.architecturePart)rows.push({id:o.userData.editId,part:o.userData.architecturePart,color:o.material.color.getHexString(),position:o.position.toArray(),size:o.geometry.parameters});});return rows;},
+ get architectureVisuals(){const rows=[];group.traverse(o=>{if(o.userData.architecturePart)rows.push({id:o.userData.editId,part:o.userData.architecturePart,color:o.material.color.getHexString(),map:o.material.map?.name||null,roughness:o.material.roughness,metalness:o.material.metalness,position:o.position.toArray(),size:o.geometry.parameters});});return rows;},
  get snapPreview(){return {kind:snapFeedback?.kind||null,targetId:snapFeedback?.targetId||null,
   label:snapFeedback?.label||'',pose:snapFeedback?.pose,ghostPose:ghostRoot?.children[0]?{position:ghostRoot.children[0].position.toArray(),yaw:ghostRoot.children[0].rotation.y}:null,ghostLoaded:!!ghostRoot?.children[0]?.userData.realModel,highlightCount:preview3d.children.filter(x=>x.userData.snapTargetId).length};},redraw};

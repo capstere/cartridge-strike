@@ -3,7 +3,7 @@ import {FINISH_COLORS,architecturalFinish} from '../appearance.mjs';
 import {floorBaseColor,WALL_PATTERNS} from './pattern-presets.mjs?v=5.6.0';
 export const validPaint=value=>typeof value==='string'&&/^#[0-9a-f]{6}$/i.test(value);
 export function surfaceColor(project,item){return project.surfaceColors?.[item.id]||
- (item.kind?FINISH_COLORS[architecturalFinish(item.kind,item.finish)]:floorBaseColor(item.surface));}
+ (item.kind?FINISH_COLORS[architecturalFinish(item.kind,item.finish)]:floorBaseColor(project.floorFinishes?.[item.id]||item.surface));}
 export function validateSurfaceColors(project,ids){
  if(project.surfaceColors===undefined)return;
  const colors=project.surfaceColors;

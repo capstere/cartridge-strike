@@ -28,3 +28,13 @@ Alla fyra mönstren genereras lokalt från små CanvasTexture-ytor med UV-koordi
 ## Tester
 
 `pattern-presets.test.mjs` testar ID, validering, väggdelning, oförändrat glas/motiv och schema-2-rundtur. `treatments.test.mjs` testar insida, framsida/baksida, äldre gardiner och nya täta gardiner. Den vanliga CI-kedjan kör dessutom editor, Floor 5, FPS/WebGL och ZIP-kontroller. Verifiering på fysisk mobil ingår inte.
+
+## Korrigering 5.6.1 – färg och golvmaterial
+
+- Ett nytt val under **Golvtyp** ersätter golvets tidigare enfärgade målning. Kakel/sten/laminat syns därför även om golvet tidigare målats svart. **Ångra** återställer både tidigare färg och material.
+- **Färg** ger fortfarande en enfärgad yta. **Originalfärg** visar det valda materialet igen. Färgval färgar inte själva kakeltexturen.
+- Ny bana visar den aktuella golvmodellen direkt; `floorFinishes` från importerade projekt används också där.
+- I egna Floor 5-projekt respekterar FPS golvvalet även i rum som originalspelet tidigare gav ett särskilt vinylmaterial. Originalspelets bana behåller sina material.
+- Delade mönstertexturer återanvänds när 3D-vyn ritas om.
+
+Ladda om Designstudion efter uppdateringen. Gamla JSON/ZIP-projekt, färger och geometri bevaras; inget materialval skrivs om automatiskt när ett projekt öppnas.

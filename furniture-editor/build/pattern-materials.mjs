@@ -3,7 +3,7 @@
  * no source-model changes and no extra collision geometry.
  */
 import * as T from '../../vendor/three/three.module.js';
-import {PATTERN_SPECS,hasPattern} from './pattern-presets.mjs?v=5.6.0';
+import {PATTERN_SPECS,hasPattern} from './pattern-presets.mjs?v=5.6.1';
 const patterns=new Map();
 const S=256;
 function canvasPattern(type){
@@ -46,7 +46,7 @@ function canvasPattern(type){
 }
 function texture(type){
  if(!patterns.has(type)){const t=new T.CanvasTexture(canvasPattern(type));
-  t.colorSpace=T.SRGBColorSpace;t.wrapS=t.wrapT=T.RepeatWrapping;
+  t.userData.studioShared=true;t.colorSpace=T.SRGBColorSpace;t.wrapS=t.wrapT=T.RepeatWrapping;
   t.minFilter=T.LinearMipmapLinearFilter;t.magFilter=T.LinearFilter;
   t.anisotropy=4;t.name='floor5-'+type;t.needsUpdate=true;patterns.set(type,t);}
  return patterns.get(type);

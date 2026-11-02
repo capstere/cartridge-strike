@@ -4,9 +4,9 @@ import {GlassVisuals} from './glass-visuals.mjs';
 import {buildRiposteProps} from './riposte-props.mjs';
 import {makeWeapon} from './models.mjs';
 import {WEAPONS} from './config.mjs';
-import {buildProjectFurniture,buildProjectDecorations} from '../../furniture-editor/build/project-visuals.mjs?v=5.6.0';
-import {hasPattern} from '../../furniture-editor/build/pattern-presets.mjs?v=5.6.0';
-import {patternMaterial} from '../../furniture-editor/build/pattern-materials.mjs?v=5.6.0';
+import {buildProjectFurniture,buildProjectDecorations} from '../../furniture-editor/build/project-visuals.mjs?v=5.6.1';
+import {hasPattern} from '../../furniture-editor/build/pattern-presets.mjs?v=5.6.1';
+import {patternMaterial} from '../../furniture-editor/build/pattern-materials.mjs?v=5.6.1';
 import {buildFacilityScene} from './facility-scene.mjs';
 import {installFocusLighting} from './strike-kit-environment.mjs';
 import {VisualDepth} from './visual-depth.mjs';
@@ -176,6 +176,8 @@ export class Renderer extends EngineRenderer {
       return this.floor5PatternMaterials.get(pattern);
     }
     if(this.world.newLevel&&b.studioColor)return this.registry.get(['carpet','office-carpet','vinyl','metal'].includes(b.material)?b.material:'wall',{color:b.studioColor,side:THREE.DoubleSide});
+    // Custom projects use the selected floor type; canonical room overrides apply only to the original map.
+    if(this.world.newLevel&&b.id?.startsWith('finish-'))return super.materialFor(b);
     if(b.id==='finish-I12')return this.registry.get('vinyl',{color:0x56676d,roughness:.53,normalScale:new THREE.Vector2(.08,.08)});
     if(['finish-I13','finish-I21','finish-I38'].includes(b.id))return this.registry.get('vinyl',{color:b.id==='finish-I12'?0x777f7d:0x8d9998,roughness:.86});
     return super.materialFor(b);
