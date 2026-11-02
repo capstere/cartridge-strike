@@ -41,7 +41,7 @@ export function levelProjectToWorldData(input){
   bomb:objectives.bomb?{...point(objectives.bomb),radius:objectives.bomb.radius??1.1,roomId:objectives.bomb.roomId}:null,
   rescue:objectives.rescue?{...point(objectives.rescue),radius:objectives.rescue.radius??1.65,doorId:objectives.rescue.doorId}:null,
   hostages:objectives.hostages.map(point)};
- const data={__custom:true,rooms:zones.filter((_,i)=>floors[i].role==='room'),corridors:zones.filter((_,i)=>floors[i].role==='corridor'),
+ const data={__custom:true,shellOnly:project.mode==='edit-floor5'&&project.legacyPatch?.emptyFixed===true,rooms:zones.filter((_,i)=>floors[i].role==='room'),corridors:zones.filter((_,i)=>floors[i].role==='corridor'),
   excludedRooms:(legacy?.excludedRooms||[]).filter(r=>!(project.ground.openedAreas||[]).includes(r.id)),floorPolygons:[...(legacy?remainingSourceTiles(legacy,project.ground.floorEdits):[]),...zones.map(z=>z.polygon),...thresholdFloorPolygons(entries,floors)],walls,doors,obstacles,routes,
   targets:[objectives.bomb&&{id:'L1',name:'Bomb',point:[objectives.bomb.x,objectives.bomb.z]},objectives.rescue&&{id:'L2',name:'Rescue',point:[objectives.rescue.x,objectives.rescue.z]}].filter(Boolean),
   spawn:anchors.analysts[0]||{x:0,z:0,yaw:0},layoutPresentation:{},ground:project.ground};
