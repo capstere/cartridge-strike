@@ -259,7 +259,7 @@ $('resetSurface').onclick=()=>{const o=lookup();if(!o)return;const before=JSON.s
 $('floorDragMode').onclick=()=>{floorOnly=!floorOnly;redraw();};
 $('doorStyle').onchange=()=>{const o=lookup();if(!o||!['door','card-door'].includes(o.kind))return;
  const selectedStyle=$('doorStyle').value;
- if(selectedStyle!=='wc'&&Math.hypot(o.b[0]-o.a[0],o.b[1]-o.a[1])<1.1){status('Den smala öppningen kräver WC-utförande. Välj WC eller bredda dörren.');redraw();return;}
+ if(selectedStyle!=='wc'&&!o.source&&Math.hypot(o.b[0]-o.a[0],o.b[1]-o.a[1])<1.1){status('Den smala öppningen kräver WC-utförande. Välj WC eller bredda dörren.');redraw();return;}
  const before=JSON.stringify(p());o.doorStyle=selectedStyle;if(selectedStyle==='wc')o.finish='white';commit(before);};
 $('previewDoor').onclick=()=>{doorPreviewOpen=!doorPreviewOpen;redraw();};
 $('spaceSelect').onchange=()=>{selected=$('spaceSelect').value||null;$('showPhysics').checked=true;const area=spaces().find(s=>s.id===selected);if(area){const pts=area.polygon||[[area.x0,area.z0],[area.x1,area.z1]],xs=pts.map(p=>p[0]),zs=pts.map(p=>p[1]),x0=Math.min(...xs),x1=Math.max(...xs),z0=Math.min(...zs),z1=Math.max(...zs);view3dCenter={x:(x0+x1)/2,z:(z0+z1)/2,span:Math.max(7,(x1-x0)*1.4,(z1-z0)*1.4)};view3dZoom=1;$('threeView').click();}else redraw();};
