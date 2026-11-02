@@ -43,7 +43,7 @@ export function planPaintOverWall(entries,wallId,start,end,kind,{posters=[],door
   // generate narrower door markers or 10-cm uneditable wall slivers.
   const width=kind==='door'?doorWidth:STANDARD_PASSAGE_WIDTH,center=(left+right)/2;
   if(!Number.isFinite(width)||width<(width===WC_PASSAGE_WIDTH?WC_MIN_PASSAGE_WIDTH:1.10)||width>8)throw Error('Ogiltig dörrbredd.');
-  if(length<width-1e-6)throw Error('Väggen är kortare än den valda dörröppningen.');
+  if(length<width-1e-6)throw Error(width===STANDARD_PASSAGE_WIDTH?'Väggen är kortare än STANDARD-öppningen 1,20.':'Väggen är kortare än WC-öppningen 0,85.');
   if(length<width+.5-1e-6){
    if(Math.abs(length-width)>.001)throw Error('För en dörr här behövs minst 25 cm vägg på varje sida.');
    left=0;right=length;
