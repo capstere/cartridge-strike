@@ -5,10 +5,13 @@
 import {architecturalFinish,WALL_FINISHES,DOOR_FINISHES} from '../appearance.mjs';
 export const ARCHITECTURE_SCHEMA=1;
 export const STANDARD_PASSAGE_WIDTH=1.20;
-export function standardPassageSpan(a,b,width=STANDARD_PASSAGE_WIDTH){
+export const WC_PASSAGE_WIDTH=.85;
+export const WC_MIN_PASSAGE_WIDTH=.65;
+export const minDoorWidth=entry=>entry?.doorStyle==='wc'?WC_MIN_PASSAGE_WIDTH:1.10;
+export function standardPassageSpan(a,b,width=STANDARD_PASSAGE_WIDTH,{minWidth=1.10}={}){
  const dx=b[0]-a[0],dz=b[1]-a[1],len=Math.hypot(dx,dz);
  if(!Number.isFinite(len)||len<.20)throw Error('Ange två olika punkter för öppningens riktning.');
- if(!Number.isFinite(width)||width<1.10||width>8)throw Error('Passagens bredd måste vara 1,10–8,00 modellenheter.');
+ if(!Number.isFinite(width)||width<minWidth||width>8)throw Error('Passagens bredd måste vara '+minWidth.toFixed(2).replace('.',',')+'–8,00 modellenheter.');
  const cx=(a[0]+b[0])/2,cz=(a[1]+b[1])/2,ux=dx/len,uz=dz/len;
  return {a:[roundPosition(cx-ux*width/2),roundPosition(cz-uz*width/2)],
          b:[roundPosition(cx+ux*width/2),roundPosition(cz+uz*width/2)]};
@@ -17,7 +20,7 @@ export function standardPassageSpan(a,b,width=STANDARD_PASSAGE_WIDTH){
  * width. Do not use this for collision, serialization or wall clipping. */
 export function standardDoorMarkerSpan(door){
  const {a,b}=door||{},dx=b?.[0]-a?.[0],dz=b?.[1]-a?.[1],len=Math.hypot(dx,dz);
- if(!Number.isFinite(len)||len<1e-6)return {a,b};
+ if(!Number.isFinite(len)||len<1e-6||door?.doorStyle==='wc')return {a,b};
  const cx=(a[0]+b[0])/2,cz=(a[1]+b[1])/2,ux=dx/len,uz=dz/len;
  return {a:[cx-ux*STANDARD_PASSAGE_WIDTH/2,cz-uz*STANDARD_PASSAGE_WIDTH/2],
          b:[cx+ux*STANDARD_PASSAGE_WIDTH/2,cz+uz*STANDARD_PASSAGE_WIDTH/2]};
@@ -72,7 +75,8 @@ export function validateEntry(entry,{isNew=false}={}){
  if(!finite(entry.height)||entry.height<.45||entry.height>6)throw Error('Byggdelens höjd måste vara 0,45–6 m.');
  if(!finite(entry.thickness)||entry.thickness<.025||entry.thickness>.7)throw Error('Väggtjockleken måste vara 0,025–0,70 m.');
  if(!finite(entry.sill)||entry.sill<0||entry.sill>entry.height-.15)throw Error('Fönsterbröstningen är inte giltig.');
- if(entry.doorStyle!==undefined&&(!['door','card-door'].includes(entry.kind)||!['solid','frosted'].includes(entry.doorStyle)))throw Error('Välj vanlig dörr eller frostad glasdörr.');
+ if(entry.doorStyle!==undefined&&(!['door','card-door'].includes(entry.kind)||!['solid','frosted','wc'].includes(entry.doorStyle)))throw Error('Välj vanlig dörr eller frostad glasdörr.');
+ if(entry.doorStyle==='wc'&&entryLength(entry)<WC_MIN_PASSAGE_WIDTH-1e-6)throw Error('WC-dörren måste vara minst 0,65 modellenheter bred.');
  if(entry.finish!==undefined&&
    !((isWall(entry.kind)?WALL_FINISHES:DOOR_FINISHES).includes(entry.finish)))
   throw Error('Färgvalet passar inte byggdelen.');
@@ -134,10 +138,10 @@ export function makeEntry(id,kind,a,b){return {id,source:false,sourceKind:'new',
 /** Place a correctly aligned default door in a selected straight wall.
  * This is a sketch aperture only; runtime door mechanics stay unchanged.
  */
-export function doorOnWallSegment(wall,id,{kind='door',width=STANDARD_PASSAGE_WIDTH,fraction=.5}={}){
+export function doorOnWallSegment(wall,id,{kind='door',width=STANDARD_PASSAGE_WIDTH,fraction=.5,doorStyle='solid'}={}){
  if(!isWall(wall.kind))throw Error('Välj först en vägg eller glasvägg.');
  const length=entryLength(wall),minEnds=.12;
- if(!Number.isFinite(width)||width<1.1||width>8)throw Error('Dörrens bredd måste vara 1,10–8,00 modellenheter.');
+ if(!Number.isFinite(width)||width<(doorStyle==='wc'?WC_MIN_PASSAGE_WIDTH:1.1)||width>8)throw Error('Dörrens bredd är för liten för den valda dörrtypen.');
  // Never silently shrink a standard door to fit: that creates inconsistent
  // door markers and openings. The user can draw a longer wall instead.
  if(length+1e-9<width+2*minEnds)throw Error('Väggen är för kort för en STANDARD-dörr på 1,20. Rita en längre vägg.');
@@ -145,7 +149,7 @@ export function doorOnWallSegment(wall,id,{kind='door',width=STANDARD_PASSAGE_WI
  const dx=(wall.b[0]-wall.a[0])/length,dz=(wall.b[1]-wall.a[1])/length;
  const point=t=>[roundPosition(wall.a[0]+t*dx),roundPosition(wall.a[1]+t*dz)];
  const door=makeEntry(id,kind,point(along-width/2),point(along+width/2));
- door.height=Math.min(2.4,wall.height);validateEntry(door,{isNew:true});return door;
+ door.height=Math.min(2.4,wall.height);if(doorStyle!=='solid')door.doorStyle=doorStyle;validateEntry(door,{isNew:true});return door;
 }
 export function floorRect(id,a,b){return {id,x0:Math.min(a[0],b[0]),z0:Math.min(a[1],b[1]),x1:Math.max(a[0],b[0]),z1:Math.max(a[1],b[1]),name:'Egen golvyta'};}
 /**
