@@ -1,7 +1,7 @@
 import {thresholdFloorPolygons} from './floor-edge.mjs?v=5.1.0';
 /** Portable collision handoff. The engine's physics remains authoritative. */
 import {wallPieces,isDoor,STANDARD_PASSAGE_WIDTH} from './architecture.mjs?v=5.1.0';
-import {resolveProjectScene,projectWallPieces} from './project-scene.mjs?v=5.1.0';
+import {resolveProjectScene,projectWallPieces} from './project-scene.mjs?v=5.3.0';
 
 export function collisionExport(p){
  const scene=resolveProjectScene(p),segments=scene.entries,floors=scene.floors;
