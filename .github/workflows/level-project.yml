@@ -17,6 +17,7 @@ on:
       - 'tools/studio-floor-door-browser.mjs'
       - 'tools/studio-clipboard-browser.mjs'
       - 'tools/studio-empty-floor5-browser.mjs'
+      - 'tools/studio-wc-browser.mjs'
       - 'tools/restore-onboard-large.mjs'
       - 'tools/onboard-large-source-catalog.json'
       - '.github/workflows/level-project.yml'
@@ -65,3 +66,4 @@ jobs:
           timeout 420s xvfb-run -a node tools/studio-floor-door-browser.mjs
           timeout 420s xvfb-run -a node tools/studio-clipboard-browser.mjs
           timeout 300s xvfb-run -a node tools/studio-empty-floor5-browser.mjs
+          timeout 300s xvfb-run -a node tools/studio-wc-browser.mjs
