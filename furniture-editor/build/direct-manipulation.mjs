@@ -1,7 +1,7 @@
 /** Direct manipulation of authored rectangles and inserts. All plans are pure:
  * the editor applies a complete result in one undo step only after validation.
  */
-import {entryLength,getNextId,isDoor,roundPosition,validateEntry,validateFloorRect} from './architecture.mjs?v=5.1.0';
+import {entryLength,getNextId,isDoor,minDoorWidth,roundPosition,validateEntry,validateFloorRect} from './architecture.mjs?v=5.1.0';
 import {projectToWall} from './paint-over-wall.mjs?v=5.1.0';
 
 const near=(a,b,t=.025)=>Math.abs(a-b)<=t;
@@ -18,8 +18,8 @@ export function planSlideInsert(entries,id,point,{posters=[],treatments=[],width
  if(!original||!isInsert(original))throw Error('Markera en dörr, ett fönster eller ett glasparti.');
  if(!point||![point.x,point.z].every(Number.isFinite))throw Error('Klicka nära väggen.');
  const originalWidth=entryLength(original),width=requestedWidth??originalWidth;
- if(!Number.isFinite(width)||width<(isDoor(original.kind)?1.1:.25)||width>8)
-  throw Error('Öppningen måste ha en giltig bredd (dörr minst 1,10).');
+ if(!Number.isFinite(width)||width<(isDoor(original.kind)?minDoorWidth(original):.25)||width>8)
+  throw Error('Öppningen måste ha en giltig bredd (vanlig dörr minst 1,10, WC-dörr minst 0,65).');
  const u=sub(original.b,original.a).map(v=>v/originalWidth);
  const along=p=>dot(sub(p,original.a),u);
  const collinear=e=>e.id!==id&&!e.deleted&&[e.a,e.b].every(p=>Math.abs(sub(p,original.a)[0]*u[1]-sub(p,original.a)[1]*u[0])<.055);
