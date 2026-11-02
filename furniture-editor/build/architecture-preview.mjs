@@ -1,7 +1,7 @@
 /** Real source wall/window/frame geometry and door poses, without a second game loop. */
 import {frostedDoorParts,frostedGlassMaterial,createWcDoorBadge} from '../../src/fps/frosted-door.mjs?v=5.4.0';
 import * as T from '../../vendor/three/three.module.js';
-import {sceneArchitectureData} from '../../src/fps/level-adapter.mjs?v=5.5.0';
+import {sceneArchitectureData} from '../../src/fps/level-adapter.mjs?v=5.6.0';
 import {createDoors} from '../../src/fps/doors.mjs?v=5.1.0';
 import {paintDescription,surfaceColor} from './surface-style.mjs?v=5.6.0';
 import {hasPattern} from './pattern-presets.mjs?v=5.6.0';
