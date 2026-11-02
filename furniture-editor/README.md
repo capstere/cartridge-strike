@@ -5,6 +5,12 @@
 
 Välj **ÅTERSTÄLL URSPRUNGSINREDNINGEN** för att få tillbaka källmöbler och fasta inventarier utan att förlora egna senare tillagda möbler (kontrollera eventuella överlapp). **Ångra** fungerar även direkt efter tömning; spara ZIP om du vill ha en hållbar säkerhetskopia. I en tom Floor 5-kopia undertrycks även automatiskt inlagda takarmaturer och pentry-display i FPS-förhandsvisningen, men konstruktion och dörrmekanik bevaras. Den här funktionen finns inte i NY BANA-läget, där projektet redan börjar tomt.
 
+## Smal vit WC-dörr (Designstudio 5.4)
+
+Välj **BYGG → WC-dörr** och klicka på en solid vägg för en **0,85-modellenheters** öppning med en vit dörr och rund dubbelsidig skylt märkt **WC**. Den automatiska öppningsmekaniken, spelarens kollision och dörrens tillhörande väggavskärning fungerar som för vanliga dörrar. Minsta bredd för WC-stilen är **0,65**, medan vanliga nya dörrar fortfarande kräver 1,10 och normalt byggs som 1,20. Redan smalare ursprungliga WC-dörrar kan få stilen via **Dörrtyp → Vit WC-dörr** utan att deras bredd ändras.
+
+WC-skylten är dekorativ och följer dörrbladet även när dörren öppnas. Den är originalskapad i Canvas och laddar ingen separat modell. I vanlig Floor 5 ändras inga befintliga dörrstilar automatiskt. Spara och exportera en redigerad bankopia när du vill använda WC-stilen i en spelbana. Fysisk mobil och enskilda modifierade bankopior bör verifieras i FPS-promenadvyn före spelpublicering.
+
 ## Nytt 30 oktober: onboard-biblioteket
 
 15 nya objekt med förhandsbilder, bättre sökning och filtret **Används i banan**. Öppna **MÖBLERA → Nytt från onboard**. [Objekt, funktioner och nästa förbättringar](../docs/onboard-library.md).
