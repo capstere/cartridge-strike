@@ -2,7 +2,7 @@
  * Paint an opening, glass wall or window over part of an existing wall,
  * replacing the painted span rather than overlapping solid geometry.
  */
-import {isWall,isDoor,makeEntry,getNextId,validateEntry,roundPosition,entryLength,pointToSegmentDistance,cloneEntry,STANDARD_PASSAGE_WIDTH} from './architecture.mjs?v=5.1.0';
+import {isWall,isDoor,makeEntry,getNextId,validateEntry,roundPosition,entryLength,pointToSegmentDistance,cloneEntry,STANDARD_PASSAGE_WIDTH,WC_PASSAGE_WIDTH,WC_MIN_PASSAGE_WIDTH} from './architecture.mjs?v=5.1.0';
 import {architecturalFinish} from '../appearance.mjs';
 import {validatePoster} from './posters.mjs';
 
@@ -29,7 +29,7 @@ export function wallAtPoint(entries,point,{radius=.25}={}){
 /** Returns replacement entries + poster re-anchoring without mutating any argument.
  * Throws before making changes on ambiguous/short spans, attached posters or existing doors.
  */
-export function planPaintOverWall(entries,wallId,start,end,kind,{posters=[]}={}){
+export function planPaintOverWall(entries,wallId,start,end,kind,{posters=[],doorWidth=STANDARD_PASSAGE_WIDTH}={}){
  if(!PAINT_KINDS.includes(kind))throw Error('Välj fönster, glasvägg, vägg eller dörr i Smart ritning.');
  const wall=entries.find(e=>e.id===wallId&&!e.deleted&&isWall(e.kind));
  if(!wall)throw Error('Starta på en befintlig vägglinje.');
@@ -41,10 +41,11 @@ export function planPaintOverWall(entries,wallId,start,end,kind,{posters=[]}={})
   // Smart paint uses the pointer gesture to POSITION a standard opening,
   // not to arbitrarily stretch its width. Short walls cannot silently
   // generate narrower door markers or 10-cm uneditable wall slivers.
-  const width=STANDARD_PASSAGE_WIDTH,center=(left+right)/2;
-  if(length<width-1e-6)throw Error('Väggen är kortare än STANDARD-öppningen 1,20.');
+  const width=kind==='door'?doorWidth:STANDARD_PASSAGE_WIDTH,center=(left+right)/2;
+  if(!Number.isFinite(width)||width<(width===WC_PASSAGE_WIDTH?WC_MIN_PASSAGE_WIDTH:1.10)||width>8)throw Error('Ogiltig dörrbredd.');
+  if(length<width-1e-6)throw Error('Väggen är kortare än den valda dörröppningen.');
   if(length<width+.5-1e-6){
-   if(Math.abs(length-width)>.001)throw Error('För STANDARD 1,20 behövs minst 25 cm vägg på varje sida.');
+   if(Math.abs(length-width)>.001)throw Error('För en dörr här behövs minst 25 cm vägg på varje sida.');
    left=0;right=length;
   }else{
    left=Math.max(.25,Math.min(length-.25-width,center-width/2));
