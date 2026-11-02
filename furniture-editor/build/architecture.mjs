@@ -95,7 +95,8 @@ export function entryChanged(e,original){
  return (e.doorStyle||'solid')!==(original.doorStyle||'solid')||e.kind!==original.kind||architecturalFinish(e.kind,e.finish)!==architecturalFinish(original.kind,original.finish)||!eq(e.height,original.height)||!eq(e.thickness,original.thickness)||!eq(e.sill,original.sill)||
   [...e.a,...e.b].some((v,i)=>!eq(v,[...original.a,...original.b][i]));
 }
-export const serializeEntry=e=>({id:e.id,kind:e.kind,a:e.a.map(roundPosition),b:e.b.map(roundPosition),
+// Preserve measured source-floor geometry. A style-only edit must not round or move its doorway.
+export const serializeEntry=e=>({id:e.id,kind:e.kind,a:e.a.map(Number),b:e.b.map(Number),
  height:roundPosition(e.height),thickness:roundPosition(e.thickness),sill:roundPosition(e.sill),finish:architecturalFinish(e.kind,e.finish),...(e.doorStyle?{doorStyle:e.doorStyle}:{})});
 export function exportArchitecture(entries,baseline,floorRects=[]){
  const source=new Map(baseline.map(e=>[e.id,e])),edits=[],added=[],removed=[];
