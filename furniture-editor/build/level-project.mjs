@@ -1,5 +1,6 @@
 import {validateFloorEdits} from './floor-edge.mjs?v=5.1.0';
-import {validateSurfaceColors} from './surface-style.mjs?v=5.5.0';
+import {validateSurfaceColors,validateSurfaceMaterials} from './surface-style.mjs?v=5.6.0';
+import {FLOOR_FINISHES} from './pattern-presets.mjs?v=5.6.0';
 import {validateOpenedAreas,closedAreas} from './walkable-spaces.mjs?v=5.0.0';
 import {validModelAlignment} from '../model-alignment.mjs?v=5.0.0';
 /** Versioned level document. Parsing is deliberately independent of the renderer. */
@@ -11,7 +12,7 @@ import {floor5Baseline} from './project-scene.mjs?v=5.5.0';
 import {parseArchitecture} from './architecture.mjs?v=5.5.0';
 import {LIBRARY_MAP} from '../library/catalog.mjs?v=5.0.0';
 import {parsePosters} from './posters.mjs';
-import {parseTreatments} from './treatments.mjs?v=5.1.0';
+import {parseTreatments} from './treatments.mjs?v=5.6.0';
 import {collisionExport,aiAgentBrief} from './ai-export.mjs?v=5.5.0';
 import {validWallMount} from '../wall-mounts.mjs?v=5.0.0';
 
@@ -77,7 +78,7 @@ export function parseProject(input,{allowLegacy=true}={}){
   input.rules?.doorWidthAppliesTo!==(input.mode==='new-level'?'all':'new-and-edited'))fail('breddregler');
  const g=input.ground;if(!rect(g?.bounds)||!Number.isFinite(g.wallHeightDefault)||g.wallHeightDefault<.45||g.wallHeightDefault>6||!Array.isArray(g.floors)||g.floors.length>100)fail('grundyta');
  const ids=new Set();const unique=id=>{if(ids.has(id))fail('dubbelt ID: '+id);ids.add(id);};
- for(const f of g.floors){validateFloorRect(f);if(!['room','corridor'].includes(f.role)||!['carpet','vinyl','office-carpet'].includes(f.surface)||
+ for(const f of g.floors){validateFloorRect(f);if(!['room','corridor'].includes(f.role)||!FLOOR_FINISHES.includes(f.surface)||
   f.x0<g.bounds.x0||f.x1>g.bounds.x1||f.z0<g.bounds.z0||f.z1>g.bounds.z1)fail('golvyta '+f.id);unique(f.id);}
  const a=input.architecture;if(a?.schemaVersion!==1||!['edits','added','removed','floors'].every(k=>Array.isArray(a[k]))||
   a.edits.length>600||a.added.length>250||a.removed.length>600||a.floors.length>100)fail('arkitektur');
@@ -111,9 +112,10 @@ export function parseProject(input,{allowLegacy=true}={}){
  }
  const sourceData=input.mode==='edit-floor5'?floor5Baseline().data:null;validateOpenedAreas(input,sourceData);validateFloorEdits(input,sourceData);
  const paintIds=new Set([...a.added,...g.floors,...a.floors,...(sourceData?[...floor5Baseline().entries,...sourceData.rooms,...sourceData.corridors,...closedAreas(sourceData)]:[])].map(e=>e.id));validateSurfaceColors(input,paintIds);
+ const wallIds=new Set([...a.added,...(sourceData?floor5Baseline().entries:[])].filter(e=>e.kind==='wall').map(e=>e.id));validateSurfaceMaterials(input,wallIds);
  // Floor 5 appearance is an opt-in source-preserving override keyed by original room ID.
  if(input.floorFinishes!==undefined){
-  const finishes=input.floorFinishes,allowed=new Set(['carpet','vinyl','office-carpet']);
+  const finishes=input.floorFinishes,allowed=new Set(FLOOR_FINISHES);
   const floorIds=new Set([...g.floors,...a.floors,...(sourceData?[...sourceData.rooms,...sourceData.corridors].filter(f=>f.status!=='uncertain'):[])].map(f=>f.id));
   if(!finishes||typeof finishes!=='object'||Array.isArray(finishes)||Object.keys(finishes).length>100)fail('golvfinish');
   for(const [id,finish] of Object.entries(finishes))if(!floorIds.has(id)||!allowed.has(finish))fail('okänd golvfinish eller golvyta: '+id);

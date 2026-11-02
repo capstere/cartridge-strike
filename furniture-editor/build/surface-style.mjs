@@ -1,13 +1,20 @@
 /** Optional schema-2 appearance overrides. Geometry and original materials stay unchanged. */
 import {FINISH_COLORS,architecturalFinish} from '../appearance.mjs';
+import {floorBaseColor,WALL_PATTERNS} from './pattern-presets.mjs?v=5.6.0';
 export const validPaint=value=>typeof value==='string'&&/^#[0-9a-f]{6}$/i.test(value);
 export function surfaceColor(project,item){return project.surfaceColors?.[item.id]||
- (item.kind?FINISH_COLORS[architecturalFinish(item.kind,item.finish)]:item.surface==='office-carpet'?'#6e6765':item.surface==='vinyl'?'#b7d6d0':'#d8cbbb');}
+ (item.kind?FINISH_COLORS[architecturalFinish(item.kind,item.finish)]:floorBaseColor(item.surface));}
 export function validateSurfaceColors(project,ids){
  if(project.surfaceColors===undefined)return;
  const colors=project.surfaceColors;
  if(!colors||typeof colors!=='object'||Array.isArray(colors)||Object.keys(colors).length>1000)throw Error('Ogiltiga ytfärger.');
  for(const [id,color] of Object.entries(colors))if(!ids.has(id)||!validPaint(color))throw Error('Ogiltig ytfärg eller okänd byggdel: '+id);
+}
+export function validateSurfaceMaterials(project,wallIds){
+ if(project.surfaceMaterials===undefined)return;
+ const v=project.surfaceMaterials;
+ if(!v||typeof v!=='object'||Array.isArray(v)||Object.keys(v).length>600)throw Error('Ogiltiga väggmaterial.');
+ for(const [id,pattern] of Object.entries(v))if(!wallIds.has(id)||!WALL_PATTERNS.includes(pattern))throw Error('Okänt väggmaterial eller vägg: '+id);
 }
 /** The same source records feed studio preview and the FPS renderer. */
 export function paintDescription(description,data){
@@ -31,26 +38,35 @@ export function paintDescription(description,data){
    header.x=door.a[0]+ux*(lo+hi)/2-uz*offset;header.z=door.a[1]+uz*(lo+hi)/2+ux*offset;header.d=wall.thickness+.0001;header.w=hi-lo;
    header.h=Math.max(.001,wall.height-2.29);header.y=2.29+header.h/2;
    if(wall.studioColor)header.studioColor=wall.studioColor;
+   if(wall.studioPattern)header.studioPattern=wall.studioPattern;
   }
  }
  for(const wall of data.walls)if(wall.studioColor)for(const box of description.boxes){
   if((box.id===wall.id||box.id.startsWith(wall.id+'-'))&&!['glass','frosted','blue-graphic'].includes(box.material)&&!box.id.endsWith('-skirt'))box.studioColor=wall.studioColor;
+ }
+ for(const wall of data.walls)if(wall.studioPattern)for(const box of description.boxes){
+  if((box.id===wall.id||box.id.startsWith(wall.id+'-'))&&!['glass','frosted','blue-graphic'].includes(box.material)&&!box.id.endsWith('-skirt'))box.studioPattern=wall.studioPattern;
  }
  for(const zone of [...data.rooms,...data.corridors])if(zone.studioColor){const surface=description.surfaces.find(s=>s.id==='finish-'+zone.id);if(surface)surface.studioColor=zone.studioColor;}
  for(const door of data.doors)if(door.studioColor)for(const box of description.boxes)if(box.id===door.id+'-leaf'||box.id===door.id+'-sealed-leaf')box.studioColor=door.studioColor;
  return description;
 }
 /** Carry a wall's paint to surviving pieces when a door splits its span. */
+/** Carry user paint and tile selections across wall splits and strip dead IDs. */
 export function reconcileSurfaceColors(project,previous,entries,oldEntries,floors){
- if(!project.surfaceColors)return;
+ if(!project.surfaceColors&&!project.surfaceMaterials)return;
  const oldIds=new Set(oldEntries.map(e=>e.id));
  const contains=(outer,inner)=>inner.a&&inner.b&&[inner.a,inner.b].every(([x,z])=>{
   const dx=outer.b[0]-outer.a[0],dz=outer.b[1]-outer.a[1],len2=dx*dx+dz*dz,t=((x-outer.a[0])*dx+(z-outer.a[1])*dz)/len2;
   return len2>0&&t>=-1e-5&&t<=1+1e-5&&Math.abs((x-outer.a[0])*dz-(z-outer.a[1])*dx)<1e-5*Math.sqrt(len2);
  });
- for(const e of entries)if(!oldIds.has(e.id)&&!project.surfaceColors[e.id]){
-  const parent=oldEntries.find(old=>old.kind===e.kind&&previous.surfaceColors?.[old.id]&&old.a&&contains(old,e));
-  if(parent)project.surfaceColors[e.id]=previous.surfaceColors[parent.id];
+ for(const key of ['surfaceColors','surfaceMaterials']){
+  const layer=project[key];if(!layer)continue;
+  for(const e of entries)if(!oldIds.has(e.id)&&!layer[e.id]){
+   const parent=oldEntries.find(old=>old.kind===e.kind&&previous[key]?.[old.id]&&old.a&&contains(old,e));
+   if(parent)layer[e.id]=previous[key][parent.id];
+  }
+  const ids=new Set((key==='surfaceMaterials'?entries.filter(e=>e.kind==='wall'):[...entries,...floors]).map(e=>e.id));
+  for(const id of Object.keys(layer))if(!ids.has(id))delete layer[id];
  }
- const ids=new Set([...entries,...floors].map(e=>e.id));for(const id of Object.keys(project.surfaceColors))if(!ids.has(id))delete project.surfaceColors[id];
 }

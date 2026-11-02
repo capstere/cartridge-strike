@@ -1,5 +1,5 @@
 import test from 'node:test';import assert from 'node:assert/strict';
-import {createCurtain,createBlind,parseTreatments,treatmentPosition} from './treatments.mjs?v=5.1.0';
+import {createCurtain,createBlind,parseTreatments,treatmentPosition,curtainSideForHit} from './treatments.mjs?v=5.6.0';
 import {exportArchitecture,parseArchitecture} from './architecture.mjs?v=5.1.0';
 const wall={id:'WALL-0001',source:true,kind:'wall',a:[2,4],b:[8,4],height:2.85,thickness:.1,sill:.9,finish:'white'};
 const win={...wall,id:'WALL-0002',kind:'window',a:[2,8],b:[4,8]};
@@ -31,4 +31,20 @@ test('invalid wall/short line/out-of-wall/harmful IDs and opaque formats rejecte
  assert.throws(()=>parseTreatments([{...p,wallId:'MISSING'}],[wall]),/finns inte/);
  assert.throws(()=>parseTreatments([p,p],[wall]),/Dubbelt/);
  assert.throws(()=>parseTreatments([{...p,id:'../bad'}],[wall]),/Ogiltigt/);
+});
+
+test('opaque white is the default for new curtains; older sheer remains readable',()=>{
+ const p=createCurtain([win],[],win.id,[2.03,8],[3.97,8],{side:-1});
+ assert.equal(p.style,'white-opaque');assert.equal(p.side,-1);
+ assert(treatmentPosition({...p,side:1},[win]).center[1]>8);
+ assert(treatmentPosition(p,[win]).center[1]<8);
+ assert.equal(parseTreatments([{...p,style:undefined}],[win])[0].style,undefined);
+ assert.throws(()=>parseTreatments([{...p,style:'unknown'}],[win]),/gardintyp/);
+});
+test('curtain clicks use glass face normal and the actual room side',()=>{
+ const room={polygon:[[2,5],[4,5],[4,8],[2,8]]};
+ assert.equal(curtainSideForHit(win,{x:3,z:8},[room]),-1);
+ assert.equal(curtainSideForHit(win,{x:3,z:8,normal:{x:0,z:-1}},[room]),-1);
+ assert.equal(curtainSideForHit({...win,a:win.b,b:win.a},{x:3,z:8},[room]),1);
+ assert.equal(curtainSideForHit(win,{x:3,z:8,normal:{x:0,z:1}},[room]),1);
 });
