@@ -1,7 +1,7 @@
 /** Panel/hinge/handle construction adapted from Riposte panelDoor, 02d-archi.js
  * (MIT, BenDBSS 2026). Instanced, fitted to existing source apertures.
  */
-import {frostedDoorParts,frostedGlassMaterial,createWcDoorBadge} from './frosted-door.mjs?v=5.1.0';
+import {frostedDoorParts,frostedGlassMaterial,createWcDoorBadge} from './frosted-door.mjs?v=5.4.0';
 import * as T from '../../vendor/three/three.module.js';
 import {RoundedBoxGeometry} from '../../vendor/three/addons/geometries/RoundedBoxGeometry.js';
 import {mergeGeometries,mergeVertices} from '../../vendor/three/addons/utils/BufferGeometryUtils.js';
