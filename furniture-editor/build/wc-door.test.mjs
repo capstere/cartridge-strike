@@ -39,7 +39,7 @@ test('WC leaf is traversable by real moving capsule from both sides',()=>{
 
 test('ordinary passages keep 1.10 minimum, while WC has a 0.65 minimum',()=>{
  assert.equal(WC_MIN_PASSAGE_WIDTH,.65);
- assert.equal(entryLength(standardPassageSpan([0,0],[2,0])),1.2);
+ assert(Math.abs(entryLength(standardPassageSpan([0,0],[2,0]))-1.2)<1e-9);
  assert.throws(()=>standardPassageSpan([0,0],[2,0],.85),/1,10/);
  assert.equal(entryLength(standardPassageSpan([0,0],[2,0],.85,{minWidth:WC_MIN_PASSAGE_WIDTH})),.85);
  assert.throws(()=>standardPassageSpan([0,0],[2,0],.64,{minWidth:WC_MIN_PASSAGE_WIDTH}),/0,65/);
