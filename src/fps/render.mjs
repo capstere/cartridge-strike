@@ -4,7 +4,9 @@ import {GlassVisuals} from './glass-visuals.mjs';
 import {buildRiposteProps} from './riposte-props.mjs';
 import {makeWeapon} from './models.mjs';
 import {WEAPONS} from './config.mjs';
-import {buildProjectFurniture,buildProjectDecorations} from '../../furniture-editor/build/project-visuals.mjs?v=5.1.0';
+import {buildProjectFurniture,buildProjectDecorations} from '../../furniture-editor/build/project-visuals.mjs?v=5.6.0';
+import {hasPattern} from '../../furniture-editor/build/pattern-presets.mjs?v=5.6.0';
+import {patternMaterial} from '../../furniture-editor/build/pattern-materials.mjs?v=5.6.0';
 import {buildFacilityScene} from './facility-scene.mjs';
 import {installFocusLighting} from './strike-kit-environment.mjs';
 import {VisualDepth} from './visual-depth.mjs';
@@ -167,6 +169,12 @@ export class Renderer extends EngineRenderer {
     }
   }
   materialFor(b){
+    const pattern=b.studioPattern||b.material;
+    if(this.world.newLevel&&!b.studioColor&&hasPattern(pattern)){
+      this.floor5PatternMaterials||=new Map();
+      if(!this.floor5PatternMaterials.has(pattern))this.floor5PatternMaterials.set(pattern,patternMaterial(pattern));
+      return this.floor5PatternMaterials.get(pattern);
+    }
     if(this.world.newLevel&&b.studioColor)return this.registry.get(['carpet','office-carpet','vinyl','metal'].includes(b.material)?b.material:'wall',{color:b.studioColor,side:THREE.DoubleSide});
     if(b.id==='finish-I12')return this.registry.get('vinyl',{color:0x56676d,roughness:.53,normalScale:new THREE.Vector2(.08,.08)});
     if(['finish-I13','finish-I21','finish-I38'].includes(b.id))return this.registry.get('vinyl',{color:b.id==='finish-I12'?0x777f7d:0x8d9998,roughness:.86});
@@ -188,6 +196,7 @@ export class Renderer extends EngineRenderer {
     this.glassVisuals?.dispose();this.detailScene?.dispose();this.doorVisuals?.dispose();this.riposteProps?.dispose();
     this.focusLighting?.dispose();this.facilityScene?.dispose();
     for(const restore of this.presentationRestores||[])restore();
+     for(const m of this.floor5PatternMaterials?.values()||[])m.dispose();this.floor5PatternMaterials?.clear();
     window.removeEventListener('keydown',this.onInspectKey);this.renderer.render=this.nativeRender;this.visualDepth?.dispose();this.combatVisuals?.dispose();this.actionVisuals?.dispose();disposeCharacterLibrary();this.presentationRestores=[];this.presentationField?.dispose();this.livingScene?.dispose();super.dispose();
   }
 }
