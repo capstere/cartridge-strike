@@ -61,4 +61,7 @@ test('existing narrow toilet doors keep their source dimensions and accept a vis
   assert.deepEqual(after.a,before.a);assert.deepEqual(after.b,before.b);
   assert.equal(after.doorStyle,'wc');
  }
+ const rows=testDoorTraversal(createWorld({levelProject:round,fresh:true}),{ids:new Set(['D43','D44','D45','D46','D47','D63'])});
+ assert.equal(rows.length,12);
+ assert(rows.every(r=>r.status==='pass'),JSON.stringify(rows));
 });
