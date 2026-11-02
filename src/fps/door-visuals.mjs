@@ -28,8 +28,20 @@ export async function buildDoorVisuals(system){
   box(seals,.5,2.26,sign*.02,1,.018,.018);
  }
  for(const y of [.28,1.14,2.05]){const g=new T.CylinderGeometry(.022,.022,.12,10);g.translate(.012,y,0);metal.push(g);}
- const leaves=system.doors.filter(d=>d.doorStyle!=='frosted').flatMap(d=>d.leaves),batches=[];
+ const leaves=system.doors.filter(d=>d.doorStyle!=='frosted'&&d.doorStyle!=='office').flatMap(d=>d.leaves),batches=[];
  const frosted=system.doors.filter(d=>d.doorStyle==='frosted').flatMap(d=>d.leaves),glass=frosted.length?frostedGlassMaterial():null;
+ const officeGroups=system.doors.filter(d=>d.doorStyle==='office').flatMap(d=>d.leaves.map(leaf=>{
+  const group=new T.Group();group.name=leaf.door.id+'-office';
+  const panelMaterial=new T.MeshStandardMaterial({color:leaf.door.studioColor||0x817c78,roughness:.79,metalness:.02});
+  const hardware=new T.MeshStandardMaterial({color:0xa0a3a2,metalness:.72,roughness:.33});
+  const body=new T.Mesh(new RoundedBoxGeometry(leaf.w,2.23,.065,2,.006),panelMaterial);
+  body.position.set(leaf.w/2,1.15,0);body.castShadow=true;body.receiveShadow=true;body.name='office-panel';group.add(body);
+  for(const sign of [-1,1]){
+   const plate=new T.Mesh(new T.BoxGeometry(.085,.12,.009),hardware);plate.position.set(leaf.w*.79,1.04,sign*.041);group.add(plate);
+   const lever=new T.Mesh(new T.BoxGeometry(.17,.026,.044),hardware);lever.position.set(leaf.w*.76,1.05,sign*.070);group.add(lever);
+  }
+  root.add(group);return {leaf,group,panelMaterial,hardware};
+ }));
  const wcBadges=system.doors.filter(d=>d.doorStyle==='wc').flatMap(d=>d.leaves.map(leaf=>{const badge=createWcDoorBadge(leaf.w);badge.group.name=leaf.door.id+'-wc-badge';root.add(badge.group);return {leaf,...badge};}));
  const glassGroups=frosted.map(leaf=>{const group=new T.Group();group.name=leaf.door.id+'-frosted';const frame=new T.MeshStandardMaterial({color:leaf.door.studioColor||0x87989e,roughness:.4,metalness:.5});
   for(const p of frostedDoorParts(leaf.w)){const mesh=new T.Mesh(new T.BoxGeometry(p.w,p.h,p.d),p.part==='glass'?glass:frame);mesh.name=p.part;mesh.position.set(p.x,p.y,p.z);mesh.castShadow=p.part!=='glass';mesh.receiveShadow=true;group.add(mesh);}root.add(group);return {leaf,group,frame};});
@@ -43,6 +55,7 @@ export async function buildDoorVisuals(system){
  const colors=leaves.map(l=>new T.Color(l.door.studioColor||(l.door.doorStyle==='wc'?0xf3f3ef:l.door.accessCard?0x527b80:0xc4c3af)));let lastSignature='',visibleCount=leaves.length;
  function update(camera=null,lights=[]){
   for(const {leaf,group} of glassGroups){group.position.set(leaf.x,0,leaf.z);group.rotation.y=leaf.box.angle;}
+  for(const {leaf,group} of officeGroups){group.position.set(leaf.x,0,leaf.z);group.rotation.y=leaf.box.angle;}
    for(const {leaf,group} of wcBadges){group.position.set(leaf.x,0,leaf.z);group.rotation.y=leaf.box.angle;}
   if(camera){camera.updateMatrixWorld();frustum.setFromProjectionMatrix(projection.multiplyMatrices(camera.projectionMatrix,camera.matrixWorldInverse));}
   const shadows=[];
@@ -60,5 +73,5 @@ export async function buildDoorVisuals(system){
   for(const batch of batches){batch.count=visible.length;batch.instanceMatrix.needsUpdate=true;}
   if(batches[0].instanceColor)batches[0].instanceColor.needsUpdate=true;return true;
  }
- update();return {root,update,get visibleCount(){return visibleCount+glassGroups.length+wcBadges.length;},report:system.report,dispose(){root.removeFromParent();for(const b of batches){b.geometry.dispose();b.dispose();}for(const h of handles)h.release();rubber.dispose();for(const {group,frame} of glassGroups){group.children.forEach(m=>m.geometry.dispose());frame.dispose();}for(const badge of wcBadges)badge.dispose();glass?.dispose();pbr.dispose();}};
+ update();return {root,update,get visibleCount(){return visibleCount+glassGroups.length+wcBadges.length+officeGroups.length;},report:system.report,dispose(){root.removeFromParent();for(const b of batches){b.geometry.dispose();b.dispose();}for(const h of handles)h.release();rubber.dispose();for(const {group,frame} of glassGroups){group.children.forEach(m=>m.geometry.dispose());frame.dispose();}for(const badge of wcBadges)badge.dispose();for(const o of officeGroups){o.group.traverse(m=>m.geometry?.dispose());o.panelMaterial.dispose();o.hardware.dispose();}glass?.dispose();pbr.dispose();}};
 }

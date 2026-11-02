@@ -2,7 +2,7 @@
 import {FINISH_COLORS,architecturalFinish} from '../appearance.mjs';
 export const validPaint=value=>typeof value==='string'&&/^#[0-9a-f]{6}$/i.test(value);
 export function surfaceColor(project,item){return project.surfaceColors?.[item.id]||
- (item.kind?FINISH_COLORS[architecturalFinish(item.kind,item.finish)]:item.surface==='vinyl'?'#b7d6d0':'#d8cbbb');}
+ (item.kind?FINISH_COLORS[architecturalFinish(item.kind,item.finish)]:item.surface==='office-carpet'?'#6e6765':item.surface==='vinyl'?'#b7d6d0':'#d8cbbb');}
 export function validateSurfaceColors(project,ids){
  if(project.surfaceColors===undefined)return;
  const colors=project.surfaceColors;
@@ -34,7 +34,7 @@ export function paintDescription(description,data){
   }
  }
  for(const wall of data.walls)if(wall.studioColor)for(const box of description.boxes){
-  if((box.id===wall.id||box.id.startsWith(wall.id+'-'))&&!['glass','frosted'].includes(box.material)&&!box.id.endsWith('-skirt'))box.studioColor=wall.studioColor;
+  if((box.id===wall.id||box.id.startsWith(wall.id+'-'))&&!['glass','frosted','blue-graphic'].includes(box.material)&&!box.id.endsWith('-skirt'))box.studioColor=wall.studioColor;
  }
  for(const zone of [...data.rooms,...data.corridors])if(zone.studioColor){const surface=description.surfaces.find(s=>s.id==='finish-'+zone.id);if(surface)surface.studioColor=zone.studioColor;}
  for(const door of data.doors)if(door.studioColor)for(const box of description.boxes)if(box.id===door.id+'-leaf'||box.id===door.id+'-sealed-leaf')box.studioColor=door.studioColor;
