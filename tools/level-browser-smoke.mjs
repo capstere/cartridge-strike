@@ -62,7 +62,9 @@ try{
  await page.locator('[data-tool="window"]').click();at=await page.evaluate(()=>__levelStudio.screenWorldPoint(8,5));await page.mouse.click(at.x,at.y);
  assert.equal(await page.evaluate(()=>__levelStudio.project.architecture.added.filter(e=>e.kind==='window').length),1);
  await page.locator('[data-tab="furnish"]').click();
- assert.equal(await page.locator('#catalogCards .catalog-card').count(),277, '104 existing GLBs + 36 procedural + 15 onboard + 122 owner-approved house assets');
+ assert.equal(await page.locator('#catalogCards .catalog-card').count(),279, '104 existing GLBs + 36 procedural + 15 onboard + 122 owner-approved house + 2 GeneXpert assets');
+ assert.equal(await page.locator('#catalogCards [data-asset="genexpert:gx16"]').count(),1);
+ assert.equal(await page.locator('#catalogCards [data-asset="genexpert:infinity80"]').count(),1);
  assert(await page.locator('#catalogCards img').count()>90);
  await page.locator('#catalogCards [data-asset="studio:desk-120"]').click();
  at=await page.evaluate(()=>__levelStudio.screenWorldPoint(5,5));await page.mouse.click(at.x,at.y);
