@@ -2,7 +2,7 @@ name: Materialize verified Studio 5.7 patch
 on:
   push:
     branches: [fix/studio57-seams-curtains-materials]
-    paths: ['tools/studio57-delta.*']
+    paths: ['tools/studio57-delta.*', '.github/workflows/studio57-materialize.yml']
 permissions:
   contents: write
 jobs:
@@ -12,8 +12,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          fetch-depth: 2
-      - name: Verify and materialize exact locally tested files
+          fetch-depth: 3
+      - name: Verify and materialize exact locally tested source files
         shell: bash
         run: |
           set -euo pipefail
@@ -24,8 +24,7 @@ jobs:
           raw = gzip.decompress(base64.b64decode(encoded, validate=True))
           assert sha(raw) == '3296194d4e1969847ab9edcaecfb1a44c1d058b17145f8ef3298b9422f5d7431', 'Payload checksum mismatch'
           payload = json.loads(raw)
-          parent = subprocess.check_output(['git','rev-parse','HEAD^'], text=True).strip()
-          assert parent == payload['baseCommit'], 'Unexpected branch ancestry'
+          subprocess.run(['git','merge-base','--is-ancestor',payload['baseCommit'],'HEAD'], check=True)
           assert len(payload['files']) == 31
           prepared = []
           for row in payload['files']:
@@ -44,13 +43,14 @@ jobs:
                       text = text[:start] + replacement + text[end:]
               out = text.encode('utf-8')
               assert sha(out) == row['sha256'], f'Target checksum mismatch: {path}'
-              prepared.append((path,out))
+              if not row['path'].startswith('.github/'):
+                  prepared.append((path,out))
           for path,out in prepared:
               path.parent.mkdir(parents=True, exist_ok=True)
               path.write_bytes(out)
-          print('Verified and wrote',len(prepared),'exact source files; no private project assets.')
+          print('Verified and wrote',len(prepared),'exact source files. Workflow updates are applied separately by the authorized connector.')
           PY
-          rm tools/studio57-delta.{1,2,3} .github/workflows/studio57-materialize.yml
+          rm tools/studio57-delta.{1,2,3}
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add -A
