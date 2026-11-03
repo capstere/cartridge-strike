@@ -34,10 +34,10 @@ try{
  const mid=await page.evaluate(()=>__levelStudio.screenWorldPoint(0,0));await page.mouse.click(mid.x,mid.y);
  let curtain=(await get()).architecture.treatments.at(-1);assert.equal(curtain.style,'sheer');
  await page.locator('#threeView').click();
- let fabrics=await page.evaluate(id=>__levelStudio.visualColors.filter(x=>x.id===id&&x.curtainStyle),curtain.id);
+ let fabrics=await page.evaluate(id=>__levelStudio.decorationVisuals.filter(x=>x.id===id&&x.curtainStyle),curtain.id);
  assert.equal(fabrics.length,1);assert.equal(fabrics[0].opacity,.32);assert.equal(fabrics[0].depthWrite,false);
  await page.locator('#curtainStyle').selectOption('botanical-sheer');
- fabrics=await page.evaluate(id=>__levelStudio.visualColors.filter(x=>x.id===id&&x.curtainStyle),curtain.id);
+ fabrics=await page.evaluate(id=>__levelStudio.decorationVisuals.filter(x=>x.id===id&&x.curtainStyle),curtain.id);
  assert.equal(fabrics[0].map,'floor5-botanical-voile');
  await page.locator('#undo').click();assert.equal((await get()).architecture.treatments.at(-1).style,'sheer');
  await page.locator('#redo').click();assert.equal((await get()).architecture.treatments.at(-1).style,'botanical-sheer');
@@ -79,4 +79,8 @@ try{
  assert.equal(roundtrip,'dark-large-stone');assert.deepEqual(errors,[]);
  writeFileSync(out+'/result.json',JSON.stringify({status:'PASS',nativeZIP:true,editorMeshes:true,fpsMeshes:true,alpha,reopenedFloor:roundtrip,errors},null,2));
  console.log('Window/curtain/material browser regression PASS');
+}catch(error){
+ await page.screenshot({path:out+'/failure.png'}).catch(()=>{});
+ const state=await page.evaluate(()=>({selected:window.__levelStudio?.selected,view:window.__levelStudio?.viewState,status:document.querySelector('#status')?.textContent,decorations:window.__levelStudio?.decorationVisuals,treatments:window.__levelStudio?.project?.architecture?.treatments})).catch(()=>null);
+ writeFileSync(out+'/failure.json',JSON.stringify({message:error.message,stack:error.stack,state,errors},null,2));throw error;
 }finally{await browser.close();}
