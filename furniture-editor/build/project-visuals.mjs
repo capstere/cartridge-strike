@@ -1,3 +1,4 @@
+import {createCurtainMesh} from './curtain-mesh.mjs?v=5.7.0';
 import {fittedSize,wallFootprint} from '../model-alignment.mjs?v=5.0.0';
 import * as T from '../../vendor/three/three.module.js';
 import {addModelToGroup,getLocalFile,importLocalGLB} from '../library/models.mjs?v=5.0.0';
@@ -6,7 +7,7 @@ import {proceduralOf} from '../library/procedural.mjs?v=5.0.0';
 import {populateProcedural,populateDiningChair} from '../library/procedural-mesh.mjs?v=5.0.0';
 import {locatePoster} from './posters.mjs';
 import {createPosterTexture} from './poster-art.mjs';
-import {treatmentPosition} from './treatments.mjs?v=5.6.0';
+import {treatmentPosition} from './treatments.mjs?v=5.7.0';
 
 export function buildProjectDecorations(project,entries,root,onReady){
  for(const poster of project.architecture.posters||[]){
@@ -19,22 +20,15 @@ export function buildProjectDecorations(project,entries,root,onReady){
  for(const item of project.architecture.treatments||[]){
   const at=treatmentPosition(item,entries);if(!at)continue;
   const holder=new T.Group();holder.userData.editId=item.id;holder.position.set(at.center[0],0,at.center[1]);holder.rotation.y=at.angle;root.add(holder);
-  const curtain=item.type==='curtain',opaque=curtain&&item.style==='white-opaque';
-  const bottom=curtain?.06:(at.wall.kind==='window'?at.wall.sill:.2),top=at.wall.height-.08;
-  const material=new T.MeshStandardMaterial({color:curtain?(opaque?0xf9f8f5:0xf2f4ed):0x58656a,
-   side:T.DoubleSide,transparent:curtain&&!opaque,opacity:curtain&&!opaque?.32:1,roughness:opaque?.95:.85,depthWrite:!curtain||opaque});
+  if(item.type==='curtain'){holder.add(createCurtainMesh(item,at));continue;}
+  const bottom=at.wall.kind==='window'?at.wall.sill:.2,top=at.wall.height-.08;
+  const material=new T.MeshStandardMaterial({color:0x58656a,side:T.DoubleSide,roughness:.85});
   material.userData.studioOwned=true;
-  const count=curtain?Math.max(4,Math.ceil(at.width/.12)):Math.max(4,Math.ceil((top-bottom)/.08));
-  // Solid backing conceals the room. Pleats can never form see-through seams.
-  if(opaque){const backing=new T.Mesh(new T.BoxGeometry(at.width,top-bottom,.018),material);
-   backing.position.y=(top+bottom)/2;holder.add(backing);}
+  const count=Math.max(4,Math.ceil((top-bottom)/.08));
   for(let i=0;i<count;i++){
-   const mesh=new T.Mesh(new T.BoxGeometry(curtain?at.width/count+.002:.01+at.width,curtain?top-bottom:.04,curtain?.021:.03),material);
-   mesh.position.set(curtain?-at.width/2+at.width*(i+.5)/count:0,curtain?(top+bottom)/2:bottom+(top-bottom)*(i+.5)/count,curtain?(i%2)*.038:0);holder.add(mesh);
+   const mesh=new T.Mesh(new T.BoxGeometry(at.width+.01,.04,.03),material);
+   mesh.position.set(0,bottom+(top-bottom)*(i+.5)/count,0);holder.add(mesh);
   }
-  if(opaque){const rodMaterial=new T.MeshStandardMaterial({color:0xd8d8d4,metalness:.3,roughness:.45});rodMaterial.userData.studioOwned=true;
-   const rod=new T.Mesh(new T.CylinderGeometry(.018,.018,at.width+.08,10),rodMaterial);
-   rod.rotation.z=Math.PI/2;rod.position.y=top+.02;rod.userData.studioGeometry=true;holder.add(rod);}
  }
 }
 

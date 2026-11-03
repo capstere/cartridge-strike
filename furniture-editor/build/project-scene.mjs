@@ -5,13 +5,19 @@ import '../../src/floor5-data.js';
 import '../../src/world.js?v=5.5.0';
 import {createFurnishings} from '../../src/fps/furnishings.mjs';
 import {catalog,inside,distanceSegment,EDITABLE_KINDS,exportPatch,isChanged} from '../core.mjs?v=5.0.0';
-import {readBaseline,parseArchitecture,exportArchitecture,wallPieces,isDoor} from './architecture.mjs?v=5.5.0';
+import {readBaseline,parseArchitecture,exportArchitecture,wallPieces,isDoor} from './architecture.mjs?v=5.7.0';
 
 /** Shared walls may overlap after adjacent rooms are drawn. A fitted window
  * replaces every underlying solid span, just as a door cuts every wall layer. */
-export function projectWallPieces(entries){
+export function projectWallPieces(entries,{glazingClearance=0}={}){
  const live=entries.filter(e=>!e.deleted),doors=live.filter(e=>isDoor(e.kind)),glazing=live.filter(e=>['window','glazed'].includes(e.kind));
- const opaque=wallPieces([...live.filter(e=>e.kind==='wall'),...doors,...glazing.map(e=>({...e,kind:'opening'}))]);
+ // A window replaces a wall; it is not a loose door leaf. The old 0.015
+ // door allowance exposed full-height slits beside its sill and header.
+ // Keep real door clearance unchanged, including when a door crosses glass.
+ const solids=live.filter(e=>e.kind==='wall');
+ const opaque=glazingClearance===.015
+  ?wallPieces([...solids,...doors,...glazing.map(e=>({...e,kind:'opening'}))])
+  :wallPieces([...wallPieces([...solids,...doors]),...glazing.map(e=>({...e,kind:'opening'}))],{clearance:glazingClearance});
  const pieces=[...opaque,...wallPieces([...glazing,...doors])],seen=new Set();
  return pieces.filter(e=>{const points=[e.a,e.b].map(p=>p.map(n=>Math.round(n*10000)/10000).join(',')).sort();
   const key=[e.kind,...points,e.height,e.thickness,e.sill].join('|');if(seen.has(key))return false;seen.add(key);return true;});
