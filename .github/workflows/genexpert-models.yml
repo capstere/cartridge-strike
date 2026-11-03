@@ -1,0 +1,59 @@
+name: GeneXpert Studio and FPS models
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'furniture-editor/**'
+      - 'src/fps/**'
+      - 'tools/genexpert-browser.mjs'
+      - '.github/workflows/genexpert-models.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'furniture-editor/library/genexpert*'
+      - 'furniture-editor/library/models/genexpert/**'
+      - 'furniture-editor/library/thumbs/genexpert/**'
+      - 'tools/genexpert-browser.mjs'
+      - '.github/workflows/genexpert-models.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: genexpert-models-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Original GLB integrity, bounds, placement, ZIP and collision
+        run: |
+          node --check tools/genexpert-browser.mjs
+          node --experimental-loader ./tools/vendor-three-test-loader.mjs --test furniture-editor/library/genexpert.test.mjs
+          node tools/verify-owner-runtime.mjs
+      - name: Install existing pinned browser
+        run: |
+          npm ci --prefix frontline/source/tools/dev --ignore-scripts --no-audit --no-fund
+          node frontline/source/tools/dev/node_modules/playwright-core/cli.js install chromium
+      - name: Catalogue clicks, bench placement, textures, ZIP, undo and real FPS render
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -m http.server 8765 --bind 127.0.0.1 >/tmp/genexpert-http.log 2>&1 &
+          PID=$!
+          trap 'kill "$PID" || true' EXIT
+          for i in $(seq 1 20); do curl -fsS http://127.0.0.1:8765/furniture-editor/new.html >/dev/null && break; sleep 1; done
+          timeout 240s node tools/genexpert-browser.mjs
+      - name: Small synthetic screenshots and test receipt
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: genexpert-model-proof
+          path: test-results/genexpert/
+          retention-days: 1
+          if-no-files-found: ignore
+          compression-level: 9
