@@ -1,7 +1,7 @@
 import {createCurtainMesh} from './curtain-mesh.mjs?v=5.7.0';
-import {fittedSize,wallFootprint} from '../model-alignment.mjs?v=5.0.0';
+import {fittedSize,wallFootprint} from '../model-alignment.mjs?v=5.7.1';
 import * as T from '../../vendor/three/three.module.js';
-import {addModelToGroup,getLocalFile,importLocalGLB} from '../library/models.mjs?v=5.0.0';
+import {addModelToGroup,getLocalFile,importLocalGLB} from '../library/models.mjs?v=5.7.1';
 import {assetHash} from '../library/glb-utils.mjs';
 import {proceduralOf} from '../library/procedural.mjs?v=5.0.0';
 import {populateProcedural,populateDiningChair} from '../library/procedural-mesh.mjs?v=5.0.0';

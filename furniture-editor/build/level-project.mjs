@@ -1,20 +1,20 @@
 import {validateFloorEdits} from './floor-edge.mjs?v=5.1.0';
 import {validateSurfaceColors,validateSurfaceMaterials} from './surface-style.mjs?v=5.7.0';
 import {FLOOR_FINISHES} from './pattern-presets.mjs?v=5.6.1';
-import {validateOpenedAreas,closedAreas} from './walkable-spaces.mjs?v=5.0.0';
-import {validModelAlignment} from '../model-alignment.mjs?v=5.0.0';
+import {validateOpenedAreas,closedAreas} from './walkable-spaces.mjs?v=5.7.1';
+import {validModelAlignment} from '../model-alignment.mjs?v=5.7.1';
 /** Versioned level document. Parsing is deliberately independent of the renderer. */
-import {BASE_COMMIT,GAME_VERSION,PATCH_FORMAT,PATCH_SCHEMA} from '../core.mjs?v=5.0.0';
+import {BASE_COMMIT,GAME_VERSION,PATCH_FORMAT,PATCH_SCHEMA} from '../core.mjs?v=5.7.1';
 import {validateEntry,validateFloorRect} from './architecture.mjs?v=5.7.0';
 import {assetHash} from '../library/glb-utils.mjs';
 import {makeZip,readZip,PROJECT_ZIP_MAX_BYTES} from '../library/zip.mjs';
-import {floor5Baseline} from './project-scene.mjs?v=5.7.0';
+import {floor5Baseline} from './project-scene.mjs?v=5.7.1';
 import {parseArchitecture} from './architecture.mjs?v=5.7.0';
-import {LIBRARY_MAP} from '../library/catalog.mjs?v=5.0.0';
+import {LIBRARY_MAP} from '../library/catalog.mjs?v=5.7.1';
 import {parsePosters} from './posters.mjs';
 import {parseTreatments} from './treatments.mjs?v=5.7.0';
-import {collisionExport,aiAgentBrief} from './ai-export.mjs?v=5.7.0';
-import {validWallMount} from '../wall-mounts.mjs?v=5.0.0';
+import {collisionExport,aiAgentBrief} from './ai-export.mjs?v=5.7.1';
+import {validWallMount} from '../wall-mounts.mjs?v=5.7.1';
 
 export const LEVEL_FORMAT='cartridge-strike-level-project',LEVEL_SCHEMA=2;
 export const LEVEL_GAME_VERSION='0.18.0',LEVEL_BASE_COMMIT='f5c63a22483feeeb29583853dab0c0911af5c09a',LEVEL_EDITOR_VERSION='5.7.0';
