@@ -159,7 +159,7 @@ export function floorRect(id,a,b){return {id,x0:Math.min(a[0],b[0]),z0:Math.min(
  * openings in the *proposal preview*. This does NOT alter source-wall collision.
  * Only parallel, almost collinear doors can cut; perpendicular crossing cannot.
  */
-export function wallPieces(entries){
+export function wallPieces(entries,{clearance=.015}={}){
  const active=entries.filter(x=>!x.deleted),doorSpans=active.filter(x=>isDoor(x.kind));const output=[];
  for(const wall of active.filter(x=>isWall(x.kind))){
   const len=entryLength(wall),ux=(wall.b[0]-wall.a[0])/len,uz=(wall.b[1]-wall.a[1])/len;
@@ -170,7 +170,7 @@ export function wallPieces(entries){
    if(Math.max(dist(d.a),dist(d.b))>Math.max(wall.thickness/2+.045,.12))continue;
    const t0=(d.a[0]-wall.a[0])*ux+(d.a[1]-wall.a[1])*uz;
    const t1=(d.b[0]-wall.a[0])*ux+(d.b[1]-wall.a[1])*uz;
-   const l=Math.max(0,Math.min(t0,t1)-.015),r=Math.min(len,Math.max(t0,t1)+.015);
+   const l=Math.max(0,Math.min(t0,t1)-clearance),r=Math.min(len,Math.max(t0,t1)+clearance);
    if(r-l>.01)clips.push([l,r]);
   }
   clips.sort((a,b)=>a[0]-b[0]);let cursor=0;

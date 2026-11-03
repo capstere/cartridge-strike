@@ -1,3 +1,4 @@
+import {sealWindowBands} from './wall-joints.mjs?v=5.7.0';
 /** Optional schema-2 appearance overrides. Geometry and original materials stay unchanged. */
 import {FINISH_COLORS,architecturalFinish} from '../appearance.mjs';
 import {floorBaseColor,WALL_PATTERNS} from './pattern-presets.mjs?v=5.6.0';
@@ -49,7 +50,7 @@ export function paintDescription(description,data){
  }
  for(const zone of [...data.rooms,...data.corridors])if(zone.studioColor){const surface=description.surfaces.find(s=>s.id==='finish-'+zone.id);if(surface)surface.studioColor=zone.studioColor;}
  for(const door of data.doors)if(door.studioColor)for(const box of description.boxes)if(box.id===door.id+'-leaf'||box.id===door.id+'-sealed-leaf')box.studioColor=door.studioColor;
- return description;
+ return sealWindowBands(description,data);
 }
 /** Carry a wall's paint to surviving pieces when a door splits its span. */
 /** Carry user paint and tile selections across wall splits and strip dead IDs. */

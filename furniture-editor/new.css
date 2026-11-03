@@ -277,3 +277,11 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,su
 .floor5-interior-tools[hidden],.floor5-interior-tools button[hidden] { display: none; }
 .floor5-interior-tools .hint { margin: 0; }
 .floor5-interior-tools button { width: 100%; text-align: left; }
+
+/* The selected floor material belongs beside its colour, also on small screens. */
+.surface-dock{max-height:calc(100% - 70px);overflow-y:auto}
+.surface-dock #floorMaterialLabel{display:block;margin-bottom:10px}
+.surface-dock #floorMaterialLabel[hidden]{display:none}
+.surface-dock #selectedSurface{display:block;width:100%;min-height:44px;margin-top:5px}
+.curtain-tools{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:8px}
+.curtain-tools button{flex:1;min-width:90px;min-height:44px}

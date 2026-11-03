@@ -1,23 +1,23 @@
 import {validateFloorEdits} from './floor-edge.mjs?v=5.1.0';
-import {validateSurfaceColors,validateSurfaceMaterials} from './surface-style.mjs?v=5.6.1';
+import {validateSurfaceColors,validateSurfaceMaterials} from './surface-style.mjs?v=5.7.0';
 import {FLOOR_FINISHES} from './pattern-presets.mjs?v=5.6.1';
 import {validateOpenedAreas,closedAreas} from './walkable-spaces.mjs?v=5.0.0';
 import {validModelAlignment} from '../model-alignment.mjs?v=5.0.0';
 /** Versioned level document. Parsing is deliberately independent of the renderer. */
 import {BASE_COMMIT,GAME_VERSION,PATCH_FORMAT,PATCH_SCHEMA} from '../core.mjs?v=5.0.0';
-import {validateEntry,validateFloorRect} from './architecture.mjs?v=5.5.0';
+import {validateEntry,validateFloorRect} from './architecture.mjs?v=5.7.0';
 import {assetHash} from '../library/glb-utils.mjs';
 import {makeZip,readZip,PROJECT_ZIP_MAX_BYTES} from '../library/zip.mjs';
-import {floor5Baseline} from './project-scene.mjs?v=5.6.1';
-import {parseArchitecture} from './architecture.mjs?v=5.5.0';
+import {floor5Baseline} from './project-scene.mjs?v=5.7.0';
+import {parseArchitecture} from './architecture.mjs?v=5.7.0';
 import {LIBRARY_MAP} from '../library/catalog.mjs?v=5.0.0';
 import {parsePosters} from './posters.mjs';
-import {parseTreatments} from './treatments.mjs?v=5.6.1';
-import {collisionExport,aiAgentBrief} from './ai-export.mjs?v=5.5.0';
+import {parseTreatments} from './treatments.mjs?v=5.7.0';
+import {collisionExport,aiAgentBrief} from './ai-export.mjs?v=5.7.0';
 import {validWallMount} from '../wall-mounts.mjs?v=5.0.0';
 
 export const LEVEL_FORMAT='cartridge-strike-level-project',LEVEL_SCHEMA=2;
-export const LEVEL_GAME_VERSION='0.18.0',LEVEL_BASE_COMMIT='f5c63a22483feeeb29583853dab0c0911af5c09a',LEVEL_EDITOR_VERSION='5.1.0';
+export const LEVEL_GAME_VERSION='0.18.0',LEVEL_BASE_COMMIT='f5c63a22483feeeb29583853dab0c0911af5c09a',LEVEL_EDITOR_VERSION='5.7.0';
 const emptyArchitecture=()=>({schemaVersion:1,edits:[],added:[],removed:[],floors:[],posters:[],treatments:[]});
 const within=n=>typeof n==='number'&&Number.isFinite(n)&&Math.abs(n)<=100;
 const rect=r=>r&&[r.x0,r.z0,r.x1,r.z1].every(within)&&r.x1>r.x0&&r.z1>r.z0;
@@ -116,7 +116,8 @@ export function parseProject(input,{allowLegacy=true}={}){
  // Floor 5 appearance is an opt-in source-preserving override keyed by original room ID.
  if(input.floorFinishes!==undefined){
   const finishes=input.floorFinishes,allowed=new Set(FLOOR_FINISHES);
-  const floorIds=new Set([...g.floors,...a.floors,...(sourceData?[...sourceData.rooms,...sourceData.corridors].filter(f=>f.status!=='uncertain'):[])].map(f=>f.id));
+  const floorIds=new Set([...g.floors,...a.floors,...(sourceData?[...sourceData.rooms,...sourceData.corridors].filter(f=>f.status!=='uncertain'):[]),
+   ...(sourceData?closedAreas(sourceData).filter(f=>(g.openedAreas||[]).includes(f.id)):[])].map(f=>f.id));
   if(!finishes||typeof finishes!=='object'||Array.isArray(finishes)||Object.keys(finishes).length>100)fail('golvfinish');
   for(const [id,finish] of Object.entries(finishes))if(!floorIds.has(id)||!allowed.has(finish))fail('okänd golvfinish eller golvyta: '+id);
  }
@@ -166,6 +167,13 @@ export async function parseProjectZip(bytes){
   out.set(asset.file,data);if(legacy&&asset.bytes===0)asset.bytes=data.length;}
  const allowed=new Set([legacy?'projekt.json':'project.json',...expected.map(x=>legacy?x.file.replace('assets/',''):x.file),...(!legacy?['AGENT_BRIEF.md','COLLISION_MAP.json']:[])]);
  for(const path of files.keys())if(!allowed.has(path))fail('oväntad ZIP-fil '+path);
- if(!legacy&&files.has('COLLISION_MAP.json')&&utf8.decode(files.get('COLLISION_MAP.json'))!==JSON.stringify(collisionExport(project),null,2)+'\n')fail('förändrad eller inaktuell kollisionskarta');
+ if(!legacy&&files.has('COLLISION_MAP.json')){
+  const saved=utf8.decode(files.get('COLLISION_MAP.json'));
+  // Verify old exports with their exact historical cutter, not by trusting or
+  // ignoring a mismatched map. All new exports use revision 2.
+  if(saved!==JSON.stringify(collisionExport(project),null,2)+'\n'&&
+   saved!==JSON.stringify(collisionExport(project,{geometryRevision:1}),null,2)+'\n')
+   fail('förändrad eller inaktuell kollisionskarta');
+ }
  return {project:parseProject(project),files:out};
 }

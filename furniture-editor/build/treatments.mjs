@@ -1,10 +1,10 @@
 /** Editor-only curtains and blinds as lightweight wall-mounted architectural decorations. */
-import {isWall} from './architecture.mjs?v=5.1.0';
-import {projectToWall} from './paint-over-wall.mjs?v=5.1.0';
+import {isWall} from './architecture.mjs?v=5.7.0';
+import {projectToWall} from './paint-over-wall.mjs?v=5.7.0';
 const R=n=>Math.round(n*1000)/1000;
 export const TREATMENTS_MAX=120;
 export const TREATMENT_TYPES=Object.freeze(['curtain','blind']);
-export const CURTAIN_STYLES=Object.freeze(['sheer','white-opaque']);
+export const CURTAIN_STYLES=Object.freeze(['sheer','white-opaque','botanical-sheer']);
 // Old curtains without a style stay sheer; newly placed curtains default to opaque white.
 export function nextTreatmentId(list){let n=1;const used=new Set(list.map(x=>x.id));while(used.has('BYGG-T-'+String(n).padStart(4,'0')))n++;return 'BYGG-T-'+String(n).padStart(4,'0');}
 export function treatmentPosition(item,entries){

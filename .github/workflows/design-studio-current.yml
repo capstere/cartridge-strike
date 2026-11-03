@@ -5,11 +5,13 @@ on:
     branches: [main]
     paths:
       - 'furniture-editor/**'
+      - 'tools/studio-seams-browser.mjs'
       - '.github/workflows/design-studio-current.yml'
   push:
     branches: [main]
     paths:
       - 'furniture-editor/**'
+      - 'tools/studio-seams-browser.mjs'
       - '.github/workflows/design-studio-current.yml'
   workflow_dispatch:
 
@@ -40,6 +42,7 @@ jobs:
           node --test furniture-editor/editor.test.mjs furniture-editor/appearance.test.mjs furniture-editor/smart-interiors.test.mjs \
             furniture-editor/placement.test.mjs furniture-editor/library/library.test.mjs \
             furniture-editor/build/{architecture,precision,rectangle-room,posters,paint-over-wall,treatments}.test.mjs
+          node --experimental-loader ./tools/vendor-three-test-loader.mjs --test furniture-editor/build/window-curtain-regression.test.mjs
           node tools/verify-owner-runtime.mjs
       - name: Install existing pinned Playwright and software WebGL
         run: |
@@ -58,4 +61,13 @@ jobs:
           done
           timeout 200s xvfb-run -a node furniture-editor/editor-browser.mjs
           timeout 200s xvfb-run -a node furniture-editor/build/build-browser.mjs
-      # No Actions artifacts: keep limited account artifact storage free.
+          timeout 240s xvfb-run -a node tools/studio-seams-browser.mjs
+      - name: Small synthetic visual proof (one day only)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: studio-window-curtain-proof
+          path: test-results/studio-seams/
+          retention-days: 1
+          if-no-files-found: ignore
+          compression-level: 9
