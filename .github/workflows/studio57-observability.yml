@@ -1,0 +1,49 @@
+name: Apply checked curtain observability correction
+on:
+  push:
+    branches: [fix/studio57-seams-curtains-materials]
+    paths: ['.github/workflows/studio57-observability.yml']
+permissions:
+  contents: write
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Apply exact tested diagnostic correction
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          import json,hashlib
+          sha=lambda s:hashlib.sha256(s.encode()).hexdigest()
+          p=Path('furniture-editor/new.mjs');old=p.read_text();marker=' get architectureVisuals(){'
+          assert sha(old)=='a5066a780607a9e7f8bcad7705596d11577877331e1e9ef53e6438d523074ce0'
+          addition=" get decorationVisuals(){const rows=[];group.traverse(o=>{const m=o.material;if(o.isMesh&&m?.userData?.curtainStyle)rows.push({id:o.userData.editId,curtainStyle:m.userData.curtainStyle,opacity:m.opacity,depthWrite:m.depthWrite,map:m.map?.name||null});});return rows;},\n"
+          assert old.count(marker)==1
+          new=old.replace(marker,addition+marker)
+          assert sha(new)=='21dbfa8b8649d2c9c7ee00cde349602af5a2a46ef96070b4e71ef6d58876f13c'
+          q=Path('tools/studio-seams-browser.mjs');testold=q.read_text()
+          assert sha(testold)=='95e446d93fb2da5304f0f71e5dcc381272390222947abbea2e8ade40582c3f3c'
+          testnew=testold.replace('__levelStudio.visualColors.filter','__levelStudio.decorationVisuals.filter').replace('}finally{await browser.close();}', '''}catch(error){
+           await page.screenshot({path:out+'/failure.png'}).catch(()=>{});
+           const state=await page.evaluate(()=>({selected:window.__levelStudio?.selected,view:window.__levelStudio?.viewState,status:document.querySelector('#status')?.textContent,decorations:window.__levelStudio?.decorationVisuals,treatments:window.__levelStudio?.project?.architecture?.treatments})).catch(()=>null);
+           writeFileSync(out+'/failure.json',JSON.stringify({message:error.message,stack:error.stack,state,errors},null,2));throw error;
+          }finally{await browser.close();}''')
+          assert sha(testnew)=='d1886a01219d0b10975d6691193fb113dbfd23c8a0a24d34520220ddd1f7b881'
+          p.write_text(new);q.write_text(testnew)
+          info=Path('build-info.json');data=json.loads(info.read_text())
+          row=next(x for x in data['files'] if x['path']=='furniture-editor/new.mjs');row['bytes']=p.stat().st_size;row['sha256']=hashlib.sha256(p.read_bytes()).hexdigest()
+          data['bytes']=sum(x['bytes'] for x in data['files']);info.write_text(json.dumps(data,ensure_ascii=False,indent=2)+'\n')
+          PY
+          node --check furniture-editor/new.mjs
+          node --check tools/studio-seams-browser.mjs
+          node tools/verify-owner-runtime.mjs
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add furniture-editor/new.mjs tools/studio-seams-browser.mjs build-info.json
+          git diff --cached --check
+          git commit -m 'Inspect actual curtain decoration meshes in browser regression'
+          git push origin "HEAD:${GITHUB_REF_NAME}"
