@@ -65,8 +65,11 @@ try{
  await page.locator('#undo').click();assert.equal(await page.evaluate(id=>__levelStudio.project.furniture.added.find(o=>o.id===id).yaw,inf.id),0);
  await page.locator('#redo').click();assert.equal(await page.evaluate(id=>__levelStudio.project.furniture.added.find(o=>o.id===id).yaw,inf.id),rotated);
  await page.screenshot({path:out+'/designstudio.png'});
- const before=await page.evaluate(()=>structuredClone(__levelStudio.project)),download=page.waitForEvent('download');await page.locator('#save').click();
- const zip=readFileSync(await (await download).path());await page.locator('#open').setInputFiles({name:'gx-test.zip',mimeType:'application/zip',buffer:zip});
+ const download=page.waitForEvent('download');await page.locator('#save').click();
+ const zip=readFileSync(await (await download).path());
+ // Save intentionally refreshes validation metadata. Compare to that exact saved state.
+ const before=await page.evaluate(()=>structuredClone(__levelStudio.project));
+ await page.locator('#open').setInputFiles({name:'gx-test.zip',mimeType:'application/zip',buffer:zip});
  await page.waitForFunction(()=>document.querySelector('#status').textContent.startsWith('Projektet öppnat'));
  assert.deepEqual(await page.evaluate(()=>structuredClone(__levelStudio.project)),before);
  await page.locator('#walkView').click();await page.waitForFunction(()=>!!document.querySelector('#walkFrame').contentWindow.__walk?.renderer?.projectFurniture);
