@@ -60,11 +60,13 @@ try{
    import('./library/catalog.mjs'),import('./library/procedural.mjs?v=5.0.0'),import('./library/onboard-catalog.mjs')
   ]);
   return {original:LIBRARY.length,procedural:PROCEDURAL_LIBRARY.length,onboard:ONBOARD_LIBRARY.length,
-   total:LIBRARY_ALL.length,visible:__furnitureEditor.catalogCount};
+   total:LIBRARY_ALL.length,visible:__furnitureEditor.catalogCount,
+   genexpert:LIBRARY_ALL.filter(e=>e.pack==='genexpert').map(e=>e.id).sort()};
  });
- check('104 original GLBs, 36 procedural objects, 15 onboard and 122 house models',
+ check('104 original GLBs, 36 procedural objects, 15 onboard, 122 house and 2 GeneXpert models',
   catalogCounts.original===104&&catalogCounts.procedural===36&&catalogCounts.onboard===15&&
-  catalogCounts.total===277&&catalogCounts.visible===277);
+  catalogCounts.total===279&&catalogCounts.visible===279);
+ assert.deepEqual(catalogCounts.genexpert,['genexpert:gx16','genexpert:infinity80']);
  await page.locator('#openLibrary').click();
  check('library opens without loading FPS runtime',await page.locator('#libraryDialog').evaluate(e=>e.open));
  await page.locator('#librarySearch').fill('Liten växt');

@@ -4,7 +4,7 @@ import {GlassVisuals} from './glass-visuals.mjs';
 import {buildRiposteProps} from './riposte-props.mjs';
 import {makeWeapon} from './models.mjs';
 import {WEAPONS} from './config.mjs';
-import {buildProjectFurniture,buildProjectDecorations} from '../../furniture-editor/build/project-visuals.mjs?v=5.7.0';
+import {buildProjectFurniture,buildProjectDecorations} from '../../furniture-editor/build/project-visuals.mjs?v=5.7.1';
 import {hasPattern} from '../../furniture-editor/build/pattern-presets.mjs?v=5.6.1';
 import {patternMaterial} from '../../furniture-editor/build/pattern-materials.mjs?v=5.6.1';
 import {buildFacilityScene} from './facility-scene.mjs';
