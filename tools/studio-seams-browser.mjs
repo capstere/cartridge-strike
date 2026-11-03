@@ -42,6 +42,8 @@ try{
  await page.locator('#undo').click();assert.equal((await get()).architecture.treatments.at(-1).style,'sheer');
  await page.locator('#redo').click();assert.equal((await get()).architecture.treatments.at(-1).style,'botanical-sheer');
  await page.locator('#curtainFlip').click();assert.equal((await get()).architecture.treatments.at(-1).side,-curtain.side);
+ // Restore the camera-facing room side, not a curtain viewed through the far wall.
+ await page.locator('#curtainFlip').click();assert.equal((await get()).architecture.treatments.at(-1).side,curtain.side);
  await page.screenshot({path:out+'/studio-pattern.png'});
  // Pixel-level texture alpha, independent of canvas/WebGL material settings.
  const alpha=await page.evaluate(async()=>{const {drawBotanicalCurtain}=await import('./build/curtain-mesh.mjs?v=5.7.0');
