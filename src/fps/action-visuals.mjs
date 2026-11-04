@@ -1,5 +1,5 @@
-import {getCharacterOverride} from './character-overrides.mjs?v=6.1.0';
-import {createDwarfAvatar,animateDwarf} from './dwarf-rig.mjs?v=6.1.0';
+import {getCharacterOverride} from './character-overrides.mjs?v=6.1.1';
+import {createDwarfAvatar,animateDwarf} from './dwarf-rig.mjs?v=6.1.1';
 /** Bounded cosmetic effects and adult fantasy dwarfs; reads authoritative hit/death state; never writes game state. */
 import {smoothstep} from './riposte-fps-math.mjs';
 import * as T from '../../vendor/three/three.module.js';

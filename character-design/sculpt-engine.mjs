@@ -3,7 +3,7 @@
  * bone weights, per-rig topology signatures and reversible brush transactions.
  */
 import * as T from '../vendor/three/three.module.js';
-import {newSculpt,SCULPT_MAX_OFFSET,brushWeight} from './sculpt-schema.mjs?v=6.1.0';
+import {newSculpt,SCULPT_MAX_OFFSET,brushWeight} from './sculpt-schema.mjs?v=6.1.1';
 const V=new T.Vector3(),M=new T.Matrix4();
 const keyOf=p=>p.map(v=>Math.round(v*1e6)).join(',');
 function vertex(g,i){

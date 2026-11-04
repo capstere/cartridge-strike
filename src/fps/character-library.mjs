@@ -1,11 +1,11 @@
-import {getCharacterOverride,loadCharacterOverrides,clearCharacterOverrides} from './character-overrides.mjs?v=6.1.0';
-import {createRuntimeViewAppearance} from './view-character-appearance.mjs?v=6.1.0';
-import {makeFootwear} from './character-footwear.mjs?v=6.1.0';
+import {getCharacterOverride,loadCharacterOverrides,clearCharacterOverrides} from './character-overrides.mjs?v=6.1.1';
+import {createRuntimeViewAppearance} from './view-character-appearance.mjs?v=6.1.1';
+import {makeFittedFootwear} from './character-footwear.mjs?v=6.1.1';
 /** Authored CC0 skinned actors, loaded locally before the Start button enables.
  * Original models: Quaternius. Uniform geometry and rest-space retargeting are
  * reproducible in tools/characters/build_assets.py. This owns no game state.
  */
-import {createPrivateViewAppearance} from './view-character-appearance.mjs?v=6.1.0';
+import {createPrivateViewAppearance} from './view-character-appearance.mjs?v=6.1.1';
 import * as T from '../../vendor/three/three.module.js';
 import {RoundedBoxGeometry} from '../../vendor/three/addons/geometries/RoundedBoxGeometry.js';
 import {WEAPONS} from './config.mjs';
@@ -73,7 +73,9 @@ export function createAuthoredAvatar(team,id,isHostage=false,options={}){
   if(o.material.name==='boots-leather'){o.visible=false;o.userData.legacyFootwear=true;}
  });
  const standard=(color,roughness=.83,metalness=0)=>{const m=new T.MeshStandardMaterial({color,roughness,metalness});materials.set(m,m);return m;};
- const rubber=standard(0x161e24,.93),leather=standard(0x243039,.72),webbing=standard(palette.vest,.94),metal=standard(0x8b989c,.4,.65),trim=standard(palette.trim);
+ const rubber=standard(0x161e24,.93),leather=standard(0x243039,.72),webbing=standard(palette.vest,.94),trim=standard(palette.trim);
+ // GLB node transforms may store an animation pose; attachments use inverse-bind rest.
+ root.traverse(o=>{if(o.isSkinnedMesh)o.skeleton.pose();});
  root.updateMatrixWorld(true);
  const restPosition=bone=>bone.getWorldPosition(new T.Vector3());
  function attached(geometry,material,pos,bone,name){
@@ -81,20 +83,14 @@ export function createAuthoredAvatar(team,id,isHostage=false,options={}){
  }
  const box=(size,mat,pos,bone,name)=>attached(new T.BoxGeometry(...size),mat,new T.Vector3(...pos),bone,name);
  for(const side of ['l','r']){
-  const foot=bones.get('foot_'+side),p=restPosition(foot),x=p.x;
-  const footwear=makeFootwear();
-  const sole=attached(footwear.sole,rubber,new T.Vector3(x,0,0),foot,'boot-sole-'+side);
-  const upper=attached(footwear.upper,leather,new T.Vector3(x,0,0),foot,'shoe-upper-'+side);
-  sole.userData.footwear='low-profile-v1';upper.userData.footwear='low-profile-v1';
-  sole.geometry.computeBoundingBox();shoes.push(sole);
+  const {sole,upper}=makeFittedFootwear({root,bones,meshes,side,soleMaterial:rubber,upperMaterial:leather});
+  ownedGeometry.push(sole.geometry,upper.geometry);meshes.push(sole,upper);shoes.push(sole);
  }
- const pelvis=bones.get('pelvis'),chest=bones.get('spine_03'),head=bones.get('Head');
+ const chest=bones.get('spine_03'),head=bones.get('Head');
  if(!isHostage){
   attached(new RoundedBoxGeometry(.255,.285,.045,3,.028),webbing,new T.Vector3(0,1.29,.145),chest,'continuous-chest-rig');
   attached(new RoundedBoxGeometry(.24,.26,.035,3,.023),webbing,new T.Vector3(0,1.285,-.114),chest,'continuous-back-rig');
  }
- const belt=new T.TorusGeometry(.165,.016,5,24);belt.rotateX(Math.PI/2);belt.scale(1,1,.70);attached(belt,rubber,new T.Vector3(0,.957,0),pelvis,'duty-belt');
- box([.05,.032,.019],metal,[0,.956,.123],pelvis,'belt-buckle');
  for(const side of [-1,1]){
   box([.088,.115,.035],webbing,[side*.073,1.175,.162],chest,'vest-pocket');
   box([.095,.018,.041],trim,[side*.073,1.23,.168],chest,'pocket-flap');

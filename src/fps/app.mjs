@@ -1,6 +1,6 @@
 import {setupCharacterMenu} from './character-selection.mjs';
 import {loadPrivateCharacter,characterHash} from './private-character-store.mjs';
-import {loadCharacterLibrary,installPrivateCharacter,setPrivateCharacterActors} from './character-library.mjs?v=6.1.0';
+import {loadCharacterLibrary,installPrivateCharacter,setPrivateCharacterActors} from './character-library.mjs?v=6.1.1';
 import {GLTFLoader} from '../../vendor/three/addons/loaders/GLTFLoader.js';
 import { RenderBudget } from './render-budget.mjs';
 import { MinimapCache } from './minimap-cache.mjs';
@@ -9,7 +9,7 @@ import { GrenadeAssist, grenadeSettingsMarkup } from './grenade-assist.mjs';
 import {CombatHUD} from './combat-hud.mjs';
 import { createWorld } from './world.mjs?v=5.7.3';
 import { Game, TEAMS, WEAPONS, CONFIG, DIFFICULTIES } from './game.mjs';
-import { Renderer } from './render.mjs?v=6.1.0';
+import { Renderer } from './render.mjs?v=6.1.1';
 import { AudioSystem } from './riposte-audio.mjs';
 import {RADIO,isEndless} from './action-rules.mjs';
 import { MobileControls, isTouchDevice } from './mobile-controls.mjs';

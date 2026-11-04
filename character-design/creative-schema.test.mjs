@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {makeCreative,ensureCreative,validateCreative,creativeBrief} from './creative-schema.mjs?v=6.1.0';
-import {newProject,validateProject,aiBrief} from './project-schema.mjs?v=6.1.0';
+import {makeCreative,ensureCreative,validateCreative,creativeBrief} from './creative-schema.mjs?v=6.1.1';
+import {newProject,validateProject,aiBrief} from './project-schema.mjs?v=6.1.1';
 
 test('old v2 project loads with optional new creative fields',()=>{
  const old=newProject();delete old.creative;

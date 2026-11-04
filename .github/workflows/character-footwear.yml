@@ -1,0 +1,51 @@
+name: Character footwear and belt regression
+on:
+  pull_request:
+    branches: [main]
+    paths: ['character-design/**', 'src/fps/character-*.mjs', 'tools/character-footwear*', '.github/workflows/character-footwear.yml']
+  push:
+    branches: [main]
+    paths: ['character-design/**', 'src/fps/character-*.mjs', 'tools/character-footwear*', '.github/workflows/character-footwear.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: character-footwear-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  footwear:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Cuffs, soles, belts, original clips and real GLB roundtrip
+        run: |
+          node --experimental-loader ./tools/vendor-three-test-loader.mjs --test character-design/*.test.mjs src/fps/view-character-appearance.test.mjs
+          node tools/verify-owner-runtime.mjs
+      - name: Install pinned browser
+        run: |
+          npm ci --prefix frontline/source/tools/dev --ignore-scripts --no-audit --no-fund
+          node frontline/source/tools/dev/node_modules/playwright-core/cli.js install chromium
+      - name: Studio edits, real ZIP exports and actual FPS avatars
+        run: |
+          set -euo pipefail
+          python3 -m http.server 8765 --bind 127.0.0.1 >/tmp/footwear-http.log 2>&1 &
+          PID=$!
+          trap 'kill "$PID" || true' EXIT
+          for i in $(seq 1 25); do
+            if curl -fsS http://127.0.0.1:8765/character-design/ >/dev/null; then break; fi
+            sleep 1
+          done
+          timeout 500s node --experimental-loader ./tools/vendor-three-test-loader.mjs tools/character-footwear-browser.mjs
+      - name: Small synthetic visual evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: character-footwear-proof
+          path: test-results/footwear-fit/
+          retention-days: 1
+          if-no-files-found: ignore
+          compression-level: 9

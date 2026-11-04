@@ -1,6 +1,6 @@
 /** Bridges the authored skin to the unchanged game actor and weapon mechanisms. */
 import * as T from '../../vendor/three/three.module.js';
-import {createAuthoredAvatar,animateAuthored,posedBounds,privateCharacterApplies,characterVisualSignature,disposeAvatar} from './character-library.mjs?v=6.1.0';
+import {createAuthoredAvatar,animateAuthored,posedBounds,privateCharacterApplies,characterVisualSignature,disposeAvatar} from './character-library.mjs?v=6.1.1';
 import {WEAPONS} from './config.mjs';
 const V=()=>new T.Vector3(),Q=()=>new T.Quaternion();
 export function upgradeActor(model,team,id,isHostage){

@@ -7,7 +7,7 @@ import * as T from '../../vendor/three/three.module.js';
 import {RoundedBoxGeometry} from '../../vendor/three/addons/geometries/RoundedBoxGeometry.js';
 import {mergeGeometries} from '../../vendor/three/addons/utils/BufferGeometryUtils.js';
 import {createHandMaterials} from './hand-materials.mjs';
-import {createKitHand,createKitSleeve,poseKitFingers,fitKitSleeve} from './strike-kit-hands.mjs?v=6.1.0';
+import {createKitHand,createKitSleeve,poseKitFingers,fitKitSleeve} from './strike-kit-hands.mjs?v=6.1.1';
 import {WEAPONS} from './config.mjs';
 import {kitWeapon,reloadPose,reloadPhase,reloadIsEmpty,smooth,envelope} from './strike-kit-timing.mjs';
 const Y=new T.Vector3(0,1,0),owned=new Set();

@@ -3,10 +3,10 @@
 import {readFile,writeFile,mkdir,rename,realpath} from 'node:fs/promises';
 import {resolve,dirname,relative} from 'node:path';
 import {fileURLToPath} from 'node:url';
-import {readRuntimePackage} from '../character-design/runtime-package.mjs?v=6.1.0';
-import {validateActorAsset,actorHash} from '../src/fps/character-runtime-contract.mjs?v=6.1.0';
-import {roleSelection} from '../src/fps/character-roles.mjs?v=6.1.0';
-import {createDwarfAsset} from '../src/fps/dwarf-rig.mjs?v=6.1.0';
+import {readRuntimePackage} from '../character-design/runtime-package.mjs?v=6.1.1';
+import {validateActorAsset,actorHash} from '../src/fps/character-runtime-contract.mjs?v=6.1.1';
+import {roleSelection} from '../src/fps/character-roles.mjs?v=6.1.1';
+import {createDwarfAsset} from '../src/fps/dwarf-rig.mjs?v=6.1.1';
 import {characterDataLoader,asBuffer} from './character-data-loader.mjs';
 export async function installPackage(packageFile,{root=resolve(dirname(fileURLToPath(import.meta.url)),'..'),apply=false}={}){
  root=await realpath(root);const {contract:c,bytes,files}=await readRuntimePackage(await readFile(packageFile));

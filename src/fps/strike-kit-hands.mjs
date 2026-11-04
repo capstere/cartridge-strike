@@ -3,7 +3,7 @@
  * Sleeves join the glove's wrist frame, rather than stretching a cylinder/cuff.
  */
 import * as T from '../../vendor/three/three.module.js';
-import {SHIRT_FRACTION} from './view-character-appearance.mjs?v=6.1.0';
+import {SHIRT_FRACTION} from './view-character-appearance.mjs?v=6.1.1';
 import {AUTHORED_HANDS} from './authored-hand-data.mjs';
 const TAU=Math.PI*2,WRIST=-.101,SEGMENTS=24,RINGS=27;
 

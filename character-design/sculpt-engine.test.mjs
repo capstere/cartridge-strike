@@ -1,8 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import * as T from '../vendor/three/three.module.js';
-import {subdivideSkin,skinMatrix,SculptEngine,safeSurfaceStep} from './sculpt-engine.mjs?v=6.1.0';
-import {newSculpt,validateSculpt,brushWeight} from './sculpt-schema.mjs?v=6.1.0';
+import {subdivideSkin,skinMatrix,SculptEngine,safeSurfaceStep} from './sculpt-engine.mjs?v=6.1.1';
+import {newSculpt,validateSculpt,brushWeight} from './sculpt-schema.mjs?v=6.1.1';
 function fixture(){
  const geometry=new T.PlaneGeometry(.16,.24,8,12).toNonIndexed();geometry.translate(0,1.67,.09);
  const count=geometry.attributes.position.count;
@@ -47,7 +47,7 @@ test('symmetry produces mirrored displacements and reset restores authored norma
  assert.equal(f.engine.begin(f.project,{object:f.mesh,face:{a:0,normal:new T.Vector3(0,0,1)},point:new T.Vector3(0,1.40,.09)},{mode:'grab',radius:.06,strength:1,symmetry:true}),false,'neck attachment cannot be grabbed');
 });
 
-test('legacy portrait annotations retain their original camera framing',async()=>{const {newProject}=await import('./project-schema.mjs?v=6.1.0');const {ensureCreative}=await import('./creative-schema.mjs?v=6.1.0');const p=newProject();p.studioVersion='4.1';p.artwork={faceViews:{front:'data:image/png;base64,example'}};ensureCreative(p);assert.equal(p.artwork.portraitFraming,'legacy-headbone-v4');const modern=newProject();modern.studioVersion='5.0';modern.artwork={faceViews:{}};ensureCreative(modern);assert.equal(modern.artwork.portraitFraming,undefined);});
+test('legacy portrait annotations retain their original camera framing',async()=>{const {newProject}=await import('./project-schema.mjs?v=6.1.1');const {ensureCreative}=await import('./creative-schema.mjs?v=6.1.1');const p=newProject();p.studioVersion='4.1';p.artwork={faceViews:{front:'data:image/png;base64,example'}};ensureCreative(p);assert.equal(p.artwork.portraitFraming,'legacy-headbone-v4');const modern=newProject();modern.studioVersion='5.0';modern.artwork={faceViews:{}};ensureCreative(modern);assert.equal(modern.artwork.portraitFraming,undefined);});
 
 test('an inverted triangle is backed off before it can fold or collapse',()=>{
  const f=fixture(),e=f.engine.entries[0],original=e.offsets.slice(),candidate=original.slice();
