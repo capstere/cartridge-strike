@@ -1,4 +1,4 @@
-name: Prepare character menu regression correction
+name: Prepare character rig reuse regression correction
 on:
   push:
     branches: [feat/character-roles-and-clean-footwear]
@@ -14,22 +14,18 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Correct pre-player menu lookup and test selector
+      - name: Normalize optional dwarf flag before comparing actor types
         shell: bash
         run: |
           set -euo pipefail
           python3 - <<'PY'
           from pathlib import Path
           import json,hashlib
-          def change(path,old,new):
-              p=Path(path);s=p.read_text();assert s.count(old)==1,(path,old);p.write_text(s.replace(old,new))
-          change('src/fps/character-roles.mjs','export function assignmentKeys(role,id,variant=0){\n',"export function assignmentKeys(role,id,variant=0){\n if(typeof id!=='string'||!id)return []; // Menu camera has no player slot yet.\n")
-          p=Path('character-design/actor-roles.test.mjs');s=p.read_text();assert 'menu camera has no cosmetic assignment' not in s
-          p.write_text(s+"\ntest('menu camera has no cosmetic assignment before player selection',()=>{\n for(const id of [undefined,null,'']){assert.deepEqual(assignmentKeys('player',id),[]);assert.equal(getCharacterOverride('player',id),null);}\n});\n")
-          change('tools/character-roles-browser.mjs',"locator('[data-color=\"jacket\"]').fill","locator('[data-color=\"jacket\"]:visible').first().fill")
-          change('character-design/index.html','<span class="edition">6.0</span>','<span class="edition">6.1</span>')
-          expected={'src/fps/character-roles.mjs':'73f61dcbf5c2304044d4ecb99b4d58c8103cf1b1be3a96728eb345daf1cb20dd','character-design/actor-roles.test.mjs':'e8e71d89a156f8cd55f117d4d576f9050692c10e9570c540f4cea27222dcadf4','tools/character-roles-browser.mjs':'dbc92b4f8338639ed4b56b5b4920ad8712f0f91a022af1ea115bba707860da30'}
-          for path,want in expected.items(): assert hashlib.sha256(Path(path).read_bytes()).hexdigest()==want,path
+          def change(path,old,new,expected):
+              p=Path(path);s=p.read_text();assert s.count(old)==1,(path,old)
+              out=s.replace(old,new);assert hashlib.sha256(out.encode()).hexdigest()==expected,path;p.write_text(out)
+          change('character-design/workbench.mjs',"this.avatar.isDwarf!==(roleOf(project)==='dwarf')","!!this.avatar.isDwarf!==(roleOf(project)==='dwarf')",'c59633ed2a31e31bdca574277cc26907ee19e3f7d397ff6c33df93167978e65b')
+          change('tools/character-roles-browser.mjs',"await page.locator('[data-tab=\"look\"]').click();await page.locator('[data-color=\"jacket\"]:visible').first().fill(v.color);","await page.locator('[data-tab=\"look\"]').click();const beforeColour=await page.evaluate(()=>__characterStudio.workbench.avatar.root.uuid);await page.locator('[data-color=\"jacket\"]:visible').first().fill(v.color);assert.equal(await page.evaluate(()=>__characterStudio.workbench.avatar.root.uuid),beforeColour);",'e73d5dbd29cf961c6de126a2637e18de07970e60b7b07d070489e740f9080cc7')
           p=Path('build-info.json');j=json.loads(p.read_text())
           for row in j['files']:
               data=Path(row['path']).read_bytes();row['bytes']=len(data);row['sha256']=hashlib.sha256(data).hexdigest()
@@ -39,7 +35,7 @@ jobs:
           node tools/verify-owner-runtime.mjs
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add src/fps/character-roles.mjs character-design/actor-roles.test.mjs character-design/index.html tools/character-roles-browser.mjs build-info.json
+          git add character-design/workbench.mjs tools/character-roles-browser.mjs build-info.json
           git diff --cached --check
-          git commit -m 'Handle menu camera before actor selection; exercise the visible colour control'
+          git commit -m 'Preserve the edited human rig during colour-only appearance changes'
           git push origin "HEAD:${GITHUB_REF_NAME}"
