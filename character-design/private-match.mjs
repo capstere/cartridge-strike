@@ -1,6 +1,6 @@
 /** Narrow, explicit pilot contract; existing projects are never silently simplified. */
-import {validateProject,newProject} from './project-schema.mjs?v=6.1.1';
-import {makeCreative} from './creative-schema.mjs?v=6.1.1';
+import {validateProject,newProject} from './project-schema.mjs?v=6.1.2';
+import {makeCreative} from './creative-schema.mjs?v=6.1.2';
 export function newMatchPilot(){const p=newProject({name:'Min provkaraktär',template:'civilian'});p.creative.outfit='tshirt';p.creative.shoes='sneakers';p.creative.print.text='MITT SPEL';p.palette.jacket=p.palette.pants='#304f65';p.palette.accent='#b9cad3';return p;}
 export function validateMatchPilot(p){
  validateProject(p);const c=p.creative,defaults=makeCreative();

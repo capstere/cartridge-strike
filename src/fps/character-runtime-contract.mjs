@@ -1,6 +1,6 @@
 /** Shared export/import checks. A receipt proves compatibility, not art quality. */
 import * as T from '../../vendor/three/three.module.js';
-import {validateRole} from './character-roles.mjs?v=6.1.1';
+import {validateRole} from './character-roles.mjs?v=6.1.2';
 export const ACTOR_FORMAT='cartridge-strike-runtime-character';
 export const ACTOR_VERSION=1,ACTOR_MAX_BYTES=48*1024*1024;
 export function validateActorContract(c){

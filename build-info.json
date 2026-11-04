@@ -472,7 +472,7 @@
     {
       "path": "fps/index.html",
       "bytes": 10962,
-      "sha256": "4bd03654896f8ae04e4f27ca0dac0363fbb6d9466dd4b7a658a9c47f142b4964"
+      "sha256": "8f14241ba56644b69429df87674016e1d54bf6840720140a8e570cb15ccba94e"
     },
     {
       "path": "fps/style.css",
@@ -482,12 +482,12 @@
     {
       "path": "fps/walk.html",
       "bytes": 1790,
-      "sha256": "d29498dbaa35091a6ab0f3bc86bfc93ef15f76f7bbadeff3c53a9562038bf136"
+      "sha256": "c2a4db20e84d12f38c9e788865d7435da5905cfb588aa9524700f55aa1182e75"
     },
     {
       "path": "fps/walk.mjs",
       "bytes": 4731,
-      "sha256": "3b5ac12a6910048581d24360c22f771baf15b383098a71c864a0d79685f2f156"
+      "sha256": "c2a13cd21a2f1b0cee7c2d7513a1a76fa1d7395129dc68b57e89545741b9ca09"
     },
     {
       "path": "furniture-editor/adjacent-room.mjs",
@@ -2322,12 +2322,12 @@
     {
       "path": "src/fps/action-visuals.mjs",
       "bytes": 9350,
-      "sha256": "7c63958bb2a09d299dcde25f48ae55fb5488ec9c19c48c58e0665bf6cb32884e"
+      "sha256": "d244fe11d15d56f7b3db32a03f42e45477cf8e0771a89f15da57f48efb6179f7"
     },
     {
       "path": "src/fps/app.mjs",
       "bytes": 32222,
-      "sha256": "fac05a43853ef97a8f4c44cad471024d88d1f33659424c0157d39db2e9788ab3"
+      "sha256": "19b49d61f2b84f117ff222d0b279422a3416e58b5d3f14de841a559c1bc860bc"
     },
     {
       "path": "src/fps/audio.mjs",
@@ -2357,12 +2357,12 @@
     {
       "path": "src/fps/character-actors.mjs",
       "bytes": 6868,
-      "sha256": "2625a6f1a537094e7c7e222af0e97a5479e1bc4c3444250f19a3e872443ca09f"
+      "sha256": "3c847b874a7a994b4a249fd5753d8cdeeab480e7e3c45a93fcec6387767f2c7e"
     },
     {
       "path": "src/fps/character-library.mjs",
       "bytes": 20837,
-      "sha256": "a94e35f60b0418ba1c45242e25e15585b0e4bdfc6dd41e87212ff6c38e917fe6"
+      "sha256": "95a8c3e2192eb9eb10cdcb60c0dd4e522fd85e6086ce5594f940e7602d94b935"
     },
     {
       "path": "src/fps/character-selection.mjs",
@@ -2532,7 +2532,7 @@
     {
       "path": "src/fps/models.mjs",
       "bytes": 6623,
-      "sha256": "4177c1a6a2494c06b507cdc5f8104919dc21d1b03804d13dd5623c0751fe10f3"
+      "sha256": "e64f57ec93e952fcdcacfc4c2737377a652c9ef946c67b6d4ba2e73d959cb8b0"
     },
     {
       "path": "src/fps/navigation.mjs",
@@ -2572,12 +2572,12 @@
     {
       "path": "src/fps/render-engine.mjs",
       "bytes": 30465,
-      "sha256": "d75290fb1b44fae2fd0a68a639fea5ed122e5e5ab42ee978ae1e0a1776df9e61"
+      "sha256": "3189220105159543f52f6415e40added72fa7750e8d6a2535148acb52deccef3"
     },
     {
       "path": "src/fps/render.mjs",
       "bytes": 15854,
-      "sha256": "257af9928f0d653c8a188e6842404642fffbb60fa84c2d28662cd987cc759dad"
+      "sha256": "d51e87378163376b6e94d0e229ba6282a21f41a13f5cb0de97325ac10dcbcf3b"
     },
     {
       "path": "src/fps/riposte-audio.mjs",
@@ -2637,12 +2637,12 @@
     {
       "path": "src/fps/strike-kit-hands.mjs",
       "bytes": 11219,
-      "sha256": "2331ba24f6c50be704d906dfb8670ea2b40597db030d1d58dd3fcf168717a256"
+      "sha256": "f40f9db67762c97aefe78c245802634e3e8acf02d8c2d791b30527682f1e84ee"
     },
     {
       "path": "src/fps/strike-kit-models.mjs",
       "bytes": 14817,
-      "sha256": "24930e927a82f9905872a40abc61e4ba98188292d70af687f1704db0c691cff9"
+      "sha256": "781f2aa6ac1126cb9721619cb563101305154e6f61024db412b37bf10458259a"
     },
     {
       "path": "src/fps/strike-kit-timing.mjs",
@@ -2777,22 +2777,22 @@
     {
       "path": "character-design/app.mjs",
       "bytes": 43454,
-      "sha256": "d9c10e6b3637be753455276fd6efaab573c3bf8ecfcd9c79242ad5e6180df841"
+      "sha256": "edaf3d6f6fa7ec4712e13a268efc3b04d2124610780cd53f595e5eaec795c51c"
     },
     {
       "path": "character-design/cloth-preview.mjs",
       "bytes": 7012,
-      "sha256": "fbcdad8aad7a001408c04bd85a6c4711dc1da0bb87ccda63a5db96c44157dae0"
+      "sha256": "61b64f7e771e11520ddb2f36cd98594f132e49d1217b64c1d5cf3c7c7deb2b53"
     },
     {
       "path": "character-design/creative-controls.mjs",
       "bytes": 15793,
-      "sha256": "555701c269c5f3c910e3a7b658ccde32b0914cc4cd125da5b73652fd5c42dd1d"
+      "sha256": "30673eb154f705a70048d00d6cd51ddedb95c98c4d6a6477d5f63ec9ba3d5a58"
     },
     {
       "path": "character-design/creative-schema.mjs",
       "bytes": 10083,
-      "sha256": "5e529aec13ecb4ca86e186a3bd677e60f76b7df072c42b7242422a8ce0ef93d2"
+      "sha256": "b2e04a406eca17b4ed46855c7597762201723f762d92b5bacd6f26374beb5df8"
     },
     {
       "path": "character-design/dwarf-fit.mjs",
@@ -2801,43 +2801,43 @@
     },
     {
       "path": "character-design/fashion-preview.mjs",
-      "bytes": 16670,
-      "sha256": "4d5bb54dfb75bda1bd9466056989f2bf579969a77d3d6e88009207810a63da7b"
+      "bytes": 17011,
+      "sha256": "660e3103131d4e2f12c0bd035f4e1188f16fe34f3e28d5eaa8d880310e4d1a6e"
     },
     {
       "path": "character-design/fiber-hair.mjs",
       "bytes": 7122,
-      "sha256": "9823abaf6e9c1770430c929001dbf0d48bea93e8d4ccff13d9fa8b54cfa4c91d"
+      "sha256": "5d07afee789820b0c942560cd420509d967f358d6e1afe0a15b7fe9838312b78"
     },
     {
       "path": "character-design/private-match.mjs",
       "bytes": 1565,
-      "sha256": "c9a9a55ee9a5bd2acaa0c1c095e2cc85c6d28b10da13d72481e62c4972f0acd4"
+      "sha256": "ed2de48b5820c710802591fd21efe47be6a29a56a99ac10244bac8da34885ac6"
     },
     {
       "path": "character-design/project-schema.mjs",
       "bytes": 18990,
-      "sha256": "ef3411da220e49318b897490a255ad0dd0c825a6585316d71cad18ff12991293"
+      "sha256": "7c59eb63b8623f8ce63887683916d4d99cb7b9d5ca84aa5a5a7a296e031d9ca1"
     },
     {
       "path": "character-design/runtime-export.mjs",
       "bytes": 3576,
-      "sha256": "5a0a522568bf184ca1f03070215f97c87c27bd9e5e9a4178de6ca0aacaee7b34"
+      "sha256": "c89ffd665ef5afe7e4a29f68ac3a4441ad512c6041b5f637f56a08d162fedee8"
     },
     {
       "path": "character-design/runtime-package.mjs",
       "bytes": 2920,
-      "sha256": "26f836c0218b3392a178b0fa9bcf79e6462bd5be8cbf74e475f18a78d5c56b14"
+      "sha256": "87dff594a6a601356a9885e43b433840e7107ba767b02fbe9c37309cba6b3ce0"
     },
     {
       "path": "character-design/sculpt-controls.mjs",
       "bytes": 7139,
-      "sha256": "459cca4c5ee1b6d3ff89804a399d20fb7f70e0dec28a44ffa7b0600358cb3ca2"
+      "sha256": "fe01bc8d81816d0f34b644b0010a9c397a5929d984ab215220f04fcb9019b892"
     },
     {
       "path": "character-design/sculpt-engine.mjs",
       "bytes": 17587,
-      "sha256": "1cf4e613a6a833fa78005590e276bc6675b90a10528b3d81e7654eede9b5aa0a"
+      "sha256": "98f2dec7b844ddc0f1d016b14f66ea883d69730916e11272a4168c998e3634de"
     },
     {
       "path": "character-design/sculpt-schema.mjs",
@@ -2847,12 +2847,12 @@
     {
       "path": "character-design/studio-controls.mjs",
       "bytes": 9921,
-      "sha256": "d7af7c3f9840a0688c6d727f07f0dc1e198f9ae3c9a369c522e3ac6309688efa"
+      "sha256": "086f284d06846a86ec3a2f7898df3be5c85c43218dee3b59e041d93a44d815ba"
     },
     {
       "path": "character-design/workbench.mjs",
       "bytes": 23391,
-      "sha256": "94a5e262b0172716f7e6c4a4f2a5326c9e97f3f248f7b68d5487b2808ee1476e"
+      "sha256": "fe0a98b37c2cda260fc6dd6dfc13ed01d44cb6a226de0470698f03074a8394e8"
     },
     {
       "path": "src/fps/character-footwear.mjs",
@@ -2862,7 +2862,7 @@
     {
       "path": "src/fps/character-overrides.mjs",
       "bytes": 3817,
-      "sha256": "7fb8314fe390b1c3c25e93b12dd2f2895f631fb46302f5f1e6bab7da09db15db"
+      "sha256": "44914746c8c597113b5ed7f86b52da588f2af76136302206ce0477a8af30bbad"
     },
     {
       "path": "src/fps/character-roles.mjs",
@@ -2872,12 +2872,12 @@
     {
       "path": "src/fps/character-runtime-contract.mjs",
       "bytes": 7873,
-      "sha256": "b7f638b6c06f2aeeb62217b1e8a26751ebba48954bf58ab4acddb2dd06b7e159"
+      "sha256": "45024debc0793bcf2905b3aecc1f424135f59746036299d22b11a4f1faf01bb9"
     },
     {
       "path": "src/fps/dwarf-rig.mjs",
       "bytes": 7695,
-      "sha256": "72c8a1708fb7f51812020c867480df2c8b1e8220037ce5ba5e35155bc1ebe37d"
+      "sha256": "6c0c087558b4a1f03b49543b6453d80b768d9ffa4d1434e341bd7af77083788f"
     },
     {
       "path": "src/fps/skinned-clone.mjs",
@@ -2885,7 +2885,7 @@
       "sha256": "f2d8f10c03cfccf08d11128ca40eee3bdfc7f7eeb50b3a392207638dc9463dec"
     }
   ],
-  "bytes": 27415292,
+  "bytes": 27415633,
   "sourceDirectoriesExcluded": [
     "references",
     "reviews",

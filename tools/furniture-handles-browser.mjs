@@ -34,7 +34,7 @@ try{
   await page.screenshot({path:`${out}/${mode}-raised.png`});
   // Copying after a height change must not silently drop it to the floor.
   const elevated=await current();await page.locator('#planView').click();assert(await page.locator('#furnitureHandles').isHidden());await page.locator('#dockDuplicate').click();await clickPlan(2,2);await page.keyboard.press('Escape');near((await current()).elevation,elevated.elevation);
-  await saveOpen();const data=await page.evaluate(async id=>{const {getLocalFile}=await import('./library/models.mjs?v=6.1.1');return [...new Uint8Array((await getLocalFile(id)).data)];},localId);assert.deepEqual(data,fixture);
+  await saveOpen();const data=await page.evaluate(async id=>{const {getLocalFile}=await import('./library/models.mjs?v=6.1.2');return [...new Uint8Array((await getLocalFile(id)).data)];},localId);assert.deepEqual(data,fixture);
   // TV stays on its original wall and side, including a mirrored/rolled appearance.
   const target=await page.evaluate(()=>{const w=__levelStudio.scene.entries.find(w=>w.kind==='wall'&&Math.hypot(w.b[0]-w.a[0],w.b[1]-w.a[1])>5&&w.height>2.7);return {x:(w.a[0]+w.b[0])/2,z:(w.a[1]+w.b[1])/2};});
   await choose('onboard:tv-with-a-wall-mount');await page.locator('#placementMode').selectOption('wall');await clickPlan(target.x,target.z);await page.keyboard.press('Escape');await page.locator('#dockDown').click();await page.locator('#dockRotate').click();await page.locator('#dockMirror').click();const wallBefore=await current();assert(wallBefore.wallMount&&wallBefore.mirrored);

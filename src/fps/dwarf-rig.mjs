@@ -4,10 +4,10 @@
 import * as T from '../../vendor/three/three.module.js';
 import {RoundedBoxGeometry} from '../../vendor/three/addons/geometries/RoundedBoxGeometry.js';
 import {mergeGeometries} from '../../vendor/three/addons/utils/BufferGeometryUtils.js';
-import {cloneSkinned as cloneSkeleton} from './skinned-clone.mjs?v=6.1.1';
+import {cloneSkinned as cloneSkeleton} from './skinned-clone.mjs?v=6.1.2';
 export const DWARF_RIG='cartridge-dwarf-v1';
 export const DWARF_CLIPS=Object.freeze(['Idle_Loop','Walk_Loop','Death01']);
-import {DWARF_PALETTES} from './character-roles.mjs?v=6.1.1';
+import {DWARF_PALETTES} from './character-roles.mjs?v=6.1.2';
 export {DWARF_PALETTES};
 export function createDwarfAsset(variant=0){
  if(!Number.isInteger(variant)||variant<0||variant>4)throw Error('Okänd dvärgvariant.');

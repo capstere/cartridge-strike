@@ -1,14 +1,15 @@
+import * as T from '../vendor/three/three.module.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
 import {GLTFExporter} from '../vendor/three/addons/exporters/GLTFExporter.js';
 import {characterDataLoader,asBuffer} from '../tools/character-data-loader.mjs';
 import {footwearMetrics} from '../tools/character-footwear-checks.mjs';
-import {installCharacterTemplates,createAuthoredAvatar,disposeAvatar,animateAuthored} from '../src/fps/character-library.mjs?v=6.1.1';
-import {ACTOR_FORMAT,validateActorAsset,actorHash} from '../src/fps/character-runtime-contract.mjs?v=6.1.1';
-import {installCharacterOverride,clearCharacterOverrides} from '../src/fps/character-overrides.mjs?v=6.1.1';
-import {FashionPreview} from './fashion-preview.mjs?v=6.1.1';
-import {newProject} from './project-schema.mjs?v=6.1.1';
+import {installCharacterTemplates,createAuthoredAvatar,disposeAvatar,animateAuthored} from '../src/fps/character-library.mjs?v=6.1.2';
+import {ACTOR_FORMAT,validateActorAsset,actorHash} from '../src/fps/character-runtime-contract.mjs?v=6.1.2';
+import {installCharacterOverride,clearCharacterOverrides} from '../src/fps/character-overrides.mjs?v=6.1.2';
+import {FashionPreview} from './fashion-preview.mjs?v=6.1.2';
+import {newProject} from './project-schema.mjs?v=6.1.2';
 globalThis.FileReader=class{readAsArrayBuffer(blob){blob.arrayBuffer().then(b=>{this.result=b;this.onloadend?.();});}};
 const loader=characterDataLoader(),files=await Promise.all(['male','female'].map(g=>readFile(new URL(`../assets/fps/models/quaternius-operator-${g}.glb`,import.meta.url)))),sources=await Promise.all(files.map(b=>loader.parseAsync(asBuffer(b),'')));
 installCharacterTemplates(...sources);
@@ -42,4 +43,22 @@ for(const [i,gender] of ['male','female'].entries())test(`${gender}: fit extreme
    try{assert(instance.roleDesign);allPoses(instance);animateAuthored(instance,{alive:true,moving:3,weapon:'pistol',pitch:0,x:0,z:0},.3);check(instance.root,'runtime');}finally{disposeAvatar(instance);clearCharacterOverrides();}
   }
  }finally{fashion.dispose();disposeAvatar(a);clearCharacterOverrides();}
+});
+
+for(const gender of ['male','female'])test(`${gender}: removing the belt does not expose a fit-slider seam at the waist`,()=>{
+ const a=createAuthoredAvatar('analysts','waist-test',false,{gender,ignoreOverrides:true}),fashion=new FashionPreview(),p=newProject({gender});p.creative.outfit='original';
+ try{
+  for(const fit of [85,100,120]){
+   a.mixer.stopAllAction();a.root.traverse(n=>{if(n.isSkinnedMesh)n.skeleton.pose();});a.root.updateMatrixWorld(true);p.creative.fit=fit;fashion.create(p,a);
+   const shirt=a.meshes.find(m=>m.material.name==='jacket-fabric'),pants=a.meshes.find(m=>m.material.name==='trousers-fabric'),s=fashion.sources.get(shirt),t=fashion.sources.get(pants),map=new Map();
+   const key=(v,i)=>Array.from(v.slice(i*3,i*3+3),x=>x.toFixed(5)).join(',');
+   for(let i=0;i<s.length/3;i++)map.set(key(s,i),i);const pairs=[];
+   for(let i=0;i<t.length/3;i++)if(map.has(key(t,i)))pairs.push([map.get(key(t,i)),i]);
+   assert(pairs.length>=40,'original waist seam vertices are paired');
+   for(const name of ['Idle_Loop','Sprint_Loop','Crouch_Fwd_Loop']){
+    a.mixer.stopAllAction();a.mixer.clipAction(a.clips.get(name)).reset().play();a.mixer.setTime(.23);a.root.updateMatrixWorld(true);shirt.skeleton.update();pants.skeleton.update();
+    for(const [i,j]of pairs){const x=shirt.getVertexPosition(i,new T.Vector3()),y=pants.getVertexPosition(j,new T.Vector3());assert(x.distanceTo(y)<2e-5,`${gender} fit ${fit} ${name}: torn waist`);}
+   }
+  }
+ }finally{fashion.dispose();disposeAvatar(a);}
 });

@@ -1,14 +1,14 @@
-import {dwarfPoint,dwarfJacket} from './dwarf-fit.mjs?v=6.1.1';
+import {dwarfPoint,dwarfJacket} from './dwarf-fit.mjs?v=6.1.2';
 /** Studio-only edits to cloned skinned geometry. Original assets/runtime stay untouched. */
 import * as T from '../vendor/three/three.module.js';
-import {makeHair,makeBeard} from './anatomy-accessories.mjs?v=6.1.1';
-import {anatomy} from './anatomy-accessories.mjs?v=6.1.1';
+import {makeHair,makeBeard} from './anatomy-accessories.mjs?v=6.1.2';
+import {anatomy} from './anatomy-accessories.mjs?v=6.1.2';
 import {makeStudioHair,makeStudioJacket,makeSkinnedHoodieShell} from './studio-foundation.mjs?v=60';
 import {applyBodyRegions,bodyRegions} from './body-proportions.mjs';
-import {makeFiberHair} from './fiber-hair.mjs?v=6.1.1';
-import {fabricMaterial} from './cloth-preview.mjs?v=6.1.1';
+import {makeFiberHair} from './fiber-hair.mjs?v=6.1.2';
+import {fabricMaterial} from './cloth-preview.mjs?v=6.1.2';
 import {FABRICS} from './realism-schema.mjs?v=53';
-import {makeCreative} from './creative-schema.mjs?v=6.1.1';
+import {makeCreative} from './creative-schema.mjs?v=6.1.2';
 const clamp=T.MathUtils.clamp;
 // The Quaternius clothing regions retain the original body-atlas UVs. Sample
 // that atlas before shirt artwork replaces the UVs, so exposed arms match skin.
@@ -87,8 +87,15 @@ export class FashionPreview{
     g.setAttribute('color',new T.BufferAttribute(colors,3));
     mesh.material.vertexColors=true;mesh.material.needsUpdate=true;
    }
-   // Preserve the ankle opening: garment fit tapers to zero at the cuffs.
-   if(name==='trousers-fabric')for(let i=0;i<pos.count;i++)pos.setZ(i,source[i*3+2]*(avatar.isDwarf?fit:1+(fit-1)*clamp((source[i*3+1]-.25)/.20,0,1)));
+   // Keep ankles fixed, and use the shirt's exact fit at the shared waist seam.
+   // The removed duty belt must not reveal a gap when the fit slider changes.
+   if(name==='trousers-fabric')for(let i=0;i<pos.count;i++){
+    const x=source[i*3],y=source[i*3+1],z=source[i*3+2];
+    if(avatar.isDwarf){pos.setZ(i,z*fit);continue;}
+    const ankle=clamp((y-.25)/.20,0,1),waist=T.MathUtils.smoothstep(y,.75,.90),torso=1-clamp((Math.abs(x)-.17)/.15,0,1);
+    pos.setX(i,x*(1+(fit-1)*torso*waist));
+    pos.setZ(i,z*(1+(fit-1)*ankle*T.MathUtils.lerp(1,torso,waist)));
+   }
    if(name==='face-skin'){
     const f=c.face;
     for(let i=0;i<pos.count;i++){

@@ -1,5 +1,5 @@
-import {roleOf,roleSelection,DWARF_PALETTES} from '../src/fps/character-roles.mjs?v=6.1.1';
-import {makeCreative,validateCreative,creativeBrief} from './creative-schema.mjs?v=6.1.1';
+import {roleOf,roleSelection,DWARF_PALETTES} from '../src/fps/character-roles.mjs?v=6.1.2';
+import {makeCreative,validateCreative,creativeBrief} from './creative-schema.mjs?v=6.1.2';
 import {bodyRegions} from './body-proportions.mjs';
 /** Portable, deterministic v2 concept format. No browser or 3D dependencies. */
 export const FORMAT='cartridge-strike-character-project';
@@ -124,8 +124,8 @@ export function animationContract(project,availableClips=[],availableBones=[]){
     schema:'cartridge-strike-fps-rig-contract-v1',kind:project.kind,
     runtime_assignment:character?roleSelection(project):null,
     source_file:character?project.base.original_glb:null,
-    existing_game_character_import:'src/fps/character-library.mjs?v=6.1.1',
-    existing_game_actor_bridge:'src/fps/character-actors.mjs?v=6.1.1',
+    existing_game_character_import:'src/fps/character-library.mjs?v=6.1.2',
+    existing_game_actor_bridge:'src/fps/character-actors.mjs?v=6.1.2',
     studio_preview_file:'PREVIEW.glb',
     studio_preview_status:'Skinned design prototype with original clips; NOT gameplay-validated. Accessories may be rigid. Validate deformation, grip, collisions and materials before integration.',
     canonical_axes:{units:'meters',up:'+Y',front:'+Z',game_holder_rotation_y:'PI (the game turns actors to face -Z)'},
