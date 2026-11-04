@@ -1,0 +1,28 @@
+name: Prepare tested per-mode draft storage correction
+on:
+  push:
+    branches: [fix/floor5-safe-drafts-final]
+    paths: ['tools/fix-draft-mode-switch.py']
+permissions:
+  contents: write
+jobs:
+  prepare:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Apply exact readable mode isolation fix
+        run: |
+          set -euo pipefail
+          python3 tools/fix-draft-mode-switch.py
+          node --check furniture-editor/new.mjs
+          node tools/verify-owner-runtime.mjs
+          git diff --check
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add furniture-editor/new.mjs tools/draft-save-browser.mjs build-info.json
+          git commit -m 'Keep Floor 5 and new-level autosaves isolated through demo and undo'
+          git push origin "HEAD:${GITHUB_REF_NAME}"
