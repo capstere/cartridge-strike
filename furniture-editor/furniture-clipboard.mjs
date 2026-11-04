@@ -1,5 +1,5 @@
 /** In-memory instance clipboard. Never copies or edits a GLB; anchors stay explicit. */
-import {furnitureAssembly, furnitureHandleFrame, planFurnitureTranslation} from './furniture-translation.mjs?v=5.8.0';
+import {furnitureAssembly, furnitureHandleFrame, planFurnitureTranslation} from './furniture-translation.mjs?v=5.8.1';
 import {poseOnWall} from './wall-mounts.mjs?v=5.8.0';
 const clone=value=>structuredClone(value);
 const wallStamp=w=>JSON.stringify(w&&[w.id,w.kind,w.a,w.b,w.height,w.thickness,w.deleted]);

@@ -12,6 +12,12 @@ export function furnitureSurfaces(item){
   label:surface.label||`Hyllplan ${index+1}`}));
 }
 
+/** Axis-aligned footprint of an item in its support's local frame. */
+export function footprintOnSurface(item,relativeYaw){
+ const c=Math.abs(Math.cos(relativeYaw)),s=Math.abs(Math.sin(relativeYaw));
+ return {width:c*item.w+s*item.d,depth:s*item.w+c*item.d};
+}
+
 export function mountedSurface(item,support){
  const surfaces=furnitureSurfaces(support);
  return surfaces[item?.mountSurface]||surfaces.at(-1)||null;

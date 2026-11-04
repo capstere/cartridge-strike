@@ -64,7 +64,29 @@ try{
   const shoe=await place('studio:shoes',rack.x-.2,rack.z);assert.equal(shoe.mountId,rack.id);assert.equal(shoe.mountSurface,2);assert.equal(shoe.elevation,.6);
   await page.evaluate(id=>__levelStudio.select(id),shoe.id);await page.locator('#dockShelf').selectOption('0');
   await page.locator('#dockColor').evaluate(el=>{el.value='#2474d8';el.dispatchEvent(new Event('change',{bubbles:true}));});
-  const changed=await page.evaluate(id=>__levelStudio.project.furniture.added.find(o=>o.id===id),shoe.id);assert.equal(changed.color,'#2474d8');assert.equal(changed.elevation,.12);assert.equal(changed.mountSurface,0);
+  const savedItem=id=>page.evaluate(id=>__levelStudio.project.furniture.added.find(o=>o.id===id),id);
+  const dragOnPlan=async(fromX,fromZ,toX,toZ)=>{
+   const point=(x,z)=>page.evaluate(([x,z])=>__levelStudio.screenWorldPoint(x,z),[x,z]);
+   const from=await point(fromX,fromZ),to=await point(toX,toZ);
+   await page.mouse.move(from.x,from.y);await page.mouse.down();await page.mouse.move(to.x,to.y,{steps:4});await page.mouse.up();
+  };
+  await page.locator('#dockShelf').selectOption('1');assert.equal((await savedItem(shoe.id)).elevation,.36);
+  await page.locator('#dockShelf').selectOption('0');
+  await page.locator('#dockRotateLeft').click();
+  const turned=await savedItem(shoe.id);assert(Math.abs(turned.yaw-Math.PI/12)<1e-5);
+  await page.locator('#editDockClose').click();
+  await dragOnPlan(turned.x,turned.z,rack.x+.1,rack.z);
+  const slid=await savedItem(shoe.id);assert(Math.abs(slid.x-turned.x)>.1,'shoe pair moved along the shelf');
+  assert.equal(slid.yaw,turned.yaw,'sliding shoes on the same shelf must keep their rotation');
+  // Grab the exposed end of the rack, then rotate the selected assembly.
+  await dragOnPlan(rack.x-.4,rack.z,rack.x+.2,rack.z+.5);
+  const movedRack=await savedItem(rack.id),movedPair=await savedItem(shoe.id);
+  assert(Math.abs(movedRack.z-rack.z)>.3,'rack moved');
+  assert(Math.abs((movedPair.x-slid.x)-(movedRack.x-rack.x))<1e-5);
+  assert(Math.abs((movedPair.z-slid.z)-(movedRack.z-rack.z))<1e-5);
+  await page.locator('#dockRotateLeft').click();
+  const changed=await savedItem(shoe.id);assert(Math.abs(changed.yaw-slid.yaw-Math.PI/12)<1e-5);
+  assert.equal(changed.color,'#2474d8');assert.equal(changed.elevation,.12);assert.equal(changed.mountId,rack.id);assert.equal(changed.mountSurface,0);
   const wallShoe=await place('studio:shoes',shelf.x+.2,shelf.z);assert.equal(wallShoe.mountId,shelf.id);assert(Math.abs(wallShoe.elevation-shelf.elevation-.14)<.001);
   // Exercise the real inspector callbacks with an occupied wall shelf. The
   // off-centre shoe pair catches rotation/translation bugs that a centred prop
@@ -101,6 +123,13 @@ try{
   const printer=await place('office:ricoh-printer',3.9,1.5),board=await place('office:whiteboard-mobile',3.4,-1.4);
   assert.equal(printer.elevation,0);assert.equal(board.elevation,0);
   const cartridge=await place('fps:cartridge',bsc.x,bsc.z);assert.equal(cartridge.mountId,bsc.id);assert.equal(cartridge.elevation,.904);
+  for(const item of [board,printer,cartridge]){
+   if(await page.locator('#editDockClose').isVisible())await page.locator('#editDockClose').click();
+   await dragOnPlan(item.x,item.z,item.x+.2,item.z);
+   assert.equal(await page.evaluate(()=>__levelStudio.selected),item.id,'pointer selects '+item.assetId);
+   const moved=await savedItem(item.id);assert(moved.x>item.x+.1,'pointer moves '+item.assetId);
+   await page.locator('#dockRotateLeft').click();assert(Math.abs((await savedItem(item.id)).yaw-moved.yaw-Math.PI/12)<1e-5,'rotate '+item.assetId);
+  }
   await page.locator('#threeView').click();await page.waitForFunction(ids=>ids.every(id=>__levelStudio.visualFurniture.some(o=>o.id===id&&o.realModel)),[printer.id,board.id]);
   assert(await page.evaluate(id=>__levelStudio.visualColors.some(o=>o.id===id&&o.color==='2474d8'),shoe.id),'shoe colour reaches actual material');
   assert(await page.evaluate(id=>!__levelStudio.visualColors.some(o=>o.id===id&&o.color==='2474d8'),wallShoe.id),'one pair cannot recolour another');
@@ -109,8 +138,12 @@ try{
   await page.locator('#open').setInputFiles({name:'lab.zip',mimeType:'application/zip',buffer:zip});await page.waitForFunction(()=>document.querySelector('#status').textContent.startsWith('Projektet öppnat'));assert.deepEqual(await page.evaluate(()=>structuredClone(__levelStudio.project)),before);
   await page.locator('#walkView').click();await page.waitForFunction(()=>!!document.querySelector('#walkFrame').contentWindow.__walk?.renderer?.projectFurniture);
   const frame=page.frames().find(f=>f.url().includes('/fps/walk.html'));assert(frame);
-  const fps=await frame.evaluate(ids=>{const r=__walk.renderer,rows=ids.map(id=>{const holder=r.projectFurniture.children.find(o=>o.userData.editId===id);if(!holder)throw Error('Missing FPS furniture '+id);let meshes=0,colors=[];holder.traverse(o=>{if(o.isMesh){meshes++;for(const m of Array.isArray(o.material)?o.material:[o.material])if(m.color)colors.push(m.color.getHexString());}});return {id,meshes,colors,y:holder.position.y};});r.camera.position.set(5.2,2.55,4.4);r.camera.lookAt(-1,.85,-1);r.camera.updateMatrixWorld();r.renderer.render(r.scene,r.camera);return {rows,webgl:r.renderer.getContext().getError()};},[bsc.id,rack.id,shelf.id,shoe.id,wallShoe.id,printer.id,board.id,cartridge.id]);
+  const fps=await frame.evaluate(ids=>{const r=__walk.renderer,rows=ids.map(id=>{const holder=r.projectFurniture.children.find(o=>o.userData.editId===id);if(!holder)throw Error('Missing FPS furniture '+id);let meshes=0,colors=[];holder.traverse(o=>{if(o.isMesh){meshes++;for(const m of Array.isArray(o.material)?o.material:[o.material])if(m.color)colors.push(m.color.getHexString());}});return {id,meshes,colors,x:holder.position.x,y:holder.position.y,z:holder.position.z,yaw:holder.rotation.y};});r.camera.position.set(5.2,2.55,4.4);r.camera.lookAt(-1,.85,-1);r.camera.updateMatrixWorld();r.renderer.render(r.scene,r.camera);return {rows,webgl:r.renderer.getContext().getError()};},[bsc.id,rack.id,shelf.id,shoe.id,wallShoe.id,printer.id,board.id,cartridge.id]);
   assert(fps.rows.every(r=>r.meshes>0));assert.equal(fps.webgl,0);assert(fps.rows.find(r=>r.id===shoe.id).colors.includes('2474d8'));assert.equal(fps.rows.find(r=>r.id===shoe.id).y,.12);
+  for(const row of fps.rows){
+   const item=before.furniture.added.find(o=>o.id===row.id);
+   assert.deepEqual([row.x,row.y,row.z,row.yaw],[item.x,item.elevation||0,item.z,item.yaw],'reopened FPS pose for '+item.assetId);
+  }
   await frame.locator('#game').screenshot({path:out+'/fps.png'});await page.evaluate(()=>__levelStudio.leaveWalk());await page.reload();await page.waitForFunction(()=>!!window.__levelStudio);assert.deepEqual(await page.evaluate(()=>__levelStudio.project.furniture.added),before.furniture.added);
   await page.goto(origin+'/furniture-editor/');await page.waitForFunction(()=>!!window.__furnitureEditor);await page.locator('#openLibrary').click();await page.locator('#librarySearch').fill('skor');assert(await page.locator('.library-tile').count()>=1);await page.locator('#librarySearch').fill('ricoh');assert.equal(await page.locator('.library-tile').count(),1);
   assert.deepEqual(errors,[]);assert.deepEqual(failed,[]);const result={status:'PASS',models,shelfLevels:true,wallShelfControls:wallShelfControls.map(step=>step.action),perPairColor:true,zipRoundtrip:true,autosave:true,classicCatalogue:true,fps,errors,failed};writeFileSync(out+'/result.json',JSON.stringify(result,null,2));console.log(JSON.stringify(result));
