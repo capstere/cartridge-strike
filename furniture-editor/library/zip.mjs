@@ -6,11 +6,11 @@ export const PROJECT_ZIP_MAX_FILES=260;
 const TABLE=Array.from({length:256},(_,i)=>{let n=i;for(let j=0;j<8;j++)n=(n&1)?(n>>>1)^0xedb88320:n>>>1;return n>>>0;});
 export function crc32(bytes){let n=0xffffffff;for(const c of bytes)n=TABLE[(n^c)&255]^(n>>>8);return(n^0xffffffff)>>>0;}
 const U16=(d,p,v)=>d.setUint16(p,v,true),U32=(d,p,v)=>d.setUint32(p,v,true);
-function validateName(name){if(['projekt.json','project.json','AGENT_BRIEF.md','COLLISION_MAP.json','preview/plan.png','preview/view3d.png'].includes(name)||
+function validateName(name){if(['projekt.json','project.json','RECOVERY.json','AGENT_BRIEF.md','COLLISION_MAP.json','preview/plan.png','preview/view3d.png'].includes(name)||
  /^((assets\/)?models\/[a-f0-9]{64}\.glb|assets\/posters\/[A-Za-z0-9_-]{1,64}\.webp)$/.test(name))return name;
  throw Error('Ogiltigt filnamn i projektpaket.');}
 export function makeZip(entries){if(!entries.length||entries.length>PROJECT_ZIP_MAX_FILES||new Set(entries.map(e=>e.name)).size!==entries.length)throw Error('För många eller duplicerade projektfiler.');const locals=[],central=[];let offset=0,total=0;
- for(const {name,data} of entries){validateName(name);const bytes=data instanceof Uint8Array?data:te.encode(data);const filename=te.encode(name);total+=bytes.length;if(total>PROJECT_ZIP_MAX_BYTES)throw Error('Projektet överstiger 24 MB.');const crc=crc32(bytes);
+ for(const {name,data} of entries){validateName(name);const bytes=data instanceof Uint8Array?data:te.encode(data);const filename=te.encode(name);total+=bytes.length;if(total>PROJECT_ZIP_MAX_BYTES)throw Error('Projektet överstiger 96 MiB.');const crc=crc32(bytes);
  const local=new Uint8Array(30+filename.length+bytes.length),a=new DataView(local.buffer);U32(a,0,0x04034b50);U16(a,4,20);U16(a,6,0x0800);U16(a,8,0);U32(a,14,crc);U32(a,18,bytes.length);U32(a,22,bytes.length);U16(a,26,filename.length);local.set(filename,30);local.set(bytes,30+filename.length);locals.push(local);
  const cent=new Uint8Array(46+filename.length),b=new DataView(cent.buffer);U32(b,0,0x02014b50);U16(b,4,20);U16(b,6,20);U16(b,8,0x0800);U16(b,10,0);U32(b,16,crc);U32(b,20,bytes.length);U32(b,24,bytes.length);U16(b,28,filename.length);U32(b,42,offset);cent.set(filename,46);central.push(cent);offset+=local.length;
  }

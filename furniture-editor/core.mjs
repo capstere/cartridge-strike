@@ -1,3 +1,4 @@
+import {MAX_FURNITURE_RECORDS} from './project-limits.mjs?v=5.7.2';
 /** Cartridge Strike Furniture Studio — pure, read-only runtime adapter.
  * This file deliberately has no imports from the active FPS, no mutations of game data,
  * and no storage or network side effects. The exported JSON is review-only.
@@ -143,7 +144,7 @@ export function parsePatch(document,baseline){
   throw Error('Filen är skapad för en annan spelversion.');
  const b=new Map(baseline.map(o=>[o.id,o]));const items=baseline.map(o=>({...o,original:{...o}}));const get=new Map(items.map(o=>[o.id,o]));const seen=new Set();
  const placements=document.placements,added=document.added,removed=document.removed;
- if(!Array.isArray(placements)||!Array.isArray(added)||!Array.isArray(removed)||placements.length+added.length+removed.length>350)
+ if(!Array.isArray(placements)||!Array.isArray(added)||!Array.isArray(removed)||placements.length+added.length+removed.length>MAX_FURNITURE_RECORDS)
   throw Error('För många eller felaktigt formaterade möbeländringar.');
  function inspect(p,isNew){
   if(!p||typeof p!=='object'||typeof p.id!=='string'||p.id.length>100||seen.has(p.id))throw Error('Ogiltigt eller dubblerat möbel-ID.');

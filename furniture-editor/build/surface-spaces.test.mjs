@@ -1,11 +1,11 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import * as T from '../../vendor/three/three.module.js';
-import {exportProject,parseProject,exportProjectZip,parseProjectZip} from './level-project.mjs?v=5.1.0';
-import {floor5Baseline,resolveProjectScene} from './project-scene.mjs?v=5.1.0';
-import {floorGaps,gapFloor,closedAreas} from './walkable-spaces.mjs';
-import {architecturePreview} from './architecture-preview.mjs?v=5.1.0';
-import {createWorld} from '../../src/fps/world.mjs?v=5.1.0';
+import {exportProject,parseProject,exportProjectZip,parseProjectZip} from './level-project.mjs?v=5.7.2';
+import {floor5Baseline,resolveProjectScene} from './project-scene.mjs?v=5.7.2';
+import {floorGaps,gapFloor,closedAreas} from './walkable-spaces.mjs?v=5.7.2';
+import {architecturePreview} from './architecture-preview.mjs?v=5.7.2';
+import {createWorld} from '../../src/fps/world.mjs?v=5.7.2';
 import {reconcileSurfaceColors} from './surface-style.mjs?v=5.1.0';
 import {makeEntry} from './architecture.mjs?v=5.1.0';
 import {PROCEDURAL_LIBRARY} from '../library/procedural.mjs';

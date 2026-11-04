@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {FLOOR_FINISHES,WALL_PATTERNS,hasPattern,floorBaseColor} from './pattern-presets.mjs?v=5.6.0';
 import {surfaceColor,paintDescription,validateSurfaceMaterials,reconcileSurfaceColors} from './surface-style.mjs?v=5.6.0';
-import {exportProject,parseProject} from './level-project.mjs?v=5.6.0';
+import {exportProject,parseProject} from './level-project.mjs?v=5.7.2';
 
 test('all requested finishes have stable IDs and visible base colors',()=>{
  assert(['dark-tile','dark-gloss-laminate','dark-large-stone'].every(k=>FLOOR_FINISHES.includes(k)&&hasPattern(k)&&/^#[a-f\d]{6}$/i.test(floorBaseColor(k))));
@@ -38,9 +38,9 @@ test('schema-2 keeps new floor and wall finishes without changing physics or ori
 });
 
 test('new-level floor overrides drive resolved scene and FPS after external ZIP round-trip',async()=>{
- const {resolveProjectScene}=await import('./project-scene.mjs');
- const {levelProjectToWorldData}=await import('../../src/fps/level-adapter.mjs');
- const {exportProjectZip,parseProjectZip}=await import('./level-project.mjs');
+ const {resolveProjectScene}=await import('./project-scene.mjs?v=5.7.2');
+ const {levelProjectToWorldData}=await import('../../src/fps/level-adapter.mjs?v=5.7.2');
+ const {exportProjectZip,parseProjectZip}=await import('./level-project.mjs?v=5.7.2');
  const p=exportProject({mode:'new-level',ground:{bounds:{x0:-5,z0:-5,x1:5,z1:5},wallHeightDefault:2.85,floors:[{id:'BYGG-G-0001',name:'Test',role:'room',surface:'carpet',x0:0,z0:0,x1:3,z1:3}]}});
  p.floorFinishes={'BYGG-G-0001':'dark-large-stone'};
  const restored=(await parseProjectZip(await exportProjectZip(p))).project;

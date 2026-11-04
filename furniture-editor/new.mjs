@@ -1,9 +1,11 @@
+import {draftText,createDraftStore,readDraftZip} from './build/draft-save.mjs?v=5.7.2';
+import {prepareProjectSave} from './build/safe-save.mjs?v=5.7.2';
 import {captureFurniture,pasteFurniture} from './furniture-clipboard.mjs?v=5.7.1';
-import {clearFloor5Interior,restoreFloor5Interior} from './build/empty-interior.mjs?v=5.7.1';
+import {clearFloor5Interior,restoreFloor5Interior} from './build/empty-interior.mjs?v=5.7.2';
 import {floorEdgeHandles,planFloorEdge} from './build/floor-edge.mjs?v=5.1.0';
-import {architecturePreview} from './build/architecture-preview.mjs?v=5.7.1';
+import {architecturePreview} from './build/architecture-preview.mjs?v=5.7.2';
 import {surfaceColor,validPaint,reconcileSurfaceColors} from './build/surface-style.mjs?v=5.7.0';
-import {floorGaps,gapFloor} from './build/walkable-spaces.mjs?v=5.7.1';
+import {floorGaps,gapFloor} from './build/walkable-spaces.mjs?v=5.7.2';
 import {installFurnitureHandles} from './furniture-handles.mjs?v=5.7.1';
 import {planFurnitureTranslation,furnitureAssembly} from './furniture-translation.mjs?v=5.7.1';
 import {rotateFurniture,mirrorFurniture} from './furniture-transforms.mjs?v=5.7.1';
@@ -11,22 +13,22 @@ import {modelFront,MODEL_FRONTS,wallFootprint} from './model-alignment.mjs?v=5.7
 import {makePoster,locatePoster} from './build/posters.mjs';
 import {createCurtain,createBlind,treatmentPosition,curtainSideForHit} from './build/treatments.mjs?v=5.7.0';
 import {buildProjectFurniture,buildProjectDecorations,applyFurnitureAppearance} from './build/project-visuals.mjs?v=5.7.1';
-import {resolveProjectScene,writeProjectScene,floor5Baseline,projectWallPieces} from './build/project-scene.mjs?v=5.7.1';
-import {inheritFloor5Gameplay} from '../src/fps/world.mjs?v=5.7.1';
+import {resolveProjectScene,writeProjectScene,floor5Baseline,projectWallPieces} from './build/project-scene.mjs?v=5.7.2';
+import {inheritFloor5Gameplay} from '../src/fps/world.mjs?v=5.7.2';
 import {wallAtPoint,planPaintOverWall} from './build/paint-over-wall.mjs?v=5.7.0';
 import {planResizeFloor,planResizeFloorEdge,planSlideInsert,planMoveWallEnd,roomBoundaryIds} from './build/direct-manipulation.mjs?v=5.7.0';
 import {parsePosters} from './build/posters.mjs';
 import {parseTreatments} from './build/treatments.mjs?v=5.7.0';
 import * as T from '../vendor/three/three.module.js';
-import {exportProject,parseProject,parseProjectZip,exportProjectZip} from './build/level-project.mjs?v=5.7.1';
-import {validateLevel} from './build/validate-level.mjs?v=5.7.1';
-import {validate,corners as baseCorners,inside,segmentIntersectsRectangle,intersects} from './core.mjs?v=5.7.1';
+import {exportProject,parseProject,parseProjectZip,exportProjectZip} from './build/level-project.mjs?v=5.7.2';
+import {validateLevel} from './build/validate-level.mjs?v=5.7.2';
+import {validate,corners as baseCorners,inside,segmentIntersectsRectangle,intersects} from './core.mjs?v=5.7.2';
 import {wallPieces,standardPassageSpan,standardDoorMarkerSpan,isDoor,STANDARD_PASSAGE_WIDTH,WC_PASSAGE_WIDTH,WC_MIN_PASSAGE_WIDTH} from './build/architecture.mjs?v=5.7.0';
 import {LIBRARY_ALL} from './library/catalog.mjs?v=5.7.1';
 import {upgradeLegacyOrangeChair} from './library/procedural.mjs?v=5.0.0';
-import {proposeSmartPose,duplicateFurnitureAssembly} from './smart-placement.mjs?v=5.7.1';
+import {proposeSmartPose,duplicateFurnitureAssembly} from './smart-placement.mjs?v=5.7.2';
 import {poseOnWall,syncWallMounts} from './wall-mounts.mjs?v=5.7.1';
-import {placementPreview,preferredPlacementPoint} from './snap-highlights.mjs?v=5.7.1';
+import {placementPreview,preferredPlacementPoint} from './snap-highlights.mjs?v=5.7.2';
 import {findNearbyFreePlacement} from './soft-placement.mjs';
 import {importLocalGLB,getLocalFile,localLibrary,readLibraryAsset} from './library/models.mjs?v=5.7.1';
 import {assetHash} from './library/glb-utils.mjs';
@@ -39,7 +41,10 @@ const catalogEntries=LIBRARY_ALL;
 const correctOldOrangeChair=doc=>(upgradeLegacyOrangeChair(doc),doc);
 const mode=new URLSearchParams(location.search).get('mode')==='edit-floor5'?'edit-floor5':'new-level';
 const STORAGE=mode==='edit-floor5'?'cartridge-floor5-level-v2':'cartridge-new-level-v2';let project,selected=null,tab='build',first=null,hover=null,drag=null,view='plan',zoom=1,offset={x:0,z:0},orbit=.65,history=[],future=[],localCatalog=[];
-try{project=parseProject(localStorage.getItem(STORAGE)||'');if(project.mode!==mode)throw Error('mode');project=inheritFloor5Gameplay(correctOldOrangeChair(project));}catch{project=inheritFloor5Gameplay(exportProject({mode,name:mode==='edit-floor5'?'Floor 5 – min version':'Min bana',projectId:'lvl-'+crypto.randomUUID().slice(0,12)}));if(mode==='edit-floor5'){try{const old=localStorage.getItem('cartridge-furniture-studio-0.17.0-v1');if(old)project=inheritFloor5Gameplay(parseProject(old));}catch{}}}
+const draftStorage={getItem:key=>localStorage.getItem(key),setItem:(key,value)=>localStorage.setItem(key,value)};
+let draftStore=createDraftStore(draftStorage,STORAGE);
+project=draftStore.load(raw=>{const doc=parseProject(raw);if(doc.mode!==mode)throw Error('Utkastet tillhör ett annat redigeringsläge.');return inheritFloor5Gameplay(correctOldOrangeChair(doc));});
+if(!project){project=inheritFloor5Gameplay(exportProject({mode,name:mode==='edit-floor5'?'Floor 5 – min version':'Min bana',projectId:'lvl-'+crypto.randomUUID().slice(0,12)}));if(!draftStore.rejected&&mode==='edit-floor5'){try{const old=localStorage.getItem('cartridge-furniture-studio-0.17.0-v1');if(old)project=inheritFloor5Gameplay(parseProject(old));}catch{}}}
 if(project.mode==='edit-floor5')project.ground.bounds={x0:-48,z0:-33,x1:52,z1:40};
 let multiSelected=new Set(),furnitureClipboard=null,pasteStep=0;
 let roomPreview=null,pendingFurniture=null,pendingTemplate=null,pendingYaw=0,snapFeedback=null,drawGesture=null,planPan=null,spaceHeld=false,view3dZoom=1,view3dCenter=null;
@@ -67,7 +72,8 @@ function updateFirstBuild(){
 const floorAt=(x,z)=>floors().find(f=>inside(x,z,f.polygon||[[f.x0,f.z0],[f.x1,f.z0],[f.x1,f.z1],[f.x0,f.z1]]));
 const nextId=prefix=>{let i=1;const ids=new Set([...floors(),...arch(),...objects()].map(o=>o.id));while(ids.has(prefix+String(i).padStart(4,'0')))i++;return prefix+String(i).padStart(4,'0');};
 function commit(before){if(p().surfaceColors||p().surfaceMaterials){const previous=JSON.parse(before);reconcileSurfaceColors(p(),previous,arch(),resolveProjectScene(previous).entries,floors());}syncWallMounts(objects(),arch());if(p().mode==='edit-floor5')writeProjectScene(p(),model());if(before===JSON.stringify(p()))return;if(view==='walk')leaveWalk();history.push(before);if(history.length>60)history.shift();future=[];persist();redraw();queueGameLook();}
-function persist(){try{localStorage.setItem(p().mode==='edit-floor5'?'cartridge-floor5-level-v2':'cartridge-new-level-v2',JSON.stringify(p()));$('autosave').textContent='Ändringar sparade lokalt.';}catch{$('autosave').textContent='Lokal lagring är full. Spara ZIP nu.';}}
+function persist(){const result=draftStore.save(p());$('autosave').textContent=result.message;$('autosave').classList.toggle('error',!result.ok);}
+window.addEventListener('beforeunload',event=>{if(draftStore.failed){event.preventDefault();event.returnValue='';}});
 function point(e){const r=canvas.getBoundingClientRect(),b=p().ground.bounds,scale=Math.min(canvas.width/(b.x1-b.x0),canvas.height/(b.z1-b.z0))*zoom;
  return {x:snap(((e.clientX-r.left)*canvas.width/r.width-canvas.width/2)/scale+(b.x0+b.x1)/2-offset.x),z:snap(((e.clientY-r.top)*canvas.height/r.height-canvas.height/2)/scale+(b.z0+b.z1)/2-offset.z)};}
 function screen(x,z){const b=p().ground.bounds,scale=Math.min(canvas.width/(b.x1-b.x0),canvas.height/(b.z1-b.z0))*zoom;
@@ -986,19 +992,32 @@ $('check').onclick=()=>{try{
  status(result.summary.playable?'Banan kan spelas!':'Fortsätt bygg fritt. Speltestet visar bara det som måste lösas före match.');
 }catch(e){status(e.message);}};
 function download(bytes,name,type){const a=document.createElement('a'),url=URL.createObjectURL(new Blob([bytes],{type}));a.href=url;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(url),5000);}
-$('saveJson').onclick=()=>{try{const doc=parseProject(p());download(JSON.stringify(doc,null,2)+'\n',p().projectId+'.json','application/json');status(p().assets.local.length?'JSON sparad. Använd ZIP för att också ta med egna modeller.':'Hela banprojektet sparat som JSON.');}catch(e){status(e.message);}};
-$('save').onclick=async()=>{try{const files=new Map(),local=[];for(const id of new Set(objects().map(o=>o.assetId).filter(x=>x?.startsWith('local:')))){
-  const row=await getLocalFile(id);if(!row?.data)throw Error('Egen GLB saknas: '+id);const bytes=new Uint8Array(row.data),file=`assets/models/${id.slice(6)}.glb`;
-  if(await assetHash(bytes)!==id.slice(6))throw Error('GLB-hash stämmer inte.');files.set(file,bytes);local.push({assetId:id,file,bytes:bytes.length,license:'private, unverified'});
- }p().assets.local=local;const report=validateLevel(p(),{engine:true});p().validation=report;const bytes=await exportProjectZip(p(),files);
-  download(bytes,p().projectId+'.zip','application/zip');persist();
-  localStorage.setItem(guideKey('saved'),'1');updateFirstBuild();
-  status('ZIP sparad med projekt och lokala tillgångar. '+(report.summary.playable?'Banan är spelbar.':'Du kan fortsätta bygga och testa spelbarheten senare.'));
- }catch(e){status('Kunde inte spara: '+e.message);}};
-$('open').onchange=async e=>{const file=e.target.files?.[0];if(!file)return;try{let incoming,files=new Map();if(file.name.toLowerCase().endsWith('.zip'))({project:incoming,files}=await parseProjectZip(await file.arrayBuffer()));else incoming=parseProject(await file.text());
+$('saveJson').onclick=()=>{try{download(draftText(p()),p().projectId+'.json','application/json');status('JSON-utkast hämtat utan spelkrav. Egna GLB ingår bara i ZIP/säkerhetskopia.');}catch(e){status('JSON kunde inte skapas: '+e.message);}};
+async function saveDesign(backupOnly=false){
+ const signature=JSON.stringify(p()),snapshot=JSON.parse(signature);$('save').disabled=true;$('saveBackup').disabled=true;
+ try{
+  const result=await prepareProjectSave(snapshot,getLocalFile,{backupOnly});
+  download(result.bytes,(snapshot.projectId||'floor5')+(result.kind==='recovery'?'-SAKERHETSKOPIA':'')+'.zip','application/zip');
+  if(result.kind==='project'){
+   if(JSON.stringify(p())===signature){p().assets=result.document.assets;p().validation=result.document.validation;persist();}
+   try{localStorage.setItem(guideKey('saved'),'1');updateFirstBuild();}catch{}
+   status('ZIP hämtad. Byggfel hindrar inte sparning. Använd TESTA OM BANAN ÄR SPELKLAR före match.');
+  }else status('SÄKERHETSKOPIA hämtad: alla projektdata bevarade. '+(result.missing.length?result.missing.length+' modell-/bildfiler saknas; behåll originalpaketen. ':'')+'Inte godkänd för spel. '+result.reason);
+ }catch(e){
+  // Last-resort source export does not depend on ZIP, models, renderer or parser.
+  try{download(draftText(snapshot),(snapshot.projectId||'floor5')+'-RADDNING.json','application/json');status('JSON-räddning hämtad. ZIP misslyckades: '+e.message+'. Behåll modellfiler och fliken.');}
+  catch(rawError){status('Kunde inte skapa hämtningen: '+rawError.message+' Behåll fliken öppen.');}
+ }finally{$('save').disabled=false;$('saveBackup').disabled=false;}
+}
+$('save').onclick=()=>saveDesign(false);$('saveBackup').onclick=()=>saveDesign(true);
+$('open').onchange=async e=>{const file=e.target.files?.[0];if(!file)return;try{let incoming,files=new Map();if(file.name.toLowerCase().endsWith('.zip')){const bytes=await file.arrayBuffer(),recovered=await readDraftZip(bytes);if(recovered){incoming=parseProject(recovered.project);files=recovered.files;}else ({project:incoming,files}=await parseProjectZip(bytes));}else incoming=parseProject(await file.text());
   for(const [path,bytes] of files)if(path.endsWith('.glb'))await importLocalGLB(new File([bytes],path.split('/').at(-1),{type:'model/gltf-binary'}));
   for(const asset of incoming.assets.local)if(!await getLocalFile(asset.assetId))throw Error('Egen GLB saknas. Öppna ZIP-filen i stället.');
-  if(view==='walk')leaveWalk();project=inheritFloor5Gameplay(correctOldOrangeChair(incoming));history=[];future=[];selected=null;pendingFurniture=null;pendingTemplate=null;pendingYaw=0;first=null;view3dCenter=null;view3dZoom=1;zoom=1;offset={x:0,z:0};$('name').value=p().name;$('width').value=p().ground.bounds.x1-p().ground.bounds.x0;$('depth').value=p().ground.bounds.z1-p().ground.bounds.z0;
+  const next=inheritFloor5Gameplay(correctOldOrangeChair(incoming));
+  const incomingKey=next.mode==='edit-floor5'?'cartridge-floor5-level-v2':'cartridge-new-level-v2';
+  let nextStore=draftStore;if(incomingKey!==(p().mode==='edit-floor5'?'cartridge-floor5-level-v2':'cartridge-new-level-v2')){nextStore=createDraftStore(draftStorage,incomingKey);nextStore.load(JSON.parse);}
+  nextStore.acceptImport(next);draftStore=nextStore;$('recoveryDialog')?.close();
+  if(view==='walk')leaveWalk();project=next;history=[];future=[];selected=null;pendingFurniture=null;pendingTemplate=null;pendingYaw=0;first=null;view3dCenter=null;view3dZoom=1;zoom=1;offset={x:0,z:0};$('name').value=p().name;$('width').value=p().ground.bounds.x1-p().ground.bounds.x0;$('depth').value=p().ground.bounds.z1-p().ground.bounds.z0;
   localCatalog=await localLibrary();for(const entry of localCatalog)entry.size=(await getLocalFile(entry.id))?.size;renderCatalog();persist();redraw();queueGameLook();status('Projektet öppnat. Kontrollera spelbarhet före provspelning.');
  }catch(err){status('Kunde inte öppna: '+err.message);}e.target.value='';};
 $('preview').onclick=()=>{try{const report=validateLevel(p(),{engine:true});p().validation=report;if(!report.summary.playable)throw Error('Åtgärda '+report.summary.errors+' fel innan provspelning.');localStorage.setItem('cartridge-level-preview',JSON.stringify(p()));window.open('../fps/?level=preview','_blank','noopener');status('Privat provspelning öppnad från aktuellt projekt.');}catch(e){status(e.message);}};
@@ -1132,3 +1151,14 @@ window.__levelStudio={get scene(){return model()},get project(){return p()},get 
  get architectureVisuals(){const rows=[];group.traverse(o=>{if(o.userData.architecturePart)rows.push({id:o.userData.editId,part:o.userData.architecturePart,color:o.material.color.getHexString(),map:o.material.map?.name||null,roughness:o.material.roughness,metalness:o.material.metalness,position:o.position.toArray(),size:o.geometry.parameters});});return rows;},
  get snapPreview(){return {kind:snapFeedback?.kind||null,targetId:snapFeedback?.targetId||null,
   label:snapFeedback?.label||'',pose:snapFeedback?.pose,ghostPose:ghostRoot?.children[0]?{position:ghostRoot.children[0].position.toArray(),yaw:ghostRoot.children[0].rotation.y}:null,ghostLoaded:!!ghostRoot?.children[0]?.userData.realModel,highlightCount:preview3d.children.filter(x=>x.userData.snapTargetId).length};},redraw};
+
+// A rejected autosave is never silently replaced by the fallback scene.
+if(draftStore.rejected){
+ const dialog=document.createElement('dialog');dialog.id='recoveryDialog';
+ const heading=document.createElement('h2');heading.textContent='Ditt tidigare utkast är skyddat';
+ const info=document.createElement('p');info.textContent='Utkastet kunde inte öppnas: '+draftStore.problem+'. Inget har skrivits över. Hämta originalet eller öppna en reparerad JSON/ZIP.';
+ const backup=document.createElement('button');backup.textContent='HÄMTA ORIGINALUTKAST';backup.onclick=()=>download(draftStore.rejected,'Floor5_SKYDDAT_UTKAST.json','application/json');
+ const chooser=document.createElement('input');chooser.type='file';chooser.accept='.json,.txt,.zip';chooser.hidden=true;chooser.onchange=e=>$('open').onchange(e);
+ const open=document.createElement('button');open.textContent='ÖPPNA REPARERAD JSON/ZIP';open.onclick=()=>chooser.click();
+ dialog.append(heading,info,backup,open,chooser);dialog.addEventListener('cancel',e=>e.preventDefault());document.body.append(dialog);dialog.showModal();
+}

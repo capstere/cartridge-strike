@@ -6,7 +6,7 @@
 import {placementRole,proceduralOf} from './library/procedural.mjs?v=5.0.0';
 import {LIBRARY_MAP} from './library/catalog.mjs?v=5.7.1';
 import {findWallMount,wallMountProblem} from './wall-mounts.mjs?v=5.7.1';
-import {round,normalizeAngle} from './core.mjs?v=5.7.1';
+import {round,normalizeAngle} from './core.mjs?v=5.7.2';
 
 const isSurface=o=>!o.deleted&&(!o.wallMount||proceduralOf(o)?.shape==='wall-shelf'&&Math.abs(o.wallRoll||0)<1e-6)&&(
  ['counter','desk','table','round','wall-shelf'].includes(proceduralOf(o)?.shape)||

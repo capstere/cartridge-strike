@@ -5,9 +5,9 @@ import {createRequire} from 'node:module';
 import {fileURLToPath} from 'node:url';
 import {dirname,resolve} from 'node:path';
 import {LIBRARY,LIBRARY_ALL,LIBRARY_MAP,LIBRARY_SOURCE} from './catalog.mjs';
-import {crc32,makeZip,readZip} from './zip.mjs';
+import {crc32,makeZip,readZip} from './zip.mjs?v=5.7.2';
 import {inspectGLB,safeFilename} from './glb-utils.mjs';
-import {exportPatch,parsePatch,BASE_COMMIT} from '../core.mjs';
+import {exportPatch,parsePatch,BASE_COMMIT} from '../core.mjs?v=5.7.2';
 const dir=dirname(fileURLToPath(import.meta.url)),root=resolve(dir,'../..');
 
 test('104 rights-audited, isolated models and supported model types',()=>{

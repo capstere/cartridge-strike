@@ -1,5 +1,5 @@
 /** Explicit local-project access changes. Never edits the canonical map. */
-import {inside} from '../core.mjs?v=5.7.1';
+import {inside} from '../core.mjs?v=5.7.2';
 const poly=f=>f.polygon||[[f.x0,f.z0],[f.x1,f.z0],[f.x1,f.z1],[f.x0,f.z1]];
 export function closedAreas(data){return [...data.excludedRooms,...data.rooms.filter(r=>r.status==='uncertain'),...data.obstacles.filter(o=>o.kind==='uncertain-area')].filter((r,i,a)=>a.findIndex(v=>v.id===r.id)===i);}
 export function validateOpenedAreas(project,data){

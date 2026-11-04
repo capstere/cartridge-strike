@@ -3,8 +3,8 @@ import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {resolve} from 'node:path';
 import {deflateRawSync} from 'node:zlib';
-import {readModelBundleZip,MODEL_PACK_MAX_FILES} from './model-bundle.mjs';
-import {makeZip,readZip,crc32,PROJECT_ZIP_MAX_BYTES} from './zip.mjs';
+import {readModelBundleZip,MODEL_PACK_MAX_FILES} from './model-bundle.mjs?v=5.7.2';
+import {makeZip,readZip,crc32,PROJECT_ZIP_MAX_BYTES} from './zip.mjs?v=5.7.2';
 
 const source=readFileSync(resolve('assets/fps/models/chairDesk.glb'));
 function deflatedZip(name,payload) {

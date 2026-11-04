@@ -2,8 +2,8 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {makeEntry,entryLength,standardDoorMarkerSpan,standardPassageSpan,WC_PASSAGE_WIDTH,WC_MIN_PASSAGE_WIDTH} from './architecture.mjs';
 import {planPaintOverWall} from './paint-over-wall.mjs';
-import {exportProject,exportProjectZip,parseProjectZip,parseProject} from './level-project.mjs';
-import {createWorld} from '../../src/fps/world.mjs';
+import {exportProject,exportProjectZip,parseProjectZip,parseProject} from './level-project.mjs?v=5.7.2';
+import {createWorld} from '../../src/fps/world.mjs?v=5.7.2';
 import {testDoorTraversal} from './door-traversal.mjs';
 
 const room={id:'BYGG-G-0001',name:'WC test',role:'room',surface:'vinyl',x0:0,z0:0,x1:8,z1:8};
@@ -48,7 +48,7 @@ test('ordinary passages keep 1.10 minimum, while WC has a 0.65 minimum',()=>{
 });
 
 test('existing narrow toilet doors keep their source dimensions and accept a visual WC style',async()=>{
- const {floor5Baseline,resolveProjectScene,writeProjectScene}=await import('./project-scene.mjs');
+ const {floor5Baseline,resolveProjectScene,writeProjectScene}=await import('./project-scene.mjs?v=5.7.2');
  const p=exportProject({mode:'edit-floor5'}),scene=resolveProjectScene(p);
  const existing=scene.entries.filter(e=>['D43','D44','D45','D46','D47','D63'].includes(e.id));
  assert.equal(existing.length,6);
