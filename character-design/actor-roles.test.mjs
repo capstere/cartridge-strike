@@ -89,3 +89,7 @@ test('native role ZIP -> installer dry run -> apply -> registry keeps original d
   await installPackage(join(dir,'input.zip'),{root:dir,apply:true});assert.equal(JSON.parse(await readFile(join(dir,'assets/fps/character-overrides.json'))).characters.length,1);
  }finally{await rm(dir,{recursive:true,force:true});}disposeAvatar(a);
 });
+
+test('menu camera has no cosmetic assignment before player selection',()=>{
+ for(const id of [undefined,null,'']){assert.deepEqual(assignmentKeys('player',id),[]);assert.equal(getCharacterOverride('player',id),null);}
+});

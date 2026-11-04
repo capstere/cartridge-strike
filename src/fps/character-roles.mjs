@@ -20,6 +20,7 @@ export function targetLabel(target){
 }
 export function dwarfVariant(project){return Number.isInteger(project?.base?.variant)?project.base.variant:0;}
 export function assignmentKeys(role,id,variant=0){
+ if(typeof id!=='string'||!id)return []; // Menu camera has no player slot yet.
  if(role==='dwarf')return [id,`dwarf-variant-${variant}`,'dwarf-all'];
  if(role==='hostage')return [id,'hostage-all'];
  return [id,id.startsWith('counterAnalysts-')?'counterAnalysts-all':'analysts-all'];
