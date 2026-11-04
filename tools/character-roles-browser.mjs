@@ -23,7 +23,7 @@ try{
   await page.waitForFunction(role=>!document.querySelector('main').inert&&__characterStudio.project.runtime.role===role,v.role);
   if(v.gender)await page.locator('#gender').selectOption(v.gender);
   await page.locator('#actor-target').selectOption(v.target);await page.locator('#project-name').fill('Synthetic '+v.role+' '+index);
-  await page.locator('[data-tab="look"]').click();await page.locator('[data-color="jacket"]:visible').first().fill(v.color);
+  await page.locator('[data-tab="look"]').click();const beforeColour=await page.evaluate(()=>__characterStudio.workbench.avatar.root.uuid);await page.locator('[data-color="jacket"]:visible').first().fill(v.color);assert.equal(await page.evaluate(()=>__characterStudio.workbench.avatar.root.uuid),beforeColour);
   await page.locator('[data-tab="fashion"]').click();await page.locator('#outfit-style').selectOption(v.outfit);
   await page.locator('#shirt-text').fill(v.role==='dwarf'?'D5':'LAB');
   await page.locator('[data-tab="parts"]').click();await page.locator('#part-type').selectOption(v.part);await page.locator('#add-part').click();

@@ -59,7 +59,7 @@ export class DesignWorkbench{
  update(project,{recreate=false,rebuild=false}={}){
   if(!this.initialized)return;
   const old=this.project;this.project=project;const headProfile=project.creative?.realism?.head||'original';upgradeAccessories(project);
-  if(project.kind==='character'&&(!this.avatar||recreate||this.headProfile!==headProfile||old?.base.gender!==project.base.gender||old?.base.team!==project.base.team||this.avatar.isDwarf!==(roleOf(project)==='dwarf'))){
+  if(project.kind==='character'&&(!this.avatar||recreate||this.headProfile!==headProfile||old?.base.gender!==project.base.gender||old?.base.team!==project.base.team||!!this.avatar.isDwarf!==(roleOf(project)==='dwarf'))){
    this.clearParts();this.fashion.dispose();this.cloth.clear();
    if(this.avatar){this.avatar.holder.removeFromParent();disposeAvatar(this.avatar);}
    this.avatar=roleOf(project)==='dwarf'?createDwarfAvatar(createDwarfAsset(dwarfVariant(project))):createAuthoredAvatar(project.base.team==='hostage'?'analysts':project.base.team,characterId(project.base.gender),roleOf(project)==='hostage',{ignoreOverrides:true,gender:project.base.gender});
