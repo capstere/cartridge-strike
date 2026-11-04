@@ -28,9 +28,9 @@ try{
    return checks;
   });
   for(const c of checks){assert(!c.belt&&!c.buckle,label+' belt');for(const s of c.sides){assert.equal(s.misses,0,label+' '+c.name+' cuff');assert.equal(s.soleMisses,0,label+' '+c.name+' sole');}}
-  await page.evaluate(()=>{const w=__characterStudio.workbench;w.pose('Sprint_Loop',false);w.avatar.mixer.setTime(.23);w.avatar.root.updateMatrixWorld(true);w.focus='shoes';w.yaw=1.5;w.pitch=.03;w.renderPreview();});
+  await page.evaluate(()=>{const w=__characterStudio.workbench;w.pose('Sprint_Loop',false);w.avatar.mixer.setTime(.23);w.avatar.root.updateMatrixWorld(true);w.focus='shoes';w.zoom=.42;w.yaw=1.5;w.pitch=.03;w.renderPreview();});
   await page.locator('#preview3d').screenshot({path:out+'/'+label+'-running-shoes.png'});
-  await page.evaluate(()=>{const w=__characterStudio.workbench;w.pose('Idle_Loop',false);w.focus='body';w.yaw=.3;w.pitch=.03;w.renderPreview();});
+  await page.evaluate(()=>{const w=__characterStudio.workbench;w.pose('Idle_Loop',false);w.focus='body';w.zoom=1;w.yaw=.3;w.pitch=.03;w.renderPreview();});
   await page.locator('#preview3d').screenshot({path:out+'/'+label+'-no-belt.png'});
   const download=page.waitForEvent('download');await page.locator('#export-runtime').click();
   await page.waitForFunction(()=>{const s=document.querySelector('#status')?.textContent||'';return s.startsWith('Spelpaket klart:')||s.startsWith('Direkt spelexport stoppades');});
@@ -48,7 +48,12 @@ try{
    for(const clip of avatar.clips.values())for(const f of [.1,.5,.9]){avatar.mixer.stopAllAction();avatar.mixer.clipAction(clip).reset().play();avatar.mixer.setTime(clip.duration*f);checks.push({clip:clip.name,f,...footwearMetrics(avatar.root)});}
    avatar.mixer.stopAllAction();avatar.mixer.clipAction(avatar.clips.get('Sprint_Loop')).reset().play();avatar.mixer.setTime(.23);avatar.holder.rotation.y=0;
    const scene=new T.Scene();scene.background=new T.Color('#eef4f3');scene.add(new T.HemisphereLight(0xffffff,0x778888,2.3));const light=new T.DirectionalLight(0xffffff,2);light.position.set(3,4,4);scene.add(light,avatar.holder);
-   const camera=new T.OrthographicCamera(-.44,.44,.31,-.31,.01,20);camera.position.set(4,.25,.15);camera.lookAt(0,.25,0);
+   // Frame both actually posed feet, not a fixed box at the origin.
+   avatar.holder.updateWorldMatrix(true,true);avatar.root.updateMatrixWorld(true);avatar.root.traverse(m=>{if(m.isSkinnedMesh)m.skeleton.update();});
+   const bounds=new T.Box3(),point=new T.Vector3();
+   avatar.root.traverse(m=>{if(m.isMesh&&/^(shoe-upper-|boot-sole-)/.test(m.name))for(let i=0;i<m.geometry.attributes.position.count;i++){m.getVertexPosition(i,point);bounds.expandByPoint(point.applyMatrix4(m.matrixWorld));}});
+   const center=bounds.getCenter(new T.Vector3()),size=bounds.getSize(new T.Vector3()),aspect=960/676,span=Math.max(size.y+.25,(size.z+.25)/aspect);center.y+=.045;
+   const camera=new T.OrthographicCamera(-span*aspect/2,span*aspect/2,span/2,-span/2,.01,20);camera.position.copy(center).add(new T.Vector3(4,.03,.08));camera.lookAt(center);
    const renderer=new T.WebGLRenderer({antialias:true,preserveDrawingBuffer:true});renderer.setSize(960,676);renderer.outputColorSpace=T.SRGBColorSpace;renderer.toneMapping=T.ACESFilmicToneMapping;renderer.render(scene,camera);
    const image=renderer.domElement.toDataURL();renderer.dispose();disposeAvatar(avatar);clearCharacterOverrides();return {checks,image};
   },{url:origin+'/__shoe-test/'+label+'.glb',contract:read.contract});

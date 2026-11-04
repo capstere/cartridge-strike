@@ -2801,8 +2801,8 @@
     },
     {
       "path": "character-design/fashion-preview.mjs",
-      "bytes": 16670,
-      "sha256": "4d5bb54dfb75bda1bd9466056989f2bf579969a77d3d6e88009207810a63da7b"
+      "bytes": 17011,
+      "sha256": "8b73e2dad90bfe3d94ea477dee5f8f2c40b0396afca31d45e50def91b76ef407"
     },
     {
       "path": "character-design/fiber-hair.mjs",
@@ -2885,7 +2885,7 @@
       "sha256": "f2d8f10c03cfccf08d11128ca40eee3bdfc7f7eeb50b3a392207638dc9463dec"
     }
   ],
-  "bytes": 27415292,
+  "bytes": 27415633,
   "sourceDirectoriesExcluded": [
     "references",
     "reviews",

@@ -87,8 +87,15 @@ export class FashionPreview{
     g.setAttribute('color',new T.BufferAttribute(colors,3));
     mesh.material.vertexColors=true;mesh.material.needsUpdate=true;
    }
-   // Preserve the ankle opening: garment fit tapers to zero at the cuffs.
-   if(name==='trousers-fabric')for(let i=0;i<pos.count;i++)pos.setZ(i,source[i*3+2]*(avatar.isDwarf?fit:1+(fit-1)*clamp((source[i*3+1]-.25)/.20,0,1)));
+   // Keep ankles fixed, and use the shirt's exact fit at the shared waist seam.
+   // The removed duty belt must not reveal a gap when the fit slider changes.
+   if(name==='trousers-fabric')for(let i=0;i<pos.count;i++){
+    const x=source[i*3],y=source[i*3+1],z=source[i*3+2];
+    if(avatar.isDwarf){pos.setZ(i,z*fit);continue;}
+    const ankle=clamp((y-.25)/.20,0,1),waist=T.MathUtils.smoothstep(y,.75,.90),torso=1-clamp((Math.abs(x)-.17)/.15,0,1);
+    pos.setX(i,x*(1+(fit-1)*torso*waist));
+    pos.setZ(i,z*(1+(fit-1)*ankle*T.MathUtils.lerp(1,torso,waist)));
+   }
    if(name==='face-skin'){
     const f=c.face;
     for(let i=0;i<pos.count;i++){
