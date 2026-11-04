@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newProject,addPart,mirrorPart,validateProject,upgradeAccessories} from './project-schema.mjs?v=6.1.1';
+import {newProject,addPart,mirrorPart,validateProject,upgradeAccessories} from './project-schema.mjs?v=6.1.2';
 test('new accessories preserve semantic identity through save, clone and mirror',()=>{
  const p=newProject(),part=addPart(p,'shoulder');part.anchor='clavicle_l';part.fitVersion=1;
  const mirrored=mirrorPart(p,part.id);assert.equal(mirrored.preset,'shoulder');assert.equal(mirrored.anchor,'clavicle_r');assert.equal(mirrored.mirrored,true);validateProject(JSON.parse(JSON.stringify(p)));

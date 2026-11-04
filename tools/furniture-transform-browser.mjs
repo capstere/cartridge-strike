@@ -34,7 +34,7 @@ try{
   const unchanged=await last();await page.locator('.dock-details summary').click();await page.locator('#dockX').focus();await page.keyboard.press('r');await page.keyboard.press('m');assert.deepEqual(await last(),unchanged);await page.locator('.dock-details summary').click();
   await page.locator('#dockMirror').click();assert(!(await last()).mirrored);await page.locator('#dockMirror').click();
   await page.locator('#planView').click();await page.locator('#dockDuplicate').click();await click(2,2);await page.keyboard.press('Escape');assert((await last()).mirrored);
-  await saveReload();const data=await page.evaluate(async id=>{const {getLocalFile}=await import('./library/models.mjs?v=6.1.1');return [...new Uint8Array((await getLocalFile(id)).data)];},localId);assert.deepEqual(data,fixture);
+  await saveReload();const data=await page.evaluate(async id=>{const {getLocalFile}=await import('./library/models.mjs?v=6.1.2');return [...new Uint8Array((await getLocalFile(id)).data)];},localId);assert.deepEqual(data,fixture);
   // Real wall model, same UI and fixed anchor in both entry points.
   const target=await page.evaluate(()=>{const w=__levelStudio.scene.entries.find(w=>w.kind==='wall'&&Math.hypot(w.b[0]-w.a[0],w.b[1]-w.a[1])>5&&w.height>2.7);return {x:(w.a[0]+w.b[0])/2,z:(w.a[1]+w.b[1])/2};});
   await choose('onboard:tv-with-a-wall-mount');await page.locator('#placementMode').selectOption('wall');await click(target.x,target.z);await page.keyboard.press('Escape');item=await last();assert(item.wallMount);

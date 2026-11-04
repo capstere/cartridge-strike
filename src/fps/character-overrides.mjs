@@ -1,8 +1,8 @@
 /** Cosmetic roster; authored GLBs replace visuals, never actor/gameplay data. */
 import {GLTFLoader} from '../../vendor/three/addons/loaders/GLTFLoader.js';
-import {assignmentKeys} from './character-roles.mjs?v=6.1.1';
-import {inspectActorGLB,validateActorContract,validateActorAsset,actorHash} from './character-runtime-contract.mjs?v=6.1.1';
-import {createDwarfAsset} from './dwarf-rig.mjs?v=6.1.1';
+import {assignmentKeys} from './character-roles.mjs?v=6.1.2';
+import {inspectActorGLB,validateActorContract,validateActorAsset,actorHash} from './character-runtime-contract.mjs?v=6.1.2';
+import {createDwarfAsset} from './dwarf-rig.mjs?v=6.1.2';
 let entries=new Map(),pending=null;
 function disposeEntry(entry){
  entry.viewAppearance?.dispose();if(!entry.ownsAsset)return;

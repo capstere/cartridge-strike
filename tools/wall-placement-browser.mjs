@@ -53,7 +53,7 @@ try{
  await page.locator('#glb').setInputFiles({name:'Importerad-vägglampa.glb',mimeType:'model/gltf-binary',buffer:Buffer.from(fixture)});await wait(()=>document.querySelector('#status').textContent.includes('GLB-filer tillagda'));
  const localId=await page.locator('[data-asset^="local:"]').first().getAttribute('data-asset');await choose(localId);await page.locator('#placementMode').selectOption('wall');await clickPlan(4,-2);await page.keyboard.press('Escape');await page.locator('#dockFacing').click();await page.locator('#dockFacing').click();
  const imported=(await items()).at(-1);assert.equal(imported.wallFacing,'+x');assert(imported.modelSize[0]<imported.modelSize[2]);assert(Math.sin(imported.yaw+Math.PI/2)<-.99999);
- const data=await page.evaluate(async id=>{const {getLocalFile}=await import('./library/models.mjs?v=6.1.1');return [...new Uint8Array((await getLocalFile(id)).data)];},localId);assert.deepEqual(data,fixture);await saveOpen();assert.equal((await items()).at(-1).wallFacing,'+x');console.log('WALL_SCENARIO_C_OK');
+ const data=await page.evaluate(async id=>{const {getLocalFile}=await import('./library/models.mjs?v=6.1.2');return [...new Uint8Array((await getLocalFile(id)).data)];},localId);assert.deepEqual(data,fixture);await saveOpen();assert.equal((await items()).at(-1).wallFacing,'+x');console.log('WALL_SCENARIO_C_OK');
  // Floor 5 baseline remains intact. Only a new authored furniture row is added.
  await page.goto(origin+'/furniture-editor/new.html?mode=edit-floor5&test=1');await wait(()=>window.__levelStudio);
  const baseline=await page.evaluate(()=>JSON.stringify({entries:__levelStudio.scene.entries,gameplay:__levelStudio.project.gameplay,ground:__levelStudio.project.ground}));

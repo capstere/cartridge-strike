@@ -1,5 +1,5 @@
 import {newRealism,validateRealism} from './realism-schema.mjs?v=53';
-import {newSculpt,validateSculpt} from './sculpt-schema.mjs?v=6.1.1';
+import {newSculpt,validateSculpt} from './sculpt-schema.mjs?v=6.1.2';
 /** Extra creative options, backward-compatible with saved v2 design projects. */
 export const OUTFITS=Object.freeze({
  original:'Originaluniform',tshirt:'T-shirt',hoodie:'Hoodie',jacket:'Jacka med dragkedja',

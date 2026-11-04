@@ -1,14 +1,14 @@
-import {dwarfPoint,dwarfJacket} from './dwarf-fit.mjs?v=6.1.1';
+import {dwarfPoint,dwarfJacket} from './dwarf-fit.mjs?v=6.1.2';
 /** Studio-only edits to cloned skinned geometry. Original assets/runtime stay untouched. */
 import * as T from '../vendor/three/three.module.js';
-import {makeHair,makeBeard} from './anatomy-accessories.mjs?v=6.1.1';
-import {anatomy} from './anatomy-accessories.mjs?v=6.1.1';
+import {makeHair,makeBeard} from './anatomy-accessories.mjs?v=6.1.2';
+import {anatomy} from './anatomy-accessories.mjs?v=6.1.2';
 import {makeStudioHair,makeStudioJacket,makeSkinnedHoodieShell} from './studio-foundation.mjs?v=60';
 import {applyBodyRegions,bodyRegions} from './body-proportions.mjs';
-import {makeFiberHair} from './fiber-hair.mjs?v=6.1.1';
-import {fabricMaterial} from './cloth-preview.mjs?v=6.1.1';
+import {makeFiberHair} from './fiber-hair.mjs?v=6.1.2';
+import {fabricMaterial} from './cloth-preview.mjs?v=6.1.2';
 import {FABRICS} from './realism-schema.mjs?v=53';
-import {makeCreative} from './creative-schema.mjs?v=6.1.1';
+import {makeCreative} from './creative-schema.mjs?v=6.1.2';
 const clamp=T.MathUtils.clamp;
 // The Quaternius clothing regions retain the original body-atlas UVs. Sample
 // that atlas before shirt artwork replaces the UVs, so exposed arms match skin.

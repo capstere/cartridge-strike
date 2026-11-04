@@ -2,7 +2,7 @@
 import {createRequire} from 'node:module';
 import {mkdir,readFile,writeFile} from 'node:fs/promises';
 import assert from 'node:assert/strict';
-import {readRuntimePackage} from '../character-design/runtime-package.mjs?v=6.1.1';
+import {readRuntimePackage} from '../character-design/runtime-package.mjs?v=6.1.2';
 const require=createRequire(import.meta.url),{chromium}=require('../frontline/source/tools/dev/node_modules/playwright-core');
 const origin=process.env.CHARACTER_TEST_ORIGIN||'http://127.0.0.1:8765',out='test-results/footwear-fit';await mkdir(out,{recursive:true});
 const browser=await chromium.launch({headless:true,args:['--no-sandbox','--use-gl=angle','--use-angle=swiftshader','--enable-unsafe-swiftshader']});
@@ -39,8 +39,8 @@ try{
   models.set(label+'.glb',Buffer.from(read.bytes));
   const runtime=await page.evaluate(async({url,contract})=>{
    const T=await import('../vendor/three/three.module.js'),{GLTFLoader}=await import('../vendor/three/addons/loaders/GLTFLoader.js');
-   const {installCharacterOverride,clearCharacterOverrides}=await import('../src/fps/character-overrides.mjs?v=6.1.1');
-   const {createAuthoredAvatar,disposeAvatar}=await import('../src/fps/character-library.mjs?v=6.1.1');
+   const {installCharacterOverride,clearCharacterOverrides}=await import('../src/fps/character-overrides.mjs?v=6.1.2');
+   const {createAuthoredAvatar,disposeAvatar}=await import('../src/fps/character-library.mjs?v=6.1.2');
    const {footwearMetrics}=await import('../tools/character-footwear-checks.mjs');
    const loader=new GLTFLoader(),asset=await loader.loadAsync(url),source=await loader.loadAsync('../assets/fps/models/'+contract.source.file);installCharacterOverride(asset,contract,source);
    const avatar=createAuthoredAvatar(contract.role==='hostage'?'hostage':'analysts',contract.target,contract.role==='hostage'),checks=[];

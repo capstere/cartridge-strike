@@ -1,8 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import * as T from '../../vendor/three/three.module.js';
-import {createPrivateViewAppearance,syncWeaponAppearance} from './view-character-appearance.mjs?v=6.1.1';
-import {makeWeapon,animateWeapon,disposeWeaponResources} from './models.mjs?v=6.1.1';
+import {createPrivateViewAppearance,syncWeaponAppearance} from './view-character-appearance.mjs?v=6.1.2';
+import {makeWeapon,animateWeapon,disposeWeaponResources} from './models.mjs?v=6.1.2';
 import {WEAPONS} from './config.mjs';
 function fixture(){
  const scene=new T.Group(),g=new T.BufferGeometry();

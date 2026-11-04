@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newProject,addPart,clonePart,mirrorPart,validateProject,aiBrief,animationContract,REQUIRED_CLIPS} from './project-schema.mjs?v=6.1.1';
+import {newProject,addPart,clonePart,mirrorPart,validateProject,aiBrief,animationContract,REQUIRED_CLIPS} from './project-schema.mjs?v=6.1.2';
 
 test('new and revised projects keep a known original game skeleton',()=>{
  const p=newProject({newCharacter:true,gender:'female',template:'blank'});

@@ -1,6 +1,6 @@
 /** Read only the studio's bounded, store-only flat character ZIP format. */
 import {crc32} from './zip-export.mjs';
-import {validateActorContract,inspectActorGLB,actorHash} from '../src/fps/character-runtime-contract.mjs?v=6.1.1';
+import {validateActorContract,inspectActorGLB,actorHash} from '../src/fps/character-runtime-contract.mjs?v=6.1.2';
 const allowed=new Set(['CHARACTER.glb','CHARACTER.json','PROJECT.json','BASE_RIG.glb','COMPATIBILITY.json','README.txt']);
 export async function readRuntimePackage(input){
  const b=input instanceof Uint8Array?input:new Uint8Array(input),d=new DataView(b.buffer,b.byteOffset,b.length),text=new TextDecoder('utf-8',{fatal:true}),files=new Map(),records=[];

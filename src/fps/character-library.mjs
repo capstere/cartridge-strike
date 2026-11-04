@@ -1,11 +1,11 @@
-import {getCharacterOverride,loadCharacterOverrides,clearCharacterOverrides} from './character-overrides.mjs?v=6.1.1';
-import {createRuntimeViewAppearance} from './view-character-appearance.mjs?v=6.1.1';
-import {makeFittedFootwear} from './character-footwear.mjs?v=6.1.1';
+import {getCharacterOverride,loadCharacterOverrides,clearCharacterOverrides} from './character-overrides.mjs?v=6.1.2';
+import {createRuntimeViewAppearance} from './view-character-appearance.mjs?v=6.1.2';
+import {makeFittedFootwear} from './character-footwear.mjs?v=6.1.2';
 /** Authored CC0 skinned actors, loaded locally before the Start button enables.
  * Original models: Quaternius. Uniform geometry and rest-space retargeting are
  * reproducible in tools/characters/build_assets.py. This owns no game state.
  */
-import {createPrivateViewAppearance} from './view-character-appearance.mjs?v=6.1.1';
+import {createPrivateViewAppearance} from './view-character-appearance.mjs?v=6.1.2';
 import * as T from '../../vendor/three/three.module.js';
 import {RoundedBoxGeometry} from '../../vendor/three/addons/geometries/RoundedBoxGeometry.js';
 import {WEAPONS} from './config.mjs';

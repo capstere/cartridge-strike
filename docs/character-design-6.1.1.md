@@ -1,4 +1,4 @@
-# Character Studio 6.1.1 — ankle attachment and no human belt
+# Character Studio 6.1.1 / 6.1.2 — ankle attachment and no human belt
 
 The approved low shoe shape remains. The old placement used only the foot's X
 position and assumed world Z=0. Its ankle collar therefore sat forward of the
@@ -23,7 +23,7 @@ the trouser fit below. No replacement belt or cover-up geometry is added.
 Two additional tests compare the original shared seam in standing, running and
 crouching poses at fit 85/100/120 on both rigs.
 
-Save any current project before reloading. The edition label is **6.1.1**.
+Save any current project before reloading. The edition label is **6.1.2**.
 Open an existing editable project and export **Exportera för spelet (.zip)**
 again to include the new shoes and belt removal. Old baked/exported GLB files
 are not silently rewritten. The contract records `footwear: ankle-fitted-v2`;
