@@ -1,10 +1,11 @@
+import {makeFloorTape,drawPlanTape} from './build/floor-tape.mjs?v=5.9.0';
 import {authoringStatus} from './project-limits.mjs?v=5.7.3';
 import {draftText,createDraftStore,readDraftZip} from './build/draft-save.mjs?v=5.7.2';
-import {prepareProjectSave} from './build/safe-save.mjs?v=5.8.0';
+import {prepareProjectSave} from './build/safe-save.mjs?v=5.9.0';
 import {captureFurniture,pasteFurniture} from './furniture-clipboard.mjs?v=5.8.1';
 import {clearFloor5Interior,restoreFloor5Interior} from './build/empty-interior.mjs?v=5.8.0';
 import {floorEdgeHandles,planFloorEdge} from './build/floor-edge.mjs?v=5.7.3';
-import {architecturePreview} from './build/architecture-preview.mjs?v=5.8.0';
+import {architecturePreview} from './build/architecture-preview.mjs?v=5.9.0';
 import {surfaceColor,validPaint,reconcileSurfaceColors} from './build/surface-style.mjs?v=5.8.0';
 import {floorGaps,gapFloor} from './build/walkable-spaces.mjs?v=5.8.0';
 import {installFurnitureHandles} from './furniture-handles.mjs?v=5.8.1';
@@ -13,17 +14,17 @@ import {rotateFurniture,mirrorFurniture} from './furniture-transforms.mjs?v=5.8.
 import {modelFront,MODEL_FRONTS,wallFootprint} from './model-alignment.mjs?v=5.8.0';
 import {makePoster,locatePoster} from './build/posters.mjs?v=5.7.3';
 import {createCurtain,createBlind,treatmentPosition,curtainSideForHit} from './build/treatments.mjs?v=5.8.0';
-import {buildProjectFurniture,buildProjectDecorations,applyFurnitureAppearance} from './build/project-visuals.mjs?v=5.8.0';
+import {buildProjectFurniture,buildProjectDecorations,applyFurnitureAppearance,floorTapeMesh} from './build/project-visuals.mjs?v=5.9.0';
 import {resolveProjectScene,writeProjectScene,floor5Baseline,projectWallPieces} from './build/project-scene.mjs?v=5.8.0';
-import {inheritFloor5Gameplay} from '../src/fps/world.mjs?v=5.8.0';
+import {inheritFloor5Gameplay} from '../src/fps/world.mjs?v=5.9.0';
 import {wallAtPoint,planPaintOverWall} from './build/paint-over-wall.mjs?v=5.8.0';
 import {planResizeFloor,planResizeFloorEdge,planSlideInsert,planMoveWallEnd,roomBoundaryIds} from './build/direct-manipulation.mjs?v=5.8.0';
 import {parsePosters} from './build/posters.mjs?v=5.7.3';
 import {parseTreatments} from './build/treatments.mjs?v=5.8.0';
 import * as T from '../vendor/three/three.module.js';
-import {exportProject,parseProject,parseProjectZip,exportProjectZip} from './build/level-project.mjs?v=5.8.0';
-import {validateLevel} from './build/validate-level.mjs?v=5.8.0';
-import {validate,corners as baseCorners,inside,segmentIntersectsRectangle,intersects} from './core.mjs?v=5.8.0';
+import {exportProject,parseProject,parseProjectZip,exportProjectZip} from './build/level-project.mjs?v=5.9.0';
+import {validateLevel} from './build/validate-level.mjs?v=5.9.0';
+import {validate,corners as baseCorners,inside,segmentIntersectsRectangle,intersects,distanceSegment} from './core.mjs?v=5.8.0';
 import {wallPieces,standardPassageSpan,standardDoorMarkerSpan,isDoor,STANDARD_PASSAGE_WIDTH,WC_PASSAGE_WIDTH,WC_MIN_PASSAGE_WIDTH} from './build/architecture.mjs?v=5.8.0';
 import {LIBRARY_ALL,LIBRARY_MAP} from './library/catalog.mjs?v=5.8.0';
 import {upgradeLegacyOrangeChair,proceduralOf} from './library/procedural.mjs?v=5.8.0';
@@ -181,6 +182,8 @@ function find(x,z){for(const d of decorations()){const at=decorationAt(d);if(at&
   const dx=a.b[0]-a.a[0],dz=a.b[1]-a.a[1],len=Math.hypot(dx,dz),t=clamp(((x-a.a[0])*dx+(z-a.a[1])*dz)/len**2,0,1);
   if(Math.hypot(x-a.a[0]-dx*t,z-a.a[1]-dz*t)<.18)return a;
  }
+ const tape=tapeStrips().findLast(strip=>distanceSegment(x,z,strip.a,strip.b)<.14);
+ if(tape)return tape;
  return floors().find(f=>x>=f.x0&&x<=f.x1&&z>=f.z0&&z<=f.z1)||null;}
 function makeFloor(a,b,role){
  const {rect,edges}=planDraggedRoom(a,b,p().ground.bounds);
@@ -262,6 +265,24 @@ function placeMarker(kind,x,z){if(!floorAt(x,z))throw Error('Placera spelpunkter
   const id='OBJ-H'+(o.hostages.length+1);o.hostages.push({id,x,z,yaw:0,roomId:floorAt(x,z).id});selected=id;
  }else{const id=kind==='bomb'?'OBJ-BOMB':'OBJ-RESCUE';o[kind]={id,x,z,radius:kind==='bomb'?1.1:1.65,roomId:floorAt(x,z).id};selected=id;}
 }
+const tapeStrips=()=>p().ground.tape||[];
+const nextTape={style:'solid',color:'#ffcf00'};
+function updateTapeControls(item){
+ const drawing=$('tool').value==='tape',editing=!drawing&&tapeStrips().includes(item);
+ $('tapeSettings').hidden=!drawing&&!editing;
+ if(!drawing&&!editing)return;
+ const appearance=editing?item:nextTape;
+ $('tapeHeading').textContent=editing?'Markerad tejpremsa':'Ny tejpremsa';
+ $('tapeStyle').value=appearance.style;$('tapeColor').value=appearance.color;
+ $('tapeColorRow').hidden=appearance.style==='hazard';
+}
+function changeTapeAppearance(){
+ const item=lookup(),appearance={style:$('tapeStyle').value,color:$('tapeColor').value};
+ if($('tool').value!=='tape'&&tapeStrips().includes(item)){
+  const before=JSON.stringify(p());Object.assign(item,appearance);commit(before);
+ }else{Object.assign(nextTape,appearance);redraw();}
+}
+$('tapeStyle').onchange=changeTapeAppearance;$('tapeColor').onchange=changeTapeAppearance;
 const decorations=()=>[...(p().architecture.posters||[]),...(p().architecture.treatments||[])];
 function decorationAt(d){if(d.type){const at=treatmentPosition(d,arch());return at?{x:at.center[0],z:at.center[1]}:null;}return locatePoster(d,arch());}
 let spacesKey='',spacesCache=[],doorPreviewOpen=false;
@@ -342,7 +363,7 @@ function removeSelectedFurniture(){
  p().assets.local=p().assets.local.filter(a=>objects().some(o=>o.assetId===a.assetId));selected=null;multiSelected.clear();commit(before);
  status(`${ids.size} föremål borttagna. Ångra återställer dem och deras fästen.`);
 }
-function lookup(){normalizeSelection();if(multiSelected.size>1)return null;return [...decorations(),...floors(),...arch(),...objects(),...markers(),...spaces()].find(o=>o.id===selected);}
+function lookup(){normalizeSelection();if(multiSelected.size>1)return null;return [...decorations(),...tapeStrips(),...floors(),...arch(),...objects(),...markers(),...spaces()].find(o=>o.id===selected);}
 const selectionDock=installSelectionDock({
  getColor:item=>LIBRARY_MAP.get(item.assetId)?.colorable?(item.color||LIBRARY_MAP.get(item.assetId).defaultColor||'#f2f3ef'):null,
  onColor:color=>{const item=lookup();if(!item||!LIBRARY_MAP.get(item.assetId)?.colorable||!validFurnitureColor(color))return;const before=JSON.stringify(p());item.color=color;commit(before);status('Skornas färg är sparad och följer med till FPS.');},
@@ -393,11 +414,11 @@ const selectionDock=installSelectionDock({
   return true;
  }
 });
-function updateProps(){const o=lookup();updateSurfaceUI(o);$('selection').hidden=!o&&multiSelected.size<2;$('posterText').disabled=!o||!p().architecture.posters?.includes(o);$('posterText').value=o?.text||'';$('selectedLabel').disabled=!o||!floors().some(f=>f.id===o.id)||!!o.source;$('selectedLabel').value=o?.name||'';$('selectedSurface').disabled=!o||!floors().includes(o);$('selectedSurface').value=p().floorFinishes?.[o?.id]||o?.surface||'carpet';$('curtainStyleLabel').hidden=o?.type!=='curtain';$('curtainFlip').hidden=!['curtain','blind'].includes(o?.type);$('curtainStyle').value=o?.style||'sheer';$('selectedSill').disabled=!o||o.kind!=='window';$('selectedSill').value=o?.sill??.9;$('collisionSetting').hidden=!o||!objects().includes(o);$('collisionMode').value=o?.collision||'solid';$('selectionName').textContent=o?`${o.name||o.assetName||o.text||o.type||o.team||o.kind||o.role}`:multiSelected.size>1?`${multiSelected.size} möbler`:'Ingenting';
+function updateProps(){const o=lookup(),isTape=tapeStrips().includes(o);updateTapeControls(o);updateSurfaceUI(o);$('selection').hidden=!o&&multiSelected.size<2;$('posterText').disabled=!o||!p().architecture.posters?.includes(o);$('posterText').value=o?.text||'';$('selectedLabel').disabled=!o||!floors().some(f=>f.id===o.id)||!!o.source;$('selectedLabel').value=o?.name||'';$('selectedSurface').disabled=!o||!floors().includes(o);$('selectedSurface').value=p().floorFinishes?.[o?.id]||o?.surface||'carpet';$('curtainStyleLabel').hidden=o?.type!=='curtain';$('curtainFlip').hidden=!['curtain','blind'].includes(o?.type);$('curtainStyle').value=o?.style||'sheer';$('selectedSill').disabled=!o||o.kind!=='window';$('selectedSill').value=o?.sill??.9;$('collisionSetting').hidden=!o||!objects().includes(o);$('collisionMode').value=o?.collision||'solid';$('selectionName').textContent=isTape?'5S-tejp':o?`${o.name||o.assetName||o.text||o.type||o.team||o.kind||o.role}`:multiSelected.size>1?`${multiSelected.size} möbler`:'Ingenting';
  $('x').value=o?(o.x??o.x0??o.a?.[0]??''):'';$('z').value=o?(o.z??o.z0??o.a?.[1]??''):'';
  $('w').value=o?(o.w??(o.x1!==undefined?o.x1-o.x0:o.b?Math.hypot(o.b[0]-o.a[0],o.b[1]-o.a[1]):'')):'';
  $('d').value=o?(o.d??(o.z1!==undefined?o.z1-o.z0:'')):'';
- for(const id of ['x','z','w','d','remove','rotate','duplicate'])$(id).disabled=!o;
+ for(const id of ['x','z','w','d','rotate','duplicate'])$(id).disabled=!o||isTape;
  $('remove').disabled=!o&&multiSelected.size<2;
  selectionDock.sync(o,{compact:view==='3d'&&innerWidth<720,isFurniture:view!=='walk'&&!!o&&objects().includes(o)&&!pendingFurniture&&(tab!=='build'||$('tool').value==='select')});
 }
@@ -431,9 +452,14 @@ function moveObject(o,x,z,pointData={}){if(arch().includes(o)){
  if(markers().includes(o)){if(!floor)return false;o.x=x;o.z=z;if(o.roomId)o.roomId=floor.id;return true;}
  return false;}
 function finishBuild(a,q,tool){try{const before=JSON.stringify(p());
- selected=['room','corridor'].includes(tool)?makeFloor(a,q,tool).id:makeSegment(tool,[a.x,a.z],[q.x,q.z]).id;
+ if(tool==='tape'){
+  const strip=makeFloorTape(a,q,nextTape,tapeStrips(),floors());
+  (p().ground.tape??=[]).push(strip);selected=strip.id;
+ }else{
+  selected=['room','corridor'].includes(tool)?makeFloor(a,q,tool).id:makeSegment(tool,[a.x,a.z],[q.x,q.z]).id;
+ }
  first=null;drawGesture=null;commit(before);
- status(tool==='room'?'Rummet är klart! Du kan fortsätta bygga eller trycka Esc för att möblera.':
+ status(tool==='tape'?'5S-tejp lagd. Dra nästa remsa eller tryck Esc.':tool==='room'?'Rummet är klart! Du kan fortsätta bygga eller trycka Esc för att möblera.':
   'Golvytan är klar. Fortsätt bygga eller tryck Esc för att välja.');
  }catch(err){first=null;drawGesture=null;status(err.message);redraw();}}
 function handleBuild(q,tool,gesture){try{
@@ -464,6 +490,7 @@ function drawPlan(){const r=canvas.getBoundingClientRect(),dpr=Math.min(devicePi
   ctx.save();ctx.beginPath();pts.forEach((v,i)=>i?ctx.lineTo(...v):ctx.moveTo(...v));ctx.closePath();
   ctx.fillStyle='#42be9f40';ctx.strokeStyle='#157d68';ctx.lineWidth=3;ctx.setLineDash([8,5]);ctx.fill();ctx.stroke();ctx.restore();
  }
+ for(const strip of tapeStrips())drawPlanTape(ctx,strip,screen,dpr,selected===strip.id);
  for(const e of [...projectWallPieces(arch()),...arch().filter(e=>isDoor(e.kind))]){const marker=isDoor(e.kind)?standardDoorMarkerSpan(e):e;const a=screen(...marker.a),b=screen(...marker.b);ctx.beginPath();ctx.moveTo(...a);ctx.lineTo(...b);ctx.lineWidth=selected===e.id?7:Math.max(3,5*dpr);ctx.strokeStyle=selected===e.id?'#f2a03e':({wall:'#bc5961',glazed:'#35aa8a',window:'#46a0c0',door:'#dc9b4f','card-door':'#dc9b4f',opening:'#fff'}[e.kind]);ctx.stroke();}
  for(const o of objects()){const pts=corners(o).map(v=>screen(...v));ctx.beginPath();pts.forEach((v,i)=>i?ctx.lineTo(...v):ctx.moveTo(...v));ctx.closePath();ctx.fillStyle=(multiSelected.has(o.id)||selected===o.id)?'#ffc874':'#5a7e88';ctx.fill();ctx.strokeStyle='#233e4a';ctx.stroke();if(multiSelected.has(o.id)||selected===o.id){const [cx,cz]=screen(o.x,o.z),a=o.yaw+wallFootprint(o).frontAngle,[tx,tz]=screen(o.x+Math.sin(a)*Math.min(o.d,.6),o.z+Math.cos(a)*Math.min(o.d,.6));ctx.beginPath();ctx.moveTo(cx,cz);ctx.lineTo(tx,tz);ctx.strokeStyle='#fff';ctx.lineWidth=3*dpr;ctx.stroke();if(o.mirrored){ctx.fillStyle='#122f33';ctx.font=`bold ${14*dpr}px system-ui`;ctx.fillText('↔',cx+5*dpr,cz-5*dpr);}}}
  for(const m of markers()){const [x,z]=screen(m.x,m.z);ctx.beginPath();ctx.arc(x,z,selected===m.id?12*dpr:9*dpr,0,Math.PI*2);ctx.fillStyle=m.team==='analysts'?'#298bb7':m.team==='counterAnalysts'?'#d5684d':m.id.includes('BOMB')?'#dfb03e':m.id.includes('RESCUE')?'#41b89a':'#bf78b5';ctx.fill();ctx.strokeStyle='#fff';ctx.lineWidth=2;ctx.stroke();ctx.fillStyle='#16343b';ctx.font=`bold ${10*dpr}px system-ui`;ctx.fillText(m.team?String(m.index+1):m.id.includes('H')?'H':m.id.includes('BOMB')?'B':'R',x+11*dpr,z);}
@@ -512,6 +539,9 @@ function drawPlan(){const r=canvas.getBoundingClientRect(),dpr=Math.min(devicePi
    ctx.beginPath();ctx.moveTo(...screen(x-vx*width/2,z-vz*width/2));ctx.lineTo(...screen(x+vx*width/2,z+vz*width/2));
    ctx.strokeStyle='#f4ad42';ctx.lineWidth=9*dpr;ctx.globalAlpha=.7;ctx.stroke();ctx.globalAlpha=1;}}
  if(first&&hover){
+  if($('tool').value==='tape'){
+   drawPlanTape(ctx,{...nextTape,a:[first.x,first.z],b:[hover.x,hover.z]},screen,dpr);return;
+  }
   const room=['room','corridor'].includes($('tool').value),bounds=p().ground.bounds;
   const withinMap=q=>room?{
    x:clamp(q.x,bounds.x0,bounds.x1),z:clamp(q.z,bounds.z0,bounds.z1)}:q;
@@ -598,7 +628,9 @@ function update3DPreview(q=hover3d){preview3d.traverse(o=>{if(o.isMesh||o.isLine
   const tool=$('tool').value,room=['room','corridor'].includes(tool),bounds=p().ground.bounds;
   const clip=v=>room?{x:clamp(v.x,bounds.x0,bounds.x1),z:clamp(v.z,bounds.z0,bounds.z1)}:v;
   const a=clip(first),b=clip(q),x=(a.x+b.x)/2,z=(a.z+b.z)/2,w=Math.abs(b.x-a.x),d=Math.abs(b.z-a.z);
-  if(room)previewBox(x,.035,z,w,.06,d,0x188d84,0,.28);
+  if(tool==='tape'){
+   if(w||d)preview3d.add(floorTapeMesh({id:'tape-preview',...nextTape,a:[a.x,a.z],b:[b.x,b.z]}));
+  }else if(room)previewBox(x,.035,z,w,.06,d,0x188d84,0,.28);
   else{const len=Math.hypot(w,d),angle=-Math.atan2(b.z-a.z,b.x-a.x);previewBox(x,.8,z,len,1.6,.07,0x188d84,angle,.35);}
  }
  else if(q&&tab==='build'&&['door','wc-door','office-door','card-door','opening','window','glazed','office-glass'].includes($('tool').value)){const hit=wallAtPoint(arch(),[q.x,q.z],{radius:.4});if(hit){const w=$('tool').value==='wc-door'?WC_PASSAGE_WIDTH:$('tool').value==='office-door'?1.2:isDoor($('tool').value)?1.2:Math.min(1.6,hit.length),angle=-Math.atan2(hit.wall.b[1]-hit.wall.a[1],hit.wall.b[0]-hit.wall.a[0]);previewBox(hit.point[0],.7,hit.point[1],w,1.4,.12,0xf4ad42,angle,.3);}}
@@ -818,12 +850,12 @@ $('kidWalk').addEventListener('click',()=>{
 });
 $('kidSave').addEventListener('click',()=>{closeRoomChoices();$('save').click();});
 
-const toolLabels={select:'VÄLJ',room:'RUM',corridor:'GOLV',wall:'VÄGG',door:'DÖRR','office-door':'KONTORSDÖRR','office-glass':'KONTORSGLAS','wc-door':'WC-DÖRR','card-door':'KORTDÖRR',opening:'ÖPPNING',window:'FÖNSTER',glazed:'GLAS',poster:'AFFISCH',curtain:'GARDIN',blind:'PERSIENN'};
+const toolLabels={tape:'5S-TEJP',select:'VÄLJ',room:'RUM',corridor:'GOLV',wall:'VÄGG',door:'DÖRR','office-door':'KONTORSDÖRR','office-glass':'KONTORSGLAS','wc-door':'WC-DÖRR','card-door':'KORTDÖRR',opening:'ÖPPNING',window:'FÖNSTER',glazed:'GLAS',poster:'AFFISCH',curtain:'GARDIN',blind:'PERSIENN'};
 function updateGuide(){
  $('placeRotate').hidden=!pendingFurniture||snapFeedback?.kind==='wall'||$('placementMode').value==='wall';
 const tool=$('tool').value,active=tab==='build'&&tool!=='select',placing=!!pendingFurniture,chosen=lookup();
  $('activeMode').textContent=placing?'PLACERA '+pendingFurniture.name:tab==='build'?toolLabels[tool]||'BYGG':tab==='play'?'SPEL':'MÖBLERA';
- $('activeHelp').textContent=placing?(snapFeedback?.label||'Peka på en bänk, vägg eller golvet och klicka för att placera.'):first?'Klicka slutpunkten eller dra från start.':active?['room','corridor','wall'].includes(tool)?'Klicka två punkter eller dra i planen eller 3D.':'Klicka direkt på en vägg i planen eller 3D.':
+ $('activeHelp').textContent=placing?(snapFeedback?.label||'Peka på en bänk, vägg eller golvet och klicka för att placera.'):first?'Klicka slutpunkten eller dra från start.':active?['room','corridor','wall','tape'].includes(tool)?'Klicka två punkter eller dra i planen eller 3D.':'Klicka direkt på en vägg i planen eller 3D.':
   chosen&&!chosen.source&&floors().includes(chosen)?
    'Dra en GRÖN pil för att flytta en vägg, eller ett ORANGE hörn för två väggar. Dörrar följer med.':
   directInsert(chosen)?'Dra öppningen längs väggen. Den gamla luckan stängs automatiskt.':
@@ -892,7 +924,13 @@ $('placementMode').addEventListener('change',()=>{
  if(pendingFurniture)status('Välj platsen i banan. Föremålet fäster enligt det valda läget.');
  redraw();
 });
-function setBuildTool(tool){$('tool').value=tool;first=null;drawGesture=null;pendingFurniture=null;pendingTemplate=null;for(const b of document.querySelectorAll('[data-tool]'))b.classList.toggle('active',b.dataset.tool===tool);renderCatalog();redraw();}
+function setBuildTool(tool){
+ $('tool').value=tool;first=null;drawGesture=null;pendingFurniture=null;pendingTemplate=null;
+ if(tool==='tape'){selected=null;multiSelected.clear();}
+ for(const button of document.querySelectorAll('[data-tool]'))button.classList.toggle('active',button.dataset.tool===tool);
+ renderCatalog();redraw();
+ if(tool==='tape')$('tapeSettings').scrollIntoView({block:'nearest'});
+}
 for(const button of document.querySelectorAll('[data-curtain-preset]'))button.onclick=()=>{$('newCurtainStyle').value=button.dataset.curtainPreset;setBuildTool('curtain');status(button.textContent+' · klicka på fönstret eller väggen.');};
 for(const button of document.querySelectorAll('[data-tool]'))button.onclick=()=>{const tool=$('tool').value===button.dataset.tool&&button.dataset.tool!=='select'?'select':button.dataset.tool;setBuildTool(tool);status(tool==='select'?'Välj en byggdel eller möbel. Delete tar bort den markerade delen.':button.title+' · Esc avslutar verktyget.');};
 for(const button of document.querySelectorAll('[data-tool="door"],[data-tool="wc-door"],[data-tool="office-door"],[data-tool="window"],[data-tool="office-glass"],[data-tool="glazed"],[data-tool="opening"]')){
@@ -943,7 +981,7 @@ $('newBlank').onclick=()=>{if(!window.confirm('Töm hela NY BANA? Ångra med Ctr
  status('Tom värld. Rita golv, väggar och öppningar. Kollision skapas automatiskt.');};
 $('remove').onclick=()=>{if(multiSelected.size>1){removeSelectedFurniture();return;}const o=lookup();if(!o)return;if(['closed-area','floor-gap'].includes(o.kind)){$('openSpace').click();return;}if(o.source&&o.polygon){status('Floor 5:s ursprungliga golv bevaras. Ändra väggar eller lägg till nya golvytor.');return;}const before=JSON.stringify(p());
  const removedIds=new Set([o.id,...(floors().includes(o)?roomBoundaryIds(o,arch(),floors().filter(f=>f.id!==o.id)):[])]);
- for(const list of [p().ground.floors,arch(),objects(),p().gameplay.spawns,p().gameplay.objectives.hostages,p().architecture.posters||[],p().architecture.treatments||[]]){
+ for(const list of [p().ground.floors,arch(),objects(),p().gameplay.spawns,p().gameplay.objectives.hostages,p().architecture.posters||[],p().architecture.treatments||[],tapeStrips()]){
   for(let i=list.length-1;i>=0;i--)if(removedIds.has(list[i].id))list.splice(i,1);
  }
  p().architecture.posters=(p().architecture.posters||[]).filter(d=>!removedIds.has(d.wallId));p().architecture.treatments=(p().architecture.treatments||[]).filter(d=>!removedIds.has(d.wallId));

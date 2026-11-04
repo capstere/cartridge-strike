@@ -1,3 +1,4 @@
+import {TAPE_WIDTH,hazardTile} from './floor-tape.mjs?v=5.9.0';
 import {createCurtainMesh} from './curtain-mesh.mjs?v=5.7.0';
 import {fittedSize,wallFootprint} from '../model-alignment.mjs?v=5.8.0';
 import * as T from '../../vendor/three/three.module.js';
@@ -9,7 +10,31 @@ import {locatePoster} from './posters.mjs?v=5.7.3';
 import {createPosterTexture} from './poster-art.mjs';
 import {treatmentPosition} from './treatments.mjs?v=5.8.0';
 
+let hazardMap;
+export function floorTapeMesh(strip){
+ const dx=strip.b[0]-strip.a[0],dz=strip.b[1]-strip.a[1],length=Math.hypot(dx,dz);
+ const geometry=new T.PlaneGeometry(length,TAPE_WIDTH);
+ const striped=strip.style==='hazard';
+ if(striped){
+  if(!hazardMap){
+   hazardMap=new T.CanvasTexture(hazardTile());hazardMap.colorSpace=T.SRGBColorSpace;
+   hazardMap.wrapS=hazardMap.wrapT=T.RepeatWrapping;hazardMap.userData.studioShared=true;
+  }
+  const uv=geometry.getAttribute('uv');
+  for(let i=0;i<uv.count;i++)uv.setXY(i,uv.getX(i)*length/(2*TAPE_WIDTH),uv.getY(i)*.5);
+ }
+ const material=new T.MeshStandardMaterial({color:striped?0xffffff:strip.color,map:striped?hazardMap:null,
+  roughness:.75,polygonOffset:true,polygonOffsetFactor:-1,polygonOffsetUnits:-1});
+ material.userData.studioOwned=true;
+ geometry.rotateX(-Math.PI/2);
+ const mesh=new T.Mesh(geometry,material);mesh.name=strip.id;mesh.userData.editId=strip.id;
+ mesh.position.set((strip.a[0]+strip.b[0])/2,.009,(strip.a[1]+strip.b[1])/2);
+ mesh.rotation.y=-Math.atan2(dz,dx);mesh.receiveShadow=true;
+ return mesh;
+}
+
 export function buildProjectDecorations(project,entries,root,onReady){
+ for(const strip of project.ground?.tape||[])root.add(floorTapeMesh(strip));
  for(const poster of project.architecture.posters||[]){
   const at=locatePoster(poster,entries);if(!at)continue;
   const map=createPosterTexture(T,poster,onReady),material=new T.MeshBasicMaterial({map,side:T.DoubleSide});

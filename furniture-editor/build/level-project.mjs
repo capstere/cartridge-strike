@@ -1,3 +1,4 @@
+import {validateFloorTape} from './floor-tape.mjs?v=5.9.0';
 import {AUTHORING_LIMITS,MAX_PROJECT_JSON_BYTES,MAX_FURNITURE_RECORDS,furnitureRecordCount} from '../project-limits.mjs?v=5.7.3';
 import {validateFloorEdits} from './floor-edge.mjs?v=5.7.3';
 import {validateSurfaceColors,validateSurfaceMaterials} from './surface-style.mjs?v=5.8.0';
@@ -19,7 +20,7 @@ import {validWallMount} from '../wall-mounts.mjs?v=5.8.0';
 import {validFurnitureColor} from '../appearance.mjs?v=5.8.0';
 
 export const LEVEL_FORMAT='cartridge-strike-level-project',LEVEL_SCHEMA=2;
-export const LEVEL_GAME_VERSION='0.18.0',LEVEL_BASE_COMMIT='f5c63a22483feeeb29583853dab0c0911af5c09a',LEVEL_EDITOR_VERSION='5.8.0';
+export const LEVEL_GAME_VERSION='0.18.0',LEVEL_BASE_COMMIT='f5c63a22483feeeb29583853dab0c0911af5c09a',LEVEL_EDITOR_VERSION='5.9.0';
 const emptyArchitecture=()=>({schemaVersion:1,edits:[],added:[],removed:[],floors:[],posters:[],treatments:[]});
 const within=n=>typeof n==='number'&&Number.isFinite(n)&&Math.abs(n)<=100;
 const rect=r=>r&&[r.x0,r.z0,r.x1,r.z1].every(within)&&r.x1>r.x0&&r.z1>r.z0;
@@ -82,6 +83,8 @@ export function parseProject(input,{allowLegacy=true}={}){
  const ids=new Set();const unique=id=>{if(ids.has(id))fail('dubbelt ID: '+id);ids.add(id);};
  for(const f of g.floors){validateFloorRect(f);if(!['room','corridor'].includes(f.role)||!FLOOR_FINISHES.includes(f.surface)||
   f.x0<g.bounds.x0||f.x1>g.bounds.x1||f.z0<g.bounds.z0||f.z1>g.bounds.z1)fail('golvyta '+f.id);unique(f.id);}
+ validateFloorTape(g.tape);
+ for(const strip of g.tape||[])unique(strip.id);
  const a=input.architecture;if(a?.schemaVersion!==1||!['edits','added','removed','floors'].every(k=>Array.isArray(a[k]))||
   a.edits.length>AUTHORING_LIMITS.sourceChanges||a.added.length>AUTHORING_LIMITS.buildingParts||a.removed.length>AUTHORING_LIMITS.sourceChanges||a.floors.length>AUTHORING_LIMITS.floors)fail('arkitektur');
  if(input.mode==='new-level'&&(a.edits.length||a.removed.length||a.floors.length))fail('ny bana får inte ärva Floor 5');
