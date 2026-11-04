@@ -1,18 +1,18 @@
-import {roleOf,dwarfVariant} from '../src/fps/character-roles.mjs?v=6.1.0';
-import {createDwarfAsset,createDwarfAvatar} from '../src/fps/dwarf-rig.mjs?v=6.1.0';
+import {roleOf,dwarfVariant} from '../src/fps/character-roles.mjs?v=6.1.1';
+import {createDwarfAsset,createDwarfAvatar} from '../src/fps/dwarf-rig.mjs?v=6.1.1';
 import {loadScan,applyScanHead} from './scan-head.mjs?v=53';
-import {ClothPreview} from './cloth-preview.mjs?v=6.1.0';
-import {SculptEngine,prepareSculptGeometry} from './sculpt-engine.mjs?v=6.1.0';
+import {ClothPreview} from './cloth-preview.mjs?v=6.1.1';
+import {SculptEngine,prepareSculptGeometry} from './sculpt-engine.mjs?v=6.1.1';
 /** Live visual preview of the original game skeleton and authored static parts. */
 import * as T from '../vendor/three/three.module.js';
-import {loadCharacterLibrary,createAuthoredAvatar,disposeAvatar} from '../src/fps/character-library.mjs?v=6.1.0';
-import {makeAccessory,fitAccessory} from './anatomy-accessories.mjs?v=6.1.0';
-import {REQUIRED_CLIPS,upgradeAccessories} from './project-schema.mjs?v=6.1.0';
+import {loadCharacterLibrary,createAuthoredAvatar,disposeAvatar} from '../src/fps/character-library.mjs?v=6.1.1';
+import {makeAccessory,fitAccessory} from './anatomy-accessories.mjs?v=6.1.1';
+import {REQUIRED_CLIPS,upgradeAccessories} from './project-schema.mjs?v=6.1.1';
 import {GLTFLoader} from '../vendor/three/addons/loaders/GLTFLoader.js';
 import {GLTFExporter} from '../vendor/three/addons/exporters/GLTFExporter.js';
 import {inspectGLB} from '../furniture-editor/library/glb-utils.mjs';
 import {dataToBytes} from './project-store.mjs?v=53';
-import {FashionPreview} from './fashion-preview.mjs?v=6.1.0';
+import {FashionPreview} from './fashion-preview.mjs?v=6.1.1';
 const RAD=Math.PI/180,SW=480,SH=680,PW=720,PH=660;
 function characterId(gender){
  for(let i=0;i<200;i++){

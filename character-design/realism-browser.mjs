@@ -18,7 +18,7 @@ try{for(const mobile of (process.env.REALISM_TEST_DEVICE==='mobile'?[true]:proce
  await page.locator('[data-tab=look]').click();assert.equal(await $('realism-head').inputValue(),'scan');
  // Independent actual workbench gives access to numeric simulation state, not test-only globals in production.
  const proof=await page.evaluate(async()=>{
-  const {DesignWorkbench}=await import('./workbench.mjs?v=6.1.0'),{newProject}=await import('./project-schema.mjs?v=6.1.0'),{ensureCreative}=await import('./creative-schema.mjs?v=6.1.0');
+  const {DesignWorkbench}=await import('./workbench.mjs?v=6.1.1'),{newProject}=await import('./project-schema.mjs?v=6.1.1'),{ensureCreative}=await import('./creative-schema.mjs?v=6.1.1');
   const canvas=document.createElement('canvas');canvas.style.cssText='width:600px;height:700px';document.body.replaceChildren(canvas);const w=new DesignWorkbench(canvas,new Map());await w.initialize();const p=newProject();ensureCreative(p);p.palette.skin='#ffffff';p.creative.hair='long';p.creative.realism={head:'scan',fiberHair:true,fabric:'cotton',garment:'cape',wind:70};w.update(p,{recreate:true,rebuild:true});
   const face=w.avatar.meshes.find(m=>m.material.name==='face-skin'),fiber=w.fashion.parts.find(m=>m.name==='creative-fitted-hair').getObjectByName('individual-hair-ribbons'),cloth=w.cloth;
   const initialLength=cloth.solver.edges[0].length;p.body.width=115;p.body.height=115;w.update(p);const resizeRatio=cloth.solver.edges[0].length/initialLength;p.body.width=100;p.body.height=100;w.update(p);

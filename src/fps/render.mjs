@@ -2,7 +2,7 @@ import {buildDoorVisuals} from './door-visuals.mjs?v=5.5.0';
 import {buildFacilityDetails} from './facility-details-view.mjs';
 import {GlassVisuals} from './glass-visuals.mjs';
 import {buildRiposteProps} from './riposte-props.mjs';
-import {makeWeapon} from './models.mjs?v=6.1.0';
+import {makeWeapon} from './models.mjs?v=6.1.1';
 import {WEAPONS} from './config.mjs';
 import {buildProjectFurniture,buildProjectDecorations} from '../../furniture-editor/build/project-visuals.mjs?v=5.7.3';
 import {hasPattern} from '../../furniture-editor/build/pattern-presets.mjs?v=5.6.1';
@@ -17,13 +17,13 @@ import {CombatVisuals} from './combat-visuals.mjs';
  * from authoritative movement, combat, death and respawn state.
  */
 import * as THREE from '../../vendor/three/three.module.js';
-import { Renderer as EngineRenderer } from './render-engine.mjs?v=6.1.0';
-import {loadCharacterLibrary,disposeCharacterLibrary} from './character-library.mjs?v=6.1.0';
+import { Renderer as EngineRenderer } from './render-engine.mjs?v=6.1.1';
+import {loadCharacterLibrary,disposeCharacterLibrary} from './character-library.mjs?v=6.1.1';
 import { bakeLightfield } from './presentation-lightfield.mjs';
-import {ActionVisuals} from './action-visuals.mjs?v=6.1.0';
+import {ActionVisuals} from './action-visuals.mjs?v=6.1.1';
 import { buildLivingScene } from './living-floor-scene.mjs';
-import { freezeStaticTransforms } from './render-engine.mjs?v=6.1.0';
-export { freezeStaticTransforms } from './render-engine.mjs?v=6.1.0';
+import { freezeStaticTransforms } from './render-engine.mjs?v=6.1.1';
+export { freezeStaticTransforms } from './render-engine.mjs?v=6.1.1';
 
 function installField(material, texture, bounds) {
   if(!material?.isMeshStandardMaterial || material.transparent || material.emissiveIntensity>1)return null;

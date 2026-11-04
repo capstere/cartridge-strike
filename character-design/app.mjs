@@ -1,19 +1,19 @@
-import {runtimeExport} from './runtime-export.mjs?v=6.1.0';
-import {roleOf,targetOf,ROLE_TARGETS,ROLE_NAMES,targetLabel} from '../src/fps/character-roles.mjs?v=6.1.0';
-import {createDwarfAsset} from '../src/fps/dwarf-rig.mjs?v=6.1.0';
+import {runtimeExport} from './runtime-export.mjs?v=6.1.1';
+import {roleOf,targetOf,ROLE_TARGETS,ROLE_NAMES,targetLabel} from '../src/fps/character-roles.mjs?v=6.1.1';
+import {createDwarfAsset} from '../src/fps/dwarf-rig.mjs?v=6.1.1';
 import {GLTFExporter} from '../vendor/three/addons/exporters/GLTFExporter.js';
-import {newMatchPilot,validateMatchPilot} from './private-match.mjs?v=6.1.0';
+import {newMatchPilot,validateMatchPilot} from './private-match.mjs?v=6.1.1';
 import {savePrivateCharacter,characterHash} from '../src/fps/private-character-store.mjs';
 /** Easy UI for revising the FPS skeleton, authoring character props and independent 3D objects. */
 import {saveProject,loadProject,listProjects,bytesToData,dataToBytes} from './project-store.mjs?v=53';
-import {installStudioControls} from './studio-controls.mjs?v=6.1.0';
-import {DesignWorkbench} from './workbench.mjs?v=6.1.0';
-import {newProject,validateProject,PALETTES,PRESETS,SHAPES,addPart,clonePart,mirrorPart,aiBrief,animationContract,filename} from './project-schema.mjs?v=6.1.0';
+import {installStudioControls} from './studio-controls.mjs?v=6.1.1';
+import {DesignWorkbench} from './workbench.mjs?v=6.1.1';
+import {newProject,validateProject,PALETTES,PRESETS,SHAPES,addPart,clonePart,mirrorPart,aiBrief,animationContract,filename} from './project-schema.mjs?v=6.1.1';
 import {makeSpelBridge,makeSpelGuide} from './spel-bridge.mjs';
 import {packZip} from './zip-export.mjs?v=53';
 import {inspectGLB} from '../furniture-editor/library/glb-utils.mjs';
-import {installCreativeControls} from './creative-controls.mjs?v=6.1.0';
-import {ensureCreative,applyStudioFoundation} from './creative-schema.mjs?v=6.1.0';
+import {installCreativeControls} from './creative-controls.mjs?v=6.1.1';
+import {ensureCreative,applyStudioFoundation} from './creative-schema.mjs?v=6.1.1';
 
 const W=480,H=680,STORE='cartridge-strike-character-studio-v2';
 const byId=id=>document.getElementById(id);
@@ -68,7 +68,7 @@ function download(data,name,type='application/octet-stream'){
  document.body.appendChild(link);link.click();link.remove();
  setTimeout(()=>URL.revokeObjectURL(url),2000);
 }
-function projectSnapshot(){workbench.sculpt.store(project);return {...project,studioVersion:'6.1',artwork:ready?{...captureArtwork(),faceViews:creativeControls?.captureFaces()||{},portraitFraming:project.artwork?.portraitFraming||'anatomical-v5'}:project.artwork};}
+function projectSnapshot(){workbench.sculpt.store(project);return {...project,studioVersion:'6.1.1',artwork:ready?{...captureArtwork(),faceViews:creativeControls?.captureFaces()||{},portraitFraming:project.artwork?.portraitFraming||'anatomical-v5'}:project.artwork};}
 function refreshPrompt(){
  try{$('ai-prompt').textContent=aiBrief(project,workbench.getClips(),workbench.getBones());}
  catch(e){status('Fel i projektet: '+e.message,true);}
@@ -384,7 +384,7 @@ async function writeZip(){
   if(!bytes)throw Error('Referensfil saknas: '+ref.name+'. Lägg till den igen innan export.');
   files.push({name:'REFERENCE_'+String(i+1).padStart(2,'0')+'.'+ref.type,data:bytes});
  }
- const manifest={studioVersion:'6.1',prototypeOnly:true,project:project.name,references:project.references.map((r,i)=>({originalName:r.name,file:'REFERENCE_'+String(i+1).padStart(2,'0')+'.'+r.type})),files:[]};
+ const manifest={studioVersion:'6.1.1',prototypeOnly:true,project:project.name,references:project.references.map((r,i)=>({originalName:r.name,file:'REFERENCE_'+String(i+1).padStart(2,'0')+'.'+r.type})),files:[]};
  for(const file of files){const bytes=typeof file.data==='string'?new TextEncoder().encode(file.data):file.data;const hash=await crypto.subtle.digest('SHA-256',bytes);manifest.files.push({name:file.name,bytes:bytes.byteLength,sha256:[...new Uint8Array(hash)].map(b=>b.toString(16).padStart(2,'0')).join('')});}
  files.push({name:'MANIFEST.json',data:JSON.stringify(manifest,null,2)});
  return packZip(files);

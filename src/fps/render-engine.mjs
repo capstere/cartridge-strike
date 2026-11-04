@@ -1,13 +1,13 @@
-import {syncWeaponAppearance} from './view-character-appearance.mjs?v=6.1.0';
-import {refreshActorCharacter} from './character-actors.mjs?v=6.1.0';
-import {privateCharacterAppearance} from './character-library.mjs?v=6.1.0';
+import {syncWeaponAppearance} from './view-character-appearance.mjs?v=6.1.1';
+import {refreshActorCharacter} from './character-actors.mjs?v=6.1.1';
+import {privateCharacterAppearance} from './character-library.mjs?v=6.1.1';
 import { FrameTimeWindow } from './frame-time-window.mjs';
 import { TracerBatch } from './tracer-batch.mjs';
 import { createThrownCartridge, updateThrownCartridge } from './throwable-cartridge.mjs';
 import * as THREE from '../../vendor/three/three.module.js';
 import { GLTFLoader } from '../../vendor/three/addons/loaders/GLTFLoader.js';
 import { mergeGeometries } from '../../vendor/three/addons/utils/BufferGeometryUtils.js';
-import { makeActor,makeWeapon,cartridge,animateActor,animateWeapon,animateCorpse,disposeWeaponResources } from './models.mjs?v=6.1.0';
+import { makeActor,makeWeapon,cartridge,animateActor,animateWeapon,animateCorpse,disposeWeaponResources } from './models.mjs?v=6.1.1';
 import { createMaterialRegistry,applyMetreUV } from './materials.mjs?v=5.5.0';
 import { buildDecor } from './decor.mjs';
 import { createRoomVisualPlan,buildRoomVisuals,roomMaterialOverride,createRoomFinishMaterial,replaceRoomSurface } from './room-visuals.mjs';

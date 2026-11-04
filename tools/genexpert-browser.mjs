@@ -18,7 +18,7 @@ await context.addInitScript(()=>{if(location.pathname.endsWith('/walk.html'))req
 try{
  await page.goto(origin+'/furniture-editor/new.html?test=1');await page.waitForFunction(()=>!!window.__levelStudio);
  const models=await page.evaluate(async generate=>{
-  const T=await import('../vendor/three/three.module.js');const {readLibraryAsset}=await import('./library/models.mjs?v=6.1.0');
+  const T=await import('../vendor/three/three.module.js');const {readLibraryAsset}=await import('./library/models.mjs?v=6.1.1');
   const {GENEXPERT_LIBRARY}=await import('./library/genexpert-catalog.mjs');
   const renderer=new T.WebGLRenderer({antialias:true,preserveDrawingBuffer:true});renderer.setSize(384,320);renderer.setPixelRatio(1);
   renderer.outputColorSpace=T.SRGBColorSpace;renderer.toneMapping=T.ACESFilmicToneMapping;renderer.toneMappingExposure=1.1;
