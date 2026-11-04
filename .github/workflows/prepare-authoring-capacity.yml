@@ -1,0 +1,35 @@
+name: Prepare checked authoring capacity change
+on:
+  push:
+    branches: [fix/studio-authoring-capacity]
+    paths: ['tools/apply-authoring-capacity.py', '.github/workflows/prepare-authoring-capacity.yml']
+permissions:
+  contents: write
+jobs:
+  prepare:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Apply readable source edits and verify exact tested runtime
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD^)" = 'ce30d918c112aad37acf517c501769a21776b79d'
+          python3 tools/apply-authoring-capacity.py
+          echo '1c319bbf27f28e0f18f2a540695053796992c2da9b574dc3520244ab1734a7ea  build-info.json' | sha256sum -c -
+          node --check furniture-editor/new.mjs
+          node --check tools/authoring-capacity-browser.mjs
+          node tools/verify-owner-runtime.mjs
+          node --experimental-loader ./tools/vendor-three-test-loader.mjs --test furniture-editor/*.test.mjs furniture-editor/build/*.test.mjs furniture-editor/library/*.test.mjs src/fps/level-adapter.test.mjs src/fps/walk-start.test.mjs
+          rm tools/apply-authoring-capacity.py
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add build-info.json fps furniture-editor src tools/apply-authoring-capacity.py
+          git diff --cached --check
+          git commit -m 'Separate authoring capacity from game readiness and retain lossless saves'
+          git push origin "HEAD:${GITHUB_REF_NAME}"
