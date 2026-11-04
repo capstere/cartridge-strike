@@ -1,0 +1,53 @@
+name: Design Studio - lossless draft saving
+on:
+  pull_request:
+    branches: [main]
+    paths: ['furniture-editor/**', 'tools/draft-save-browser.mjs', '.github/workflows/design-studio-draft-save.yml']
+  push:
+    branches: [main]
+    paths: ['furniture-editor/**', 'tools/draft-save-browser.mjs', '.github/workflows/design-studio-draft-save.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: draft-save-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  draft-save:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Strict parsing, backup integrity, quotas and autosave preservation
+        run: |
+          node --experimental-loader ./tools/vendor-three-test-loader.mjs --test furniture-editor/build/draft-save.test.mjs furniture-editor/editor.test.mjs
+          node --check furniture-editor/new.mjs
+          node tools/verify-owner-runtime.mjs
+      - name: Install pinned Chromium and software WebGL
+        run: |
+          npm ci --prefix frontline/source/tools/dev --ignore-scripts --no-audit --no-fund
+          node frontline/source/tools/dev/node_modules/playwright-core/cli.js install chromium
+          sudo timeout 80s apt-get -o Acquire::Retries=1 -o Acquire::http::Timeout=20 install -y libgl1-mesa-dri libglx-mesa0 libegl-mesa0 xvfb
+      - name: Actual save, rescue download, reload and native import controls
+        run: |
+          set -euo pipefail
+          python3 -m http.server 8765 --bind 127.0.0.1 >/tmp/draft-http.log 2>&1 &
+          SERVER_PID=$!
+          trap 'kill "$SERVER_PID" || true' EXIT
+          for i in $(seq 1 25); do
+            if curl -fsS http://127.0.0.1:8765/furniture-editor/new.html >/dev/null; then break; fi
+            sleep 1
+          done
+          timeout 300s xvfb-run -a node tools/draft-save-browser.mjs
+      - name: Small synthetic proof only
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: draft-save-proof
+          path: test-results/draft-save/
+          retention-days: 1
+          if-no-files-found: ignore
+          compression-level: 9
