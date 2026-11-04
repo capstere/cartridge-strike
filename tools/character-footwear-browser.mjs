@@ -13,11 +13,11 @@ try{
  await page.goto(origin+'/character-design/?test=1');await page.waitForFunction(()=>!!window.__characterStudio&&document.querySelector('#status')?.textContent.includes('redo!'));
  for(const role of ['player','hostage'])for(const gender of ['male','female']){
   const label=role+'-'+gender;await page.locator('#actor-role').selectOption(role);await page.waitForFunction(r=>!document.querySelector('main').inert&&__characterStudio.project.runtime.role===r,role);
-  await page.locator('#gender').selectOption(gender);await page.locator('#actor-target').selectOption(role==='hostage'?'hostage-0':'analysts-1');
-  await page.locator('#project-name').fill('Ankle regression '+label);
+  await page.locator('#gender').selectOption(gender);await page.waitForFunction(g=>__characterStudio.workbench.avatar.gender===g,gender);
+  await page.locator('#actor-target').selectOption(role==='hostage'?'hostage-0':'analysts-1');await page.locator('#project-name').fill('Ankle regression '+label);
   await page.locator('[data-tab="fashion"]').click();await page.locator('#outfit-style').selectOption('original');
-  // Real input event, not only mutation of the project object.
-  await page.locator('#garment-fit').fill('120');await page.locator('#garment-fit').dispatchEvent('input');
+  // Actual range keyboard input; fill() is not supported for type=range.
+  await page.locator('#garment-fit').focus();await page.locator('#garment-fit').press('End');assert.equal(await page.locator('#garment-fit').inputValue(),'120');
   const checks=await page.evaluate(async()=>{
    const {footwearMetrics}=await import('../tools/character-footwear-checks.mjs');const w=__characterStudio.workbench,checks=[];
    w.playing=false;
