@@ -1,24 +1,25 @@
 import {AUTHORING_LIMITS,MAX_PROJECT_JSON_BYTES,MAX_FURNITURE_RECORDS,furnitureRecordCount} from '../project-limits.mjs?v=5.7.3';
 import {validateFloorEdits} from './floor-edge.mjs?v=5.7.3';
-import {validateSurfaceColors,validateSurfaceMaterials} from './surface-style.mjs?v=5.7.3';
+import {validateSurfaceColors,validateSurfaceMaterials} from './surface-style.mjs?v=5.8.0';
 import {FLOOR_FINISHES} from './pattern-presets.mjs?v=5.6.1';
-import {validateOpenedAreas,closedAreas} from './walkable-spaces.mjs?v=5.7.3';
-import {validModelAlignment} from '../model-alignment.mjs?v=5.7.1';
+import {validateOpenedAreas,closedAreas} from './walkable-spaces.mjs?v=5.8.0';
+import {validModelAlignment} from '../model-alignment.mjs?v=5.8.0';
 /** Versioned level document. Parsing is deliberately independent of the renderer. */
-import {BASE_COMMIT,GAME_VERSION,PATCH_FORMAT,PATCH_SCHEMA} from '../core.mjs?v=5.7.3';
-import {validateEntry,validateFloorRect} from './architecture.mjs?v=5.7.3';
+import {BASE_COMMIT,GAME_VERSION,PATCH_FORMAT,PATCH_SCHEMA} from '../core.mjs?v=5.8.0';
+import {validateEntry,validateFloorRect} from './architecture.mjs?v=5.8.0';
 import {assetHash} from '../library/glb-utils.mjs';
 import {makeZip,readZip,PROJECT_ZIP_MAX_BYTES} from '../library/zip.mjs?v=5.7.2';
-import {floor5Baseline} from './project-scene.mjs?v=5.7.3';
-import {parseArchitecture} from './architecture.mjs?v=5.7.3';
-import {LIBRARY_MAP} from '../library/catalog.mjs?v=5.7.1';
+import {floor5Baseline} from './project-scene.mjs?v=5.8.0';
+import {parseArchitecture} from './architecture.mjs?v=5.8.0';
+import {LIBRARY_MAP} from '../library/catalog.mjs?v=5.8.0';
 import {parsePosters} from './posters.mjs?v=5.7.3';
-import {parseTreatments} from './treatments.mjs?v=5.7.3';
-import {collisionExport,aiAgentBrief} from './ai-export.mjs?v=5.7.3';
-import {validWallMount} from '../wall-mounts.mjs?v=5.7.1';
+import {parseTreatments} from './treatments.mjs?v=5.8.0';
+import {collisionExport,aiAgentBrief} from './ai-export.mjs?v=5.8.0';
+import {validWallMount} from '../wall-mounts.mjs?v=5.8.0';
+import {validFurnitureColor} from '../appearance.mjs?v=5.8.0';
 
 export const LEVEL_FORMAT='cartridge-strike-level-project',LEVEL_SCHEMA=2;
-export const LEVEL_GAME_VERSION='0.18.0',LEVEL_BASE_COMMIT='f5c63a22483feeeb29583853dab0c0911af5c09a',LEVEL_EDITOR_VERSION='5.7.3';
+export const LEVEL_GAME_VERSION='0.18.0',LEVEL_BASE_COMMIT='f5c63a22483feeeb29583853dab0c0911af5c09a',LEVEL_EDITOR_VERSION='5.8.0';
 const emptyArchitecture=()=>({schemaVersion:1,edits:[],added:[],removed:[],floors:[],posters:[],treatments:[]});
 const within=n=>typeof n==='number'&&Number.isFinite(n)&&Math.abs(n)<=100;
 const rect=r=>r&&[r.x0,r.z0,r.x1,r.z1].every(within)&&r.x1>r.x0&&r.z1>r.z0;
@@ -95,6 +96,8 @@ export function parseProject(input,{allowLegacy=true}={}){
   if(!validModelAlignment(o))fail('modellens framåtriktning eller mått');
   if(o.elevation!==undefined&&(!Number.isFinite(o.elevation)||o.elevation<0||o.elevation>6))fail('höjd över golv');
   if(o.mountId!==undefined&&o.mountId!==null&&(typeof o.mountId!=='string'||o.mountId.length>100||o.mountId===o.id))fail('möbelfäste');
+  if(o.mountSurface!==undefined&&o.mountSurface!==null&&(!Number.isInteger(o.mountSurface)||o.mountSurface<0||o.mountSurface>31||!o.mountId))fail('hyllplan');
+  if(o.color!==undefined&&!validFurnitureColor(o.color))fail('möbelfärg');
   if(o.wallMount!==undefined&&o.wallMount!==null&&(!validWallMount(o.wallMount)||o.mountId))fail('väggfäste');
  };
  for(const o of f.added){checkMount(o);if(!/^NY-(OBJ|STOL|BORD|SOFFA)-\d{1,5}$/.test(o.id)||!

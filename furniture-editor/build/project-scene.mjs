@@ -1,11 +1,11 @@
 import {applyFloorEdits} from './floor-edge.mjs?v=5.7.3';
-import {closedAreas} from './walkable-spaces.mjs?v=5.7.3';
+import {closedAreas} from './walkable-spaces.mjs?v=5.8.0';
 /** Resolve editable geometry once for the studio, collision export and FPS adapter. */
 import '../../src/floor5-data.js';
 import '../../src/world.js?v=5.5.0';
 import {createFurnishings} from '../../src/fps/furnishings.mjs';
-import {catalog,inside,distanceSegment,EDITABLE_KINDS,exportPatch,isChanged} from '../core.mjs?v=5.7.3';
-import {readBaseline,parseArchitecture,exportArchitecture,wallPieces,isDoor} from './architecture.mjs?v=5.7.3';
+import {catalog,inside,distanceSegment,EDITABLE_KINDS,exportPatch,isChanged} from '../core.mjs?v=5.8.0';
+import {readBaseline,parseArchitecture,exportArchitecture,wallPieces,isDoor} from './architecture.mjs?v=5.8.0';
 
 /** Shared walls may overlap after adjacent rooms are drawn. A fitted window
  * replaces every underlying solid span, just as a door cuts every wall layer. */

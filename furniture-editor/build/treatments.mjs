@@ -1,7 +1,7 @@
 import {AUTHORING_LIMITS} from '../project-limits.mjs?v=5.7.3';
 /** Editor-only curtains and blinds as lightweight wall-mounted architectural decorations. */
-import {isWall} from './architecture.mjs?v=5.7.3';
-import {projectToWall} from './paint-over-wall.mjs?v=5.7.3';
+import {isWall} from './architecture.mjs?v=5.8.0';
+import {projectToWall} from './paint-over-wall.mjs?v=5.8.0';
 const R=n=>Math.round(n*1000)/1000;
 export const TREATMENTS_MAX=AUTHORING_LIMITS.treatments;
 export const TREATMENT_TYPES=Object.freeze(['curtain','blind']);

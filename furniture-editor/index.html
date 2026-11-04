@@ -54,6 +54,8 @@
           <option value="office">Kontors-/labb-stol · svart</option>
           <option value="conference">Konferensstol · blå / svarta ben</option></select>
       </div>
+      <div id="objectColorFields" hidden><label>Skornas färg <input id="objectColor" type="color" value="#f2f3ef"></label></div>
+      <div id="shelfFields" hidden><label>Hyllplan <select id="shelfLevel"></select></label></div>
       <label>Rotation <strong id="degrees">0°</strong></label>
       <div class="rotate-row"><button id="rotateLeft" type="button" aria-label="Rotera 15 grader åt vänster"><span>↶</span> Vrid vänster</button><button id="rotateRight" type="button" aria-label="Rotera 15 grader åt höger">Vrid höger <span>↷</span></button></div>
       <p class="helper">Dra möbeln ända fram till väggen. Den snäpper på plats med ca 1 cm luft, utan falska kollisionsvarningar. <kbd>Q</kbd>/<kbd>E</kbd> vrider 15°. <kbd>Ctrl+D</kbd> duplicerar valt föremål. Dörrar måste vara fria.</p>
@@ -243,5 +245,5 @@
 
 <script src="../src/floor5-data.js"></script>
 <script src="../src/world.js"></script>
-<script type="module" src="./main.mjs?v=5.7.3"></script>
+<script type="module" src="./main.mjs?v=5.8.0"></script>
 </body></html>

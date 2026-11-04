@@ -1,11 +1,14 @@
 import test from 'node:test';import assert from 'node:assert/strict';
 import {PROCEDURAL_LIBRARY,PROCEDURAL_MAP} from './library/procedural.mjs';
+import {LAB_FURNITURE_LIBRARY} from './library/lab-furniture.mjs';
+import {FPS_LIBRARY} from './library/fps-catalog.mjs';
 import {findSupport,proposeSmartPose} from './smart-placement.mjs?v=5.7.2';
 import {exportPatch,parsePatch} from './core.mjs?v=5.7.2';
 const desk={id:'NY-OBJ-0001',kind:'prop',assetId:'studio:desk-160',assetName:'Skrivbord 160',roomId:'I09',source:'added',x:4,z:4,yaw:0,w:1.6,d:.8,height:.75};
 const oven={id:'NY-OBJ-0002',kind:'prop',assetId:'studio:microwave',assetName:'Mikrovågsugn',roomId:'I09',source:'added',x:4,z:4,yaw:0,w:.5,d:.42,height:.31};
-test('36 opt-in procedural presets have unique valid IDs and stay low-poly',()=>{
- assert.equal(PROCEDURAL_LIBRARY.length,36);assert.equal(new Set(PROCEDURAL_LIBRARY.map(x=>x.id)).size,36);
+test('original 36 procedural presets and new lab/FPS objects have unique valid IDs',()=>{
+ const expected=36+LAB_FURNITURE_LIBRARY.length+FPS_LIBRARY.filter(e=>!e.url).length;
+ assert.equal(PROCEDURAL_LIBRARY.length,expected);assert.equal(new Set(PROCEDURAL_LIBRARY.map(x=>x.id)).size,expected);
  assert(PROCEDURAL_LIBRARY.every(x=>x.width>0&&x.depth>0&&x.height>0&&x.url===undefined));
  for(const name of ['desk-120','slim-240','round-110','desk-screen-160','counter-180','microwave','lab-instrument'])
   assert(PROCEDURAL_MAP.has('studio:'+name));

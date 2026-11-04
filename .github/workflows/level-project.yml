@@ -20,6 +20,7 @@ on:
       - 'tools/studio-wc-browser.mjs'
       - 'tools/studio-office-finishes-browser.mjs'
       - 'tools/studio-curtains-finishes-browser.mjs'
+      - 'tools/studio-lab-browser.mjs'
       - 'tools/restore-onboard-large.mjs'
       - 'tools/onboard-large-source-catalog.json'
       - '.github/workflows/level-project.yml'
@@ -38,6 +39,7 @@ jobs:
       - name: Pure tests, Floor 5 doors and SHA manifest
         run: |
           node --check tools/restore-onboard-large.mjs
+          node --check tools/studio-lab-browser.mjs
           for file in tools/studio-ux-browser.mjs furniture-editor/studio-ui.mjs character-design/app.mjs; do node --check "$file"; done
           node --test studio/studio.test.mjs
           node tools/restore-onboard-large.mjs --plan
@@ -57,6 +59,7 @@ jobs:
           trap 'kill "$PID" || true' EXIT
           timeout 300s xvfb-run -a node tools/studio-ux-browser.mjs
           timeout 220s xvfb-run -a node furniture-editor/editor-browser.mjs
+          timeout 240s xvfb-run -a node tools/studio-lab-browser.mjs
           timeout 220s xvfb-run -a node furniture-editor/build/build-browser.mjs
           timeout 360s xvfb-run -a node tools/level-browser-smoke.mjs
           timeout 420s xvfb-run -a node tools/direct-browser-smoke.mjs

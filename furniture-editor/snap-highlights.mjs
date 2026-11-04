@@ -2,8 +2,9 @@
  * Presentation for smart placement; the pose comes from the same pure algorithm
  * used by the editor for actual placement. Highlights never create colliders.
  */
-import {wallFootprint} from './model-alignment.mjs?v=5.7.1';
-import {inferPlacementRole,proposeSmartPose} from './smart-placement.mjs?v=5.7.3';
+import {wallFootprint} from './model-alignment.mjs?v=5.8.0';
+import {inferPlacementRole,proposeSmartPose} from './smart-placement.mjs?v=5.8.0';
+import {mountedSurface} from './furniture-surfaces.mjs?v=5.8.0';
 
 const finite=n=>typeof n==='number'&&Number.isFinite(n);
 const normalWall=w=>w&&!w.deleted&&w.kind==='wall';
@@ -36,11 +37,12 @@ export function placementPreview(item,point,objects=[],walls=[],{mode='auto',flo
  if(pose.mountId){
   const support=objects.find(o=>o.id===pose.mountId&&!o.deleted);
   if(support){
+   const shelf=mountedSurface(pose,support),c=Math.cos(support.yaw||0),s=Math.sin(support.yaw||0);
    return {kind:'surface',targetId:support.id,
-    label:'Ovanpå '+label(support)+' – klicka för att placera',
+    label:(shelf?shelf.label+' på ':'Ovanpå ')+label(support)+' – klicka för att placera',
     pose,
-    surface:{x:support.x,z:support.z,y:(support.elevation||0)+support.height+.018,
-     w:Math.max(.12,support.w*.96),d:Math.max(.12,support.d*.96),h:.032,yaw:support.yaw||0}};
+    surface:{x:support.x+(shelf?c*shelf.x+s*shelf.z:0),z:support.z+(shelf?-s*shelf.x+c*shelf.z:0),y:pose.elevation+.026,
+     w:Math.max(.12,(shelf?.width||support.w)*.96),d:Math.max(.12,(shelf?.depth||support.d)*.96),h:.032,yaw:support.yaw||0}};
   }
  }
  const desired=mode==='wall'?'wall':mode==='surface'?'countertop':

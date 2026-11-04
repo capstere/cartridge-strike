@@ -1,8 +1,8 @@
 /** Editor-only lazy 3D model management. No game-runtime dependencies. */
 import * as T from '../../vendor/three/three.module.js';
 import {GLTFLoader} from '../../vendor/three/addons/loaders/GLTFLoader.js';
-import {LIBRARY_MAP} from './catalog.mjs?v=5.7.1';
-import {isTable,isChair,chairColors,FINISH_COLORS,modelScale} from '../appearance.mjs';
+import {LIBRARY_MAP} from './catalog.mjs?v=5.8.0';
+import {isTable,isChair,chairColors,FINISH_COLORS,modelScale} from '../appearance.mjs?v=5.8.0';
 import {inspectGLB,assetHash,safeFilename,assetPut,assetGet,assetAll,GLB_MAX_BYTES} from './glb-utils.mjs';
 const loader=new GLTFLoader();
 const sourceCache=new Map(),locals=new Map();
@@ -41,6 +41,8 @@ export async function readLibraryAsset(id){
    // Model URLs must be audited same-origin paths, never external configuration.
    if(url.origin!==location.origin)throw Error('Externa 3D-källor är blockerade.');
    object=(await loader.loadAsync(url.href)).scene;
+   // Normalize a catalogued model's native axis without changing its GLB bytes.
+   if(e.modelYaw){const aligned=new T.Group();aligned.rotation.y=e.modelYaw;aligned.add(object);object=aligned;}
   }
   if(!object)throw Error('3D-modellen kunde inte öppnas.');
   object.updateWorldMatrix(true,true);const b=new T.Box3().setFromObject(object);

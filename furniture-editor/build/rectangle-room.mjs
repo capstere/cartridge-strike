@@ -1,6 +1,6 @@
 import {AUTHORING_LIMITS} from '../project-limits.mjs?v=5.7.3';
 /** Atomic rectangle-room sketch generator. No source geometry, physics, or navmesh edits. */
-import {floorRect,getNextId,makeEntry,roundPosition,validateEntry,validateFloorRect} from './architecture.mjs?v=5.7.3';
+import {floorRect,getNextId,makeEntry,roundPosition,validateEntry,validateFloorRect} from './architecture.mjs?v=5.8.0';
 
 const bounded=(n,min,max,label)=>{
  if(typeof n!=='number'||!Number.isFinite(n)||n<min||n>max)throw Error(label+' måste vara '+min+'–'+max+' m.');

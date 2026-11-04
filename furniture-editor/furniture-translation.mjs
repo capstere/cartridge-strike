@@ -1,6 +1,7 @@
 /** Pure, bounded instance movement. Preview and commit share the same authored pose. */
-import {poseOnWall} from './wall-mounts.mjs?v=5.7.1';
-import {fittedSize,wallFootprint} from './model-alignment.mjs?v=5.7.1';
+import {poseOnWall} from './wall-mounts.mjs?v=5.8.0';
+import {fittedSize,wallFootprint} from './model-alignment.mjs?v=5.8.0';
+import {mountedSurface,mountedElevation} from './furniture-surfaces.mjs?v=5.8.0';
 const clamp=(n,a,b)=>Math.max(a,Math.min(b,n));
 const rounded=n=>Math.round(n*1e6)/1e6;
 export function furnitureAssembly(item,items){const result=[item],seen=new Set([item.id]);for(let i=0;i<result.length;i++)for(const child of items)if(child.mountId===result[i].id&&!seen.has(child.id)){result.push(child);seen.add(child.id);}return result;}
@@ -30,9 +31,10 @@ export function planFurnitureTranslation(item,items,walls,delta){
    const parent=items.find(o=>o.id===item.mountId);if(!parent)throw Error('Möbelytan saknas. Välj fri placering eller ångra.');
    const c=Math.cos(parent.yaw),s=Math.sin(parent.yaw),angle=item.yaw-parent.yaw;
    const width=Math.abs(Math.cos(angle))*item.w+Math.abs(Math.sin(angle))*item.d,depth=Math.abs(Math.sin(angle))*item.w+Math.abs(Math.cos(angle))*item.d;
-   const x=item.x+dx-parent.x,z=item.z+dz-parent.z,lx=clamp(c*x-s*z,-Math.max(0,(parent.w-width)/2),Math.max(0,(parent.w-width)/2)),lz=clamp(s*x+c*z,-Math.max(0,(parent.d-depth)/2),Math.max(0,(parent.d-depth)/2));
+   const surface=mountedSurface(item,parent),sx=surface?.x||0,sz=surface?.z||0;
+   const x=item.x+dx-parent.x,z=item.z+dz-parent.z,lx=sx+clamp(c*x-s*z-sx,-Math.max(0,((surface?.width||parent.w)-width)/2),Math.max(0,((surface?.width||parent.w)-width)/2)),lz=sz+clamp(s*x+c*z-sz,-Math.max(0,((surface?.depth||parent.d)-depth)/2),Math.max(0,((surface?.depth||parent.d)-depth)/2));
    dx=parent.x+c*lx+s*lz-item.x;dz=parent.z-s*lx+c*lz-item.z;
-   dy=Math.max(dy,(parent.elevation||0)+parent.height-.008-(item.elevation||0));
+   dy=Math.max(dy,mountedElevation(item,parent)-(item.elevation||0));
   }
   next.x=rounded(item.x+dx);next.z=rounded(item.z+dz);next.elevation=rounded((item.elevation||0)+dy);
  }

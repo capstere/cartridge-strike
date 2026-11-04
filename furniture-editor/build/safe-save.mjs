@@ -1,5 +1,5 @@
-import {parseProject,exportProjectZip} from './level-project.mjs?v=5.7.3';
-import {validateLevel} from './validate-level.mjs?v=5.7.3';
+import {parseProject,exportProjectZip} from './level-project.mjs?v=5.8.0';
+import {validateLevel} from './validate-level.mjs?v=5.8.0';
 import {collectDraftFiles,exportDraftZip,draftText} from './draft-save.mjs?v=5.7.2';
 /** Operate on one snapshot, never on an asynchronously changing editor object. */
 export async function prepareProjectSave(project,readModel,{backupOnly=false}={}){

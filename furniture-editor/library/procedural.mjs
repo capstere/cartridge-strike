@@ -1,5 +1,9 @@
-/** Editor-only, procedural low-poly furnishings: no GLB download or external assets. */
+import {LAB_FURNITURE_LIBRARY} from './lab-furniture.mjs?v=5.8.0';
+import {FPS_LIBRARY} from './fps-catalog.mjs?v=5.8.0';
+/** Shared low-poly furnishings for the studio and authored FPS levels. */
 export const PROCEDURAL_LIBRARY=Object.freeze([
+ ...LAB_FURNITURE_LIBRARY,
+ ...FPS_LIBRARY.filter(entry=>!entry.url),
  {id:'studio:reuse-barrel',name:'Ståltunna',category:'labb',width:0.59,depth:0.59,height:0.846,shape:'reuse',prefab:'barrel',placement:'floor',license:'MIT · Riposte / BenDBSS',source:'Befintlig Cartridge Strike-geometri · inga nya modellkopior'},
  {id:'studio:reuse-jersey',name:'Betongbarriär',category:'labb',width:2,depth:0.48,height:0.78,shape:'reuse',prefab:'jersey',placement:'floor',license:'MIT · Riposte / BenDBSS',source:'Befintlig Cartridge Strike-geometri · inga nya modellkopior'},
  {id:'studio:reuse-sandbags',name:'Sandsäckar',category:'labb',width:2.1036,depth:0.3804,height:0.6,shape:'reuse',prefab:'sandbags',placement:'floor',license:'MIT · Riposte / BenDBSS',source:'Befintlig Cartridge Strike-geometri · inga nya modellkopior'},
@@ -36,7 +40,7 @@ export const PROCEDURAL_LIBRARY=Object.freeze([
  {id:'studio:wall-picture',name:'Tavla med ram · blå',category:'dekor',width:.85,depth:.07,height:.62,shape:'wall-picture',placement:'wall'},
  {id:'studio:wall-clock',name:'Väggklocka · rund',category:'dekor',width:.38,depth:.08,height:.38,shape:'wall-clock',placement:'wall'},
  {id:'studio:wall-shelf',name:'Vägghylla · vit',category:'dekor',width:.9,depth:.25,height:.1,shape:'wall-shelf',placement:'wall'}
-].map(o=>Object.freeze({...o,kind:o.kind||'prop',license:o.license||'Original · Designstudion, procedurbyggd',source:o.source||'Designstudions procedurmodeller · inga extra filer',model:o.shape,thumb:o.prefab?`./library/thumbs/reuse/${o.prefab}.webp`:null})));
+].map(o=>Object.freeze({...o,kind:o.kind||'prop',license:o.license||'Original · Designstudion, procedurbyggd',source:o.source||'Designstudions procedurmodeller · inga extra filer',model:o.model||o.shape,thumb:o.thumb||(o.prefab?`./library/thumbs/reuse/${o.prefab}.webp`:null)})));
 export const PROCEDURAL_MAP=new Map(PROCEDURAL_LIBRARY.map(o=>[o.id,o]));
 /** Correct only the mislabeled office-chair preset from editor 3.4 drafts. */
 export function upgradeLegacyOrangeChair(project){let count=0;

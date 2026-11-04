@@ -8,7 +8,13 @@ Projekten sparas lokalt i webbläsaren. **Ladda alltid ner AI-paket/ZIP** för s
 
 [Spela Floor 5](https://capstere.github.io/cartridge-strike/fps/) · [Designa en FPS-karaktär](https://capstere.github.io/cartridge-strike/character-design/) · [Bygg en ny bana](https://capstere.github.io/cartridge-strike/furniture-editor/new.html) · [Redigera Floor 5](https://capstere.github.io/cartridge-strike/furniture-editor/new.html?mode=edit-floor5) · [Spela syntetisk demobana](https://capstere.github.io/cartridge-strike/fps/?level=synthetic-demo)
 
-Designstudion 3.6.0 bygger banprojekt i schema 2 för spelversion 0.18.0. Arkitektur och möbler har spelgeometri och kollision från samma projektdata. Du kan bygga i plan och 3D, visa FPS-utseendet, gå runt, kontrollera spelbarhet och spara/öppna JSON eller ZIP. Ett privat förhandsprov publicerar inte projektet. [Aktuell användarguide](furniture-editor/README.md) och [formatbeslut](docs/level-project-decisions.md).
+Designstudion 5.8.0 bygger banprojekt i schema 2 för spelversion 0.18.0. Arkitektur och möbler har spelgeometri och kollision från samma projektdata. Du kan bygga i plan och 3D, visa FPS-utseendet, gå runt, kontrollera spelbarhet och spara/öppna JSON eller ZIP. Ett privat förhandsprov publicerar inte projektet. [Aktuell användarguide](furniture-editor/README.md) och [formatbeslut](docs/level-project-decisions.md).
+
+## Labb, skor och FPS-inredning i Designstudion 5.8
+
+**MÖBLERA** innehåller nu 301 objekt. De 22 nya objekten finns under **Biosäkerhet & skor**, **Whiteboard & Ricoh** och **FPS & labbutrustning**. Där finns Biosafety Cabinet byggd efter referensbilderna, svart golvskoställ, vit vägghylla, färgvalbara skor och de uppladdade whiteboard- och Ricoh-modellerna. FPS-samlingen innehåller bland annat Cartridge med stängt/öppet lock, cartridgebricka, labbvagn, instrument, centrifug, labbfrys, skåp, provrörsställ, pärmar, vakuumugn och torkugn.
+
+Placera först skostället eller vägghyllan och därefter skorna med **Smart placering** påslagen. Markera ett par för att välja **Skornas färg** och **Hyllplan**. Skorna följer sin hylla när den flyttas, och färg, hyllplan och väggfästen sparas i JSON/ZIP och visas i FPS-promenaden. BINDER-vakuumugnen är en ny lågpolymodell; den separata torkugnen är återhämtad från onboard. [Användning](furniture-editor/README.md) · [FPS-objektens ursprung](docs/fps-furniture-library.md) · [Whiteboard och Ricoh](licenses/studio-office-models.md).
 
 ## Hitta i repot
 

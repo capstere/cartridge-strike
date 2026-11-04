@@ -7,7 +7,7 @@ const fieldIDs={x:'dockX',z:'dockZ',w:'dockWidth',d:'dockDepth'};
 const roundDisplay=value=>String(Math.round(Number(value)*1000)/1000);
 const $=id=>document.getElementById(id);
 
-export function installSelectionDock({getIssue,getMountIssue,onHeight,onMountMode,onWallHeight,onWallSide,onFacing,onRotate,onMirror}){
+export function installSelectionDock({getIssue,getMountIssue,onHeight,onMountMode,onWallHeight,onWallSide,onFacing,onRotate,onMirror,getColor,onColor,getSupportLevels,onSupportLevel}){
  const panel=$('editDock'),reopen=$('editDockReopen'),name=$('editDockName'),message=$('editDockMessage');
  const collision=$('dockCollision'),height=$('dockHeight'),mount=$('dockMountMode'),wallY=$('dockWallY'),wallYRow=$('dockWallHeightRow');
  let itemId=null,collapsed=false;
@@ -22,6 +22,9 @@ export function installSelectionDock({getIssue,getMountIssue,onHeight,onMountMod
   }
   if(itemId!==item.id){itemId=item.id;collapsed=compact;}
   name.textContent=item.assetName||item.name||item.kind||'Möbel';
+  const color=getColor?.(item);$('dockColorRow').hidden=!color;if(color)$('dockColor').value=color;
+  const levels=getSupportLevels?.(item)||[],shelf=$('dockShelf');$('dockShelfRow').hidden=levels.length<2;
+  shelf.replaceChildren(...levels.map(level=>new Option(level.label,String(level.index))));shelf.value=String(item.mountSurface??levels.at(-1)?.index??0);
   for(const [source,destination] of Object.entries(fieldIDs))
    $(destination).value=roundDisplay(item[source]);
   height.value=roundDisplay(item.height);
@@ -64,6 +67,8 @@ export function installSelectionDock({getIssue,getMountIssue,onHeight,onMountMod
   onHeight(value);
  });
  collision.addEventListener('change',()=>changeNative('collisionMode',collision.value));
+ $('dockColor').addEventListener('change',e=>{if(itemId)onColor?.(e.target.value);});
+ $('dockShelf').addEventListener('change',e=>{if(itemId)onSupportLevel?.(Number(e.target.value));});
  mount.addEventListener('change',()=>{
   if(!itemId)return;
   const ok=onMountMode?.(mount.value);

@@ -3,8 +3,8 @@ import {AUTHORING_LIMITS} from '../project-limits.mjs?v=5.7.3';
  * Paint an opening, glass wall or window over part of an existing wall,
  * replacing the painted span rather than overlapping solid geometry.
  */
-import {isWall,isDoor,makeEntry,getNextId,validateEntry,roundPosition,entryLength,pointToSegmentDistance,cloneEntry,STANDARD_PASSAGE_WIDTH,WC_PASSAGE_WIDTH,WC_MIN_PASSAGE_WIDTH} from './architecture.mjs?v=5.7.3';
-import {architecturalFinish} from '../appearance.mjs';
+import {isWall,isDoor,makeEntry,getNextId,validateEntry,roundPosition,entryLength,pointToSegmentDistance,cloneEntry,STANDARD_PASSAGE_WIDTH,WC_PASSAGE_WIDTH,WC_MIN_PASSAGE_WIDTH} from './architecture.mjs?v=5.8.0';
+import {architecturalFinish} from '../appearance.mjs?v=5.8.0';
 import {validatePoster} from './posters.mjs?v=5.7.3';
 
 export const PAINT_KINDS=Object.freeze(['window','glazed','wall','door','card-door','opening']);

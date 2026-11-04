@@ -3,8 +3,8 @@
  * resolver and old furniture-studio migration. Never infer deletion from
  * hidden rendering alone: baseline furniture IDs must also be removed.
  */
-import {floor5Baseline} from './project-scene.mjs?v=5.7.3';
-import {EDITABLE_KINDS} from '../core.mjs?v=5.7.3';
+import {floor5Baseline} from './project-scene.mjs?v=5.8.0';
+import {EDITABLE_KINDS} from '../core.mjs?v=5.8.0';
 
 const ensureFloor5=(project,scene)=>{
  if(project?.mode!=='edit-floor5'||!Array.isArray(scene?.baselineItems)||!Array.isArray(scene?.items)||!Array.isArray(scene?.fixed))

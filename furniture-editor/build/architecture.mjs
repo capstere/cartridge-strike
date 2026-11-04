@@ -3,7 +3,7 @@ import {AUTHORING_LIMITS} from '../project-limits.mjs?v=5.7.3';
  * The canonical map, collision, door ownership and navigation are NEVER mutated.
  * The edits returned by exportArchitecture are user-authored proposals only.
  */
-import {architecturalFinish,WALL_FINISHES,DOOR_FINISHES} from '../appearance.mjs';
+import {architecturalFinish,WALL_FINISHES,DOOR_FINISHES} from '../appearance.mjs?v=5.8.0';
 export const ARCHITECTURE_SCHEMA=1;
 export const STANDARD_PASSAGE_WIDTH=1.20;
 export const WC_PASSAGE_WIDTH=.85;

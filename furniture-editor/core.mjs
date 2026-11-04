@@ -3,8 +3,10 @@ import {MAX_FURNITURE_RECORDS} from './project-limits.mjs?v=5.7.3';
  * This file deliberately has no imports from the active FPS, no mutations of game data,
  * and no storage or network side effects. The exported JSON is review-only.
  */
-import {LIBRARY_MAP} from './library/catalog.mjs?v=5.7.1';
-import {editableDimensions,isChair,chairRole,validateDimensions,CHAIR_ROLES,ASSET_ROLES} from './appearance.mjs';
+import {LIBRARY_MAP} from './library/catalog.mjs?v=5.8.0';
+import {editableDimensions,isChair,chairRole,validateDimensions,CHAIR_ROLES,ASSET_ROLES,validFurnitureColor} from './appearance.mjs?v=5.8.0';
+import {validWallMount} from './wall-mounts.mjs?v=5.8.0';
+import {validModelAlignment} from './model-alignment.mjs?v=5.8.0';
 export const EDITOR_VERSION = '2.0.0';
 export const GAME_VERSION = '0.17.0';
 export const BASE_COMMIT = '7b99da56c9cc7f7e5bdbc626a174c8db9a9e33bc';
@@ -87,8 +89,9 @@ export function validate(item,objects,data,original=null,{emptyFixed=false}={}){
   if(obj.roomId!==item.roomId)continue;
   // Only guard newly introduced overlaps. Known approximate placement in the
   // reviewed baseline must not prevent rotating a chair in place.
-  if(item.mountId===obj.id&&item.elevation>=Math.min(.45,obj.height*.5))continue;
-  if(obj.mountId===item.id&&obj.elevation>=Math.min(.45,item.height*.5))continue;
+  if(item.mountId===obj.id&&item.elevation>=(obj.elevation||0))continue;
+  if(obj.mountId===item.id&&obj.elevation>=(item.elevation||0))continue;
+  if((item.elevation||0)>=((obj.elevation||0)+obj.height)-.005||(obj.elevation||0)>=((item.elevation||0)+item.height)-.005)continue;
   if(intersects(corners(item,.012),corners(obj,.012)) &&
    !(original&&obj.original&&intersects(corners(original,.012),corners(obj.original,.012))))return 'Möbeln överlappar en annan möbel.';
  }
@@ -124,6 +127,10 @@ export function exportPatch(objects,baseline,{createdAt=new Date().toISOString()
   const payload={id:o.id,roomId:o.roomId,kind:o.kind,x:round(o.x),z:round(o.z),yaw:round(normalizeAngle(o.yaw),6)};
   if(!old)added.push({...payload,w:round(o.w),d:round(o.d),height:round(o.height),
    ...(o.elevation?{elevation:round(o.elevation)}:{}),...(o.mountId?{mountId:o.mountId}:{}),
+   ...(Number.isInteger(o.mountSurface)?{mountSurface:o.mountSurface}:{}),
+   ...(o.color?{color:o.color}:{}),...(o.wallMount?{wallMount:o.wallMount}:{}),
+   ...(o.collision?{collision:o.collision}:{}),...(o.wallFacing?{wallFacing:o.wallFacing}:{}),
+   ...(o.modelSize?{modelSize:o.modelSize}:{}),...(o.mirrored?{mirrored:true}:{}),...(o.wallRoll?{wallRoll:o.wallRoll}:{}),
    ...(isChair(o)?{chairRole:chairRole(o)}:{}),
    ...(o.kind==='prop'&&o.assetRole&&o.assetRole!=='auto'?{assetRole:o.assetRole}:{}),
    ...(o.assetId?{assetId:o.assetId,assetName:String(o.assetName||'3D-objekt').slice(0,90)}:{})});
@@ -156,10 +163,15 @@ export function parsePatch(document,baseline){
    const classic=/^NY-(STOL|BORD|SOFFA)-\d{1,5}$/.test(p.id)&&['chair','table','coffee-table','desk','sofa'].includes(p.kind)&&!p.assetId;
    const curated=/^NY-OBJ-\d{1,5}$/.test(p.id)&&p.kind==='prop'&&typeof p.assetId==='string'&&
      (LIBRARY_MAP.has(p.assetId)||/^local:[a-f0-9]{64}$/.test(p.assetId));
-   if((!classic&&!curated)||![p.w,p.d,p.height].every(v=>typeof v==='number'&&Number.isFinite(v)&&v>.05&&v<=8))
+   if((!classic&&!curated)||![p.w,p.d,p.height].every(v=>typeof v==='number'&&Number.isFinite(v)&&v>.001&&v<=8))
      throw Error('Ogiltig ny möbel eller okänd 3D-modell.');
    if(p.elevation!==undefined&&(!Number.isFinite(p.elevation)||p.elevation<0||p.elevation>3))throw Error('Ogiltig höjd över golv.');
    if(p.mountId!==undefined&&(typeof p.mountId!=='string'||p.mountId.length>100||p.mountId===p.id))throw Error('Ogiltigt fäste.');
+   if(p.mountSurface!==undefined&&p.mountSurface!==null&&(!Number.isInteger(p.mountSurface)||p.mountSurface<0||p.mountSurface>31||!p.mountId))throw Error('Ogiltigt hyllplan.');
+   if(p.color!==undefined&&!validFurnitureColor(p.color))throw Error('Ogiltig möbelfärg.');
+   if(p.wallMount!==undefined&&(!validWallMount(p.wallMount)||p.mountId))throw Error('Ogiltigt väggfäste.');
+   if(!validModelAlignment(p))throw Error('Ogiltig modellriktning.');
+   if(p.collision!==undefined&&!['solid','none'].includes(p.collision))throw Error('Ogiltig möbelkollision.');
    const obj={...p,assetName:curated?String(p.assetName||LIBRARY_MAP.get(p.assetId)?.name||'Egen 3D-modell').slice(0,90):undefined,source:'added'};
    if(p.assetRole!==undefined&&(!curated||!ASSET_ROLES.includes(p.assetRole)))throw Error('Ogiltig kategori för 3D-modellen.');
    if(p.chairRole!==undefined&&(!isChair(obj)||!CHAIR_ROLES.includes(p.chairRole)))throw Error('Ogiltig stolskategori.');
@@ -182,7 +194,8 @@ export function parsePatch(document,baseline){
  for(const id of removed){if(typeof id!=='string'||!b.has(id)||seen.has(id))throw Error('Ogiltig borttagen möbel.');seen.add(id);get.get(id).deleted=true;}
  for(const item of items.filter(o=>!o.deleted&&o.mountId)){
   const support=get.get(item.mountId);
-  if(!support||support.deleted||item.mountId===item.id||item.elevation<.3)throw Error('Utrustningens fäste saknas i projektet.');
+  if(!support||support.deleted||item.mountId===item.id||!Number.isFinite(item.elevation)||item.elevation<0)throw Error('Utrustningens fäste saknas i projektet.');
+  if(Number.isInteger(item.mountSurface)&&!LIBRARY_MAP.get(support.assetId)?.supportSurfaces?.[item.mountSurface])throw Error('Utrustningens hyllplan saknas i projektet.');
  }
  return items;
 }
