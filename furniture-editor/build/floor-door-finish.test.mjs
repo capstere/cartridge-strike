@@ -1,9 +1,9 @@
 import {testDoorTraversal} from './door-traversal.mjs';
 import test from 'node:test';import assert from 'node:assert/strict';import {readFileSync} from 'node:fs';
-import {exportProject,parseProject,exportProjectZip,parseProjectZip} from './level-project.mjs';
-import {makeEntry} from './architecture.mjs';import {floor5Baseline,resolveProjectScene,writeProjectScene} from './project-scene.mjs';
-import {planFloorEdge,floorEdgeHandles,remainingSourceTiles} from './floor-edge.mjs';import {architecturePreview} from './architecture-preview.mjs';
-import {createWorld} from '../../src/fps/world.mjs';import {sceneArchitectureData} from '../../src/fps/level-adapter.mjs';import {paintDescription} from './surface-style.mjs';
+import {exportProject,parseProject,exportProjectZip,parseProjectZip} from './level-project.mjs?v=5.7.2';
+import {makeEntry} from './architecture.mjs';import {floor5Baseline,resolveProjectScene,writeProjectScene} from './project-scene.mjs?v=5.7.2';
+import {planFloorEdge,floorEdgeHandles,remainingSourceTiles} from './floor-edge.mjs';import {architecturePreview} from './architecture-preview.mjs?v=5.7.2';
+import {createWorld} from '../../src/fps/world.mjs?v=5.7.2';import {sceneArchitectureData} from '../../src/fps/level-adapter.mjs?v=5.7.2';import {paintDescription} from './surface-style.mjs';
 const bounds={x0:-50,x1:52,z0:-35,z1:40},floor={id:'BYGG-G-0001',name:'Rum',role:'room',surface:'carpet',x0:0,x1:8,z0:0,z1:8};
 function fixture(){const p=exportProject({ground:{bounds,wallHeightDefault:2.85,floors:[{...floor}]}});p.architecture.added=[makeEntry('BYGG-V-0001','wall',[0,0],[8,0]),makeEntry('BYGG-D-0001','door',[3,0],[4.2,0])];return p;}
 test('lintel closes .015 cutter gaps, follows wall plane/depth/height/paint in either endpoint order',()=>{

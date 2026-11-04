@@ -1,23 +1,24 @@
+import {MAX_FURNITURE_RECORDS,furnitureRecordCount} from '../project-limits.mjs?v=5.7.2';
 import {validateFloorEdits} from './floor-edge.mjs?v=5.1.0';
 import {validateSurfaceColors,validateSurfaceMaterials} from './surface-style.mjs?v=5.7.0';
 import {FLOOR_FINISHES} from './pattern-presets.mjs?v=5.6.1';
-import {validateOpenedAreas,closedAreas} from './walkable-spaces.mjs?v=5.7.1';
+import {validateOpenedAreas,closedAreas} from './walkable-spaces.mjs?v=5.7.2';
 import {validModelAlignment} from '../model-alignment.mjs?v=5.7.1';
 /** Versioned level document. Parsing is deliberately independent of the renderer. */
-import {BASE_COMMIT,GAME_VERSION,PATCH_FORMAT,PATCH_SCHEMA} from '../core.mjs?v=5.7.1';
+import {BASE_COMMIT,GAME_VERSION,PATCH_FORMAT,PATCH_SCHEMA} from '../core.mjs?v=5.7.2';
 import {validateEntry,validateFloorRect} from './architecture.mjs?v=5.7.0';
 import {assetHash} from '../library/glb-utils.mjs';
-import {makeZip,readZip,PROJECT_ZIP_MAX_BYTES} from '../library/zip.mjs';
-import {floor5Baseline} from './project-scene.mjs?v=5.7.1';
+import {makeZip,readZip,PROJECT_ZIP_MAX_BYTES} from '../library/zip.mjs?v=5.7.2';
+import {floor5Baseline} from './project-scene.mjs?v=5.7.2';
 import {parseArchitecture} from './architecture.mjs?v=5.7.0';
 import {LIBRARY_MAP} from '../library/catalog.mjs?v=5.7.1';
 import {parsePosters} from './posters.mjs';
 import {parseTreatments} from './treatments.mjs?v=5.7.0';
-import {collisionExport,aiAgentBrief} from './ai-export.mjs?v=5.7.1';
+import {collisionExport,aiAgentBrief} from './ai-export.mjs?v=5.7.2';
 import {validWallMount} from '../wall-mounts.mjs?v=5.7.1';
 
 export const LEVEL_FORMAT='cartridge-strike-level-project',LEVEL_SCHEMA=2;
-export const LEVEL_GAME_VERSION='0.18.0',LEVEL_BASE_COMMIT='f5c63a22483feeeb29583853dab0c0911af5c09a',LEVEL_EDITOR_VERSION='5.7.0';
+export const LEVEL_GAME_VERSION='0.18.0',LEVEL_BASE_COMMIT='f5c63a22483feeeb29583853dab0c0911af5c09a',LEVEL_EDITOR_VERSION='5.7.2';
 const emptyArchitecture=()=>({schemaVersion:1,edits:[],added:[],removed:[],floors:[],posters:[],treatments:[]});
 const within=n=>typeof n==='number'&&Number.isFinite(n)&&Math.abs(n)<=100;
 const rect=r=>r&&[r.x0,r.z0,r.x1,r.z1].every(within)&&r.x1>r.x0&&r.z1>r.z0;
@@ -86,8 +87,9 @@ export function parseProject(input,{allowLegacy=true}={}){
  for(const e of a.added){validateEntry(e,{isNew:true});unique(e.id);}
  if(input.mode==='new-level'){parsePosters(a.posters,a.added);parseTreatments(a.treatments,a.added);}
  if(input.mode==='new-level'&&g.floors.length>0){for(const e of a.added){if(![e.a,e.b].every(([x,z])=>x>=g.bounds.x0&&x<=g.bounds.x1&&z>=g.bounds.z0&&z<=g.bounds.z1))fail('byggdel utanför grundytan');}}
- const f=input.furniture;if(!f||!['placements','added','removed'].every(k=>Array.isArray(f[k]))||
-  f.placements.length+f.added.length+f.removed.length>350)fail('möbler');
+ const f=input.furniture,count=furnitureRecordCount(f);
+ if(count===null)fail('möbler: placements, added och removed måste vara listor');
+ if(count>MAX_FURNITURE_RECORDS)fail(`möbelposter ${count}/${MAX_FURNITURE_RECORDS}. Spara en säkerhetskopia; inga objekt behöver raderas för att rädda arbetet`);
  if(input.mode==='new-level'&&(f.placements.length||f.removed.length))fail('ny bana får inte ärva möbler');
  const checkMount=o=>{
   if(!validModelAlignment(o))fail('modellens framåtriktning eller mått');

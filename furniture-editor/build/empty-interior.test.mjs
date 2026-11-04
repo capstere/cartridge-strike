@@ -1,10 +1,10 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {clearFloor5Interior,restoreFloor5Interior} from './empty-interior.mjs';
-import {resolveProjectScene,floor5Baseline,writeProjectScene} from './project-scene.mjs?v=5.1.0';
-import {exportProject,exportProjectZip,parseProjectZip} from './level-project.mjs?v=5.1.0';
-import {collisionExport} from './ai-export.mjs?v=5.1.0';
-import {createWorld} from '../../src/fps/world.mjs?v=5.1.0';
+import {clearFloor5Interior,restoreFloor5Interior} from './empty-interior.mjs?v=5.7.2';
+import {resolveProjectScene,floor5Baseline,writeProjectScene} from './project-scene.mjs?v=5.7.2';
+import {exportProject,exportProjectZip,parseProjectZip} from './level-project.mjs?v=5.7.2';
+import {collisionExport} from './ai-export.mjs?v=5.7.2';
+import {createWorld} from '../../src/fps/world.mjs?v=5.7.2';
 
 test('empty Floor 5 removes 107 inherited furniture and fixed items without touching the architecture',async()=>{
  const project=exportProject({mode:'edit-floor5'});

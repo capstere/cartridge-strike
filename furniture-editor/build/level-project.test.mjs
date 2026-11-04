@@ -1,9 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {exportProject,parseProject,migrateV1,exportProjectZip,parseProjectZip} from './level-project.mjs?v=5.1.0';
-import {exportPatch,BASE_COMMIT} from '../core.mjs';
+import {exportProject,parseProject,migrateV1,exportProjectZip,parseProjectZip} from './level-project.mjs?v=5.7.2';
+import {exportPatch,BASE_COMMIT} from '../core.mjs?v=5.7.2';
 import {assetHash} from '../library/glb-utils.mjs';
-import {makeZip,readZip} from '../library/zip.mjs';
+import {makeZip,readZip} from '../library/zip.mjs?v=5.7.2';
 
 const floor={id:'BYGG-G-0001',name:'Rum',role:'room',surface:'vinyl',x0:0,z0:0,x1:8,z1:8};
 test('empty new level is independent of Floor 5 and serializes',()=>{
@@ -64,7 +64,7 @@ test('ZIP rejects inconsistent central-directory filename even when local entry 
 });
 
 test('AI handoff ZIP validates derived collision map and accepts older ZIP',async()=>{
- const {collisionExport}=await import('./ai-export.mjs?v=5.1.0');
+ const {collisionExport}=await import('./ai-export.mjs?v=5.7.2');
  const p=exportProject(),zip=await exportProjectZip(p),files=readZip(zip),decode=new TextDecoder();
  assert.equal(JSON.parse(decode.decode(files.get('COLLISION_MAP.json'))).floor5Inherited,false);
  assert.equal(collisionExport(p).walkableFloors.length,0);

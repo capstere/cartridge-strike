@@ -6,14 +6,14 @@ import * as T from '../vendor/three/three.module.js';
 import {createFurnishings} from '../src/fps/furnishings.mjs';
 import {EDITOR_VERSION,GAME_VERSION,BASE_COMMIT,DEFAULT_ROOMS,ROOM_LABELS,
   EDITABLE_KINDS,bounds,centroid,inside,distanceSegment,catalog,normalizeAngle,
-  round,validate,snapFurnitureToWall,exportPatch,parsePatch,isChanged} from './core.mjs?v=5.7.1';
+  round,validate,snapFurnitureToWall,exportPatch,parsePatch,isChanged} from './core.mjs?v=5.7.2';
 import {LIBRARY_ALL as LIBRARY,LIBRARY_MAP,LIBRARY_CATEGORIES} from './library/catalog.mjs?v=5.7.1';
 import {populateProcedural} from './library/procedural-mesh.mjs?v=5.0.0';
 import {proceduralOf,placementRole} from './library/procedural.mjs?v=5.0.0';
-import {proposeSmartPose,findSupport} from './smart-placement.mjs?v=5.7.1';
+import {proposeSmartPose,findSupport} from './smart-placement.mjs?v=5.7.2';
 import {addModelToGroup,importLocalGLB,localLibrary,getLocalFile} from './library/models.mjs?v=5.7.1';
-import {makeZip,readZip,PROJECT_ZIP_MAX_BYTES} from './library/zip.mjs';
-import {readModelBundleZip} from './library/model-bundle.mjs';
+import {makeZip,readZip,PROJECT_ZIP_MAX_BYTES} from './library/zip.mjs?v=5.7.2';
+import {readModelBundleZip} from './library/model-bundle.mjs?v=5.7.2';
 import {assetHash} from './library/glb-utils.mjs';
 import {createBuildMode} from './build/build-mode.mjs?v=5.1.0';
 import {parseArchitecture,standardDoorMarkerSpan} from './build/architecture.mjs?v=5.1.0';

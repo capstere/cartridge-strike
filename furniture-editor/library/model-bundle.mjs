@@ -1,5 +1,5 @@
 /** Offline, bounded ZIP reader for user-selected GLB packs. Never fetches or publishes assets. */
-import {crc32} from './zip.mjs';
+import {crc32} from './zip.mjs?v=5.7.2';
 import {GLB_MAX_BYTES} from './glb-utils.mjs';
 export const MODEL_PACK_MAX_FILES = 20;
 export const MODEL_PACK_MAX_BYTES = 96 * 1024 * 1024;

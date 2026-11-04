@@ -1,10 +1,10 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {exportProject,parseProject,parseProjectZip,exportProjectZip} from './level-project.mjs';
+import {exportProject,parseProject,parseProjectZip,exportProjectZip} from './level-project.mjs?v=5.7.2';
 import {makeEntry,entryLength} from './architecture.mjs';
-import {resolveProjectScene,writeProjectScene,floor5Baseline} from './project-scene.mjs';
-import {levelProjectToWorldData} from '../../src/fps/level-adapter.mjs';
-import {createWorld} from '../../src/fps/world.mjs';
+import {resolveProjectScene,writeProjectScene,floor5Baseline} from './project-scene.mjs?v=5.7.2';
+import {levelProjectToWorldData} from '../../src/fps/level-adapter.mjs?v=5.7.2';
+import {createWorld} from '../../src/fps/world.mjs?v=5.7.2';
 import {testDoorTraversal} from './door-traversal.mjs';
 
 const floor={id:'BYGG-G-0001',name:'Kontor',role:'room',surface:'office-carpet',x0:0,z0:0,x1:8,z1:8};

@@ -5,12 +5,12 @@ import {createHash} from 'node:crypto';
 import {GENEXPERT_LIBRARY} from './genexpert-catalog.mjs';
 import {LIBRARY_ALL,LIBRARY_MAP} from './catalog.mjs';
 import {inspectGLB} from './glb-utils.mjs';
-import {inferPlacementRole,proposeSmartPose,duplicateFurnitureAssembly} from '../smart-placement.mjs';
+import {inferPlacementRole,proposeSmartPose,duplicateFurnitureAssembly} from '../smart-placement.mjs?v=5.7.2';
 import {modelFront,fittedSize} from '../model-alignment.mjs';
 import {isTable,isChair} from '../appearance.mjs';
-import {exportProject,exportProjectZip,parseProjectZip} from '../build/level-project.mjs?v=5.7.0';
-import {createWorld} from '../../src/fps/world.mjs?v=5.7.0';
-import {resolveProjectScene,floor5Baseline} from '../build/project-scene.mjs?v=5.7.0';
+import {exportProject,exportProjectZip,parseProjectZip} from '../build/level-project.mjs?v=5.7.2';
+import {createWorld} from '../../src/fps/world.mjs?v=5.7.2';
+import {resolveProjectScene,floor5Baseline} from '../build/project-scene.mjs?v=5.7.2';
 
 const entries=GENEXPERT_LIBRARY;
 const bytesOf=e=>readFileSync(new URL(e.url,new URL('../',import.meta.url)));

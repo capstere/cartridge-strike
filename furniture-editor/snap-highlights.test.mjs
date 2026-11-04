@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {placementPreview,preferredPlacementPoint} from './snap-highlights.mjs';
-import {proposeSmartPose} from './smart-placement.mjs';
+import {placementPreview,preferredPlacementPoint} from './snap-highlights.mjs?v=5.7.2';
+import {proposeSmartPose} from './smart-placement.mjs?v=5.7.2';
 const counter={id:'NY-OBJ-0001',kind:'prop',assetId:'studio:counter-120',assetName:'Köksbänk',x:0,z:0,yaw:0,w:1.2,d:.62,height:.9};
 const microwave={id:'NY-OBJ-0002',kind:'prop',assetId:'kenney:furniture-kit:kitchenmicrowave',assetName:'Mikrovågsugn',x:0,z:0,yaw:0,w:.54,d:.41,height:.34};
 const picture={...microwave,id:'NY-OBJ-0003',assetId:'studio:wall-picture',assetName:'Tavla',w:.85,d:.07,height:.62};

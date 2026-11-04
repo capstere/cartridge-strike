@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {planDraggedRoom,MIN_ROOM_SPAN,MAX_ROOM_SPAN} from './room-drag.mjs?v=5.1.0';
 import {validateEntry,validateFloorRect} from './architecture.mjs?v=5.1.0';
-import {exportProject,parseProject} from './level-project.mjs?v=5.1.0';
+import {exportProject,parseProject} from './level-project.mjs?v=5.7.2';
 import {planAdjacentRoom} from '../adjacent-room.mjs?v=5.1.0';
 
 const bounds={x0:-40,z0:-40,x1:40,z1:40};

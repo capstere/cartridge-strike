@@ -4,7 +4,7 @@ import {readFileSync} from 'node:fs';
 import {fileURLToPath} from 'node:url';
 import {dirname,resolve} from 'node:path';
 import {EDITOR_VERSION,GAME_VERSION,BASE_COMMIT,PATCH_FORMAT,round,normalizeAngle,
-  inside,corners,intersects,segmentIntersectsRectangle,catalog,validate,exportPatch,parsePatch} from './core.mjs';
+  inside,corners,intersects,segmentIntersectsRectangle,catalog,validate,exportPatch,parsePatch} from './core.mjs?v=5.7.2';
 const root=resolve(dirname(fileURLToPath(import.meta.url)),'..');
 function fixture(){
  const data={rooms:[{id:'I09',name:'Lunch room',status:'included',polygon:[[0,0],[12,0],[12,12],[0,12]]}],
@@ -52,7 +52,8 @@ test('unsafe or incompatible JSON imports are rejected, gameplay remains unmodif
  assert.throws(()=>parsePatch({...doc,source:{...doc.source,commit:'other'}},base),/annan spelversion/);
  assert.throws(()=>parsePatch({...doc,placements:[{id:'UNKNOWN',kind:'chair',roomId:'I09',x:1,z:1,yaw:0}]},base),/matchar inte/);
  assert.throws(()=>parsePatch({...doc,added:[{id:'../evil',kind:'chair',roomId:'I09',x:1,z:1,yaw:0,w:1,d:1,height:1}]},base),/ny möbel/);
- assert.throws(()=>parsePatch({...doc,placements:Array(400).fill({})},base),/många/);
+ assert.throws(()=>parsePatch({...doc,placements:Array(2001).fill({})},base),/många/);
+ assert.throws(()=>parsePatch({...doc,placements:Array(400).fill({})},base),/Ogiltigt/);
  const html=readFileSync(resolve(root,'furniture-editor/index.html'),'utf8');
  assert(html.includes('SPARA MITT PROJEKT'));assert(!html.includes('src/fps/app.mjs'));
  for(const path of ['furniture-editor/main.mjs','furniture-editor/core.mjs']){

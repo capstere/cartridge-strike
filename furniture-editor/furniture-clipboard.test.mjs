@@ -1,8 +1,8 @@
 import test from 'node:test';import assert from 'node:assert/strict';
 import {captureFurniture,pasteFurniture} from './furniture-clipboard.mjs';
 import {poseOnWall} from './wall-mounts.mjs';
-import {exportProject,parseProject,exportProjectZip,parseProjectZip} from './build/level-project.mjs?v=5.1.0';
-import {resolveProjectScene,writeProjectScene} from './build/project-scene.mjs?v=5.1.0';
+import {exportProject,parseProject,exportProjectZip,parseProjectZip} from './build/level-project.mjs?v=5.7.2';
+import {resolveProjectScene,writeProjectScene} from './build/project-scene.mjs?v=5.7.2';
 const base=(id,x=1)=>({id,kind:'desk',roomId:'',x,z:2,yaw:.2,w:1,d:1,height:.8,elevation:0,collision:'solid',mirrored:true});
 const near=(a,b)=>assert(Math.abs(a-b)<1e-5,`${a} != ${b}`);
 const wall={id:'w',kind:'wall',a:[0,0],b:[8,0],height:3,thickness:.12};

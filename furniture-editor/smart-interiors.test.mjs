@@ -1,7 +1,7 @@
 import test from 'node:test';import assert from 'node:assert/strict';
 import {PROCEDURAL_LIBRARY,PROCEDURAL_MAP} from './library/procedural.mjs';
-import {findSupport,proposeSmartPose} from './smart-placement.mjs';
-import {exportPatch,parsePatch} from './core.mjs';
+import {findSupport,proposeSmartPose} from './smart-placement.mjs?v=5.7.2';
+import {exportPatch,parsePatch} from './core.mjs?v=5.7.2';
 const desk={id:'NY-OBJ-0001',kind:'prop',assetId:'studio:desk-160',assetName:'Skrivbord 160',roomId:'I09',source:'added',x:4,z:4,yaw:0,w:1.6,d:.8,height:.75};
 const oven={id:'NY-OBJ-0002',kind:'prop',assetId:'studio:microwave',assetName:'Mikrovågsugn',roomId:'I09',source:'added',x:4,z:4,yaw:0,w:.5,d:.42,height:.31};
 test('36 opt-in procedural presets have unique valid IDs and stay low-poly',()=>{

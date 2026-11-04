@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {inferPlacementRole,proposeSmartPose,findSupport,duplicateFurnitureAssembly} from './smart-placement.mjs';
+import {inferPlacementRole,proposeSmartPose,findSupport,duplicateFurnitureAssembly} from './smart-placement.mjs?v=5.7.2';
 const desk={id:'NY-OBJ-0001',assetId:'studio:desk-120',assetName:'Skrivbord 120 × 70',kind:'prop',
  x:3,z:3,yaw:0,w:1.2,d:.7,height:.75};
 const wall={id:'BYGG-V-0001',kind:'wall',a:[0,0],b:[8,0],height:2.85,thickness:.11};

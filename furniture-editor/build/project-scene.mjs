@@ -1,10 +1,10 @@
 import {applyFloorEdits} from './floor-edge.mjs?v=5.1.0';
-import {closedAreas} from './walkable-spaces.mjs?v=5.7.1';
+import {closedAreas} from './walkable-spaces.mjs?v=5.7.2';
 /** Resolve editable geometry once for the studio, collision export and FPS adapter. */
 import '../../src/floor5-data.js';
 import '../../src/world.js?v=5.5.0';
 import {createFurnishings} from '../../src/fps/furnishings.mjs';
-import {catalog,inside,distanceSegment,EDITABLE_KINDS,exportPatch,isChanged} from '../core.mjs?v=5.7.1';
+import {catalog,inside,distanceSegment,EDITABLE_KINDS,exportPatch,isChanged} from '../core.mjs?v=5.7.2';
 import {readBaseline,parseArchitecture,exportArchitecture,wallPieces,isDoor} from './architecture.mjs?v=5.7.0';
 
 /** Shared walls may overlap after adjacent rooms are drawn. A fitted window

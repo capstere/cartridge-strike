@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {validate,snapFurnitureToWall} from './core.mjs';
+import {validate,snapFurnitureToWall} from './core.mjs?v=5.7.2';
 import {doorOnWallSegment,makeEntry,wallPieces,entryLength} from './build/architecture.mjs?v=5.1.0';
 const data={
  rooms:[{id:'TEST',status:'included',polygon:[[0,0],[6,0],[6,6],[0,6]]}],

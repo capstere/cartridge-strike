@@ -5,7 +5,7 @@ import {createRequire} from 'node:module';
 import {mkdir,readFile,writeFile} from 'node:fs/promises';
 import {resolve} from 'node:path';
 import assert from 'node:assert/strict';
-import {makeZip,readZip} from './library/zip.mjs';
+import {makeZip,readZip} from './library/zip.mjs?v=5.7.2';
 import {createHash} from 'node:crypto';
 const require=createRequire(import.meta.url);
 const {chromium}=require('../frontline/source/tools/dev/node_modules/playwright-core');
