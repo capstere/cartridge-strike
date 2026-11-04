@@ -1,0 +1,83 @@
+name: Apply checked waist seam and image framing
+on:
+  push:
+    branches: [fix/character-shoe-anchors-no-belt]
+    paths: ['.github/workflows/prepare-character-611-waist.yml']
+permissions:
+  contents: write
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Apply exact inspected changes
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          import hashlib,json
+          sha=lambda s:hashlib.sha256(s.encode()).hexdigest()
+          p=Path('character-design/fashion-preview.mjs');s=p.read_text()
+          assert sha(s)=='4d5bb54dfb75bda1bd9466056989f2bf579969a77d3d6e88009207810a63da7b'
+          a="   // Preserve the ankle opening: garment fit tapers to zero at the cuffs.\n   if(name==='trousers-fabric')for(let i=0;i<pos.count;i++)pos.setZ(i,source[i*3+2]*(avatar.isDwarf?fit:1+(fit-1)*clamp((source[i*3+1]-.25)/.20,0,1)));"
+          b="""   // Keep ankles fixed, and use the shirt's exact fit at the shared waist seam.
+             // The removed duty belt must not reveal a gap when the fit slider changes.
+             if(name==='trousers-fabric')for(let i=0;i<pos.count;i++){
+              const x=source[i*3],y=source[i*3+1],z=source[i*3+2];
+              if(avatar.isDwarf){pos.setZ(i,z*fit);continue;}
+              const ankle=clamp((y-.25)/.20,0,1),waist=T.MathUtils.smoothstep(y,.75,.90),torso=1-clamp((Math.abs(x)-.17)/.15,0,1);
+              pos.setX(i,x*(1+(fit-1)*torso*waist));
+              pos.setZ(i,z*(1+(fit-1)*ankle*T.MathUtils.lerp(1,torso,waist)));
+             }"""
+          assert s.count(a)==1;s=s.replace(a,b)
+          assert sha(s)=='8b73e2dad90bfe3d94ea477dee5f8f2c40b0396afca31d45e50def91b76ef407'
+          p.write_text(s)
+          p=Path('tools/character-footwear-browser.mjs');s=p.read_text()
+          a="w.focus='shoes';w.yaw=1.5;w.pitch=.03;";assert s.count(a)==1;s=s.replace(a,"w.focus='shoes';w.zoom=.42;w.yaw=1.5;w.pitch=.03;")
+          a="w.focus='body';w.yaw=.3;";assert s.count(a)==1;s=s.replace(a,"w.focus='body';w.zoom=1;w.yaw=.3;")
+          a="   const camera=new T.OrthographicCamera(-.44,.44,.31,-.31,.01,20);camera.position.set(4,.25,.15);camera.lookAt(0,.25,0);"
+          b="""   // Frame both actually posed feet, not a fixed box at the origin.
+             avatar.holder.updateWorldMatrix(true,true);avatar.root.updateMatrixWorld(true);avatar.root.traverse(m=>{if(m.isSkinnedMesh)m.skeleton.update();});
+             const bounds=new T.Box3(),point=new T.Vector3();
+             avatar.root.traverse(m=>{if(m.isMesh&&/^(shoe-upper-|boot-sole-)/.test(m.name))for(let i=0;i<m.geometry.attributes.position.count;i++){m.getVertexPosition(i,point);bounds.expandByPoint(point.applyMatrix4(m.matrixWorld));}});
+             const center=bounds.getCenter(new T.Vector3()),size=bounds.getSize(new T.Vector3()),aspect=960/676,span=Math.max(size.y+.25,(size.z+.25)/aspect);center.y+=.045;
+             const camera=new T.OrthographicCamera(-span*aspect/2,span*aspect/2,span/2,-span/2,.01,20);camera.position.copy(center).add(new T.Vector3(4,.03,.08));camera.lookAt(center);"""
+          assert s.count(a)==1;p.write_text(s.replace(a,b))
+          p=Path('character-design/footwear-fit.test.mjs');s=p.read_text();assert sha(s)=='800932b01a0bec464a52fa899553e8b87b07cb182acd89bb9386ce8c6e514ec1'
+          s="import * as T from '../vendor/three/three.module.js';\n"+s+'''
+          for(const gender of ['male','female'])test(`${gender}: removing the belt does not expose a fit-slider seam at the waist`,()=>{
+           const a=createAuthoredAvatar('analysts','waist-test',false,{gender,ignoreOverrides:true}),fashion=new FashionPreview(),p=newProject({gender});p.creative.outfit='original';
+           try{
+            for(const fit of [85,100,120]){
+             a.mixer.stopAllAction();a.root.traverse(n=>{if(n.isSkinnedMesh)n.skeleton.pose();});a.root.updateMatrixWorld(true);p.creative.fit=fit;fashion.create(p,a);
+             const shirt=a.meshes.find(m=>m.material.name==='jacket-fabric'),pants=a.meshes.find(m=>m.material.name==='trousers-fabric'),s=fashion.sources.get(shirt),t=fashion.sources.get(pants),map=new Map();
+             const key=(v,i)=>Array.from(v.slice(i*3,i*3+3),x=>x.toFixed(5)).join(',');
+             for(let i=0;i<s.length/3;i++)map.set(key(s,i),i);const pairs=[];
+             for(let i=0;i<t.length/3;i++)if(map.has(key(t,i)))pairs.push([map.get(key(t,i)),i]);
+             assert(pairs.length>=40,'original waist seam vertices are paired');
+             for(const name of ['Idle_Loop','Sprint_Loop','Crouch_Fwd_Loop']){
+              a.mixer.stopAllAction();a.mixer.clipAction(a.clips.get(name)).reset().play();a.mixer.setTime(.23);a.root.updateMatrixWorld(true);shirt.skeleton.update();pants.skeleton.update();
+              for(const [i,j]of pairs){const x=shirt.getVertexPosition(i,new T.Vector3()),y=pants.getVertexPosition(j,new T.Vector3());assert(x.distanceTo(y)<2e-5,`${gender} fit ${fit} ${name}: torn waist`);}
+             }
+            }
+           }finally{fashion.dispose();disposeAvatar(a);}
+          });
+          '''
+          assert sha(s)=='19620e9334f9cbd3af5b08387041489f3dd5d8727e59f48d0904bd300cf6e096';p.write_text(s)
+          p=Path('build-info.json');info=json.loads(p.read_text());row=next(r for r in info['files'] if r['path']=='character-design/fashion-preview.mjs');b=Path(row['path']).read_bytes();row['bytes']=len(b);row['sha256']=hashlib.sha256(b).hexdigest();info['bytes']=sum(r['bytes'] for r in info['files']);p.write_text(json.dumps(info,ensure_ascii=False,indent=2)+'\n')
+          PY
+          node --check character-design/fashion-preview.mjs
+          node --check tools/character-footwear-browser.mjs
+          node --experimental-loader ./tools/vendor-three-test-loader.mjs --test character-design/*.test.mjs src/fps/view-character-appearance.test.mjs
+          node tools/verify-owner-runtime.mjs
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git rm .github/workflows/prepare-character-611-waist.yml
+          git add character-design/fashion-preview.mjs character-design/footwear-fit.test.mjs tools/character-footwear-browser.mjs build-info.json
+          git diff --cached --check
+          git commit -m 'Keep the uncovered waist seam joined and frame both running feet'
+          git push origin "HEAD:${GITHUB_REF_NAME}"
