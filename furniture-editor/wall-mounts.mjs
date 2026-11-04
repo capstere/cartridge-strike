@@ -4,7 +4,7 @@
  * This pure geometry is shared by plan/3D and preserves normal FPS furniture
  * serialization. A missing wall is never silently replaced by an invisible one.
  */
-import {wallFootprint} from './model-alignment.mjs?v=5.7.1';
+import {wallFootprint} from './model-alignment.mjs?v=5.8.0';
 const r=n=>Math.round(n*1000000)/1000000;
 const clamp=(n,a,b)=>Math.max(a,Math.min(b,n));
 const finite=n=>typeof n==='number'&&Number.isFinite(n);
@@ -76,6 +76,41 @@ export function findWallMount(item,point,walls,{radius=.85,centerY=null,floors=[
  }
  return best;
 }
+/** Apply a parent pose and the same rigid movement to its attachment tree.
+ * Coordinates are authored in world space, so every descendant is transformed
+ * once around the old root. Attachment IDs, shelf indices, colors and all other
+ * instance metadata stay intact. An unchanged pose leaves children untouched.
+ */
+export function applyFurnitureAssemblyPose(item,items,pose){
+ const old={x:item.x,z:item.z,yaw:item.yaw??0,elevation:item.elevation??0};
+ const next={x:pose.x??old.x,z:pose.z??old.z,yaw:pose.yaw??old.yaw,elevation:pose.elevation??old.elevation};
+ if(!Object.values(old).every(finite)||!Object.values(next).every(finite))throw TypeError('Ogiltig möbelplacering.');
+ const dx=next.x-old.x,dz=next.z-old.z,dy=next.elevation-old.elevation;
+ const angle=normalAngle(next.yaw-old.yaw),turn=Math.abs(angle)<1e-12?0:angle;
+ if(dx!==0||dz!==0||dy!==0||turn!==0){
+  const byParent=new Map();
+  for(const child of items){
+   if(!child.mountId)continue;
+   if(!byParent.has(child.mountId))byParent.set(child.mountId,[]);
+   byParent.get(child.mountId).push(child);
+  }
+  const queue=[item.id],seen=new Set(queue),c=Math.cos(turn),s=Math.sin(turn);
+  for(let i=0;i<queue.length;i++)for(const child of byParent.get(queue[i])||[]){
+   if(seen.has(child.id))continue;
+   seen.add(child.id);queue.push(child.id);
+   if(turn){
+    const x=child.x-old.x,z=child.z-old.z;
+    child.x=r(next.x+c*x+s*z);child.z=r(next.z-s*x+c*z);
+    child.yaw=r(normalAngle((child.yaw??0)+turn));
+   }else{
+    if(dx!==0)child.x=r(child.x+dx);
+    if(dz!==0)child.z=r(child.z+dz);
+   }
+   if(dy!==0)child.elevation=r((child.elevation??0)+dy);
+  }
+ }
+ return Object.assign(item,pose);
+}
 export function syncWallMounts(items,walls,{reanchorDistance=.18}={}){
  let updated=0,missing=0;
  for(const item of items){
@@ -90,7 +125,7 @@ export function syncWallMounts(items,walls,{reanchorDistance=.18}={}){
   // Preserve an explicit later collision override; default wall fixtures are
   // decoration so they do not add invisible player blockers.
   const keepCollision=item.collision||'none';
-  Object.assign(item,pose,{collision:keepCollision});
+  applyFurnitureAssemblyPose(item,items,{...pose,collision:keepCollision});
   updated++;
  }
  return {updated,missing};

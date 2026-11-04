@@ -7,21 +7,24 @@ import * as T from '../vendor/three/three.module.js';
 import {createFurnishings} from '../src/fps/furnishings.mjs';
 import {EDITOR_VERSION,GAME_VERSION,BASE_COMMIT,DEFAULT_ROOMS,ROOM_LABELS,
   EDITABLE_KINDS,bounds,centroid,inside,distanceSegment,catalog,normalizeAngle,
-  round,validate,snapFurnitureToWall,exportPatch,parsePatch,isChanged} from './core.mjs?v=5.7.3';
-import {LIBRARY_ALL as LIBRARY,LIBRARY_MAP,LIBRARY_CATEGORIES} from './library/catalog.mjs?v=5.7.1';
-import {populateProcedural} from './library/procedural-mesh.mjs?v=5.0.0';
-import {proceduralOf,placementRole} from './library/procedural.mjs?v=5.0.0';
-import {proposeSmartPose,findSupport} from './smart-placement.mjs?v=5.7.3';
-import {addModelToGroup,importLocalGLB,localLibrary,getLocalFile} from './library/models.mjs?v=5.7.1';
+  round,validate,snapFurnitureToWall,exportPatch,parsePatch,isChanged} from './core.mjs?v=5.8.0';
+import {LIBRARY_ALL as LIBRARY,LIBRARY_MAP,LIBRARY_CATEGORIES} from './library/catalog.mjs?v=5.8.0';
+import {populateProcedural} from './library/procedural-mesh.mjs?v=5.8.0';
+import {proceduralOf,placementRole} from './library/procedural.mjs?v=5.8.0';
+import {proposeSmartPose,findSupport,inferPlacementRole} from './smart-placement.mjs?v=5.8.0';
+import {furnitureSurfaces} from './furniture-surfaces.mjs?v=5.8.0';
+import {poseOnWall,syncWallMounts,applyFurnitureAssemblyPose} from './wall-mounts.mjs?v=5.8.0';
+import {applyFurnitureAppearance} from './build/project-visuals.mjs?v=5.8.0';
+import {addModelToGroup,importLocalGLB,localLibrary,getLocalFile} from './library/models.mjs?v=5.8.0';
 import {makeZip,readZip,PROJECT_ZIP_MAX_BYTES} from './library/zip.mjs?v=5.7.2';
 import {readModelBundleZip} from './library/model-bundle.mjs?v=5.7.2';
 import {assetHash} from './library/glb-utils.mjs';
-import {createBuildMode} from './build/build-mode.mjs?v=5.7.3';
-import {parseArchitecture,standardDoorMarkerSpan} from './build/architecture.mjs?v=5.7.3';
+import {createBuildMode} from './build/build-mode.mjs?v=5.8.0';
+import {parseArchitecture,standardDoorMarkerSpan} from './build/architecture.mjs?v=5.8.0';
 import {parsePosters} from './build/posters.mjs?v=5.7.3';
-import {parseTreatments} from './build/treatments.mjs?v=5.7.3';
+import {parseTreatments} from './build/treatments.mjs?v=5.8.0';
 import {findCameraPlacement} from './placement.mjs';
-import {isTable,isChair,chairRole,chairColors,validateDimensions,FINISH_COLORS,cameraPanVector} from './appearance.mjs';
+import {isTable,isChair,chairRole,chairColors,validateDimensions,FINISH_COLORS,cameraPanVector,validFurnitureColor} from './appearance.mjs?v=5.8.0';
 const $=s=>document.querySelector(s),data=globalThis.SpelFloor5,worldSource=globalThis.SpelWorld;
 if(!data||!worldSource||!T.WebGLRenderer)throw new Error('Spelplanen eller Three.js saknas.');
 const baseScene=worldSource.build({doors:Object.fromEntries(data.doors.filter(d=>d.accessCardConfirmed).map(d=>[d.id,true]))});
@@ -92,7 +95,7 @@ function makeModel(item){
   const proxy=put(0,item.height/2,0,w,item.height,d,pickMaterial);proxy.userData.editId=item.id;
   const fallback=put(0,item.height/2,0,w*.96,item.height*.96,d*.96,m.teal);fallback.userData.editorFallback=true;
   addModelToGroup(item,group,()=>{if(group.userData.realModel){fallback.visible=false;fallback.material=pickMaterial;}
-    if(chosen===item.id)updateHighlight();scheduleRender();});
+    applyFurnitureAppearance(group,item);if(chosen===item.id)updateHighlight();scheduleRender();});
  }else if(item.kind==='chair'){
   const seatH=.47;put(0,seatH,0,w*.91,.11,d*.86,cloth);
   put(0,.74,d*.39,w*.91,.46,.072,cloth);
@@ -113,9 +116,14 @@ function makeModel(item){
  }
  group.position.set(item.x,item.elevation||0,item.z);group.rotation.y=item.yaw;
  group.traverse(c=>{if(c.isMesh)c.userData.editId=item.id});
+ applyFurnitureAppearance(group,item);
+ // Merged procedural geometry is selectable just like the older box presets.
+ group.traverse(c=>{if(c.isMesh&&!pickMeshes.includes(c))pickMeshes.push(c);});
  return group;
 }
 function syncModels(){
+ syncWallMounts(items,building?.getEntries()||[]);
+ dynamicGroup.traverse(o=>{if(o.userData?.studioGeometry)o.geometry?.dispose();for(const m of Array.isArray(o.material)?o.material:[o.material])if(m?.userData?.studioOwned)m.dispose();});
  dynamicGroup.clear();pickMeshes.length=0;furnitureGroups.clear();for(const o of items){if(o.deleted)continue;const group=makeModel(o);dynamicGroup.add(group);furnitureGroups.set(o.id,group);}
  updateHighlight();scheduleRender();
 }
@@ -183,21 +191,29 @@ function renderProperties(){const o=items.find(x=>x.id===chosen&&!x.deleted);$('
  $('#tableSizeFields').hidden=!table;$('#chairRoleFields').hidden=!chair;
  if(table){$('#tableWidth').value=round(o.w,3);$('#tableDepth').value=round(o.d,3);}
  if(chair)$('#chairRole').value=chairRole(o);
+ const entry=LIBRARY_MAP.get(o.assetId);$('#objectColorFields').hidden=!entry?.colorable;
+ if(entry?.colorable)$('#objectColor').value=o.color||entry.defaultColor||'#f2f3ef';
+ const levels=furnitureSurfaces(items.find(item=>item.id===o.mountId));$('#shelfFields').hidden=levels.length<2;
+ $('#shelfLevel').replaceChildren(...levels.map(level=>new Option(level.label,String(level.index))));$('#shelfLevel').value=String(o.mountSurface??levels.at(-1)?.index??0);
  $('#degrees').textContent=Math.round(normalizeAngle(o.yaw)*180/Math.PI)+'°';
+ $('#rotateLeft').disabled=$('#rotateRight').disabled=!!o.wallMount;
  $('#duplicate').disabled=!['chair','table','coffee-table','desk','sofa','prop'].includes(o.kind);
 }
-function positionIssue(candidate){const list=items.filter(o=>!o.deleted);return validate(candidate,list,data,baseMap.get(candidate.id),{emptyFixed});}
+function positionIssue(candidate){if(candidate.wallMount)return poseOnWall(candidate,candidate.wallMount,building?.getEntries()||[])?null:'Väggfästet saknas.';const list=items.filter(o=>!o.deleted);return validate(candidate,list,data,baseMap.get(candidate.id),{emptyFixed});}
 function changePose(id,delta,{quiet=false}={}){const o=items.find(o=>o.id===id&&!o.deleted);if(!o)return false;let next={...o,...delta};next.yaw=normalizeAngle(next.yaw);
+ if(o.wallMount&&delta.yaw!==undefined){if(!quiet)notify('Vägghyllans riktning följer väggen. Dra den längs väggen för att flytta.');return false;}
  if(quiet&&$('#wallSnap')?.checked&&(delta.x!==undefined||delta.z!==undefined)){
   const snapped=snapFurnitureToWall(next,data);
   if(!positionIssue(snapped))next=snapped;
  }
  if(delta.x!==undefined||delta.z!==undefined){
-  const smart=proposeSmartPose(next,{x:next.x,z:next.z},items,{enabled:$('#smartAttach').checked&&!quiet||$('#smartAttach').checked&&quiet});
+  const smart=proposeSmartPose(next,{x:next.x,z:next.z},items,{enabled:$('#smartAttach').checked||!!o.wallMount,mode:o.wallMount?'wall':'auto',walls:building?.getEntries()||[],floors:data.rooms});
+  if(smart.blocked){$('#validation').textContent=smart.blocked;$('#validation').hidden=false;if(!quiet)notify(smart.blocked);return false;}
   next={...next,...smart};
  }
  const problem=positionIssue(next);if(problem){$('#validation').textContent=problem;$('#validation').hidden=false;if(!quiet)notify(problem);return false;}
- $('#validation').hidden=true;Object.assign(o,{x:next.x,z:next.z,yaw:next.yaw,mountId:next.mountId||null,elevation:next.elevation||0});updatePose(o);renderProperties();return true;
+ $('#validation').hidden=true;
+ applyFurnitureAssemblyPose(o,items,{x:next.x,z:next.z,yaw:next.yaw,mountId:next.mountId||null,mountSurface:next.mountId?next.mountSurface??null:null,wallMount:next.wallMount||null,elevation:next.elevation||0});for(const item of items.filter(item=>!item.deleted))updatePose(item);renderProperties();return true;
 }
 function mutate(id,delta){const prev=snapshot();const ok=changePose(id,delta);if(ok)checkpoint(prev);return ok;}
 function changeDimensions(id,delta){
@@ -229,7 +245,7 @@ function createDuplicate(){const source=items.find(x=>x.id===chosen&&!x.deleted)
  }
  notify('Det finns ingen säker ledig plats intill möbeln.');
 }
-function removeSelection(){const o=items.find(x=>x.id===chosen&&!x.deleted);if(!o)return;const before=snapshot();o.deleted=true;for(const child of items.filter(x=>x.mountId===o.id&&!x.deleted)){child.mountId=null;child.elevation=0;}chosen=null;checkpoint(before);syncModels();renderList();renderProperties();notify('Möbeln är borttagen i redigeraren. Spelet är orört.');}
+function removeSelection(){const o=items.find(x=>x.id===chosen&&!x.deleted);if(!o)return;const before=snapshot();o.deleted=true;for(const child of items.filter(x=>x.mountId===o.id&&!x.deleted)){child.mountId=null;child.mountSurface=null;child.elevation=0;}chosen=null;checkpoint(before);syncModels();renderList();renderProperties();notify('Möbeln är borttagen i redigeraren. Spelet är orört.');}
 function undo(){if(!undoStack.length)return;redoStack.push(snapshot());restore(undoStack.pop());store();notify('Ångrat.');}
 function redo(){if(!redoStack.length)return;undoStack.push(snapshot());restore(redoStack.pop());store();notify('Gjort om.');}
 function downloadBlob(blob,name){const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=name;document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),5000);}
@@ -272,15 +288,15 @@ function pan(dx,dy){
 }
 const LIBRARY_EMOJI={hissrum12:'▧',stolar:'◩',bord:'▰',kontor:'▥',kok:'▤',badrum:'◪',labb:'⬡',industri:'▦',dekor:'✦',egna:'★'};
 function renderLibrary(){const query=$('#librarySearch').value.trim().toLocaleLowerCase('sv'),cat=$('#libraryCategory').value;
- const source=[...LIBRARY,...localEntries];const visible=source.filter(x=>(cat==='alla'||x.category===cat)&&(!query||(x.name+' '+x.category+' '+x.model).toLocaleLowerCase('sv').includes(query)));
- $('#libraryCount').textContent=`${visible.length} av ${source.length} objekt`;
+ const source=[...LIBRARY,...localEntries];const words=s=>String(s).normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLocaleLowerCase('sv');const visible=source.filter(x=>(cat==='alla'||x.category===cat)&&words(query).split(/\s+/).every(word=>words(x.name+' '+x.category+' '+x.model+' '+(x.keywords||'')).includes(word)));
+ $('#libraryCount').textContent=`${visible.length} av ${source.length} objekt`;$('#openLibrary span').textContent=`${source.length} objekt och 3D-modeller`;
  const list=$('#libraryTiles');list.replaceChildren();
  for(const entry of visible){const card=document.createElement('button');card.type='button';card.className='library-tile';card.title=entry.license+' · '+entry.source;
   const preview=document.createElement('div');preview.className='library-thumb';
   if(entry.thumb){const img=document.createElement('img');img.src=entry.thumb;img.loading='lazy';img.alt='Förhandsbild av '+entry.name;img.decoding='async';img.onerror=()=>{img.remove();preview.textContent=LIBRARY_EMOJI[entry.category]||'◼';};preview.append(img);}else preview.textContent=LIBRARY_EMOJI[entry.category]||'◼';
   const name=document.createElement('strong');name.textContent=entry.name;
   const lic=document.createElement('small');lic.textContent=entry.category+' · '+entry.license;
-  const dim=document.createElement('span');dim.textContent=`${entry.width} × ${entry.depth} × ${entry.height} m`;
+  const dim=document.createElement('span');dim.textContent=`${[entry.width,entry.depth,entry.height].map(n=>n.toLocaleString('sv-SE',{maximumFractionDigits:3})).join(' × ')} m`;
   card.append(preview,name,lic,dim);card.onclick=()=>addPreset(entry.id);list.append(card);
  }
  if(!visible.length){const p=document.createElement('p');p.className='helper';p.textContent='Inga objekt hittades. Prova en annan sökning eller importera en GLB.';list.append(p);}
@@ -298,9 +314,16 @@ async function addPreset(id){
  const draft={id:objectId,kind:'prop',assetId:entry.id,assetName:entry.name,source:'added',
   x:round(target.x),z:round(target.z),yaw:0,w:entry.width,d:entry.depth,height:entry.height,
   roomId:roomAt(target.x,target.z)?.id||room};
+ if(entry.assetRole)draft.assetRole=entry.assetRole;if(entry.wallFacing)draft.wallFacing=entry.wallFacing;if(entry.modelSize)draft.modelSize=entry.modelSize;
+ if(entry.colorable)draft.color=entry.defaultColor||'#f2f3ef';if(entry.collision)draft.collision=entry.collision;
  const support=$('#smartAttach').checked?findSupport(draft,{x:target.x,z:target.z},items,{radius:1.8}):null;
  let item=null;
- if(support){
+ if(inferPlacementRole(draft)==='wall'){
+  const walls=building?.getEntries()||[],points=[{x:target.x,z:target.z},...walls.filter(w=>w.kind==='wall').map(w=>{const dx=w.b[0]-w.a[0],dz=w.b[1]-w.a[1],t=Math.max(0,Math.min(1,((target.x-w.a[0])*dx+(target.z-w.a[1])*dz)/(dx*dx+dz*dz||1)));return {x:w.a[0]+dx*t,z:w.a[1]+dz*t};}).filter(p=>Math.hypot(p.x-target.x,p.z-target.z)<5).sort((a,b)=>Math.hypot(a.x-target.x,a.z-target.z)-Math.hypot(b.x-target.x,b.z-target.z))];
+  for(const point of points){const pose=proposeSmartPose(draft,point,items,{walls,floors:data.rooms});if(pose.wallMount){item={...draft,...pose};break;}}
+  if(!item){notify('Flytta kameran närmare en hel väggyta där hyllan får plats.');return null;}
+ }
+ if(!item&&support){
   const mounted={...draft,...support,roomId:roomAt(support.x,support.z)?.id||draft.roomId};
   if(!positionIssue(mounted))item=mounted;
  }
@@ -311,7 +334,7 @@ async function addPreset(id){
  }
  const before=snapshot();items.push(item);checkpoint(before);$('#chairsOnly').checked=false;
  syncModels();renderRooms();select(objectId,false);$('#libraryDialog').close();
- notify(entry.name+(item.mountId?' fästes automatiskt på bord/bänk.':' placerad nära kameran.')+' Dra objektet för att finjustera.');
+ notify(entry.name+(item.wallMount?' fästes på väggen.':item.mountId?' fästes automatiskt på möbelytan.':' placerad nära kameran.')+' Dra objektet för att finjustera.');
  return objectId;
 }
 async function addCustom(file,{place=true}={}){if(!file)return;const entry=await importLocalGLB(file),existing=localEntries.findIndex(x=>x.id===entry.id);
@@ -356,6 +379,8 @@ function setUpEvents(){
  };
  $('#chairRole').onchange=e=>{const o=items.find(x=>x.id===chosen&&!x.deleted);if(o)changeChairRole(o.id,e.target.value);};
  $('#assetRole').onchange=e=>{const o=items.find(x=>x.id===chosen&&!x.deleted);if(o)changeAssetRole(o.id,e.target.value);};
+ $('#objectColor').onchange=e=>{const o=items.find(x=>x.id===chosen&&!x.deleted);if(!o||!LIBRARY_MAP.get(o.assetId)?.colorable||!validFurnitureColor(e.target.value))return;const before=snapshot();o.color=e.target.value;checkpoint(before);syncModels();};
+ $('#shelfLevel').onchange=e=>{const o=items.find(x=>x.id===chosen&&!x.deleted),parent=o&&items.find(x=>x.id===o.mountId),level=furnitureSurfaces(parent)[Number(e.target.value)];if(!level)return;const before=snapshot();o.mountSurface=level.index;o.elevation=round((parent.elevation||0)+level.y);checkpoint(before);syncModels();};
  $('#duplicate').onclick=createDuplicate;$('#remove').onclick=removeSelection;$('#download').onclick=download;$('#downloadTop').onclick=download;$('#undo').onclick=undo;$('#redo').onclick=redo;
  $('#openLibrary').onclick=()=>{$('#libraryDialog').showModal();renderLibrary();$('#librarySearch').focus();};
  $('#emptyFixed').onclick=()=>{

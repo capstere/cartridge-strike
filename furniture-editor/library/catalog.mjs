@@ -1,12 +1,14 @@
 import {GENEXPERT_LIBRARY} from './genexpert-catalog.mjs?v=5.7.1';
 import {HOUSE_LIBRARY} from './house-catalog.mjs?v=5.0.0';
 import {ONBOARD_LIBRARY} from './onboard-catalog.mjs?v=4.7.0';
-import {PROCEDURAL_LIBRARY} from './procedural.mjs?v=5.0.0';
+import {PROCEDURAL_LIBRARY} from './procedural.mjs?v=5.8.0';
+import {OFFICE_LIBRARY} from './office-catalog.mjs?v=5.8.0';
+import {FPS_LIBRARY} from './fps-catalog.mjs?v=5.8.0';
 /** License-audited, version-pinned reusable 3D furniture library.
  * Kenney source: https://kenney.nl/assets/furniture-kit (CC0 1.0).
  * Curated binary mirror: Hidencod/tge-assets@37f5baddf99899547ae661668880809c42b450f0.
  * Existing NORD-01 models are original derivative files already in the public FPS.
- * ALL entries remain editor-only; they are not loaded by the live game. */
+ * Shared by both studios and saved-project FPS rendering; models load on demand. */
 export const LIBRARY = Object.freeze([
   {"id": "hissrum12:pallet", "name": "EUR-pall", "category": "hissrum12", "kind": "prop", "width": 1.2, "depth": 0.8, "height": 0.144, "url": "./library/models/hissrum12/pallet.glb", "thumb": "./library/thumbs/hissrum12/pallet.webp", "license": "Original · Hissrum12 (ägarens procedurmodeller)", "pack": "hissrum12", "model": "pallet", "source": "capstere/jedi@0ed0c4d · återbyggd lågpoly GLB, rättighetsgranskad"},
   {"id": "hissrum12:palletBins", "name": "Pall med 4 kärl", "category": "hissrum12", "kind": "prop", "width": 1.2, "depth": 0.8, "height": 0.94, "url": "./library/models/hissrum12/palletBins.glb", "thumb": "./library/thumbs/hissrum12/palletBins.webp", "license": "Original · Hissrum12 (ägarens procedurmodeller)", "pack": "hissrum12", "model": "palletBins", "source": "capstere/jedi@0ed0c4d · återbyggd lågpoly GLB, rättighetsgranskad"},
@@ -1180,7 +1182,7 @@ export const LIBRARY = Object.freeze([
   }
 ]);
 export const BASE_LIBRARY = LIBRARY;
-export const LIBRARY_ALL = Object.freeze([...LIBRARY,...PROCEDURAL_LIBRARY,...ONBOARD_LIBRARY,...HOUSE_LIBRARY,...GENEXPERT_LIBRARY]);
+export const LIBRARY_ALL = Object.freeze([...LIBRARY,...PROCEDURAL_LIBRARY,...ONBOARD_LIBRARY,...HOUSE_LIBRARY,...GENEXPERT_LIBRARY,...OFFICE_LIBRARY,...FPS_LIBRARY.filter(entry=>entry.url)]);
 export const LIBRARY_MAP = new Map(LIBRARY_ALL.map(x=>[x.id,x]));
 export const LIBRARY_CATEGORIES = Object.freeze(["alla","stolar","bord","kontor","kok","badrum","labb","industri","dekor","hissrum12","egna"]);
 export const LIBRARY_SOURCE = Object.freeze({repository:"Hidencod/tge-assets",commit:"37f5baddf99899547ae661668880809c42b450f0",license:"CC0-1.0",creator:"Kenney"});

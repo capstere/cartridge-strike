@@ -1,7 +1,7 @@
 import {AUTHORING_LIMITS} from '../project-limits.mjs?v=5.7.3';
 import {sealWindowBands} from './wall-joints.mjs?v=5.7.0';
 /** Optional schema-2 appearance overrides. Geometry and original materials stay unchanged. */
-import {FINISH_COLORS,architecturalFinish} from '../appearance.mjs';
+import {FINISH_COLORS,architecturalFinish} from '../appearance.mjs?v=5.8.0';
 import {floorBaseColor,WALL_PATTERNS} from './pattern-presets.mjs?v=5.6.0';
 export const validPaint=value=>typeof value==='string'&&/^#[0-9a-f]{6}$/i.test(value);
 export function surfaceColor(project,item){return project.surfaceColors?.[item.id]||

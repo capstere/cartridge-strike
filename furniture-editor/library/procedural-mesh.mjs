@@ -3,8 +3,10 @@
  */
 import {createPrefab} from '../../src/fps/riposte-procedural-props.mjs';
 import * as T from '../../vendor/three/three.module.js';
-import {proceduralOf} from './procedural.mjs?v=5.0.0';
-import {chairColors} from '../appearance.mjs';
+import {proceduralOf} from './procedural.mjs?v=5.8.0';
+import {chairColors} from '../appearance.mjs?v=5.8.0';
+import {populateLabFurniture} from './lab-furniture-mesh.mjs?v=5.8.0';
+import {populateFpsFurniture} from './fps-mesh.mjs?v=5.8.0';
 const circle=new T.CylinderGeometry(.5,.5,1,24);
 const metallic=new T.MeshStandardMaterial({color:0xaab6bd,metalness:.57,roughness:.43});
 const white=new T.MeshStandardMaterial({color:0xf5f7f6,metalness:.05,roughness:.76});
@@ -29,6 +31,7 @@ export function populateDiningChair(item,put){
 }
 export function populateProcedural(item,group,put){
  const entry=proceduralOf(item);if(!entry)return false;
+ if(populateLabFurniture(item,group,put)||populateFpsFurniture(item,group,put))return true;
  const w=item.w,d=item.d,h=item.height;
  if(entry.shape==='reuse'){
   const prefab=createPrefab(T,entry.prefab,{detail:1}),bounds=new T.Box3().setFromObject(prefab.group),size=bounds.getSize(new T.Vector3()),center=bounds.getCenter(new T.Vector3());

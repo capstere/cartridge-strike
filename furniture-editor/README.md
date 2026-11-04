@@ -1,3 +1,15 @@
+## Labb, skoförvaring och FPS-objekt (Designstudio 5.8)
+
+Öppna **MÖBLERA** och välj **Biosäkerhet & skor**, **Whiteboard & Ricoh** eller **FPS & labbutrustning**. De 22 nya objekten har egna bilder och kan även hittas genom sökning, exempelvis `biosafety`, `skostall`, `skor`, `ricoh`, `cartridge` eller `binder`. Biblioteket har totalt 301 objekt, även i den klassiska studion.
+
+1. Placera **Svart skoställ** på golvet eller **Vit skohylla** mot en vägg. Vägghyllan använder väggfästets höjd, sida och framsida.
+2. Låt **Smart placering** vara på och placera **Skor** över hyllan. I planvyn används översta hyllplanet; i 3D kan du peka på det önskade planet.
+3. Markera skorna och välj **Hyllplan** för att byta nivå. **Skornas färg** ändrar bara det markerade parets ovandel; sula, snören och foder behåller sina material.
+4. Flytta eller vrid skostället för att ta med skorna. Skor på vägghyllan följer även ändrad väggsida, framsida och höjd. Spara JSON/ZIP och öppna **GÅ RUNT I BANAN** för att se samma placering och färg.
+
+**Biosafety Cabinet** är modellerad efter de tillhandahållna bilderna med vit kåpa, blå detaljer, glas, belyst arbetsyta och mörkt hjulstativ. Arbetsytan kan bära exempelvis Cartridge. Whiteboarden på hjul och Ricoh-skrivaren använder de uppladdade GLB-filerna; visningsrotation och storlek anpassas vid placering.
+
+**FPS & labbutrustning** samlar Cartridge med stängt/öppet lock, en sexpackbricka, vitt/rött labbinstrument, labbvagn, labbänk, centrifug, labbfrys, förvaringsskåp, provrörsställ, blå labblåda, pärmar, BINDER-vakuumugn, ventilationsgaller, armatur och torkugn. BINDER-modellen är en ny ungefärlig rekonstruktion. Den blå torkugnen är en separat återhämtad onboard-modell. [Ursprung, licenser och renderingsdetaljer](../docs/fps-furniture-library.md) · [Whiteboard- och Ricoh-attribution](../licenses/studio-office-models.md).
 
 ### Floor 5 helt tom på inredning (Designstudio 5.3)
 
@@ -15,13 +27,13 @@ WC-skylten är dekorativ och följer dörrbladet även när dörren öppnas. Den
 
 15 nya objekt med förhandsbilder, bättre sökning och filtret **Används i banan**. Öppna **MÖBLERA → Nytt från onboard**. [Objekt, funktioner och nästa förbättringar](../docs/onboard-library.md).
 
-# Cartridge Strike Designstudion 3.6.0 — bygg i plan och 3D
+# Cartridge Strike Designstudion 5.8.0 — bygg i plan och 3D
 
 **[Öppna Designstudion](https://capstere.github.io/cartridge-strike/furniture-editor/new.html)** (dator och mus rekommenderas).
 
 **NY BANA** och **[REDIGERA FLOOR 5](https://capstere.github.io/cartridge-strike/furniture-editor/new.html?mode=edit-floor5)** använder samma byggverktyg. Ett rum ger golv och fyra väggar; klicka på en vägg för dörr, öppning, fönster eller glas. Spelets fysik följer automatiskt byggdelarna. Du kan placera möbler trots varningar och flytta dem senare. Bildkorten visar biblioteket; 3D-vyn visar samma möbelmodeller som FPS. **GÅ RUNT I BANAN** använder FPS-renderaren, dörrmotorn och kapselkollisionen direkt från ditt utkast, även innan spelmålen finns. Planvyn och export fungerar utan WebGL; 3D och promenad kräver WebGL 2.
 
-Schema 2, editor 3.6.0 och kompatibel spelversion 0.18.0 används. Exportens `project.json` är källan; `COLLISION_MAP.json` är en härledd, integritetskontrollerad karta. JSON/ZIP från den äldre studion kan öppnas utan att skissen eller ursprungliga data förloras. Den **[klassiska studion](https://capstere.github.io/cartridge-strike/furniture-editor/)** finns kvar för äldre arbetsflöden.
+Schema 2, editor 5.8.0 och kompatibel spelversion 0.18.0 används. Exportens `project.json` är källan; `COLLISION_MAP.json` är en härledd, integritetskontrollerad karta. JSON/ZIP från den äldre studion kan öppnas utan att skissen eller ursprungliga data förloras. Den **[klassiska studion](https://capstere.github.io/cartridge-strike/furniture-editor/)** finns kvar för äldre arbetsflöden.
 
 ### Bygg en ny bana
 

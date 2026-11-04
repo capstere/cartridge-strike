@@ -3,10 +3,11 @@
  * imports. The scene/physics is unchanged; outputs are ordinary saved furniture.
  * Automatic suggestions can always be overridden by Auto/Surface/Wall/Floor.
  */
-import {placementRole,proceduralOf} from './library/procedural.mjs?v=5.0.0';
-import {LIBRARY_MAP} from './library/catalog.mjs?v=5.7.1';
-import {findWallMount,wallMountProblem} from './wall-mounts.mjs?v=5.7.1';
-import {round,normalizeAngle} from './core.mjs?v=5.7.3';
+import {placementRole,proceduralOf} from './library/procedural.mjs?v=5.8.0';
+import {LIBRARY_MAP} from './library/catalog.mjs?v=5.8.0';
+import {findWallMount,wallMountProblem} from './wall-mounts.mjs?v=5.8.0';
+import {round,normalizeAngle} from './core.mjs?v=5.8.0';
+import {furnitureSurfaces} from './furniture-surfaces.mjs?v=5.8.0';
 
 const isSurface=o=>!o.deleted&&(!o.wallMount||proceduralOf(o)?.shape==='wall-shelf'&&Math.abs(o.wallRoll||0)<1e-6)&&(
  ['counter','desk','table','round','wall-shelf'].includes(proceduralOf(o)?.shape)||
@@ -43,38 +44,51 @@ export function findSupport(item,point,objects,{radius=.38,role=inferPlacementRo
  if(!['countertop','desk-edge'].includes(role))return null;
  let best=null,score=Infinity;
  for(const surface of objects){
-  if(surface.id===item.id||!isSurface(surface))continue;
+  const shelves=furnitureSurfaces(surface);
+  if(surface.id===item.id||(!shelves.length&&!isSurface(surface)))continue;
   if(role==='desk-edge'&&!['desk','table'].includes(surface.kind)&&proceduralOf(surface)?.shape!=='desk')continue;
-  const where=local(surface,point.x,point.z),allowW=(surface.w-item.w)/2+.08,allowD=(surface.d-item.d)/2+.06;
+  const profiles=shelves.length?shelves:[{x:0,z:0,y:surface.height-.008,width:surface.w,depth:surface.d}];
+  for(const profile of profiles){
+  if(profile.clearance!==null&&Number.isFinite(profile.clearance)&&item.height>profile.clearance)continue;
+  const where=local(surface,point.x,point.z),allowW=(profile.width-item.w)/2+(shelves.length?0:.08),allowD=(profile.depth-item.d)/2+(shelves.length?0:.06);
+  where.x-=profile.x;where.z-=profile.z;
+  if(shelves.length&&(allowW<0||allowD<0))continue;
   if(allowW<-.12||allowD<-.12)continue;
   if(Math.abs(where.x)>Math.max(.08,allowW)+radius||Math.abs(where.z)>Math.max(.08,allowD)+radius)continue;
   const target=role==='desk-edge'?
-   global(surface,Math.max(-Math.max(0,allowW),Math.min(Math.max(0,allowW),where.x)),surface.d*.42):
-   global(surface,Math.max(-Math.max(0,allowW),Math.min(Math.max(0,allowW),where.x)),
-    Math.max(-Math.max(0,allowD),Math.min(Math.max(0,allowD),where.z)));
+   global(surface,profile.x+Math.max(-Math.max(0,allowW),Math.min(Math.max(0,allowW),where.x)),profile.z+profile.depth*.42):
+   global(surface,profile.x+Math.max(-Math.max(0,allowW),Math.min(Math.max(0,allowW),where.x)),
+    profile.z+Math.max(-Math.max(0,allowD),Math.min(Math.max(0,allowD),where.z)));
   const dist=near(point,target);
   if(dist>radius+.16)continue;
-  const priority=dist+Math.abs(point.x-surface.x)*.002;
+  const elevation=(surface.elevation||0)+profile.y;
+  // A visible 3D shelf wins by its height. Plan placement uses the top shelf;
+  // moving an already attached object retains the selected level.
+  const levelPriority=shelves.length?(Number.isFinite(point.y)?Math.abs(point.y-elevation):
+   item.mountId===surface.id&&Number.isInteger(item.mountSurface)?Math.abs(item.mountSurface-profile.index):
+   (shelves.length-1-profile.index)*.04):0;
+  const priority=dist+levelPriority+Math.abs(point.x-surface.x)*.002;
   if(priority<score){score=priority;best={...target,yaw:surface.yaw,
-   mountId:surface.id,elevation:round((surface.elevation||0)+surface.height-.008),snapRole:role};}
+   mountId:surface.id,mountSurface:profile.index??null,elevation:round(elevation),snapRole:role};}
+  }
  }
  return best;
 }
 export function proposeSmartPose(item,point,objects,{enabled=true,mode='auto',walls=[],floors=[]}={}){
  const pos={x:round(point.x),z:round(point.z)};
- const floor={...pos,mountId:null,wallMount:null,elevation:0,snapRole:'floor'};
- if(!enabled)return {...pos,mountId:null,elevation:0}; // Legacy API contract
+ const floor={...pos,mountId:null,mountSurface:null,wallMount:null,elevation:0,snapRole:'floor'};
+ if(!enabled)return {...pos,mountId:null,...(item.mountSurface!=null?{mountSurface:null}:{}),elevation:0}; // Legacy API contract
  if(mode==='floor')return floor;
  const role=mode==='wall'?'wall':mode==='surface'?'countertop':inferPlacementRole(item);
  if(role==='wall'){
   const mount=findWallMount(item,point,walls,{floors});
-  return mount||{...floor,blocked:wallMountProblem(item,point,walls)};
+  return mount?{...mount,mountSurface:null}:{...floor,blocked:wallMountProblem(item,point,walls)};
  }
- const support=findSupport(item,pos,objects,{role});
+ const support=findSupport(item,{...pos,...(Number.isFinite(point.y)?{y:point.y}:{})},objects,{role});
  return support?{...support,wallMount:null}:mode==='surface'?{...floor,blocked:'Peka på en bordsyta där föremålet får plats.'}:floor;
 }
 export function isMountedOn(item,other){
- return !!item.mountId&&item.mountId===other.id&&item.elevation>=Math.min(.45,other.height*.5);
+ return !!item.mountId&&item.mountId===other.id&&item.elevation>=(other.elevation||0);
 }
 /** Copy a support and its complete attachment tree without sharing anchors. */
 export function duplicateFurnitureAssembly(root,objects,pose){

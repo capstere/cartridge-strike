@@ -1,41 +1,43 @@
 import {authoringStatus} from './project-limits.mjs?v=5.7.3';
 import {draftText,createDraftStore,readDraftZip} from './build/draft-save.mjs?v=5.7.2';
-import {prepareProjectSave} from './build/safe-save.mjs?v=5.7.3';
-import {captureFurniture,pasteFurniture} from './furniture-clipboard.mjs?v=5.7.1';
-import {clearFloor5Interior,restoreFloor5Interior} from './build/empty-interior.mjs?v=5.7.3';
+import {prepareProjectSave} from './build/safe-save.mjs?v=5.8.0';
+import {captureFurniture,pasteFurniture} from './furniture-clipboard.mjs?v=5.8.0';
+import {clearFloor5Interior,restoreFloor5Interior} from './build/empty-interior.mjs?v=5.8.0';
 import {floorEdgeHandles,planFloorEdge} from './build/floor-edge.mjs?v=5.7.3';
-import {architecturePreview} from './build/architecture-preview.mjs?v=5.7.3';
-import {surfaceColor,validPaint,reconcileSurfaceColors} from './build/surface-style.mjs?v=5.7.3';
-import {floorGaps,gapFloor} from './build/walkable-spaces.mjs?v=5.7.3';
-import {installFurnitureHandles} from './furniture-handles.mjs?v=5.7.1';
-import {planFurnitureTranslation,furnitureAssembly} from './furniture-translation.mjs?v=5.7.1';
-import {rotateFurniture,mirrorFurniture} from './furniture-transforms.mjs?v=5.7.1';
-import {modelFront,MODEL_FRONTS,wallFootprint} from './model-alignment.mjs?v=5.7.1';
+import {architecturePreview} from './build/architecture-preview.mjs?v=5.8.0';
+import {surfaceColor,validPaint,reconcileSurfaceColors} from './build/surface-style.mjs?v=5.8.0';
+import {floorGaps,gapFloor} from './build/walkable-spaces.mjs?v=5.8.0';
+import {installFurnitureHandles} from './furniture-handles.mjs?v=5.8.0';
+import {planFurnitureTranslation,furnitureAssembly} from './furniture-translation.mjs?v=5.8.0';
+import {rotateFurniture,mirrorFurniture} from './furniture-transforms.mjs?v=5.8.0';
+import {modelFront,MODEL_FRONTS,wallFootprint} from './model-alignment.mjs?v=5.8.0';
 import {makePoster,locatePoster} from './build/posters.mjs?v=5.7.3';
-import {createCurtain,createBlind,treatmentPosition,curtainSideForHit} from './build/treatments.mjs?v=5.7.3';
-import {buildProjectFurniture,buildProjectDecorations,applyFurnitureAppearance} from './build/project-visuals.mjs?v=5.7.3';
-import {resolveProjectScene,writeProjectScene,floor5Baseline,projectWallPieces} from './build/project-scene.mjs?v=5.7.3';
-import {inheritFloor5Gameplay} from '../src/fps/world.mjs?v=5.7.3';
-import {wallAtPoint,planPaintOverWall} from './build/paint-over-wall.mjs?v=5.7.3';
-import {planResizeFloor,planResizeFloorEdge,planSlideInsert,planMoveWallEnd,roomBoundaryIds} from './build/direct-manipulation.mjs?v=5.7.3';
+import {createCurtain,createBlind,treatmentPosition,curtainSideForHit} from './build/treatments.mjs?v=5.8.0';
+import {buildProjectFurniture,buildProjectDecorations,applyFurnitureAppearance} from './build/project-visuals.mjs?v=5.8.0';
+import {resolveProjectScene,writeProjectScene,floor5Baseline,projectWallPieces} from './build/project-scene.mjs?v=5.8.0';
+import {inheritFloor5Gameplay} from '../src/fps/world.mjs?v=5.8.0';
+import {wallAtPoint,planPaintOverWall} from './build/paint-over-wall.mjs?v=5.8.0';
+import {planResizeFloor,planResizeFloorEdge,planSlideInsert,planMoveWallEnd,roomBoundaryIds} from './build/direct-manipulation.mjs?v=5.8.0';
 import {parsePosters} from './build/posters.mjs?v=5.7.3';
-import {parseTreatments} from './build/treatments.mjs?v=5.7.3';
+import {parseTreatments} from './build/treatments.mjs?v=5.8.0';
 import * as T from '../vendor/three/three.module.js';
-import {exportProject,parseProject,parseProjectZip,exportProjectZip} from './build/level-project.mjs?v=5.7.3';
-import {validateLevel} from './build/validate-level.mjs?v=5.7.3';
-import {validate,corners as baseCorners,inside,segmentIntersectsRectangle,intersects} from './core.mjs?v=5.7.3';
-import {wallPieces,standardPassageSpan,standardDoorMarkerSpan,isDoor,STANDARD_PASSAGE_WIDTH,WC_PASSAGE_WIDTH,WC_MIN_PASSAGE_WIDTH} from './build/architecture.mjs?v=5.7.3';
-import {LIBRARY_ALL} from './library/catalog.mjs?v=5.7.1';
-import {upgradeLegacyOrangeChair} from './library/procedural.mjs?v=5.0.0';
-import {proposeSmartPose,duplicateFurnitureAssembly} from './smart-placement.mjs?v=5.7.3';
-import {poseOnWall,syncWallMounts} from './wall-mounts.mjs?v=5.7.1';
-import {placementPreview,preferredPlacementPoint} from './snap-highlights.mjs?v=5.7.3';
+import {exportProject,parseProject,parseProjectZip,exportProjectZip} from './build/level-project.mjs?v=5.8.0';
+import {validateLevel} from './build/validate-level.mjs?v=5.8.0';
+import {validate,corners as baseCorners,inside,segmentIntersectsRectangle,intersects} from './core.mjs?v=5.8.0';
+import {wallPieces,standardPassageSpan,standardDoorMarkerSpan,isDoor,STANDARD_PASSAGE_WIDTH,WC_PASSAGE_WIDTH,WC_MIN_PASSAGE_WIDTH} from './build/architecture.mjs?v=5.8.0';
+import {LIBRARY_ALL,LIBRARY_MAP} from './library/catalog.mjs?v=5.8.0';
+import {upgradeLegacyOrangeChair,proceduralOf} from './library/procedural.mjs?v=5.8.0';
+import {validFurnitureColor} from './appearance.mjs?v=5.8.0';
+import {furnitureSurfaces,mountedElevation} from './furniture-surfaces.mjs?v=5.8.0';
+import {proposeSmartPose,duplicateFurnitureAssembly} from './smart-placement.mjs?v=5.8.0';
+import {poseOnWall,syncWallMounts,applyFurnitureAssemblyPose} from './wall-mounts.mjs?v=5.8.0';
+import {placementPreview,preferredPlacementPoint} from './snap-highlights.mjs?v=5.8.0';
 import {findNearbyFreePlacement} from './soft-placement.mjs';
-import {importLocalGLB,getLocalFile,localLibrary,readLibraryAsset} from './library/models.mjs?v=5.7.1';
+import {importLocalGLB,getLocalFile,localLibrary,readLibraryAsset} from './library/models.mjs?v=5.8.0';
 import {assetHash} from './library/glb-utils.mjs';
-import {installSelectionDock} from './selection-dock.mjs?v=4.9.0';
-import {planAdjacentRoom,ADJACENT_SIDES} from './adjacent-room.mjs?v=5.7.3';
-import {planDraggedRoom} from './build/room-drag.mjs?v=5.7.3';
+import {installSelectionDock} from './selection-dock.mjs?v=5.8.0';
+import {planAdjacentRoom,ADJACENT_SIDES} from './adjacent-room.mjs?v=5.8.0';
+import {planDraggedRoom} from './build/room-drag.mjs?v=5.8.0';
 
 const $=id=>document.getElementById(id),canvas=$('plan'),ctx=canvas.getContext('2d');
 const catalogEntries=LIBRARY_ALL;
@@ -231,7 +233,8 @@ function easyFurniturePose(item){
   {step:.2,maxRadius:.8});
 }
 function pendingPlacement(q){
- const entry=pendingFurniture,base={...(pendingTemplate||{}),id:'ghost',kind:pendingTemplate?.kind||entry.kind||'prop',assetId:entry.assetId||entry.id,assetName:entry.name,x:q.x,z:q.z,yaw:pendingYaw,w:entry.width,d:entry.depth,height:entry.height,modelSize:entry.modelSize||pendingTemplate?.modelSize,wallFacing:entry.wallFacing||pendingTemplate?.wallFacing};
+ const entry=pendingFurniture,base={...(pendingTemplate||{}),id:'ghost',kind:pendingTemplate?.kind||entry.kind||'prop',assetId:entry.assetId||entry.id,assetName:entry.name,x:q.x,z:q.z,yaw:pendingYaw,w:entry.width,d:entry.depth,height:entry.height,modelSize:entry.modelSize||pendingTemplate?.modelSize,wallFacing:entry.wallFacing||pendingTemplate?.wallFacing,
+  ...(entry.assetRole?{assetRole:entry.assetRole}:{}),...(entry.colorable&&!pendingTemplate?{color:entry.defaultColor||'#f2f3ef'}:{}),...(entry.collision&&!pendingTemplate?{collision:entry.collision}:{})};
  const feedback=placementPreview(base,q,objects(),arch(),{mode:pendingTemplate?.wallMount?'wall':$('placementMode').value,floors:floors()});
  if(pendingTemplate&&!base.wallMount&&!base.mountId&&!feedback.pose.wallMount&&!feedback.pose.mountId)feedback.pose.elevation=base.elevation||0;
  const fitted=easyFurniturePose({...base,...feedback.pose});return {item:fitted.item,feedback,adjusted:fitted.adjusted};
@@ -245,7 +248,7 @@ function addFurniture(entry,x,z,y=null,pointData={}){const floor=floorAt(x,z),id
  let item={...fitted.item,id,assetId};delete item.blocked;
  if(entry.chairRole&&!pendingTemplate)item.chairRole=entry.chairRole;
  item.roomId=floorAt(item.x,item.z)?.id||floor?.id||'';
- if(pendingTemplate){const copies=duplicateFurnitureAssembly(pendingTemplate,objects(),{x:item.x,z:item.z,yaw:item.yaw,mountId:item.mountId,wallMount:item.wallMount||null,elevation:item.elevation||0,collision:item.collision});for(const copy of copies)copy.roomId=floor?.id||'';objects().push(...copies);item=copies[0];}else objects().push(item);if(entry.id.startsWith('local:')){
+ if(pendingTemplate){const copies=duplicateFurnitureAssembly(pendingTemplate,objects(),{x:item.x,z:item.z,yaw:item.yaw,mountId:item.mountId,mountSurface:item.mountSurface,wallMount:item.wallMount||null,elevation:item.elevation||0,collision:item.collision});for(const copy of copies)copy.roomId=floor?.id||'';objects().push(...copies);item=copies[0];}else objects().push(item);if(entry.id.startsWith('local:')){
   if(!p().assets.local.some(a=>a.assetId===entry.id))p().assets.local.push({assetId:entry.id,file:`assets/models/${entry.id.slice(6)}.glb`,bytes:entry.byteCount||entry.size,license:'private, unverified'});
  }else if(entry.id!=='clone'&&!p().assets.library.includes(assetId))p().assets.library.push(assetId);
  selected=item.id;placementStatus(item);
@@ -341,18 +344,27 @@ function removeSelectedFurniture(){
 }
 function lookup(){normalizeSelection();if(multiSelected.size>1)return null;return [...decorations(),...floors(),...arch(),...objects(),...markers(),...spaces()].find(o=>o.id===selected);}
 const selectionDock=installSelectionDock({
+ getColor:item=>LIBRARY_MAP.get(item.assetId)?.colorable?(item.color||LIBRARY_MAP.get(item.assetId).defaultColor||'#f2f3ef'):null,
+ onColor:color=>{const item=lookup();if(!item||!LIBRARY_MAP.get(item.assetId)?.colorable||!validFurnitureColor(color))return;const before=JSON.stringify(p());item.color=color;commit(before);status('Skornas färg är sparad och följer med till FPS.');},
+ getSupportLevels:item=>furnitureSurfaces(objects().find(o=>o.id===item.mountId)),
+ onSupportLevel:index=>{const item=lookup(),support=item&&objects().find(o=>o.id===item.mountId),level=furnitureSurfaces(support)[index];if(!level)return;
+  const before=JSON.stringify(p());item.mountSurface=index;item.elevation=Math.round(((support.elevation||0)+level.y)*1000)/1000;commit(before);status(`${level.label} valt. Skorna följer med när du flyttar hyllan.`);},
  onRotate:delta=>transformSelected('rotate',delta),onMirror:()=>transformSelected('mirror'),
  getIssue:placementIssue,
  getMountIssue:item=>item.wallMount&&!poseOnWall(item,item.wallMount,arch())?'Väggfästet saknas eller får inte längre plats. Välj en annan väggyta eller ångra ändringen.':null,
  onHeight:value=>{
   const item=lookup();
   if(!item||!objects().includes(item)||!Number.isFinite(value)||value<.1||value>8)return;
-  const before=JSON.stringify(p()),delta=value-item.height;
-  if(item.wallMount&&!poseOnWall({...item,height:value},item.wallMount,arch())){status('Föremålet blir för stort för väggen.');redraw();return;}
+  const before=JSON.stringify(p()),oldMounts=new Map(objects().filter(child=>child.mountId===item.id).map(child=>[child.id,mountedElevation(child,item)]));
+  const wallPose=item.wallMount&&poseOnWall({...item,height:value},item.wallMount,arch());
+  if(item.wallMount&&!wallPose){status('Föremålet blir för stort för väggen.');redraw();return;}
   item.height=value;
+  if(wallPose)Object.assign(item,wallPose,{collision:item.collision||'none'});
   // A countertop-mounted accessory stays on top when its supporting table changes height.
-  for(const child of objects().filter(child=>child.mountId===item.id&&Number.isFinite(child.elevation)))
-   child.elevation=Math.max(0,Math.round((child.elevation+delta)*1000)/1000);
+  for(const child of objects().filter(child=>child.mountId===item.id&&Number.isFinite(child.elevation))){
+   const delta=mountedElevation(child,item)-oldMounts.get(child.id);
+   for(const member of furnitureAssembly(child,objects()))member.elevation=Math.max(0,Math.round(((member.elevation||0)+delta)*1000)/1000);
+  }
   placementStatus(item);commit(before);
  },
  onMountMode:mode=>{
@@ -363,20 +375,20 @@ const selectionDock=installSelectionDock({
   if(mode==='wall'&&!proposed.wallMount)return false;
   if(mode==='surface'&&!proposed.mountId)return false;
   const before=JSON.stringify(p());
-  Object.assign(item,proposed);
+  applyFurnitureAssemblyPose(item,objects(),proposed);
   item.roomId=floorAt(item.x,item.z)?.id||item.roomId||'';
   placementStatus(item);commit(before);
   return true;
  },
- onWallSide:()=>{const item=lookup();if(!item?.wallMount)return;const before=JSON.stringify(p()),pose=poseOnWall(item,{...item.wallMount,side:-item.wallMount.side},arch());if(pose){Object.assign(item,pose);commit(before);status('Föremålet sitter på andra sidan av väggen.');}},
- onFacing:()=>{const item=lookup();if(!item)return;const before=JSON.stringify(p());item.wallFacing=MODEL_FRONTS[(MODEL_FRONTS.indexOf(modelFront(item))+1)%4];const pose=item.wallMount&&poseOnWall(item,item.wallMount,arch());if(item.wallMount&&!pose){project=JSON.parse(before);status('Den riktningen får inte plats på väggen.');redraw();return;}if(pose)Object.assign(item,pose);commit(before);status('Modellens framsida vänd. Originalfilen är oförändrad.');},
+ onWallSide:()=>{const item=lookup();if(!item?.wallMount)return;const before=JSON.stringify(p()),pose=poseOnWall(item,{...item.wallMount,side:-item.wallMount.side},arch());if(pose){applyFurnitureAssemblyPose(item,objects(),pose);commit(before);status('Föremålet sitter på andra sidan av väggen.');}},
+ onFacing:()=>{const item=lookup();if(!item)return;const before=JSON.stringify(p());item.wallFacing=MODEL_FRONTS[(MODEL_FRONTS.indexOf(modelFront(item))+1)%4];const pose=item.wallMount&&poseOnWall(item,item.wallMount,arch());if(item.wallMount&&!pose){project=JSON.parse(before);status('Den riktningen får inte plats på väggen.');redraw();return;}if(pose)applyFurnitureAssemblyPose(item,objects(),pose);commit(before);status('Modellens framsida vänd. Originalfilen är oförändrad.');},
  onWallHeight:value=>{
   const item=lookup();
   if(!item||!objects().includes(item)||!item.wallMount)return false;
   const pose=poseOnWall(item,{...item.wallMount,y:value},arch());
   if(!pose){status('Höjden passar inte på väggen.');return false;}
   const before=JSON.stringify(p()),collision=item.collision||'none';
-  Object.assign(item,pose,{collision});commit(before);
+  applyFurnitureAssemblyPose(item,objects(),{...pose,collision});commit(before);
   status('Höjden på väggen är ändrad.');
   return true;
  }
@@ -413,8 +425,8 @@ function moveObject(o,x,z,pointData={}){if(arch().includes(o)){
   if(!o.wallMount&&!o.mountId&&!proposed.wallMount&&!proposed.mountId)proposed.elevation=o.elevation||0;
   let candidate={...o,x,z,...proposed};
   candidate.roomId=floorAt(candidate.x,candidate.z)?.id||floor?.id||'';
-  const dx=candidate.x-o.x,dz=candidate.z-o.z,dy=(candidate.elevation||0)-(o.elevation||0),children=furnitureAssembly(o,objects()).slice(1);Object.assign(o,candidate);
-  for(const child of children){child.x+=dx;child.z+=dz;child.elevation=(child.elevation||0)+dy;child.roomId=o.roomId;}placementStatus(o);return true;
+  applyFurnitureAssemblyPose(o,objects(),candidate);
+  for(const child of furnitureAssembly(o,objects()).slice(1))child.roomId=o.roomId;placementStatus(o);return true;
  }
  if(markers().includes(o)){if(!floor)return false;o.x=x;o.z=z;if(o.roomId)o.roomId=floor.id;return true;}
  return false;}
@@ -537,7 +549,7 @@ let ghostRoot=null,ghostKey='',ghostGeneration=0;
 function clearGhost(){ghostGeneration++;if(ghostRoot){scene.remove(ghostRoot);disposeGhost(ghostRoot);}ghostRoot=null;ghostKey='';}
 function disposeGhost(root){root.traverse(o=>{if(o.userData.studioGeometry||o.userData.ghostGeometry)o.geometry?.dispose();for(const m of Array.isArray(o.material)?o.material:[o.material])if(m?.userData?.ghostOwned||m?.userData?.studioOwned)m.dispose();});}
 function showModelGhost(item){
- const key=JSON.stringify([item.assetId,item.w,item.d,item.height,item.modelSize,item.chairRole]);
+ const key=JSON.stringify([item.assetId,item.w,item.d,item.height,item.modelSize,item.chairRole,item.color]);
  if(ghostKey!==key){clearGhost();ghostKey=key;ghostRoot=new T.Group();scene.add(ghostRoot);const target=ghostRoot,version=ghostGeneration;
   buildProjectFurniture([{...item,id:'ghost'}],target,{assets:p().assets.local}).then(()=>{
    if(version!==ghostGeneration){disposeGhost(target);return;}
@@ -845,7 +857,7 @@ $('firstBuildNext').onclick=()=>{switch(Number($('firstBuild').dataset.step)){
 async function armFurniture(entry){pendingTemplate=null;pendingFurniture={...entry};const request=pendingFurniture;pendingYaw=0;snapFeedback=null;hover3d=null;hover=null;first=null;$('catalog').value=entry.id;
  document.querySelectorAll('.catalog-card').forEach(card=>card.classList.toggle('active',card.dataset.asset===entry.id));
  status(`Klicka där ${entry.name} ska stå. R vrider · Esc avbryter.`);redraw();
- if(!entry.id.startsWith('studio:')){request.loading=true;status('Laddar modellens förhandsvisning…');try{const asset=await readLibraryAsset(entry.id);request.modelSize=asset.originalSize.toArray();}catch(e){request.loadError=e.message;status(e.message);}finally{request.loading=false;if(pendingFurniture===request){if(!request.loadError)status('Modellen är klar. Peka och klicka för att placera.');redraw();}}}
+ if(!proceduralOf({assetId:entry.id})){request.loading=true;status('Laddar modellens förhandsvisning…');try{const asset=await readLibraryAsset(entry.id);request.modelSize=asset.originalSize.toArray();}catch(e){request.loadError=e.message;status(e.message);}finally{request.loading=false;if(pendingFurniture===request){if(!request.loadError)status('Modellen är klar. Peka och klicka för att placera.');redraw();}}}
 }
 const autoPlace=$('autoPlace');
 try{const saved=localStorage.getItem('cartridge-studio-smart-position');if(saved!==null)autoPlace.checked=saved==='1';}catch{}
@@ -857,7 +869,7 @@ function renderCatalog(){const list=$('catalog'),cards=$('catalogCards'),query=$
   const card=document.createElement('button');card.type='button';card.className='catalog-card';card.dataset.asset=entry.id;card.title=`Placera ${entry.name}${entry.staticOnly?' · statiskt dekorobjekt':''}`;card.setAttribute('aria-label',`Placera ${entry.name}`);
   const image=document.createElement('span');image.className='catalog-image';if(entry.thumb){const img=document.createElement('img');img.src=entry.thumb;img.alt='';img.loading='lazy';image.append(img);}else if(entry.id==='studio:orange-kitchen-chair')image.innerHTML='<svg viewBox="0 0 100 80" aria-hidden="true"><path fill="#aab6bd" d="M22 47h5v27h-5zm48 0h5v27h-5zM35 49h5v27h-5zm47-7h5v28h-5z"/><path fill="#df753c" d="M22 10h49v32H22zM17 42h60l10 10H27z"/></svg>';else image.textContent=entry.category==='egna'?'3D':entry.category==='bord'?'▤':'▣';
   if(entry.featured){const badge=document.createElement('span');badge.className='catalog-color-badge';badge.textContent='ORANGE';image.append(badge);}
-  const name=document.createElement('strong');name.textContent=entry.name;const size=document.createElement('small');size.textContent=`${entry.width} × ${entry.depth} × ${entry.height} · ${entry.category}${entry.staticOnly?' · dekor':''}`;
+  const name=document.createElement('strong');name.textContent=entry.name;const size=document.createElement('small');size.textContent=`${[entry.width,entry.depth,entry.height].map(n=>n.toLocaleString('sv-SE',{maximumFractionDigits:3})).join(' × ')} · ${entry.category}${entry.staticOnly?' · dekor':''}`;
   card.append(image,name,size);card.onclick=()=>armFurniture(entry);card.classList.toggle('active',pendingFurniture?.id===entry.id);cards.append(card);
  }if(list.options.length&&!entries.some(e=>e.id===list.value))list.selectedIndex=0;$('catalogCount').textContent=entries.length?`${entries.length} objekt · bredd × djup × höjd i modellenheter`:'Inga träffar. Prova färre sökord eller Alla kategorier.';
 }
@@ -936,7 +948,7 @@ $('remove').onclick=()=>{if(multiSelected.size>1){removeSelectedFurniture();retu
  }
  p().architecture.posters=(p().architecture.posters||[]).filter(d=>!removedIds.has(d.wallId));p().architecture.treatments=(p().architecture.treatments||[]).filter(d=>!removedIds.has(d.wallId));
  for(const key of ['bomb','rescue'])if(p().gameplay.objectives[key]===o)p().gameplay.objectives[key]=null;
- if(objects().includes(o)===false)for(const child of objects().filter(x=>x.mountId===o.id)){child.mountId=null;child.elevation=0;}
+ if(objects().includes(o)===false)for(const child of objects().filter(x=>x.mountId===o.id)){child.mountId=null;child.mountSurface=null;child.elevation=0;}
  p().assets.local=p().assets.local.filter(a=>objects().some(item=>item.assetId===a.assetId));
  if(p().surfaceColors)for(const id of removedIds)delete p().surfaceColors[id];
  selected=null;if(p().mode==='edit-floor5')model().floors=model().floors.filter(f=>f.source||p().ground.floors.some(g=>g.id===f.id));commit(before);};

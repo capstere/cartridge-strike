@@ -1,13 +1,13 @@
 import {createCurtainMesh} from './curtain-mesh.mjs?v=5.7.0';
-import {fittedSize,wallFootprint} from '../model-alignment.mjs?v=5.7.1';
+import {fittedSize,wallFootprint} from '../model-alignment.mjs?v=5.8.0';
 import * as T from '../../vendor/three/three.module.js';
-import {addModelToGroup,getLocalFile,importLocalGLB} from '../library/models.mjs?v=5.7.1';
+import {addModelToGroup,getLocalFile,importLocalGLB} from '../library/models.mjs?v=5.8.0';
 import {assetHash} from '../library/glb-utils.mjs';
-import {proceduralOf} from '../library/procedural.mjs?v=5.0.0';
-import {populateProcedural,populateDiningChair} from '../library/procedural-mesh.mjs?v=5.0.0';
+import {proceduralOf} from '../library/procedural.mjs?v=5.8.0';
+import {populateProcedural,populateDiningChair} from '../library/procedural-mesh.mjs?v=5.8.0';
 import {locatePoster} from './posters.mjs?v=5.7.3';
 import {createPosterTexture} from './poster-art.mjs';
-import {treatmentPosition} from './treatments.mjs?v=5.7.3';
+import {treatmentPosition} from './treatments.mjs?v=5.8.0';
 
 export function buildProjectDecorations(project,entries,root,onReady){
  for(const poster of project.architecture.posters||[]){

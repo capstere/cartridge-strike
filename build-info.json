@@ -280,6 +280,11 @@
       "sha256": "a22b4299deb3f5df74a925c4d116f1fe48aed0af63e757303ee74fe9559da553"
     },
     {
+      "path": "assets/fps/character-overrides.json",
+      "bytes": 38,
+      "sha256": "bc5dfc36dd19249b5d9d3a581ff9baeab03ba63c1e80fce45bcf0249be9f0884"
+    },
+    {
       "path": "assets/fps/materials/Concrete034/Concrete034_1K-JPG_Color.jpg",
       "bytes": 269501,
       "sha256": "8ceb9186d990b31fce785e06fdc6974c160f1d27c43f6160266f164deba713aa"
@@ -460,9 +465,99 @@
       "sha256": "780a0473bc7202fae47647986918dede4598286c3e2ec95ac03710aa8d00405c"
     },
     {
+      "path": "character-design/anatomy-accessories.mjs",
+      "bytes": 16669,
+      "sha256": "80fd4506c5515539baaf6edb63e244d07500934833ea5bc7c6dc3853ca3f1199"
+    },
+    {
+      "path": "character-design/app.mjs",
+      "bytes": 43454,
+      "sha256": "edaf3d6f6fa7ec4712e13a268efc3b04d2124610780cd53f595e5eaec795c51c"
+    },
+    {
+      "path": "character-design/cloth-preview.mjs",
+      "bytes": 7012,
+      "sha256": "61b64f7e771e11520ddb2f36cd98594f132e49d1217b64c1d5cf3c7c7deb2b53"
+    },
+    {
+      "path": "character-design/creative-controls.mjs",
+      "bytes": 15793,
+      "sha256": "30673eb154f705a70048d00d6cd51ddedb95c98c4d6a6477d5f63ec9ba3d5a58"
+    },
+    {
+      "path": "character-design/creative-schema.mjs",
+      "bytes": 10083,
+      "sha256": "b2e04a406eca17b4ed46855c7597762201723f762d92b5bacd6f26374beb5df8"
+    },
+    {
+      "path": "character-design/dwarf-fit.mjs",
+      "bytes": 749,
+      "sha256": "5d893a990d470acac15a90dc7d6e4320d62bb137798d94a142da0e9631b2c2b8"
+    },
+    {
+      "path": "character-design/fashion-preview.mjs",
+      "bytes": 17011,
+      "sha256": "660e3103131d4e2f12c0bd035f4e1188f16fe34f3e28d5eaa8d880310e4d1a6e"
+    },
+    {
+      "path": "character-design/fiber-hair.mjs",
+      "bytes": 7122,
+      "sha256": "5d07afee789820b0c942560cd420509d967f358d6e1afe0a15b7fe9838312b78"
+    },
+    {
+      "path": "character-design/private-match.mjs",
+      "bytes": 1565,
+      "sha256": "ed2de48b5820c710802591fd21efe47be6a29a56a99ac10244bac8da34885ac6"
+    },
+    {
+      "path": "character-design/project-schema.mjs",
+      "bytes": 18990,
+      "sha256": "7c59eb63b8623f8ce63887683916d4d99cb7b9d5ca84aa5a5a7a296e031d9ca1"
+    },
+    {
+      "path": "character-design/runtime-export.mjs",
+      "bytes": 3576,
+      "sha256": "c89ffd665ef5afe7e4a29f68ac3a4441ad512c6041b5f637f56a08d162fedee8"
+    },
+    {
+      "path": "character-design/runtime-package.mjs",
+      "bytes": 2920,
+      "sha256": "87dff594a6a601356a9885e43b433840e7107ba767b02fbe9c37309cba6b3ce0"
+    },
+    {
+      "path": "character-design/sculpt-controls.mjs",
+      "bytes": 7139,
+      "sha256": "fe01bc8d81816d0f34b644b0010a9c397a5929d984ab215220f04fcb9019b892"
+    },
+    {
+      "path": "character-design/sculpt-engine.mjs",
+      "bytes": 17587,
+      "sha256": "98f2dec7b844ddc0f1d016b14f66ea883d69730916e11272a4168c998e3634de"
+    },
+    {
+      "path": "character-design/sculpt-schema.mjs",
+      "bytes": 1887,
+      "sha256": "183f7beb0de1d6e1c56502414d1200e732f711c9838e0c9905a5792796811fd8"
+    },
+    {
+      "path": "character-design/studio-controls.mjs",
+      "bytes": 9921,
+      "sha256": "086f284d06846a86ec3a2f7898df3be5c85c43218dee3b59e041d93a44d815ba"
+    },
+    {
+      "path": "character-design/workbench.mjs",
+      "bytes": 23391,
+      "sha256": "fe0a98b37c2cda260fc6dd6dfc13ed01d44cb6a226de0470698f03074a8394e8"
+    },
+    {
       "path": "credits.html",
-      "bytes": 12973,
-      "sha256": "119beb7641b7147fb3ab5d9e5475fb553fbd95640a8dbaed17d6cac57732bf3a"
+      "bytes": 13735,
+      "sha256": "0410bf84bc8b31e68b55f59c68d8a54f3702e5eb17644aec68420fa6a496e259"
+    },
+    {
+      "path": "docs/fps-furniture-library.md",
+      "bytes": 6572,
+      "sha256": "533dce29d265607a9e3fd44df857fde3510a126887682e97ecb69dfcb0671954"
     },
     {
       "path": "fps/focus-hud.css",
@@ -472,7 +567,7 @@
     {
       "path": "fps/index.html",
       "bytes": 10962,
-      "sha256": "8f14241ba56644b69429df87674016e1d54bf6840720140a8e570cb15ccba94e"
+      "sha256": "1b7c2aa6c71a5e9c4049c5350cc1ac6dc409e986ff02931fb9a285288cfad6d1"
     },
     {
       "path": "fps/style.css",
@@ -482,37 +577,37 @@
     {
       "path": "fps/walk.html",
       "bytes": 1790,
-      "sha256": "c2a4db20e84d12f38c9e788865d7435da5905cfb588aa9524700f55aa1182e75"
+      "sha256": "83e0a854124ab55a880cfceb09a01bf5f99e3ceff9e1b3eed536a4c17d145a1d"
     },
     {
       "path": "fps/walk.mjs",
       "bytes": 4731,
-      "sha256": "c2a13cd21a2f1b0cee7c2d7513a1a76fa1d7395129dc68b57e89545741b9ca09"
+      "sha256": "0640dd47eb24ddac6c75ef7266d92a2f10f5f0611a871eedb609562d269108f6"
     },
     {
       "path": "furniture-editor/adjacent-room.mjs",
       "bytes": 3204,
-      "sha256": "422db4434a17abd345593c9f81d8723b6048d2c4e41f028d1f966f84c1d750b2"
+      "sha256": "6cee4867f25fe5cbfbedc6a9bdd469a47627c44d6610eb9bf168c391378f50ae"
     },
     {
       "path": "furniture-editor/appearance.mjs",
-      "bytes": 3462,
-      "sha256": "7b002b11298725eb846921fb14d3307b46bd419b882c6feff0e290cda2ed851f"
+      "bytes": 3560,
+      "sha256": "1580d1380bce30adb871bf36e54bffe856c44a297ab122048e4f1abdbbe5b807"
     },
     {
       "path": "furniture-editor/build/ai-export.mjs",
       "bytes": 5471,
-      "sha256": "02fe11fe68e7c991021a9c578ff02c13da5ef2c244e77e1e5ec166617d53f1be"
+      "sha256": "cb2436fdb6acf73fcf60f468441423d8965b3761a1b93558693f22deeea607ad"
     },
     {
       "path": "furniture-editor/build/architecture-preview.mjs",
       "bytes": 6084,
-      "sha256": "9f42b335eefc1a733095d1e9587121ea0f6c68ee8c7d632bc7ced79b1098326a"
+      "sha256": "71c21200f8b87471869a3d5581b209590a5f1a6fff066c0164480c36cf26a3a8"
     },
     {
       "path": "furniture-editor/build/architecture.mjs",
-      "bytes": 14484,
-      "sha256": "177a850ef4970b1fc0cb9208f0f9a38a05b2d4ab665b2006643c59d4579af7ce"
+      "bytes": 14492,
+      "sha256": "c9b95f9dd02c64f840a56c7b7d92debc64584ede221a0a045340abfe32dd63c9"
     },
     {
       "path": "furniture-editor/build/curtain-mesh.mjs",
@@ -522,7 +617,7 @@
     {
       "path": "furniture-editor/build/direct-manipulation.mjs",
       "bytes": 11172,
-      "sha256": "270f1ba9a6c92261874702ecad636df53db98dc999d8c0d66cade9c234bfcf79"
+      "sha256": "65e2bc20d3a19a6d480a42addebd6aebc1ba6cb6a4fa408a9c9f459d15ea45c4"
     },
     {
       "path": "furniture-editor/build/door-traversal.mjs",
@@ -537,7 +632,7 @@
     {
       "path": "furniture-editor/build/empty-interior.mjs",
       "bytes": 2019,
-      "sha256": "66b815ed38678e283969b721c1d12f961a0aadfee65ae3a8cfadcb597968b644"
+      "sha256": "3e4fdbe957811475db94cfbb7b4d504690c27e4cdc77037d2722586c990e1443"
     },
     {
       "path": "furniture-editor/build/floor-edge.mjs",
@@ -546,8 +641,8 @@
     },
     {
       "path": "furniture-editor/build/level-project.mjs",
-      "bytes": 16019,
-      "sha256": "4bcf62bf3fe4ea3e1e30578adf9ab40426e37419203be9142740a099e0f5ad2a"
+      "bytes": 16318,
+      "sha256": "d796e36158f01c9ba1babc1429182d7fd826794cebf746fc60d2ef279f32d8c9"
     },
     {
       "path": "furniture-editor/build/level-project.schema.json",
@@ -556,8 +651,8 @@
     },
     {
       "path": "furniture-editor/build/paint-over-wall.mjs",
-      "bytes": 6524,
-      "sha256": "64be7036c2384b6cc2bd63070c78fe0136eba1a4471fe483ea7f8a8bddc17d70"
+      "bytes": 6532,
+      "sha256": "2d72038e95548d9333f6e4e9a8d54917a9a74340d99c912589a9984f5ea5a2d0"
     },
     {
       "path": "furniture-editor/build/pattern-materials.mjs",
@@ -582,42 +677,42 @@
     {
       "path": "furniture-editor/build/project-scene.mjs",
       "bytes": 5681,
-      "sha256": "f8ec85224707db5fd946ed8bdb6ea071fb556a1b017b1bbdb6174e0a51d8d715"
+      "sha256": "bd3a7919960428ca70c39d7fea44a6becdf8421d1bf3fa04d0b9024c55ebaa93"
     },
     {
       "path": "furniture-editor/build/project-visuals.mjs",
       "bytes": 5112,
-      "sha256": "8a47312d80d8cb57eb9b1326befeab3e9924751db8596ab53b0d3a2fdcc2cbfc"
+      "sha256": "1739bb6deb5bdcdf822357cfb57de2edff15890d85e0f739ebe586fe883fc12e"
     },
     {
       "path": "furniture-editor/build/room-drag.mjs",
       "bytes": 1951,
-      "sha256": "94c9e2e74937d46629d69654b4d1d2a54c1a3091e6bfc0b260c9141f21bb3674"
+      "sha256": "b18601c806dbea5598135a5185dcdc7d6d6f81a50c18a8af3b7f5013707b28e2"
     },
     {
       "path": "furniture-editor/build/safe-save.mjs",
       "bytes": 1308,
-      "sha256": "fab9f5430c38bf51150ada5378dd1ebb8e9d47d71ae1d29e8381ba610657148f"
+      "sha256": "5fd97aaf9e9b0154b2fab206a7b41e6c0749e6b95d1564b039acb10beef6f4c5"
     },
     {
       "path": "furniture-editor/build/surface-style.mjs",
-      "bytes": 5837,
-      "sha256": "fc82a03634a4920b739b77f4bfcca5de947b0ced95f857e17615ffa9ef076b18"
+      "bytes": 5845,
+      "sha256": "30e49facbdfd22de9526bf3fdb32af740cd501e27bd0b32b3fabac8fcacd32ef"
     },
     {
       "path": "furniture-editor/build/treatments.mjs",
       "bytes": 5109,
-      "sha256": "0cebfeea0b88bce6891c131018b1f3b1cb6f533d3eb21b2ddbdd7e0748fe5559"
+      "sha256": "86285c9b6be697e66370a6d1c060c886220d042a17ca54451670e62dea1fd98c"
     },
     {
       "path": "furniture-editor/build/validate-level.mjs",
       "bytes": 10624,
-      "sha256": "f85bf397befd180d767b916abbad77c6c4f5446bd13dfc3b6f545672a6cc8957"
+      "sha256": "5e0de3b034c553c2e62f1bd1fb506422b34904e25ad0101b05eb087c3e2aa04f"
     },
     {
       "path": "furniture-editor/build/walkable-spaces.mjs",
       "bytes": 2560,
-      "sha256": "d707f9731ba8ef77f7a7c7268d5544ef4e59daa20dd8a553470a82a616047bf9"
+      "sha256": "3ce2f96e7bee0dbee626d6c9731848cb9a709f670b97fa686c4ad25dcd146759"
     },
     {
       "path": "furniture-editor/build/wall-joints.mjs",
@@ -626,38 +721,53 @@
     },
     {
       "path": "furniture-editor/core.mjs",
-      "bytes": 13605,
-      "sha256": "c6cddd1d0bd4668e2ee6ca7d0f15545859b77d5d2b8ff52cc4add653085d675b"
+      "bytes": 15018,
+      "sha256": "d8d05b776c3d213c7d9e954c380258316fe82ea9cc0f58a73be271661b07e8b5"
     },
     {
       "path": "furniture-editor/furniture-clipboard.mjs",
       "bytes": 3674,
-      "sha256": "b6decf224a5356f08dee76fd9357e38831602262be841ec8ef0b40bf1f3db2ad"
+      "sha256": "1abea92160f7ff844669b5d85a7881d949f9bc80560ed7eedd9cbd1519c72247"
     },
     {
       "path": "furniture-editor/furniture-handles.mjs",
       "bytes": 6748,
-      "sha256": "f3bd7132821d1dcbf9af9d5709061c5d042814075ccea25529989ef45a858ee5"
+      "sha256": "918f20567b2c8281ab7ede483a4d09c4f1d273e18a91a2a73fde033a4579e989"
+    },
+    {
+      "path": "furniture-editor/furniture-surfaces.mjs",
+      "bytes": 1010,
+      "sha256": "bdabb58b4e6a858da4d8072e377a7e763c60ff011d0c80154148e534db842dfe"
     },
     {
       "path": "furniture-editor/furniture-transforms.mjs",
       "bytes": 2080,
-      "sha256": "30a69db227e5851741be317701a7faa650d7718a58b0e44eb5156ffeec69b831"
+      "sha256": "2f731af6c96cff941becf0136aeab636f3380b861f9cc3cd0a7389efa894fa9e"
     },
     {
       "path": "furniture-editor/furniture-translation.mjs",
-      "bytes": 3620,
-      "sha256": "c258c32094c4301a287c433995135800d375dddf52f323c3288a09be1b726c86"
+      "bytes": 3855,
+      "sha256": "0bcfcdb2e248292c89f33a91e1deaffe5186e9eb138d61d0081215c1be6ff443"
     },
     {
       "path": "furniture-editor/index.html",
-      "bytes": 25822,
-      "sha256": "2de679d278a6e34989b7ba219f014bec352ffd2c83611a436073b72f10e6a375"
+      "bytes": 26051,
+      "sha256": "cfecb7359864666c2900ea84ad6e0f2f8a7aa247c0897b1e00560c124f74b540"
     },
     {
       "path": "furniture-editor/library/catalog.mjs",
-      "bytes": 47993,
-      "sha256": "e22e9725ac8fdd2da17b8aa8137adc35a570295927171bb5b0f8ed1e6ecb62ad"
+      "bytes": 48176,
+      "sha256": "5d9f7427f0ffb5a185886ff5187072adfdf902a6ef2e8c7b73945e5b0a272d3b"
+    },
+    {
+      "path": "furniture-editor/library/fps-catalog.mjs",
+      "bytes": 6267,
+      "sha256": "cdeeef008315813de2f2cb2110770145ccb01fc5d62ee6ad3fdba447cec97eaf"
+    },
+    {
+      "path": "furniture-editor/library/fps-mesh.mjs",
+      "bytes": 11781,
+      "sha256": "67df593e0ed84b6930985861ec5b33797c7e7847e649db1a195a3ab4f1af6f9c"
     },
     {
       "path": "furniture-editor/library/genexpert-catalog.mjs",
@@ -675,9 +785,24 @@
       "sha256": "8ce22067ea7dddb92e9233efd23df267a8dfc5b0d5f9bd61d223643d1fcd15b0"
     },
     {
+      "path": "furniture-editor/library/lab-furniture-mesh.mjs",
+      "bytes": 11421,
+      "sha256": "e136984a7aa44bc5f6469ef412b592dd087b58fb9749d71635fde2e6f60b9467"
+    },
+    {
+      "path": "furniture-editor/library/lab-furniture.mjs",
+      "bytes": 2207,
+      "sha256": "fa3236bde86085006cc89d214a2144e0703d4951bc05760553f9a2d7510f3464"
+    },
+    {
       "path": "furniture-editor/library/models.mjs",
-      "bytes": 6301,
-      "sha256": "07b106eaf2dec9b1da16872b431c4baf8f9ae06519e52753dde443380d59aa37"
+      "bytes": 6503,
+      "sha256": "321b8b46a52f02e39a1d40398470d4bdb30474c3f46661857f82bd09e2fc8ee3"
+    },
+    {
+      "path": "furniture-editor/library/models/fps/laboratory-drying-oven.glb",
+      "bytes": 1301856,
+      "sha256": "0e45d530895e94d5e8d132d12ddc89e7d762eb270c2dc5d0ad7e098999db918e"
     },
     {
       "path": "furniture-editor/library/models/genexpert/genexpert-16.glb",
@@ -1300,6 +1425,16 @@
       "sha256": "69a4b2eafff1d55a0a24720307d761f4809a5fa659854caf8078c5311f3cc62b"
     },
     {
+      "path": "furniture-editor/library/models/office/ricoh-printer.glb",
+      "bytes": 1003812,
+      "sha256": "88c07363e9afc420c7f05e0f9c67ae7815a82383680e80470bca1e58b0f4e002"
+    },
+    {
+      "path": "furniture-editor/library/models/office/whiteboard-mobile.glb",
+      "bytes": 162552,
+      "sha256": "75e6cb0003bff1e7dc27f1a35669824beeee5ed80e3082deb3f2652d4c43e3f7"
+    },
+    {
       "path": "furniture-editor/library/models/onboard/ammo-box-lod0.glb",
       "bytes": 8288,
       "sha256": "8a01b96043ceadc6d7dfaa7dc9878f77d8ad8cb588b3b46a14fb65bd106ca529"
@@ -1375,19 +1510,104 @@
       "sha256": "ec12dfae624e029935b52cf878dbd2b64a9ada8692935aadc9eb8e24b4722869"
     },
     {
+      "path": "furniture-editor/library/office-catalog.mjs",
+      "bytes": 1972,
+      "sha256": "cc8eb34691058dc9b5f0fff66b33ca37318b41a4eeb88b60c78c99080b0c05fb"
+    },
+    {
       "path": "furniture-editor/library/onboard-catalog.mjs",
       "bytes": 11457,
       "sha256": "aa61d6cb5f03065a93c6db53b683daaa31a433576d602b7eb255ab37c745502b"
     },
     {
       "path": "furniture-editor/library/procedural-mesh.mjs",
-      "bytes": 5130,
-      "sha256": "67d621e0b5f530431fb521b5475d795e5cf0fc992f064c1ba4dd0784758de1c2"
+      "bytes": 5362,
+      "sha256": "5a3e952de010a9269e58b406f14b18f8459e2b65a8c0ad41f8e9f9c5dc50fbf1"
     },
     {
       "path": "furniture-editor/library/procedural.mjs",
-      "bytes": 7668,
-      "sha256": "5606a544c7b7f4b8ac619a6ac585ed2a65ec1635b37c3ae92ab8181c95779296"
+      "bytes": 7866,
+      "sha256": "4c7e56b2bfb320e6ec11ec590825359ddf8c0b96c495ba66dc6485f215716cd7"
+    },
+    {
+      "path": "furniture-editor/library/thumbs/fps/bench-instrument.png",
+      "bytes": 8102,
+      "sha256": "953cab3c3bcdd4411974a8c19507fd0037b7794f9a635a9c3c9b2b54b309219d"
+    },
+    {
+      "path": "furniture-editor/library/thumbs/fps/binder-vacuum-oven.png",
+      "bytes": 19292,
+      "sha256": "b5cf04a40565ffd8044404f542668b9bc1acce2d9abf5f84150fc9b389b79458"
+    },
+    {
+      "path": "furniture-editor/library/thumbs/fps/binders.png",
+      "bytes": 9792,
+      "sha256": "db737181285a126a74c24604cc74efdb36914420a0af91900562fc3e17f04cec"
+    },
+    {
+      "path": "furniture-editor/library/thumbs/fps/cartridge-open.png",
+      "bytes": 22678,
+      "sha256": "f4b89cea0c06699526638acacfb2bab9ef1063b67fee28ed9f51a8d507b494f4"
+    },
+    {
+      "path": "furniture-editor/library/thumbs/fps/cartridge-rack.png",
+      "bytes": 24230,
+      "sha256": "5b9ab08434b2c2965a7deaf7666926b07b45fa3224459f8c3d1d34baeb4ca8e6"
+    },
+    {
+      "path": "furniture-editor/library/thumbs/fps/cartridge.png",
+      "bytes": 28723,
+      "sha256": "ba5aa8b30b38cb867790b20ca3f1184e49e39f90b6e982e6ad6fb3cb3e5bc5cf"
+    },
+    {
+      "path": "furniture-editor/library/thumbs/fps/centrifuge.png",
+      "bytes": 10810,
+      "sha256": "6b868e74eaac8b784be12026a0f0ec797ec282ec13d825c126787479eb78d1b4"
+    },
+    {
+      "path": "furniture-editor/library/thumbs/fps/lab-bench.png",
+      "bytes": 11243,
+      "sha256": "a5be771e7c1f3d032c57cf7cd4c91f5d902b2fc486000e51d92fb9cee503037e"
+    },
+    {
+      "path": "furniture-editor/library/thumbs/fps/lab-cabinet.png",
+      "bytes": 6068,
+      "sha256": "f6ecef613103e1d74c15c6651064f03b5e244083bd2304cebe578a540100f1e5"
+    },
+    {
+      "path": "furniture-editor/library/thumbs/fps/lab-cart.png",
+      "bytes": 11038,
+      "sha256": "604815a5c47a2ee30c80e6356f933a3baccde581cf615556e9d591b66d140cd8"
+    },
+    {
+      "path": "furniture-editor/library/thumbs/fps/lab-freezer.png",
+      "bytes": 6271,
+      "sha256": "96afa3d7d150c1c731ede92982cb0714b8f65c9997314613ef9a4da4a1ba45fb"
+    },
+    {
+      "path": "furniture-editor/library/thumbs/fps/laboratory-drying-oven.png",
+      "bytes": 37177,
+      "sha256": "89ce3f1efcbee2cbfbdfdf300fafc4f7177fc530378c70db82f1db3588ae0fbd"
+    },
+    {
+      "path": "furniture-editor/library/thumbs/fps/strip-light.png",
+      "bytes": 9269,
+      "sha256": "4a64a2e4a0d7cc4e13b42837b2ba8bbf55ccbe3ccc22ef30a793164db0147588"
+    },
+    {
+      "path": "furniture-editor/library/thumbs/fps/tip-box.png",
+      "bytes": 8219,
+      "sha256": "5be4c7f990f2094b83069978678f991c897234363fdf2db3a3bf71634be12bf5"
+    },
+    {
+      "path": "furniture-editor/library/thumbs/fps/tube-rack.png",
+      "bytes": 10256,
+      "sha256": "cc049db0ceedd09ae9e2437d69384580eab66d803ee127e4248d36fb49226ea7"
+    },
+    {
+      "path": "furniture-editor/library/thumbs/fps/wall-vent.png",
+      "bytes": 30085,
+      "sha256": "cbbdbb6c4d0be3212ea4c3249f8f8b51b19cbe60093df4a82b140a5f1407fdcc"
     },
     {
       "path": "furniture-editor/library/thumbs/genexpert/genexpert-16.png",
@@ -2010,6 +2230,36 @@
       "sha256": "947fd1a5c593fabe531daaddcc9129d635b40cc4b980314b4ba74ad9532805ed"
     },
     {
+      "path": "furniture-editor/library/thumbs/lab-furniture/biosafety-cabinet.png",
+      "bytes": 15452,
+      "sha256": "45a113c973a6ff48bed7d3e56ed074c374d154a9fef98f47cdb10e4ae52f0a1b"
+    },
+    {
+      "path": "furniture-editor/library/thumbs/lab-furniture/shoe-rack.png",
+      "bytes": 25104,
+      "sha256": "d102e999f50f0617ed776d49bdde697997064fcf1f7487bc06d6279478f192db"
+    },
+    {
+      "path": "furniture-editor/library/thumbs/lab-furniture/shoe-shelf.png",
+      "bytes": 5512,
+      "sha256": "750bdbc925fec8cb7248ebca6424a813703786537b99a85c60167512500b5605"
+    },
+    {
+      "path": "furniture-editor/library/thumbs/lab-furniture/shoes.png",
+      "bytes": 30023,
+      "sha256": "b67a3ce99df60a1bc90c3a015479563e6d6f5ed89b6b6347de5f1b7b32553197"
+    },
+    {
+      "path": "furniture-editor/library/thumbs/office/ricoh-printer.png",
+      "bytes": 58802,
+      "sha256": "fef04d8a830edf71537e91f3426e7727673d8b05cf4475fd054e4063d8626a36"
+    },
+    {
+      "path": "furniture-editor/library/thumbs/office/whiteboard-mobile.png",
+      "bytes": 10285,
+      "sha256": "91e4145d259b51fc73018e418e4efc3e374992302be56187558628caa3a3bd9c"
+    },
+    {
       "path": "furniture-editor/library/thumbs/onboard/ammo-box-lod0.png",
       "bytes": 4063,
       "sha256": "033269ebfdc587610760b51265c9856f0919d108cec055e46a9fed239d83652e"
@@ -2146,13 +2396,13 @@
     },
     {
       "path": "furniture-editor/main.mjs",
-      "bytes": 42554,
-      "sha256": "8d2d090ed8c42168b8a807c202076c6229e1281b0e7ef937c9c081be9639753d"
+      "bytes": 46401,
+      "sha256": "e6452d2b9219de8bfa061c396eaddcc96c4318d19f0b93469170844a5419614a"
     },
     {
       "path": "furniture-editor/model-alignment.mjs",
-      "bytes": 1408,
-      "sha256": "b2232523115b54904cb98f7e5454a096051351b9f51fe0fd3c0ed6a56ade837d"
+      "bytes": 1416,
+      "sha256": "8d4cc9b1df0fd767722d04ada9fabce6bcbca3da4918191d8319f7a8ad07b831"
     },
     {
       "path": "furniture-editor/new.css",
@@ -2161,13 +2411,13 @@
     },
     {
       "path": "furniture-editor/new.html",
-      "bytes": 23849,
-      "sha256": "f1b3f5e8dd1e05882889c22a2c29cc9ef933166cf49eba86be26224bb2b5a6f2"
+      "bytes": 24281,
+      "sha256": "3d65b935ceb6d2e2d4f05575b0acee634ceeeb502b8101c25e3d7f6f678ad707"
     },
     {
       "path": "furniture-editor/new.mjs",
-      "bytes": 119875,
-      "sha256": "31aa745ab1c003993f1ae4eafdce5cdd93fa628a9c6b02ff47af7af3de3d347a"
+      "bytes": 121553,
+      "sha256": "0d28bda8019905d0f5d6eb9de75dc12f5c71cffeac63e8d48515b853bdafcb30"
     },
     {
       "path": "furniture-editor/project-limits.mjs",
@@ -2176,18 +2426,18 @@
     },
     {
       "path": "furniture-editor/selection-dock.mjs",
-      "bytes": 4868,
-      "sha256": "8a6aff366fc7f126339e4d8542c2016577acc4ae5b247f6b10d9f5bcfce2e55c"
+      "bytes": 5466,
+      "sha256": "53786417cb53dbb58f1c5252681ed4a820cf8401f2e96eb8d89be55eee576b94"
     },
     {
       "path": "furniture-editor/smart-placement.mjs",
-      "bytes": 6131,
-      "sha256": "d74f865aa756337a2c3efc4747e52ecfaa7ec73e6047b5067ed2a7a5adff74bc"
+      "bytes": 7293,
+      "sha256": "d329d4bcc4c9003bad4834a820693d937772ec262b4219c3e61ca54b511cad0a"
     },
     {
       "path": "furniture-editor/snap-highlights.mjs",
-      "bytes": 2766,
-      "sha256": "7f042b483009b53c11bc83fac5b1a42102c6028c24356b628913e07871ce296b"
+      "bytes": 3028,
+      "sha256": "92e7d23d33276c7ebbde49d59858c9adeaab3f64a8145a33eb680df125f0a0cb"
     },
     {
       "path": "furniture-editor/soft-placement.mjs",
@@ -2201,8 +2451,8 @@
     },
     {
       "path": "furniture-editor/wall-mounts.mjs",
-      "bytes": 6784,
-      "sha256": "3c884ab1b594f4221ebc4658dcffcbe9f8996419aa737655c1e3b3280c45a4e5"
+      "bytes": 8475,
+      "sha256": "4df0b847d675ba1be09338ffb295e9d30b1817cefeca1034d0a98dd3f9d14af0"
     },
     {
       "path": "index.html",
@@ -2285,6 +2535,11 @@
       "sha256": "6a07ac64a552960c532900bba81af285f372a83fc46b3790e82ce37908f08dcf"
     },
     {
+      "path": "licenses/studio-office-models.md",
+      "bytes": 2215,
+      "sha256": "d2da7f1793ec2a4b3a4fda204b5135840941c32bff93f0b6d30b3ba9210332a6"
+    },
+    {
       "path": "licenses/three-LICENSE",
       "bytes": 1081,
       "sha256": "bfe119ea4fd413f5f7ca3fcd63adb0c4a073ed39daa2fe7d3e6b769e21272601"
@@ -2327,7 +2582,7 @@
     {
       "path": "src/fps/app.mjs",
       "bytes": 32222,
-      "sha256": "19b49d61f2b84f117ff222d0b279422a3416e58b5d3f14de841a559c1bc860bc"
+      "sha256": "83a3119bd423e30e6470b89615bcfeb4cb34e9a484448ab7fcf9d530f2a2a6c8"
     },
     {
       "path": "src/fps/audio.mjs",
@@ -2360,9 +2615,29 @@
       "sha256": "3c847b874a7a994b4a249fd5753d8cdeeab480e7e3c45a93fcec6387767f2c7e"
     },
     {
+      "path": "src/fps/character-footwear.mjs",
+      "bytes": 6783,
+      "sha256": "0dbd0294b8282894e3d052e045143ced954472fbcaa463529afb379c755b30db"
+    },
+    {
       "path": "src/fps/character-library.mjs",
       "bytes": 20837,
       "sha256": "95a8c3e2192eb9eb10cdcb60c0dd4e522fd85e6086ce5594f940e7602d94b935"
+    },
+    {
+      "path": "src/fps/character-overrides.mjs",
+      "bytes": 3817,
+      "sha256": "44914746c8c597113b5ed7f86b52da588f2af76136302206ce0477a8af30bbad"
+    },
+    {
+      "path": "src/fps/character-roles.mjs",
+      "bytes": 2663,
+      "sha256": "73f61dcbf5c2304044d4ecb99b4d58c8103cf1b1be3a96728eb345daf1cb20dd"
+    },
+    {
+      "path": "src/fps/character-runtime-contract.mjs",
+      "bytes": 7873,
+      "sha256": "45024debc0793bcf2905b3aecc1f424135f59746036299d22b11a4f1faf01bb9"
     },
     {
       "path": "src/fps/character-selection.mjs",
@@ -2418,6 +2693,11 @@
       "path": "src/fps/doors.mjs",
       "bytes": 4717,
       "sha256": "7a1bbabf81830c134f53f664cece1214fa79ef0f662182a5652ad0cb78d6c25b"
+    },
+    {
+      "path": "src/fps/dwarf-rig.mjs",
+      "bytes": 7695,
+      "sha256": "6c0c087558b4a1f03b49543b6453d80b768d9ffa4d1434e341bd7af77083788f"
     },
     {
       "path": "src/fps/effects.mjs",
@@ -2492,7 +2772,7 @@
     {
       "path": "src/fps/level-adapter.mjs",
       "bytes": 4682,
-      "sha256": "633a00aea83ad1e9043c8bcac0ad4c2456b6a1ceefc740965c34cd1fbc5d58db"
+      "sha256": "9dad5a3d1ff5233955e79ad8b4db8688431da8d590e72fb9a897adfd7ff8f130"
     },
     {
       "path": "src/fps/living-floor-art.mjs",
@@ -2577,7 +2857,7 @@
     {
       "path": "src/fps/render.mjs",
       "bytes": 15854,
-      "sha256": "d51e87378163376b6e94d0e229ba6282a21f41a13f5cb0de97325ac10dcbcf3b"
+      "sha256": "74b8915ea9d92dd76397e3be4a77b22f7753cd6a23bca525eabebcb7710cb7eb"
     },
     {
       "path": "src/fps/riposte-audio.mjs",
@@ -2618,6 +2898,11 @@
       "path": "src/fps/room-visuals.mjs",
       "bytes": 17965,
       "sha256": "894486f3975d6ff12d616dc3394c3f14a3284b647cced41a5e75667096db572d"
+    },
+    {
+      "path": "src/fps/skinned-clone.mjs",
+      "bytes": 752,
+      "sha256": "f2d8f10c03cfccf08d11128ca40eee3bdfc7f7eeb50b3a392207638dc9463dec"
     },
     {
       "path": "src/fps/static-asset-library.mjs",
@@ -2702,7 +2987,7 @@
     {
       "path": "src/fps/world.mjs",
       "bytes": 8804,
-      "sha256": "5247c813d4cbc7b5e07b95ce4354402491973a7e807e69f725affda2d99e0828"
+      "sha256": "5cf477cae23a8de554972cf2219999c5128751c6442161032ae9f6f54fa688ae"
     },
     {
       "path": "src/world.js",
@@ -2763,129 +3048,9 @@
       "path": "vendor/yuka/yuka.module.js",
       "bytes": 442887,
       "sha256": "9b0c24534a47f2e1c9549a63a5e00a850577e22fe8d18dbc7a532008a027cb89"
-    },
-    {
-      "path": "assets/fps/character-overrides.json",
-      "bytes": 38,
-      "sha256": "bc5dfc36dd19249b5d9d3a581ff9baeab03ba63c1e80fce45bcf0249be9f0884"
-    },
-    {
-      "path": "character-design/anatomy-accessories.mjs",
-      "bytes": 16669,
-      "sha256": "80fd4506c5515539baaf6edb63e244d07500934833ea5bc7c6dc3853ca3f1199"
-    },
-    {
-      "path": "character-design/app.mjs",
-      "bytes": 43454,
-      "sha256": "edaf3d6f6fa7ec4712e13a268efc3b04d2124610780cd53f595e5eaec795c51c"
-    },
-    {
-      "path": "character-design/cloth-preview.mjs",
-      "bytes": 7012,
-      "sha256": "61b64f7e771e11520ddb2f36cd98594f132e49d1217b64c1d5cf3c7c7deb2b53"
-    },
-    {
-      "path": "character-design/creative-controls.mjs",
-      "bytes": 15793,
-      "sha256": "30673eb154f705a70048d00d6cd51ddedb95c98c4d6a6477d5f63ec9ba3d5a58"
-    },
-    {
-      "path": "character-design/creative-schema.mjs",
-      "bytes": 10083,
-      "sha256": "b2e04a406eca17b4ed46855c7597762201723f762d92b5bacd6f26374beb5df8"
-    },
-    {
-      "path": "character-design/dwarf-fit.mjs",
-      "bytes": 749,
-      "sha256": "5d893a990d470acac15a90dc7d6e4320d62bb137798d94a142da0e9631b2c2b8"
-    },
-    {
-      "path": "character-design/fashion-preview.mjs",
-      "bytes": 17011,
-      "sha256": "660e3103131d4e2f12c0bd035f4e1188f16fe34f3e28d5eaa8d880310e4d1a6e"
-    },
-    {
-      "path": "character-design/fiber-hair.mjs",
-      "bytes": 7122,
-      "sha256": "5d07afee789820b0c942560cd420509d967f358d6e1afe0a15b7fe9838312b78"
-    },
-    {
-      "path": "character-design/private-match.mjs",
-      "bytes": 1565,
-      "sha256": "ed2de48b5820c710802591fd21efe47be6a29a56a99ac10244bac8da34885ac6"
-    },
-    {
-      "path": "character-design/project-schema.mjs",
-      "bytes": 18990,
-      "sha256": "7c59eb63b8623f8ce63887683916d4d99cb7b9d5ca84aa5a5a7a296e031d9ca1"
-    },
-    {
-      "path": "character-design/runtime-export.mjs",
-      "bytes": 3576,
-      "sha256": "c89ffd665ef5afe7e4a29f68ac3a4441ad512c6041b5f637f56a08d162fedee8"
-    },
-    {
-      "path": "character-design/runtime-package.mjs",
-      "bytes": 2920,
-      "sha256": "87dff594a6a601356a9885e43b433840e7107ba767b02fbe9c37309cba6b3ce0"
-    },
-    {
-      "path": "character-design/sculpt-controls.mjs",
-      "bytes": 7139,
-      "sha256": "fe01bc8d81816d0f34b644b0010a9c397a5929d984ab215220f04fcb9019b892"
-    },
-    {
-      "path": "character-design/sculpt-engine.mjs",
-      "bytes": 17587,
-      "sha256": "98f2dec7b844ddc0f1d016b14f66ea883d69730916e11272a4168c998e3634de"
-    },
-    {
-      "path": "character-design/sculpt-schema.mjs",
-      "bytes": 1887,
-      "sha256": "183f7beb0de1d6e1c56502414d1200e732f711c9838e0c9905a5792796811fd8"
-    },
-    {
-      "path": "character-design/studio-controls.mjs",
-      "bytes": 9921,
-      "sha256": "086f284d06846a86ec3a2f7898df3be5c85c43218dee3b59e041d93a44d815ba"
-    },
-    {
-      "path": "character-design/workbench.mjs",
-      "bytes": 23391,
-      "sha256": "fe0a98b37c2cda260fc6dd6dfc13ed01d44cb6a226de0470698f03074a8394e8"
-    },
-    {
-      "path": "src/fps/character-footwear.mjs",
-      "bytes": 6783,
-      "sha256": "0dbd0294b8282894e3d052e045143ced954472fbcaa463529afb379c755b30db"
-    },
-    {
-      "path": "src/fps/character-overrides.mjs",
-      "bytes": 3817,
-      "sha256": "44914746c8c597113b5ed7f86b52da588f2af76136302206ce0477a8af30bbad"
-    },
-    {
-      "path": "src/fps/character-roles.mjs",
-      "bytes": 2663,
-      "sha256": "73f61dcbf5c2304044d4ecb99b4d58c8103cf1b1be3a96728eb345daf1cb20dd"
-    },
-    {
-      "path": "src/fps/character-runtime-contract.mjs",
-      "bytes": 7873,
-      "sha256": "45024debc0793bcf2905b3aecc1f424135f59746036299d22b11a4f1faf01bb9"
-    },
-    {
-      "path": "src/fps/dwarf-rig.mjs",
-      "bytes": 7695,
-      "sha256": "6c0c087558b4a1f03b49543b6453d80b768d9ffa4d1434e341bd7af77083788f"
-    },
-    {
-      "path": "src/fps/skinned-clone.mjs",
-      "bytes": 752,
-      "sha256": "f2d8f10c03cfccf08d11128ca40eee3bdfc7f7eeb50b3a392207638dc9463dec"
     }
   ],
-  "bytes": 27415633,
+  "bytes": 30339282,
   "sourceDirectoriesExcluded": [
     "references",
     "reviews",
@@ -3278,5 +3443,17 @@
     ],
     "modelUnitsVerifiedAsMetres": false,
     "privatePreview": "browser-local"
+  },
+  "studioFurniture": {
+    "editorVersion": "5.8.0",
+    "catalogueObjects": 301,
+    "addedObjects": 22,
+    "labAndShoeObjects": 4,
+    "uploadedOfficeModels": 2,
+    "fpsObjects": 16,
+    "perPairShoeColour": true,
+    "measuredSupportSurfaces": true,
+    "sourceMap": "docs/fps-furniture-library.md",
+    "officeAttribution": "licenses/studio-office-models.md"
   }
 }

@@ -7,6 +7,7 @@ export const WALL_FINISHES=Object.freeze(['white','gray']);
 export const DOOR_FINISHES=Object.freeze(['white','gray','red','elevator']);
 export const CHAIR_ROLES=Object.freeze(['kitchen','office','conference']);
 export const ASSET_ROLES=Object.freeze(['auto','table','chair','other']);
+export const validFurnitureColor=value=>typeof value==='string'&&/^#[0-9a-fA-F]{6}$/.test(value);
 const TABLE_KINDS=new Set(['table','desk','coffee-table']);
 const TABLE_ASSETS=/table|desk|bord|skrivbord|sidetable/i;
 const CHAIR_ASSETS=/chair|stol|arbeitsstuhl/i;

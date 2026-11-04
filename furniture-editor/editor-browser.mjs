@@ -12,7 +12,7 @@ const {chromium}=require('../frontline/source/tools/dev/node_modules/playwright-
 const origin=process.env.FURNITURE_TEST_ORIGIN||'http://127.0.0.1:8765';
 const out=resolve('test-results/furniture-editor');await mkdir(out,{recursive:true});
 const report={status:'RUNNING',checks:[],errors:[],externalRequests:[],httpFailures:[],shots:[]};
-const browser=await chromium.launch({headless:true,args:['--use-gl=angle','--use-angle=swiftshader','--enable-unsafe-swiftshader','--ignore-gpu-blocklist','--no-sandbox','--disable-gpu-sandbox']});
+const browser=await chromium.launch({headless:true,...(process.env.PLAYWRIGHT_EXECUTABLE_PATH?{executablePath:process.env.PLAYWRIGHT_EXECUTABLE_PATH}:{}),args:['--use-gl=angle','--use-angle=swiftshader','--enable-unsafe-swiftshader','--ignore-gpu-blocklist','--no-sandbox','--disable-gpu-sandbox']});
 const context=await browser.newContext({viewport:{width:1380,height:850},deviceScaleFactor:1,acceptDownloads:true}),page=await context.newPage();page.setDefaultTimeout(30000);
 const check=(name,pass)=>{report.checks.push({name,pass:!!pass});console.log(name,!!pass?'PASS':'FAIL');if(!pass)throw Error(name);};
 page.on('pageerror',e=>report.errors.push(String(e)));
@@ -63,9 +63,9 @@ try{
    total:LIBRARY_ALL.length,visible:__furnitureEditor.catalogCount,
    genexpert:LIBRARY_ALL.filter(e=>e.pack==='genexpert').map(e=>e.id).sort()};
  });
- check('104 original GLBs, 36 procedural objects, 15 onboard, 122 house and 2 GeneXpert models',
-  catalogCounts.original===104&&catalogCounts.procedural===36&&catalogCounts.onboard===15&&
-  catalogCounts.total===279&&catalogCounts.visible===279);
+ check('104 original GLBs plus all shared studio, lab and FPS catalogues are visible',
+  catalogCounts.original===104&&catalogCounts.procedural===53&&catalogCounts.onboard===15&&
+  catalogCounts.total===301&&catalogCounts.visible===301);
  assert.deepEqual(catalogCounts.genexpert,['genexpert:gx16','genexpert:infinity80']);
  await page.locator('#openLibrary').click();
  check('library opens without loading FPS runtime',await page.locator('#libraryDialog').evaluate(e=>e.open));
