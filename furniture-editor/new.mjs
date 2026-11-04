@@ -43,6 +43,16 @@ const mode=new URLSearchParams(location.search).get('mode')==='edit-floor5'?'edi
 const STORAGE=mode==='edit-floor5'?'cartridge-floor5-level-v2':'cartridge-new-level-v2';let project,selected=null,tab='build',first=null,hover=null,drag=null,view='plan',zoom=1,offset={x:0,z:0},orbit=.65,history=[],future=[],localCatalog=[];
 const draftStorage={getItem:key=>localStorage.getItem(key),setItem:(key,value)=>localStorage.setItem(key,value)};
 let draftStore=createDraftStore(draftStorage,STORAGE);
+const draftStores=new Map([[mode,draftStore]]);
+function storeForMode(currentMode){
+ if(!draftStores.has(currentMode)){
+  const key=currentMode==='edit-floor5'?'cartridge-floor5-level-v2':'cartridge-new-level-v2';
+  const store=createDraftStore(draftStorage,key);
+  store.load(raw=>{const doc=parseProject(raw);if(doc.mode!==currentMode)throw Error('Utkastet tillhör ett annat redigeringsläge.');return doc;});
+  draftStores.set(currentMode,store);
+ }
+ return draftStores.get(currentMode);
+}
 project=draftStore.load(raw=>{const doc=parseProject(raw);if(doc.mode!==mode)throw Error('Utkastet tillhör ett annat redigeringsläge.');return inheritFloor5Gameplay(correctOldOrangeChair(doc));});
 if(!project){project=inheritFloor5Gameplay(exportProject({mode,name:mode==='edit-floor5'?'Floor 5 – min version':'Min bana',projectId:'lvl-'+crypto.randomUUID().slice(0,12)}));if(!draftStore.rejected&&mode==='edit-floor5'){try{const old=localStorage.getItem('cartridge-furniture-studio-0.17.0-v1');if(old)project=inheritFloor5Gameplay(parseProject(old));}catch{}}}
 if(project.mode==='edit-floor5')project.ground.bounds={x0:-48,z0:-33,x1:52,z1:40};
@@ -72,7 +82,7 @@ function updateFirstBuild(){
 const floorAt=(x,z)=>floors().find(f=>inside(x,z,f.polygon||[[f.x0,f.z0],[f.x1,f.z0],[f.x1,f.z1],[f.x0,f.z1]]));
 const nextId=prefix=>{let i=1;const ids=new Set([...floors(),...arch(),...objects()].map(o=>o.id));while(ids.has(prefix+String(i).padStart(4,'0')))i++;return prefix+String(i).padStart(4,'0');};
 function commit(before){if(p().surfaceColors||p().surfaceMaterials){const previous=JSON.parse(before);reconcileSurfaceColors(p(),previous,arch(),resolveProjectScene(previous).entries,floors());}syncWallMounts(objects(),arch());if(p().mode==='edit-floor5')writeProjectScene(p(),model());if(before===JSON.stringify(p()))return;if(view==='walk')leaveWalk();history.push(before);if(history.length>60)history.shift();future=[];persist();redraw();queueGameLook();}
-function persist(){const result=draftStore.save(p());$('autosave').textContent=result.message;$('autosave').classList.toggle('error',!result.ok);}
+function persist(){draftStore=storeForMode(p().mode);const result=draftStore.save(p());$('autosave').textContent=result.message;$('autosave').classList.toggle('error',!result.ok);}
 window.addEventListener('beforeunload',event=>{if(draftStore.failed){event.preventDefault();event.returnValue='';}});
 function point(e){const r=canvas.getBoundingClientRect(),b=p().ground.bounds,scale=Math.min(canvas.width/(b.x1-b.x0),canvas.height/(b.z1-b.z0))*zoom;
  return {x:snap(((e.clientX-r.left)*canvas.width/r.width-canvas.width/2)/scale+(b.x0+b.x1)/2-offset.x),z:snap(((e.clientY-r.top)*canvas.height/r.height-canvas.height/2)/scale+(b.z0+b.z1)/2-offset.z)};}
@@ -1014,8 +1024,7 @@ $('open').onchange=async e=>{const file=e.target.files?.[0];if(!file)return;try{
   for(const [path,bytes] of files)if(path.endsWith('.glb'))await importLocalGLB(new File([bytes],path.split('/').at(-1),{type:'model/gltf-binary'}));
   for(const asset of incoming.assets.local)if(!await getLocalFile(asset.assetId))throw Error('Egen GLB saknas. Öppna ZIP-filen i stället.');
   const next=inheritFloor5Gameplay(correctOldOrangeChair(incoming));
-  const incomingKey=next.mode==='edit-floor5'?'cartridge-floor5-level-v2':'cartridge-new-level-v2';
-  let nextStore=draftStore;if(incomingKey!==(p().mode==='edit-floor5'?'cartridge-floor5-level-v2':'cartridge-new-level-v2')){nextStore=createDraftStore(draftStorage,incomingKey);nextStore.load(JSON.parse);}
+  const nextStore=storeForMode(next.mode);
   nextStore.acceptImport(next);draftStore=nextStore;$('recoveryDialog')?.close();
   if(view==='walk')leaveWalk();project=next;history=[];future=[];selected=null;pendingFurniture=null;pendingTemplate=null;pendingYaw=0;first=null;view3dCenter=null;view3dZoom=1;zoom=1;offset={x:0,z:0};$('name').value=p().name;$('width').value=p().ground.bounds.x1-p().ground.bounds.x0;$('depth').value=p().ground.bounds.z1-p().ground.bounds.z0;
   localCatalog=await localLibrary();for(const entry of localCatalog)entry.size=(await getLocalFile(entry.id))?.size;renderCatalog();persist();redraw();queueGameLook();status('Projektet öppnat. Kontrollera spelbarhet före provspelning.');

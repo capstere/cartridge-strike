@@ -45,6 +45,17 @@ try{
  assert.equal(await page.evaluate(()=>localStorage.getItem('cartridge-new-level-v2:before-import')),rejected);
  assert.equal((await get()).furniture.added.length,507);
  await page.screenshot({path:out+'/recovered.png'});
- assert.deepEqual(errors,[]);writeFileSync(out+'/result.json',JSON.stringify({status:'PASS',objects:507,nativeZIP:true,jsonTxtImport:true,invalidDraftPreserved:true,missingAssetReported:true,rejectedAutosaveProtected:true,errors},null,2));
+ // Import / demo / undo must keep the other editing mode's storage untouched.
+ const newRaw=await page.evaluate(()=>localStorage.getItem('cartridge-new-level-v2'));
+ const floor=await page.evaluate(async()=>{const {exportProject}=await import('./build/level-project.mjs?v=5.7.2');return exportProject({mode:'edit-floor5',projectId:'lvl-mode-switch',name:'Saved Floor 5'});});
+ await open(Buffer.from(JSON.stringify(floor)),'floor.json');await page.waitForFunction(()=>__levelStudio.project.projectId==='lvl-mode-switch');
+ assert.equal(await page.evaluate(()=>localStorage.getItem('cartridge-new-level-v2')),newRaw);
+ const floorRaw=await page.evaluate(()=>localStorage.getItem('cartridge-floor5-level-v2'));
+ await page.locator('#demo').click();await page.waitForFunction(()=>__levelStudio.project.mode==='new-level');
+ assert.equal(await page.evaluate(()=>localStorage.getItem('cartridge-floor5-level-v2')),floorRaw);
+ await page.locator('#undo').click();assert.equal((await get()).projectId,'lvl-mode-switch');
+ assert.equal(await page.evaluate(()=>localStorage.getItem('cartridge-floor5-level-v2')),floorRaw);
+
+ assert.deepEqual(errors,[]);writeFileSync(out+'/result.json',JSON.stringify({status:'PASS',objects:507,nativeZIP:true,jsonTxtImport:true,invalidDraftPreserved:true,missingAssetReported:true,rejectedAutosaveProtected:true,modeSwitchIsolated:true,errors},null,2));
  console.log('Draft-save browser regression PASS');
 }catch(e){await page.screenshot({path:out+'/failure.png'}).catch(()=>{});writeFileSync(out+'/failure.json',JSON.stringify({error:e.message,stack:e.stack,errors},null,2));throw e;}finally{await browser.close();}
