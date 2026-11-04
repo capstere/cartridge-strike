@@ -1,6 +1,6 @@
 /** Pure conversion into the existing world/physics/navigation data contract. */
 import {remainingSourceTiles,thresholdFloorPolygons} from '../../furniture-editor/build/floor-edge.mjs?v=5.7.3';
-import {parseProject} from '../../furniture-editor/build/level-project.mjs?v=5.8.0';
+import {parseProject} from '../../furniture-editor/build/level-project.mjs?v=5.9.0';
 import {wallPieces} from '../../furniture-editor/build/architecture.mjs?v=5.8.0';
 import {corners} from '../../furniture-editor/core.mjs?v=5.8.0';
 import {resolveProjectScene,floor5Baseline,projectWallPieces} from '../../furniture-editor/build/project-scene.mjs?v=5.8.0';

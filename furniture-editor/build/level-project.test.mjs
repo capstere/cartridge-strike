@@ -112,3 +112,18 @@ test('calibrated GLB fronts and canonical anchors are optional, bounded and roun
  for(const bad of [{wallFacing:'up'},{modelSize:[0,1,1]},{modelSize:[1,Infinity,1]},{modelSize:[1,1]},{wallMount:{...item.wallMount,frame:2}}]){const copy=structuredClone(p);Object.assign(copy.furniture.added[0],bad);assert.throws(()=>parseProject(copy));}
  const legacy=structuredClone(p);delete legacy.furniture.added[0].wallFacing;delete legacy.furniture.added[0].modelSize;delete legacy.furniture.added[0].wallMount.frame;assert.doesNotThrow(()=>parseProject(legacy));
 });
+
+test('5S tape crosses adjoining floors, survives ZIP and adds no collision',async()=>{
+ const {makeFloorTape}=await import('./floor-tape.mjs');
+ const {collisionExport}=await import('./ai-export.mjs');
+ const p=exportProject(),neighbor={...floor,id:'BYGG-G-0002',x0:8,x1:12};
+ p.ground.floors=[floor,neighbor];
+ const collision=collisionExport(p),a={x:7,z:3},b={x:9,z:3};
+ const appearance={style:'hazard',color:'#ffcf00'};
+ assert.throws(()=>makeFloorTape(a,b,appearance,[],[floor,{...neighbor,x0:8.02}]),/golvet/);
+ p.ground.tape=[makeFloorTape(a,b,appearance,[],p.ground.floors)];
+ const restored=(await parseProjectZip(await exportProjectZip(p))).project;
+ assert.deepEqual(restored.ground.tape,p.ground.tape);
+ assert.deepEqual(collisionExport(restored),collision);
+ restored.ground.tape[0].color='invalid';assert.throws(()=>parseProject(restored),/tejp/);
+});

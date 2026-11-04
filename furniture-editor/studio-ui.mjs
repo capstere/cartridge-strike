@@ -38,9 +38,10 @@ document.addEventListener('keydown',event=>{
 const tools=$('toolsPanel');
 tools.addEventListener('click',event=>{
  if(!narrow.matches)return;
+ if(event.target.closest('[data-tool="tape"]')&&$('tool').value==='tape')return; // Choose colour or stripes before closing.
  if(event.target.closest('[data-tool],.catalog-card,#placeFurniture,#doorInWall'))openSheet();
 });
-tools.querySelector('#tool')?.addEventListener('change',()=>{if(narrow.matches)openSheet();});
+tools.querySelector('#tool')?.addEventListener('change',()=>{if(narrow.matches&&$('tool').value!=='tape')openSheet();});
 narrow.addEventListener('change',event=>{if(!event.matches)openSheet();});
 
 // A wider desktop scene keeps the palette and a one-click ZIP shortcut.
