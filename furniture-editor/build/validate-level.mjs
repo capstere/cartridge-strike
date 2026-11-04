@@ -1,12 +1,12 @@
-import {parseProject} from './level-project.mjs?v=5.7.2';
-import {levelProjectToWorldData} from '../../src/fps/level-adapter.mjs?v=5.7.2';
-import {createWorld,inheritFloor5Gameplay} from '../../src/fps/world.mjs?v=5.7.2';
-import {resolveProjectScene,projectWallPieces} from './project-scene.mjs?v=5.7.2';
-import {corners,inside,intersects,segmentIntersectsRectangle} from '../core.mjs?v=5.7.2';
-import {wallPieces,minDoorWidth} from './architecture.mjs?v=5.7.0';
+import {parseProject} from './level-project.mjs?v=5.7.3';
+import {levelProjectToWorldData} from '../../src/fps/level-adapter.mjs?v=5.7.3';
+import {createWorld,inheritFloor5Gameplay} from '../../src/fps/world.mjs?v=5.7.3';
+import {resolveProjectScene,projectWallPieces} from './project-scene.mjs?v=5.7.3';
+import {corners,inside,intersects,segmentIntersectsRectangle} from '../core.mjs?v=5.7.3';
+import {wallPieces,minDoorWidth} from './architecture.mjs?v=5.7.3';
 import {testDoorTraversal} from './door-traversal.mjs';
-import {parsePosters} from './posters.mjs';
-import {parseTreatments} from './treatments.mjs?v=5.7.0';
+import {parsePosters} from './posters.mjs?v=5.7.3';
+import {parseTreatments} from './treatments.mjs?v=5.7.3';
 import {poseOnWall} from '../wall-mounts.mjs?v=5.7.1';
 
 /** Validation never labels a structural-only result playable. */

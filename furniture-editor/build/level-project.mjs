@@ -1,24 +1,24 @@
-import {MAX_FURNITURE_RECORDS,furnitureRecordCount} from '../project-limits.mjs?v=5.7.2';
-import {validateFloorEdits} from './floor-edge.mjs?v=5.1.0';
-import {validateSurfaceColors,validateSurfaceMaterials} from './surface-style.mjs?v=5.7.0';
+import {AUTHORING_LIMITS,MAX_PROJECT_JSON_BYTES,MAX_FURNITURE_RECORDS,furnitureRecordCount} from '../project-limits.mjs?v=5.7.3';
+import {validateFloorEdits} from './floor-edge.mjs?v=5.7.3';
+import {validateSurfaceColors,validateSurfaceMaterials} from './surface-style.mjs?v=5.7.3';
 import {FLOOR_FINISHES} from './pattern-presets.mjs?v=5.6.1';
-import {validateOpenedAreas,closedAreas} from './walkable-spaces.mjs?v=5.7.2';
+import {validateOpenedAreas,closedAreas} from './walkable-spaces.mjs?v=5.7.3';
 import {validModelAlignment} from '../model-alignment.mjs?v=5.7.1';
 /** Versioned level document. Parsing is deliberately independent of the renderer. */
-import {BASE_COMMIT,GAME_VERSION,PATCH_FORMAT,PATCH_SCHEMA} from '../core.mjs?v=5.7.2';
-import {validateEntry,validateFloorRect} from './architecture.mjs?v=5.7.0';
+import {BASE_COMMIT,GAME_VERSION,PATCH_FORMAT,PATCH_SCHEMA} from '../core.mjs?v=5.7.3';
+import {validateEntry,validateFloorRect} from './architecture.mjs?v=5.7.3';
 import {assetHash} from '../library/glb-utils.mjs';
 import {makeZip,readZip,PROJECT_ZIP_MAX_BYTES} from '../library/zip.mjs?v=5.7.2';
-import {floor5Baseline} from './project-scene.mjs?v=5.7.2';
-import {parseArchitecture} from './architecture.mjs?v=5.7.0';
+import {floor5Baseline} from './project-scene.mjs?v=5.7.3';
+import {parseArchitecture} from './architecture.mjs?v=5.7.3';
 import {LIBRARY_MAP} from '../library/catalog.mjs?v=5.7.1';
-import {parsePosters} from './posters.mjs';
-import {parseTreatments} from './treatments.mjs?v=5.7.0';
-import {collisionExport,aiAgentBrief} from './ai-export.mjs?v=5.7.2';
+import {parsePosters} from './posters.mjs?v=5.7.3';
+import {parseTreatments} from './treatments.mjs?v=5.7.3';
+import {collisionExport,aiAgentBrief} from './ai-export.mjs?v=5.7.3';
 import {validWallMount} from '../wall-mounts.mjs?v=5.7.1';
 
 export const LEVEL_FORMAT='cartridge-strike-level-project',LEVEL_SCHEMA=2;
-export const LEVEL_GAME_VERSION='0.18.0',LEVEL_BASE_COMMIT='f5c63a22483feeeb29583853dab0c0911af5c09a',LEVEL_EDITOR_VERSION='5.7.2';
+export const LEVEL_GAME_VERSION='0.18.0',LEVEL_BASE_COMMIT='f5c63a22483feeeb29583853dab0c0911af5c09a',LEVEL_EDITOR_VERSION='5.7.3';
 const emptyArchitecture=()=>({schemaVersion:1,edits:[],added:[],removed:[],floors:[],posters:[],treatments:[]});
 const within=n=>typeof n==='number'&&Number.isFinite(n)&&Math.abs(n)<=100;
 const rect=r=>r&&[r.x0,r.z0,r.x1,r.z1].every(within)&&r.x1>r.x0&&r.z1>r.z0;
@@ -64,7 +64,7 @@ export function migrateV1(input){
 
 export function parseProject(input,{allowLegacy=true}={}){
  if(typeof input==='string'){
-  if(input.length>5*1024*1024)fail('JSON över 5 MiB');
+  if(input.length>MAX_PROJECT_JSON_BYTES||new TextEncoder().encode(input).length>MAX_PROJECT_JSON_BYTES)fail('JSON över 16 MiB; behåll originalfilen');
   input=JSON.parse(input);
  }
  if(!input||typeof input!=='object'||Array.isArray(input))fail('rotobjekt saknas');
@@ -77,12 +77,12 @@ export function parseProject(input,{allowLegacy=true}={}){
   input.units?.playerRadius!==.22||input.units?.actorRadius!==.20||input.units?.gridStep!==.1)fail('enheter');
  if(input.rules?.minDoorWidth!==1.1||input.rules?.minCorridorWidth!==2||
   input.rules?.doorWidthAppliesTo!==(input.mode==='new-level'?'all':'new-and-edited'))fail('breddregler');
- const g=input.ground;if(!rect(g?.bounds)||!Number.isFinite(g.wallHeightDefault)||g.wallHeightDefault<.45||g.wallHeightDefault>6||!Array.isArray(g.floors)||g.floors.length>100)fail('grundyta');
+ const g=input.ground;if(!rect(g?.bounds)||!Number.isFinite(g.wallHeightDefault)||g.wallHeightDefault<.45||g.wallHeightDefault>6||!Array.isArray(g.floors)||g.floors.length>AUTHORING_LIMITS.floors)fail('grundyta');
  const ids=new Set();const unique=id=>{if(ids.has(id))fail('dubbelt ID: '+id);ids.add(id);};
  for(const f of g.floors){validateFloorRect(f);if(!['room','corridor'].includes(f.role)||!FLOOR_FINISHES.includes(f.surface)||
   f.x0<g.bounds.x0||f.x1>g.bounds.x1||f.z0<g.bounds.z0||f.z1>g.bounds.z1)fail('golvyta '+f.id);unique(f.id);}
  const a=input.architecture;if(a?.schemaVersion!==1||!['edits','added','removed','floors'].every(k=>Array.isArray(a[k]))||
-  a.edits.length>600||a.added.length>250||a.removed.length>600||a.floors.length>100)fail('arkitektur');
+  a.edits.length>AUTHORING_LIMITS.sourceChanges||a.added.length>AUTHORING_LIMITS.buildingParts||a.removed.length>AUTHORING_LIMITS.sourceChanges||a.floors.length>AUTHORING_LIMITS.floors)fail('arkitektur');
  if(input.mode==='new-level'&&(a.edits.length||a.removed.length||a.floors.length))fail('ny bana får inte ärva Floor 5');
  for(const e of a.added){validateEntry(e,{isNew:true});unique(e.id);}
  if(input.mode==='new-level'){parsePosters(a.posters,a.added);parseTreatments(a.treatments,a.added);}
@@ -120,7 +120,7 @@ export function parseProject(input,{allowLegacy=true}={}){
   const finishes=input.floorFinishes,allowed=new Set(FLOOR_FINISHES);
   const floorIds=new Set([...g.floors,...a.floors,...(sourceData?[...sourceData.rooms,...sourceData.corridors].filter(f=>f.status!=='uncertain'):[]),
    ...(sourceData?closedAreas(sourceData).filter(f=>(g.openedAreas||[]).includes(f.id)):[])].map(f=>f.id));
-  if(!finishes||typeof finishes!=='object'||Array.isArray(finishes)||Object.keys(finishes).length>100)fail('golvfinish');
+  if(!finishes||typeof finishes!=='object'||Array.isArray(finishes)||Object.keys(finishes).length>AUTHORING_LIMITS.floors)fail('golvfinish');
   for(const [id,finish] of Object.entries(finishes))if(!floorIds.has(id)||!allowed.has(finish))fail('okänd golvfinish eller golvyta: '+id);
  }
  const play=input.gameplay;if(play?.mode!=='classic'||!play.counts||!Array.isArray(play.spawns)||play.spawns.length>10||
@@ -142,7 +142,7 @@ export function parseProject(input,{allowLegacy=true}={}){
  for(const row of assets.posters){if(!/^[A-Za-z0-9_-]{1,64}$/.test(row.id)||row.file!==`assets/posters/${row.id}.webp`||
   !/^[a-f0-9]{64}$/.test(row.sha256)||!Number.isInteger(row.bytes)||row.bytes<1||row.bytes>5e6)fail('affischfil');}
  if(input.mode==='new-level')for(const o of f.added){if(o.assetId?.startsWith('local:')&&!assets.local.some(row=>row.assetId===o.assetId&&row.bytes>0))fail('saknad lokal modell för '+o.id);}
- if(JSON.stringify(input).length>5*1024*1024)fail('JSON över 5 MiB');
+ if(new TextEncoder().encode(JSON.stringify(input)).length>MAX_PROJECT_JSON_BYTES)fail('JSON över 16 MiB; behåll originalfilen');
  return clone(input);
 }
 

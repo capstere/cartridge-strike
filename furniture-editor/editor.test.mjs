@@ -1,3 +1,4 @@
+import {MAX_FURNITURE_RECORDS} from './project-limits.mjs?v=5.7.3';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
@@ -52,7 +53,7 @@ test('unsafe or incompatible JSON imports are rejected, gameplay remains unmodif
  assert.throws(()=>parsePatch({...doc,source:{...doc.source,commit:'other'}},base),/annan spelversion/);
  assert.throws(()=>parsePatch({...doc,placements:[{id:'UNKNOWN',kind:'chair',roomId:'I09',x:1,z:1,yaw:0}]},base),/matchar inte/);
  assert.throws(()=>parsePatch({...doc,added:[{id:'../evil',kind:'chair',roomId:'I09',x:1,z:1,yaw:0,w:1,d:1,height:1}]},base),/ny möbel/);
- assert.throws(()=>parsePatch({...doc,placements:Array(2001).fill({})},base),/många/);
+ assert.throws(()=>parsePatch({...doc,placements:Array(MAX_FURNITURE_RECORDS+1).fill({})},base),/många/);
  assert.throws(()=>parsePatch({...doc,placements:Array(400).fill({})},base),/Ogiltigt/);
  const html=readFileSync(resolve(root,'furniture-editor/index.html'),'utf8');
  assert(html.includes('SPARA MITT PROJEKT'));assert(!html.includes('src/fps/app.mjs'));

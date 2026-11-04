@@ -1,5 +1,6 @@
+import {AUTHORING_LIMITS} from '../project-limits.mjs?v=5.7.3';
 /** Atomic rectangle-room sketch generator. No source geometry, physics, or navmesh edits. */
-import {floorRect,getNextId,makeEntry,roundPosition,validateEntry,validateFloorRect} from './architecture.mjs?v=5.1.0';
+import {floorRect,getNextId,makeEntry,roundPosition,validateEntry,validateFloorRect} from './architecture.mjs?v=5.7.3';
 
 const bounded=(n,min,max,label)=>{
  if(typeof n!=='number'||!Number.isFinite(n)||n<min||n>max)throw Error(label+' måste vara '+min+'–'+max+' m.');
@@ -20,9 +21,9 @@ export function createRectangleRoom(entries,floors,start,opposite,{
  const wallHeight=bounded(height,.45,6,'Höjden');
  const wallThickness=bounded(thickness,.025,.7,'Väggtjockleken');
  if(typeof name!=='string'||name.length>60)throw Error('Rumsnamnet får vara högst 60 tecken.');
- if(entries.filter(e=>!e.source&&!e.deleted).length+4>250)
-  throw Error('För många egna väggar för projektformatet (max 250).');
- if(withFloor&&floors.length+1>100)throw Error('För många golvytor för projektformatet (max 100).');
+ if(entries.filter(e=>!e.source&&!e.deleted).length+4>AUTHORING_LIMITS.buildingParts)
+  throw Error(`Redigerarens resursgräns är ${AUTHORING_LIMITS.buildingParts} byggdelar. Spara en säkerhetskopia.`);
+ if(withFloor&&floors.length+1>AUTHORING_LIMITS.floors)throw Error(`Redigerarens resursgräns är ${AUTHORING_LIMITS.floors} golvytor. Spara en säkerhetskopia.`);
  // Adjacent wall segments reuse the exact same corner arrays, no floating seams.
  const corners=[[x0,z0],[x1,z0],[x1,z1],[x0,z1]],staged=[...entries],walls=[];
  for(let i=0;i<4;i++){

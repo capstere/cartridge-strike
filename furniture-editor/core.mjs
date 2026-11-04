@@ -1,4 +1,4 @@
-import {MAX_FURNITURE_RECORDS} from './project-limits.mjs?v=5.7.2';
+import {MAX_FURNITURE_RECORDS} from './project-limits.mjs?v=5.7.3';
 /** Cartridge Strike Furniture Studio — pure, read-only runtime adapter.
  * This file deliberately has no imports from the active FPS, no mutations of game data,
  * and no storage or network side effects. The exported JSON is review-only.

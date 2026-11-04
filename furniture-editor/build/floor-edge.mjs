@@ -1,3 +1,4 @@
+import {AUTHORING_LIMITS} from '../project-limits.mjs?v=5.7.3';
 /** Floor-only edge edits. Never move walls, openings, furniture or source polygons. */
 const EPS=1e-7;
 export const floorPolygon=f=>f.polygon||[[f.x0,f.z0],[f.x1,f.z0],[f.x1,f.z1],[f.x0,f.z1]];
@@ -48,7 +49,7 @@ export function planFloorEdge(floor,index,point,walls,{bounds}={}){
 }
 export function validateFloorEdits(project,source){
  const edits=project.ground.floorEdits;if(edits===undefined)return;
- if(project.mode!=='edit-floor5'||!edits||typeof edits!=='object'||Array.isArray(edits)||Object.keys(edits).length>100)throw Error('Ogiltiga lokala golvkanter.');
+ if(project.mode!=='edit-floor5'||!edits||typeof edits!=='object'||Array.isArray(edits)||Object.keys(edits).length>AUTHORING_LIMITS.floors)throw Error('Ogiltiga lokala golvkanter.');
  const originals=new Map([...(source?.rooms||[]),...(source?.corridors||[])].filter(f=>f.status!=='uncertain').map(f=>[f.id,f]));
  for(const [id,p] of Object.entries(edits)){const f=originals.get(id);if(!f)throw Error('Okänd ursprunglig golvyta: '+id);validatePolygon(p,f.polygon,project.ground.bounds);}
 }

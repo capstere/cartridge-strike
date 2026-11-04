@@ -1,3 +1,4 @@
+import {MAX_FURNITURE_RECORDS} from '../project-limits.mjs?v=5.7.3';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {exportProject,parseProject,parseProjectZip} from './level-project.mjs?v=5.7.2';
@@ -18,9 +19,9 @@ test('schema checks remain strict; fallback preserves rejected fields without tr
  assert.equal(r.kind,'recovery');assert.deepEqual(p,original);assert.deepEqual((await readDraftZip(r.bytes)).project,original);
  await assert.rejects(()=>parseProjectZip(r.bytes));
 });
-test('exceeding the runtime budget still allows a lossless draft download',async()=>{
- const p=exportProject();p.furniture.added=Array.from({length:2001},(_,i)=>item(i));assert.throws(()=>parseProject(p),/2001\/2000/);
- const r=await prepareProjectSave(p,async()=>null);assert.equal(r.kind,'recovery');assert.equal((await readDraftZip(r.bytes)).project.furniture.added.length,2001);
+test('exceeding the authoring resource ceiling still allows a lossless draft download',async()=>{
+ const p=exportProject();p.furniture.added=Array.from({length:MAX_FURNITURE_RECORDS+1},(_,i)=>item(i));assert.throws(()=>parseProject(p),/möbelposter/);
+ const r=await prepareProjectSave(p,async()=>null);assert.equal(r.kind,'recovery');assert.equal((await readDraftZip(r.bytes)).project.furniture.added.length,MAX_FURNITURE_RECORDS+1);
 });
 test('valid draft backup remains separate from playable project and round-trips assets',async()=>{
  const data=new Uint8Array([1,2,3]),id='local:'+await assetHash(data),p=exportProject();p.assets.local=[{assetId:id,file:`assets/models/${id.slice(6)}.glb`,bytes:3}];

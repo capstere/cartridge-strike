@@ -1,3 +1,4 @@
+import {AUTHORING_LIMITS} from '../project-limits.mjs?v=5.7.3';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {createRectangleRoom,rectangleFromDimensions} from './rectangle-room.mjs?v=5.1.0';
@@ -51,8 +52,8 @@ test('invalid geometry and dimensions reject atomically before mutating input',(
 });
 test('respect architecture export limits on added parts and floors',()=>{
  const base=createRectangleRoom([],[],[0,0],[2,2]);
- const manyWalls=Array.from({length:247},(_,i)=>({...base.walls[0],id:'BYGG-V-'+String(i+1).padStart(4,'0')}));
- assert.throws(()=>createRectangleRoom(manyWalls,[],[3,3],[5,5]),/250/);
- const floors=Array.from({length:100},(_,i)=>({...base.floor,id:'BYGG-G-'+String(i+1).padStart(4,'0')}));
- assert.throws(()=>createRectangleRoom([],floors,[3,3],[5,5]),/100/);
+ const manyWalls=Array.from({length:AUTHORING_LIMITS.buildingParts-3},(_,i)=>({...base.walls[0],id:'BYGG-V-'+String(i+1).padStart(4,'0')}));
+ assert.throws(()=>createRectangleRoom(manyWalls,[],[3,3],[5,5]),new RegExp(String(AUTHORING_LIMITS.buildingParts)));
+ const floors=Array.from({length:AUTHORING_LIMITS.floors},(_,i)=>({...base.floor,id:'BYGG-G-'+String(i+1).padStart(4,'0')}));
+ assert.throws(()=>createRectangleRoom([],floors,[3,3],[5,5]),new RegExp(String(AUTHORING_LIMITS.floors)));
 });
