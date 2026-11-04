@@ -1,9 +1,9 @@
 /** Pure conversion into the existing world/physics/navigation data contract. */
-import {remainingSourceTiles,thresholdFloorPolygons} from '../../furniture-editor/build/floor-edge.mjs?v=5.1.0';
-import {parseProject} from '../../furniture-editor/build/level-project.mjs?v=5.7.2';
-import {wallPieces} from '../../furniture-editor/build/architecture.mjs?v=5.7.0';
-import {corners} from '../../furniture-editor/core.mjs?v=5.7.2';
-import {resolveProjectScene,floor5Baseline,projectWallPieces} from '../../furniture-editor/build/project-scene.mjs?v=5.7.2';
+import {remainingSourceTiles,thresholdFloorPolygons} from '../../furniture-editor/build/floor-edge.mjs?v=5.7.3';
+import {parseProject} from '../../furniture-editor/build/level-project.mjs?v=5.7.3';
+import {wallPieces} from '../../furniture-editor/build/architecture.mjs?v=5.7.3';
+import {corners} from '../../furniture-editor/core.mjs?v=5.7.3';
+import {resolveProjectScene,floor5Baseline,projectWallPieces} from '../../furniture-editor/build/project-scene.mjs?v=5.7.3';
 
 const polygon=r=>[[r.x0,r.z0],[r.x1,r.z0],[r.x1,r.z1],[r.x0,r.z1]];
 const point=p=>({x:p.x,y:0,z:p.z,yaw:p.yaw||0});

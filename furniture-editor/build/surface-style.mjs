@@ -1,3 +1,4 @@
+import {AUTHORING_LIMITS} from '../project-limits.mjs?v=5.7.3';
 import {sealWindowBands} from './wall-joints.mjs?v=5.7.0';
 /** Optional schema-2 appearance overrides. Geometry and original materials stay unchanged. */
 import {FINISH_COLORS,architecturalFinish} from '../appearance.mjs';
@@ -8,13 +9,13 @@ export function surfaceColor(project,item){return project.surfaceColors?.[item.i
 export function validateSurfaceColors(project,ids){
  if(project.surfaceColors===undefined)return;
  const colors=project.surfaceColors;
- if(!colors||typeof colors!=='object'||Array.isArray(colors)||Object.keys(colors).length>1000)throw Error('Ogiltiga ytfärger.');
+ if(!colors||typeof colors!=='object'||Array.isArray(colors)||Object.keys(colors).length>AUTHORING_LIMITS.surfaceOverrides)throw Error('Ogiltiga ytfärger.');
  for(const [id,color] of Object.entries(colors))if(!ids.has(id)||!validPaint(color))throw Error('Ogiltig ytfärg eller okänd byggdel: '+id);
 }
 export function validateSurfaceMaterials(project,wallIds){
  if(project.surfaceMaterials===undefined)return;
  const v=project.surfaceMaterials;
- if(!v||typeof v!=='object'||Array.isArray(v)||Object.keys(v).length>600)throw Error('Ogiltiga väggmaterial.');
+ if(!v||typeof v!=='object'||Array.isArray(v)||Object.keys(v).length>AUTHORING_LIMITS.surfaceOverrides)throw Error('Ogiltiga väggmaterial.');
  for(const [id,pattern] of Object.entries(v))if(!wallIds.has(id)||!WALL_PATTERNS.includes(pattern))throw Error('Okänt väggmaterial eller vägg: '+id);
 }
 /** The same source records feed studio preview and the FPS renderer. */

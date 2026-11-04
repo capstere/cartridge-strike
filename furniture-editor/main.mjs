@@ -1,3 +1,4 @@
+import {MAX_PROJECT_JSON_BYTES} from './project-limits.mjs?v=5.7.3';
 /** Cartridge Strike Möbelstudion — completely separate read-only source consumer.
  * No import of the FPS app, game state, controllers or game renderer.
  * Edits live only here, in browser-local storage and downloaded review JSON.
@@ -6,19 +7,19 @@ import * as T from '../vendor/three/three.module.js';
 import {createFurnishings} from '../src/fps/furnishings.mjs';
 import {EDITOR_VERSION,GAME_VERSION,BASE_COMMIT,DEFAULT_ROOMS,ROOM_LABELS,
   EDITABLE_KINDS,bounds,centroid,inside,distanceSegment,catalog,normalizeAngle,
-  round,validate,snapFurnitureToWall,exportPatch,parsePatch,isChanged} from './core.mjs?v=5.7.2';
+  round,validate,snapFurnitureToWall,exportPatch,parsePatch,isChanged} from './core.mjs?v=5.7.3';
 import {LIBRARY_ALL as LIBRARY,LIBRARY_MAP,LIBRARY_CATEGORIES} from './library/catalog.mjs?v=5.7.1';
 import {populateProcedural} from './library/procedural-mesh.mjs?v=5.0.0';
 import {proceduralOf,placementRole} from './library/procedural.mjs?v=5.0.0';
-import {proposeSmartPose,findSupport} from './smart-placement.mjs?v=5.7.2';
+import {proposeSmartPose,findSupport} from './smart-placement.mjs?v=5.7.3';
 import {addModelToGroup,importLocalGLB,localLibrary,getLocalFile} from './library/models.mjs?v=5.7.1';
 import {makeZip,readZip,PROJECT_ZIP_MAX_BYTES} from './library/zip.mjs?v=5.7.2';
 import {readModelBundleZip} from './library/model-bundle.mjs?v=5.7.2';
 import {assetHash} from './library/glb-utils.mjs';
-import {createBuildMode} from './build/build-mode.mjs?v=5.1.0';
-import {parseArchitecture,standardDoorMarkerSpan} from './build/architecture.mjs?v=5.1.0';
-import {parsePosters} from './build/posters.mjs';
-import {parseTreatments} from './build/treatments.mjs?v=5.1.0';
+import {createBuildMode} from './build/build-mode.mjs?v=5.7.3';
+import {parseArchitecture,standardDoorMarkerSpan} from './build/architecture.mjs?v=5.7.3';
+import {parsePosters} from './build/posters.mjs?v=5.7.3';
+import {parseTreatments} from './build/treatments.mjs?v=5.7.3';
 import {findCameraPlacement} from './placement.mjs';
 import {isTable,isChair,chairRole,chairColors,validateDimensions,FINISH_COLORS,cameraPanVector} from './appearance.mjs';
 const $=s=>document.querySelector(s),data=globalThis.SpelFloor5,worldSource=globalThis.SpelWorld;
@@ -250,7 +251,7 @@ async function importFile(file){if(!file)return;if(file.size>PROJECT_ZIP_MAX_BYT
   const packages=[...contents.keys()].filter(n=>n!=='projekt.json');
   if(packages.length!==expected.length)throw Error('ZIP-filen saknar eller innehåller extra 3D-modeller.');
   for(const id of expected){const name='models/'+id.slice(6)+'.glb',bytes=contents.get(name);if(!bytes||'local:'+await assetHash(bytes)!==id)throw Error('GLB-filen har ändrats efter sparningen.');stored.push({id,data:bytes});}
- }else{if(file.size>5*1024*1024)throw Error('JSON-filen är för stor (max 5 MB).');doc=JSON.parse(await file.text());}
+ }else{if(file.size>MAX_PROJECT_JSON_BYTES)throw Error('JSON-filen är för stor (max 16 MiB). Behåll originalfilen.');doc=JSON.parse(await file.text());}
  const parsed=parsePatch(doc,baseline),arch=parseArchitecture(doc.architecture,building.getBaseline());
  parsePosters(doc.architecture?.posters,arch.entries);
  parseTreatments(doc.architecture?.treatments,arch.entries);

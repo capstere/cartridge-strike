@@ -1,8 +1,8 @@
 /** Direct manipulation of authored rectangles and inserts. All plans are pure:
  * the editor applies a complete result in one undo step only after validation.
  */
-import {entryLength,getNextId,isDoor,minDoorWidth,roundPosition,validateEntry,validateFloorRect} from './architecture.mjs?v=5.7.0';
-import {projectToWall} from './paint-over-wall.mjs?v=5.7.0';
+import {entryLength,getNextId,isDoor,minDoorWidth,roundPosition,validateEntry,validateFloorRect} from './architecture.mjs?v=5.7.3';
+import {projectToWall} from './paint-over-wall.mjs?v=5.7.3';
 
 const near=(a,b,t=.025)=>Math.abs(a-b)<=t;
 const same=(a,b)=>near(a[0],b[0])&&near(a[1],b[1]);

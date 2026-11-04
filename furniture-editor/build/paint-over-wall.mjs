@@ -1,10 +1,11 @@
+import {AUTHORING_LIMITS} from '../project-limits.mjs?v=5.7.3';
 /** Atomic design-only paint-over operation: no live FPS geometry is modified.
  * Paint an opening, glass wall or window over part of an existing wall,
  * replacing the painted span rather than overlapping solid geometry.
  */
-import {isWall,isDoor,makeEntry,getNextId,validateEntry,roundPosition,entryLength,pointToSegmentDistance,cloneEntry,STANDARD_PASSAGE_WIDTH,WC_PASSAGE_WIDTH,WC_MIN_PASSAGE_WIDTH} from './architecture.mjs?v=5.7.0';
+import {isWall,isDoor,makeEntry,getNextId,validateEntry,roundPosition,entryLength,pointToSegmentDistance,cloneEntry,STANDARD_PASSAGE_WIDTH,WC_PASSAGE_WIDTH,WC_MIN_PASSAGE_WIDTH} from './architecture.mjs?v=5.7.3';
 import {architecturalFinish} from '../appearance.mjs';
-import {validatePoster} from './posters.mjs';
+import {validatePoster} from './posters.mjs?v=5.7.3';
 
 export const PAINT_KINDS=Object.freeze(['window','glazed','wall','door','card-door','opening']);
 const roundPoint=p=>p.map(roundPosition);
@@ -88,7 +89,7 @@ export function planPaintOverWall(entries,wallId,start,end,kind,{posters=[],door
   updated=entries.filter(e=>e.id!==wallId||e.source).map(e=>e.id===wallId?{...cloneEntry(e),deleted:true}:e);
   updated.push(...pieces);
   parts=pieces.map(e=>{const x=projectToWall(e.a,wall),y=projectToWall(e.b,wall);return {entry:e,lo:x.t*length,hi:y.t*length};});
-  if(updated.filter(e=>!e.source&&!e.deleted).length>250)throw Error('För många nya byggdelar (max 250).');
+  if(updated.filter(e=>!e.source&&!e.deleted).length>AUTHORING_LIMITS.buildingParts)throw Error(`Redigerarens resursgräns är ${AUTHORING_LIMITS.buildingParts} nya byggdelar. Spara en säkerhetskopia innan du fortsätter.`);
  }
  const nextPosters=posters.map(p=>{
   if(p.wallId!==wallId)return {...p};

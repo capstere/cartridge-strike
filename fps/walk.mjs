@@ -1,7 +1,7 @@
-import {parseProject} from '../furniture-editor/build/level-project.mjs?v=5.7.2';
-import {createWorld} from '../src/fps/world.mjs?v=5.7.2';
+import {parseProject} from '../furniture-editor/build/level-project.mjs?v=5.7.3';
+import {createWorld} from '../src/fps/world.mjs?v=5.7.3';
 import {findWalkStart} from '../src/fps/walk-start.mjs';
-import {Renderer} from '../src/fps/render.mjs?v=5.7.1';
+import {Renderer} from '../src/fps/render.mjs?v=5.7.3';
 
 const canvas=document.getElementById('game'),message=document.getElementById('message'),hint=document.getElementById('hint');
 const params=new URLSearchParams(location.search);document.body.classList.toggle('embedded',params.has('embed'));

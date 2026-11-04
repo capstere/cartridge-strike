@@ -5,14 +5,14 @@ import * as THREE from '../../vendor/three/three.module.js';
 import {ARCHITECTURE_TYPES,ARCHITECTURE_NAMES,ARCHITECTURE_COLORS,readBaseline,
  cloneEntry,roundPosition,entryLength,validateEntry,validateFloorRect,pointToSegmentDistance,
  exportArchitecture,parseArchitecture,makeEntry,getNextId,doorOnWallSegment,floorRect,wallPieces,warningsForLayout,
- isDoor,isWall,standardPassageSpan,standardDoorMarkerSpan,STANDARD_PASSAGE_WIDTH} from './architecture.mjs?v=5.1.0';
-import {snapDraftPoint,dimensionsFromWall,joinNearbyEnds,straightenEntry} from './precision.mjs?v=5.1.0';
-import {createRectangleRoom,rectangleFromDimensions} from './rectangle-room.mjs?v=5.1.0';
+ isDoor,isWall,standardPassageSpan,standardDoorMarkerSpan,STANDARD_PASSAGE_WIDTH} from './architecture.mjs?v=5.7.3';
+import {snapDraftPoint,dimensionsFromWall,joinNearbyEnds,straightenEntry} from './precision.mjs?v=5.7.3';
+import {createRectangleRoom,rectangleFromDimensions} from './rectangle-room.mjs?v=5.7.3';
 import {FINISH_COLORS,architecturalFinish,WALL_FINISHES,DOOR_FINISHES} from '../appearance.mjs';
-import {makePoster,parsePosters,serializePosters,validatePoster,locatePoster,posterId,POSTER_MAX} from './posters.mjs';
+import {makePoster,parsePosters,serializePosters,validatePoster,locatePoster,posterId,POSTER_MAX} from './posters.mjs?v=5.7.3';
 import {createPosterTexture,compressPosterImage} from './poster-art.mjs';
-import {PAINT_KINDS,wallAtPoint,projectToWall,planPaintOverWall} from './paint-over-wall.mjs?v=5.1.0';
-import {TREATMENTS_MAX,createCurtain,createBlind,parseTreatments,treatmentPosition,validateTreatment,nextTreatmentId} from './treatments.mjs?v=5.1.0';
+import {PAINT_KINDS,wallAtPoint,projectToWall,planPaintOverWall} from './paint-over-wall.mjs?v=5.7.3';
+import {TREATMENTS_MAX,createCurtain,createBlind,parseTreatments,treatmentPosition,validateTreatment,nextTreatmentId} from './treatments.mjs?v=5.7.3';
 const $=id=>document.getElementById(id);
 const DIST=1e-5;
 const floorKind='floor',roomKind='room-rect',posterKind='poster',paintKind='paint',curtainKind='curtain',blindKind='blind';
@@ -287,7 +287,7 @@ export function createBuildMode({data,scene,canvas,camera,getZoom,getView,rayAt,
   }
   if(!wall){notify?.('Klicka på en röd/grå vägg. Affischer kan inte sitta på en dörr.');return false;}
   try{
-   if(posters.length>=POSTER_MAX)throw Error('Max 40 affischer per projekt.');
+   if(posters.length>=POSTER_MAX)throw Error(`Redigerarens resursgräns är ${POSTER_MAX} affischer. Spara en säkerhetskopia.`);
    const poster=makePoster(wall,posters,t,side);
    const before=capture();posters.push(poster);selection=poster.id;
    setTool('select');record(before);
@@ -495,12 +495,12 @@ export function createBuildMode({data,scene,canvas,camera,getZoom,getView,rayAt,
   selection=null;record(before);notify?.('Byggdelen är borttagen ur skissen. Spelet ändras inte.');}
  function duplicate(){const e=entryById(selection);if(!e)return;const before=capture();
   if(e.type){
-   if(treatments.length>=TREATMENTS_MAX){notify?.('Max 120 gardiner/persienner.');return;}
+   if(treatments.length>=TREATMENTS_MAX){notify?.(`Redigerarens resursgräns är ${TREATMENTS_MAX} gardiner/persienner. Spara en säkerhetskopia.`);return;}
    const next={...e,id:nextTreatmentId(treatments),side:e.side===1?-1:1};
    try{validateTreatment(next,entries);}catch(error){notify?.(error.message);return;}
    treatments.push(next);selection=next.id;
   }else if(e.wallId){
-   if(posters.length>=POSTER_MAX){notify?.('Max 40 affischer.');return;}
+   if(posters.length>=POSTER_MAX){notify?.(`Redigerarens resursgräns är ${POSTER_MAX} affischer. Spara en säkerhetskopia.`);return;}
    const at=locatePoster(e,entries);if(!at)return;
    const next={...e,id:posterId(posters),t:roundPosition(clamp(e.t+e.width/at.length+.03,0,1))};
    try{validatePoster(next,entries);}catch{notify?.('Det finns inte tillräckligt med väggyta bredvid affischen.');return;}

@@ -1,5 +1,6 @@
+import {AUTHORING_LIMITS} from '../project-limits.mjs?v=5.7.3';
 /** Portable, editor-only wall-mounted value-word posters. Never changes game collisions. */
-export const POSTER_MAX=40;
+export const POSTER_MAX=AUTHORING_LIMITS.posters;
 export const POSTER_IMAGE_MAX=100000; // base64 data payload characters, ~75 KB compressed
 export const POSTER_COLORS=Object.freeze(['navy','white','blue','orange']);
 const finite=n=>typeof n==='number'&&Number.isFinite(n);
@@ -56,7 +57,7 @@ export function makePoster(wall,existing,t=.5,side=1,options={}){
 }
 export function parsePosters(raw,walls){
  if(raw===undefined||raw===null)return [];
- if(!Array.isArray(raw)||raw.length>POSTER_MAX)throw Error('För många affischer i projektet (max 40).');
+ if(!Array.isArray(raw)||raw.length>POSTER_MAX)throw Error(`Redigerarens resursgräns är ${POSTER_MAX} affischer. Spara en säkerhetskopia.`);
  const out=[],ids=new Set();
  for(const p of raw){validatePoster(p,walls);if(ids.has(p.id))throw Error('Dubbelt affisch-ID.');
   ids.add(p.id);out.push({...p});}

@@ -1,0 +1,52 @@
+name: Design Studio - authoring capacity
+on:
+  pull_request:
+    branches: [main]
+    paths: ['furniture-editor/**', 'tools/authoring-capacity-browser.mjs', '.github/workflows/design-studio-authoring-capacity.yml']
+  push:
+    branches: [main]
+    paths: ['furniture-editor/**', 'tools/authoring-capacity-browser.mjs', '.github/workflows/design-studio-authoring-capacity.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: authoring-capacity-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  capacity:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Capacity and lossless draft regression
+        run: |
+          node --experimental-loader ./tools/vendor-three-test-loader.mjs --test furniture-editor/build/authoring-capacity.test.mjs furniture-editor/build/draft-save.test.mjs
+          node --check furniture-editor/new.mjs
+          node tools/verify-owner-runtime.mjs
+      - name: Install pinned Chromium
+        run: |
+          npm ci --prefix frontline/source/tools/dev --ignore-scripts --no-audit --no-fund
+          node frontline/source/tools/dev/node_modules/playwright-core/cli.js install --with-deps chromium
+      - name: Real window insertion past 250, save and reload
+        run: |
+          set -euo pipefail
+          python3 -m http.server 8765 --bind 127.0.0.1 >/tmp/capacity-http.log 2>&1 &
+          PID=$!
+          trap 'kill "$PID" || true' EXIT
+          for i in $(seq 1 25); do
+            if curl -fsS http://127.0.0.1:8765/furniture-editor/new.html >/dev/null; then break; fi
+            sleep 1
+          done
+          timeout 240s node --experimental-loader ./tools/vendor-three-test-loader.mjs tools/authoring-capacity-browser.mjs
+      - name: Small synthetic proof
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: authoring-capacity-proof
+          path: test-results/authoring-capacity/
+          retention-days: 1
+          if-no-files-found: ignore
+          compression-level: 9

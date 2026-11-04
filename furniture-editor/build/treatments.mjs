@@ -1,8 +1,9 @@
+import {AUTHORING_LIMITS} from '../project-limits.mjs?v=5.7.3';
 /** Editor-only curtains and blinds as lightweight wall-mounted architectural decorations. */
-import {isWall} from './architecture.mjs?v=5.7.0';
-import {projectToWall} from './paint-over-wall.mjs?v=5.7.0';
+import {isWall} from './architecture.mjs?v=5.7.3';
+import {projectToWall} from './paint-over-wall.mjs?v=5.7.3';
 const R=n=>Math.round(n*1000)/1000;
-export const TREATMENTS_MAX=120;
+export const TREATMENTS_MAX=AUTHORING_LIMITS.treatments;
 export const TREATMENT_TYPES=Object.freeze(['curtain','blind']);
 export const CURTAIN_STYLES=Object.freeze(['sheer','white-opaque','botanical-sheer']);
 // Old curtains without a style stay sheer; newly placed curtains default to opaque white.
@@ -31,7 +32,7 @@ export function validateTreatment(item,entries){
  return item;
 }
 export function createCurtain(entries,list,wallId,start,end,{side=1,style='white-opaque'}={}){
- if(list.length>=TREATMENTS_MAX)throw Error('Max 120 gardiner/persienner.');
+ if(list.length>=TREATMENTS_MAX)throw Error(`Redigerarens resursgräns är ${TREATMENTS_MAX} gardiner/persienner. Spara en säkerhetskopia.`);
  const wall=entries.find(x=>x.id===wallId&&!x.deleted&&isWall(x.kind));
  if(!wall)throw Error('Börja på en vägg eller fönsterlinje.');
  const a=projectToWall(start,wall),b=projectToWall(end,wall);
@@ -40,7 +41,7 @@ export function createCurtain(entries,list,wallId,start,end,{side=1,style='white
  return validateTreatment(result,entries);
 }
 export function createBlind(entries,list,wallId,{side=1}={}){
- if(list.length>=TREATMENTS_MAX)throw Error('Max 120 gardiner/persienner.');
+ if(list.length>=TREATMENTS_MAX)throw Error(`Redigerarens resursgräns är ${TREATMENTS_MAX} gardiner/persienner. Spara en säkerhetskopia.`);
  const wall=entries.find(x=>x.id===wallId&&!x.deleted&&['window','glazed'].includes(x.kind));
  if(!wall)throw Error('Klicka på ett FÖNSTER eller en GLASVÄGG för att montera persiennen.');
  const p={id:nextTreatmentId(list),type:'blind',wallId,t0:.015,t1:.985,side};

@@ -1,3 +1,4 @@
+import {AUTHORING_LIMITS} from '../project-limits.mjs?v=5.7.3';
 /** Pure, read-only source of architectural design proposals for Cartridge Strike.
  * The canonical map, collision, door ownership and navigation are NEVER mutated.
  * The edits returned by exportArchitecture are user-authored proposals only.
@@ -115,8 +116,8 @@ export function parseArchitecture(patch,baseline){
  if(!patch||typeof patch!=='object'||Array.isArray(patch)||patch.schemaVersion!==ARCHITECTURE_SCHEMA||
   !Array.isArray(patch.edits)||!Array.isArray(patch.added)||!Array.isArray(patch.removed)||!Array.isArray(patch.floors))
   throw Error('Arkitekturdelen i projektet har ett okänt format.');
- if(patch.edits.length>600||patch.added.length>250||patch.removed.length>600||patch.floors.length>100)
-  throw Error('För många arkitekturändringar.');
+ if(patch.edits.length>AUTHORING_LIMITS.sourceChanges||patch.added.length>AUTHORING_LIMITS.buildingParts||patch.removed.length>AUTHORING_LIMITS.sourceChanges||patch.floors.length>AUTHORING_LIMITS.floors)
+  throw Error('Byggprojektet överskrider redigerarens resursgräns. Spara en säkerhetskopia; originalet ska inte rensas.');
  const byId=new Map(items.map(x=>[x.id,x]));const seen=new Set();
  for(const [list,newObject] of [[patch.edits,false],[patch.added,true]])for(const e of list){
   validateEntry(e,{isNew:newObject});if(seen.has(e.id))throw Error('Dubbelt ändrad byggdel.');seen.add(e.id);
