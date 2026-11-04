@@ -3,8 +3,8 @@ import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
 import * as T from '../vendor/three/three.module.js';
 import {makeStudioHair,makeStudioJacket,scalpLine} from './studio-foundation.mjs';
-import {applyStudioFoundation,ensureCreative} from './creative-schema.mjs';
-import {newProject,validateProject} from './project-schema.mjs';
+import {applyStudioFoundation,ensureCreative} from './creative-schema.mjs?v=6.1.0';
+import {newProject,validateProject} from './project-schema.mjs?v=6.1.0';
 // Read the actual original GLB accessors. No hand-made substitute anatomy.
 async function sourceAvatar(gender){
  const bytes=await readFile(new URL('../assets/fps/models/quaternius-operator-'+gender+'.glb',import.meta.url)),jsonLength=bytes.readUInt32LE(12),json=JSON.parse(bytes.toString('utf8',20,20+jsonLength)),bin=bytes.subarray(28+jsonLength),meshes=[];

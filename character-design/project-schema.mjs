@@ -1,4 +1,5 @@
-import {makeCreative,validateCreative,creativeBrief} from './creative-schema.mjs?v=53';
+import {roleOf,roleSelection,DWARF_PALETTES} from '../src/fps/character-roles.mjs?v=6.1.0';
+import {makeCreative,validateCreative,creativeBrief} from './creative-schema.mjs?v=6.1.0';
 import {bodyRegions} from './body-proportions.mjs';
 /** Portable, deterministic v2 concept format. No browser or 3D dependencies. */
 export const FORMAT='cartridge-strike-character-project';
@@ -26,10 +27,10 @@ export const PRESETS=Object.freeze({
 const cssColor=s=>/^#[0-9a-fA-F]{6}$/.test(s);
 const finite=(n,min,max)=>typeof n==='number'&&Number.isFinite(n)&&n>=min&&n<=max;
 export function filename(value){return (String(value||'projekt').normalize('NFKD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9-]+/g,'-').replace(/^-|-$/g,'').slice(0,48))||'projekt';}
-export function newProject({kind='character',newCharacter=false,gender='male',team='analysts',template='analysts',name}={}){
+export function newProject({kind='character',newCharacter=false,gender='male',team='analysts',template='analysts',name,role=(team==='hostage'?'hostage':'player'),target,variant=0}={}){
   const isObject=kind==='object';
-  const theme=PALETTES[template]||PALETTES.analysts;
-  return {
+  const theme=role==='dwarf'?DWARF_PALETTES[variant]||DWARF_PALETTES[0]:PALETTES[template]||PALETTES.analysts;
+  const result={
     format:FORMAT,version:VERSION,kind:isObject?'object':'character',
     name:name||(isObject?'Mitt 3D-objekt':newCharacter?'Min nya karaktär':'Min FPS-karaktär'),
     intent:newCharacter?'create':'revise',
@@ -40,6 +41,12 @@ export function newProject({kind='character',newCharacter=false,gender='male',te
     // Reference files are opt-in local attachments; bytes live outside this portable JSON.
     references:[]
   };
+  if(!isObject){
+   result.runtime={version:1,role,target:target||(role==='dwarf'?`dwarf-variant-${variant}`:role==='hostage'?'hostage-0':`${team==='counterAnalysts'?'counterAnalysts':'analysts'}-0`)};
+   if(role==='hostage')result.base.team='hostage';
+   if(role==='dwarf'){result.base.original_glb='procedural-dwarf-v1';result.base.variant=variant;result.base.gender='male';result.base.template='civilian';result.creative.face.facialHair='Helskägg';result.creative.gloves='skin';result.name=name||'Min bot-dvärg';}
+  }
+  return result;
 }
 export function addPart(project,preset='box'){
   if(project.parts.length>=60)throw Error('Maximalt 60 delar per projekt.');
@@ -54,6 +61,7 @@ export function addPart(project,preset='box'){
     color:p?p.color:'#56abc5',visible:true,
     ...(p?{preset,fitVersion:0}:{}),note:''
   };
+  if(roleOf(project)==='dwarf'){item.position=[item.position[0]*.65,.23+(item.position[1]-.98)*.45,item.position[2]*.8];if(item.anchor==='Head')item.position[1]=.70+(p?.position[1]??1.7)-1.81;item.dimensions=item.dimensions.map(v=>Math.max(.01,v*.8));}
   project.parts.push(item);
   return item;
 }
@@ -79,8 +87,10 @@ export function mirrorPart(project,id){
 export function validateProject(data){
   if(!data||typeof data!=='object'||data.format!==FORMAT||data.version!==VERSION)throw Error('Inte ett Character Design Studio v2-projekt.');
   if(!['character','object'].includes(data.kind)||typeof data.name!=='string'||data.name.length>100)throw Error('Projektets typ eller namn är ogiltigt.');
-  const b=data.base||{};
-  if(!['male','female'].includes(b.gender)||!['analysts','counterAnalysts','hostage'].includes(b.team)||!PALETTES[b.template]||b.original_glb!=='quaternius-operator-'+b.gender+'.glb')throw Error('Okänd grundmodell.');
+  const b=data.base||{},dwarf=roleOf(data)==='dwarf';
+  if(data.kind==='character'){roleSelection(data);if(data.runtime&&data.runtime.version!==1)throw Error('Okänd rollversion.');}
+  if(!['male','female'].includes(b.gender)||!['analysts','counterAnalysts','hostage'].includes(b.team)||!PALETTES[b.template]||b.original_glb!==(dwarf?'procedural-dwarf-v1':'quaternius-operator-'+b.gender+'.glb'))throw Error('Okänd grundmodell.');
+  if(dwarf&&(!Number.isInteger(b.variant)||b.variant<0||b.variant>4||data.creative?.realism?.head==='scan'))throw Error('Dvärgens grundutseende måste vara 1–5; porträttskanningen hör till människoriggen.');
   if(!data.palette||Object.keys(PALETTES.analysts).some(key=>!cssColor(data.palette[key])))throw Error('Ogiltiga klädfärger.');
   if(!data.body||!finite(data.body.height,80,120)||!finite(data.body.width,80,120))throw Error('Kroppsreglagen är utanför tillåtet område.');
   bodyRegions(data.body); // Missing regional fields in older projects mean neutral (100%).
@@ -112,16 +122,17 @@ export function animationContract(project,availableClips=[],availableBones=[]){
   const character=project.kind==='character';
   return {
     schema:'cartridge-strike-fps-rig-contract-v1',kind:project.kind,
+    runtime_assignment:character?roleSelection(project):null,
     source_file:character?project.base.original_glb:null,
-    existing_game_character_import:'src/fps/character-library.mjs',
-    existing_game_actor_bridge:'src/fps/character-actors.mjs',
+    existing_game_character_import:'src/fps/character-library.mjs?v=6.1.0',
+    existing_game_actor_bridge:'src/fps/character-actors.mjs?v=6.1.0',
     studio_preview_file:'PREVIEW.glb',
     studio_preview_status:'Skinned design prototype with original clips; NOT gameplay-validated. Accessories may be rigid. Validate deformation, grip, collisions and materials before integration.',
     canonical_axes:{units:'meters',up:'+Y',front:'+Z',game_holder_rotation_y:'PI (the game turns actors to face -Z)'},
-    reference_height_m:character?1.69:null,
+    reference_height_m:character?(roleOf(project)==='dwarf'?.86:1.69):null,
     dimensions_multiplier:character?{height:project.body.height/100,width:project.body.width/100}:null,
     regional_body_shape_percent:character?bodyRegions(project.body):null,
-    required_animation_clips:character?[...REQUIRED_CLIPS]:[],
+    required_animation_clips:character?(roleOf(project)==='dwarf'?['Idle_Loop','Walk_Loop','Death01']:[...REQUIRED_CLIPS]):[],
     observed_animation_clips:character?[...availableClips]:[],
     observed_bone_names:character?[...availableBones]:[],
     attachment_rule:character?'Parts attached to named bones use neutral root coordinates in meters and rotation in degrees. Reconstruct each bone-local rest matrix; test animation and skinning.':'Object parts use world/root coordinates in meters. Choose a sensible origin, pivot and collision when integrating.',

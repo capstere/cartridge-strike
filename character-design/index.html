@@ -34,6 +34,9 @@
   </div>
   <div class="setup-fields">
     <label>Ge din design ett namn<input id="project-name" maxlength="100" value="Min FPS-karaktär" placeholder="T.ex. Nova, Polis, Maskot..."></label>
+    <label id="role-wrap">Roll i spelet<select id="actor-role"><option value="player">Spelkaraktär / lagbot</option><option value="hostage">Gisslan</option><option value="dwarf">Bot-dvärg</option></select></label>
+    <label id="target-wrap">Ersätt i spelet<select id="actor-target"></select></label>
+    <label id="dwarf-variant-wrap" hidden>Dvärgens grundutseende<select id="dwarf-variant"><option value="0">Dvärg 1 · blågrön</option><option value="1">Dvärg 2 · röd</option><option value="2">Dvärg 3 · ockra</option><option value="3">Dvärg 4 · grön</option><option value="4">Dvärg 5 · lila</option></select></label>
     <label id="gender-wrap">Grundkropp<select id="gender"><option value="male">Manlig rigg</option><option value="female">Kvinnlig rigg</option></select></label>
     <label id="template-wrap">Startstil<select id="template">
       <option value="analysts">Analysts (blå)</option>
@@ -176,7 +179,7 @@
       <option value="vest">Skyddsväst</option><option value="fieldjacket">Studiojacka · följsam krage</option>
      </select></label>
      <div class="print-grid">
-      <label>Skor<select id="shoe-style"><option value="boots">Kängor</option><option value="sneakers">Sneakers</option></select></label>
+      <label>Skor<select id="shoe-style"><option value="sneakers">Låga skor · ny modell</option><option value="boots" hidden>Äldre val · visas som nya låga skor</option></select></label>
       <label>Händer<select id="glove-style"><option value="original">Handskar</option><option value="skin">Bara händer</option></select></label>
       <label>Extra väst<input type="checkbox" id="vest-layer"></label>
       <label>Passform <output id="fit-value">100 %</output><input id="garment-fit" type="range" min="85" max="120" value="100"></label>
@@ -333,9 +336,11 @@
   </div>
  </section>
  <section class="panel export">
-  <div class="section-title"><div><p class="eyebrow">STEG 5 / EXPORTERA TILL BLENDER / SPEL</p><h2>Hämta din riktiga 3D-design</h2></div></div>
-  <p>Den stora exportknappen skapar en <strong>ZIP</strong> med hela den synliga, riggade designprototypen (PREVIEW.glb), filmanifest och originalets animerade GLB (för karaktärer), dina 3D-delar som prototyp-GLB, referensbilder, designprojekt och detaljerade instruktioner för en slutlig FPS-kompatibel karaktär.</p>
+  <div class="section-title"><div><p class="eyebrow">STEG 5 / SPARA DIN DESIGN & EXPORTERA FÖR SPELET</p><h2>Hämta din riktiga 3D-design</h2></div></div>
+  <p><strong>Exportera för spelet</strong> skapar en kontrollerad ZIP med din riggade modell, originalrörelser, designoriginal och vald spelplats. Skicka hela paketet för integration. Blender/SPEL-paketet finns kvar för friare prototyper och tygsimulering.</p>
+  <p id="role-export-summary" class="hint"></p>
   <div class="downloads">
+   <button id="export-runtime" class="primary hero-button" type="button">Exportera för spelet (.zip)</button>
    <button id="save-game-character" class="primary" type="button">Spara för spelet</button>
    <a href="../fps/">Öppna spelmenyn ↗</a>
    <button id="private-match" class="primary" type="button">Prova i privat match</button>
@@ -346,7 +351,7 @@
    <button id="copy-ai" type="button">Kopiera AI-instruktionen</button>
    <button id="print-sheet" type="button">Skriv ut / PDF</button>
   </div>
-  <p class="hint">Privat provmatch: Male med originalproportioner, T-shirt, sneakers, färger och eget tryck. Ny Male-pilot sparar ditt nuvarande projekt först. Designen finns bara i denna webbläsare. Förstapersonshänderna behåller spelets originalutseende.</p>
+  <p class="hint">Privat provmatch: Male med originalproportioner, T-shirt, sneakers, färger och eget tryck. Ny Male-pilot sparar ditt nuvarande projekt först. Designen finns bara i denna webbläsare. För andra roller och fria designer: använd Exportera för spelet. Skicka hela ZIP-paketet för integration. Ingen modell publiceras automatiskt.</p>
   <p id="export-help" class="hint">ZIP innehåller SPEL_SOURCE.glb, samma synliga riggade design som PREVIEW.glb, samt originalrigg, designprojekt och enkla Blender-instruktioner. SPEL kontrollerar själv om just denna modell är kompatibel för Procreate. Ingen automatisk spelpublicering.</p>
   <details><summary>Läs hela AI-instruktionen</summary><pre id="ai-prompt"></pre></details>
   <div class="model-downloads">
@@ -359,6 +364,6 @@
   <p class="credits">Quaternius originalkaraktärer och animationer: CC0 1.0 · <a href="../licenses/quaternius-characters-CC0.txt">Licens</a>. Designen ligger lokalt i webbläsaren tills du exporterar. Inga filer laddas upp av studion.</p>
  </section>
 </main>
-<script type="module" src="app.mjs?v=60"></script>
+<script type="module" src="app.mjs?v=6.1.0"></script>
 </body>
 </html>

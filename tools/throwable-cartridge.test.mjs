@@ -5,7 +5,7 @@ import { CONFIG } from '../src/fps/config.mjs';
 import { createThrowableCartridge, createThrownCartridge, updateThrownCartridge,
   disposeThrowableCartridges, CARTRIDGE_VISUAL } from '../src/fps/throwable-cartridge.mjs';
 import { cartridge, makeWeapon, disposeWeaponResources } from '../src/fps/model-primitives.mjs';
-import { Renderer } from '../src/fps/render-engine.mjs';
+import { Renderer } from '../src/fps/render-engine.mjs?v=6.1.0';
 
 const projectile = (id = 'test1', type = 'he') => ({ id, type, x: 3, y: 1.5, z: -2, vx: 4, vy: 3, vz: -8, radius: CONFIG.grenadeRadius, fuse: CONFIG.grenadeFuse });
 const meshes = model => { const found = []; model.traverse(o => { if (o.isMesh) found.push(o); }); return found; };

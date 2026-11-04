@@ -17,7 +17,7 @@ export async function verifySavedCharacterMenu(page,origin){
  await page.screenshot({path:'test-results/private-character/menu-narrow.png'});await page.setViewportSize({width:1280,height:900});
  await page.locator('#start').click();
  const check=async team=>page.evaluate(async team=>{
-  const r=__fps.renderer,g=__fps.game,{privateCharacterAppearance}=await import('../src/fps/character-library.mjs');__fps.render();
+  const r=__fps.renderer,g=__fps.game,{privateCharacterAppearance}=await import('../src/fps/character-library.mjs?v=6.1.0');__fps.render();
   if(g.team!==team)throw Error('Wrong team');const rows=g.actors.map(a=>({id:a.id,custom:!!r.actors.get(a.id).userData.avatar.privateDesign}));
   if(rows.filter(a=>a.custom).length!==1||!rows.find(a=>a.id===g.player.id).custom)throw Error('Appearance leaked to a bot or previous team');
   const me=r.actors.get(g.player.id).userData.avatar;if(me.bones.size!==65||me.clips.size!==13)throw Error('Rig/animations missing');

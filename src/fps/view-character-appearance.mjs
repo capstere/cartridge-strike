@@ -69,8 +69,19 @@ export function syncWeaponAppearance(model,profile){
   if(role==='kit-sleeve'){
    if(profile&&!item.privateUV){item.privateUV=item.uv.clone();for(let i=0;i<item.privateUV.count;i++)item.privateUV.setXY(i,.5,1-item.uv.getY(i)/6);}
    mesh.geometry.setAttribute('uv',profile?item.privateUV:item.uv);
-   mesh.userData.privateShortSleeves=!!profile;mesh.userData.last.fill(NaN);
+   mesh.userData.privateShortSleeves=!!profile&&profile.shortSleeves!==false;mesh.userData.last.fill(NaN);
   }
  }
  state.profile=profile;
+}
+
+/** Long- and short-sleeved exported designs share their actual material colours. */
+export function createRuntimeViewAppearance(asset,{shortSleeves=false}={}){
+ let shirt,hand,skin;asset.scene.traverse(o=>{if(!o.isMesh)return;const ms=Array.isArray(o.material)?o.material:[o.material];for(const m of ms){if(m.name==='jacket-fabric')shirt=m;if(m.name==='gloves-leather')hand=m;if(m.name==='face-skin')skin=m;}});
+ if(!shirt||!hand||!skin)throw Error('Spelkaraktären saknar hand-/ärmmaterial.');
+ // A short-sleeved export needs vertex/atlas matching; reuse its verified reader.
+ if(shortSleeves){const p=createPrivateViewAppearance(asset);p.shortSleeves=true;return p;}
+ const cloth=textureColor(shirt,.005,.005),glove=hand.clone(),sleeve=new T.MeshStandardMaterial({color:cloth,roughness:shirt.roughness,metalness:shirt.metalness});
+ glove.name='runtime-character-hands';sleeve.name='runtime-character-long-sleeves';for(const m of [glove,sleeve]){delete m.userData.ownedTexture;m.userData.sharedWeapon=true;}
+ return {glove,sleeve,shortSleeves:false,cloth:cloth.toArray(),skin:skin.color.toArray(),dispose(){glove.dispose();sleeve.dispose();}};
 }

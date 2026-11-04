@@ -1,7 +1,7 @@
-import {installSculptControls} from './sculpt-controls.mjs?v=53';
+import {installSculptControls} from './sculpt-controls.mjs?v=6.1.0';
 /** Small studio controller: reversible edits, layers and direct touch/mouse manipulation. */
 import * as T from '../vendor/three/three.module.js';
-import {ensureCreative} from './creative-schema.mjs?v=53';
+import {ensureCreative} from './creative-schema.mjs?v=6.1.0';
 const $=id=>document.getElementById(id),clamp=T.MathUtils.clamp;
 function copy(p){
  // Asset strings are immutable: share them across history entries rather than

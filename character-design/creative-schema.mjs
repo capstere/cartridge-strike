@@ -1,5 +1,5 @@
 import {newRealism,validateRealism} from './realism-schema.mjs?v=53';
-import {newSculpt,validateSculpt} from './sculpt-schema.mjs?v=53';
+import {newSculpt,validateSculpt} from './sculpt-schema.mjs?v=6.1.0';
 /** Extra creative options, backward-compatible with saved v2 design projects. */
 export const OUTFITS=Object.freeze({
  original:'Originaluniform',tshirt:'T-shirt',hoodie:'Hoodie',jacket:'Jacka med dragkedja',
@@ -27,7 +27,7 @@ export const FONT_STYLES=Object.freeze({sans:'Sans-serif',serif:'Serif',mono:'Mo
 export function makeCreative(){
  return {
   outfit:'original',hair:'original',sculpt:newSculpt(),realism:newRealism(),
-  fit:100,roughness:85,shoes:'boots',gloves:'original',vest:false,
+  fit:100,roughness:85,shoes:'sneakers',gloves:'original',vest:false,
   printTransform:{x:0,y:0,rotation:0,scale:100},
   face:{eyes:'Naturliga',eyebrows:'Naturliga',nose:'Naturlig',mouth:'Naturlig',jaw:'Naturlig',facialHair:'Ingen',freckles:'Nej',eyeColor:'#547a8d'},
   print:{text:'',color:'#ffffff',font:'sans',size:60,position:'front',

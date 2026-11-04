@@ -1,8 +1,11 @@
+import {getCharacterOverride,loadCharacterOverrides,clearCharacterOverrides} from './character-overrides.mjs?v=6.1.0';
+import {createRuntimeViewAppearance} from './view-character-appearance.mjs?v=6.1.0';
+import {makeFootwear} from './character-footwear.mjs?v=6.1.0';
 /** Authored CC0 skinned actors, loaded locally before the Start button enables.
  * Original models: Quaternius. Uniform geometry and rest-space retargeting are
  * reproducible in tools/characters/build_assets.py. This owns no game state.
  */
-import {createPrivateViewAppearance} from './view-character-appearance.mjs';
+import {createPrivateViewAppearance} from './view-character-appearance.mjs?v=6.1.0';
 import * as T from '../../vendor/three/three.module.js';
 import {RoundedBoxGeometry} from '../../vendor/three/addons/geometries/RoundedBoxGeometry.js';
 import {WEAPONS} from './config.mjs';
@@ -20,10 +23,10 @@ export function installCharacterTemplates(male,female){
  templates={male,female};
 }
 export async function loadCharacterLibrary(){
- if(templates)return;if(pending)return pending;
+ if(pending)return pending;if(templates)return;
  const loader=new GLTFLoader();
  pending=Promise.all(['male','female'].map(name=>loader.loadAsync(new URL(`../../assets/fps/models/quaternius-operator-${name}.glb`,import.meta.url).href)))
-  .then(([male,female])=>installCharacterTemplates(male,female)).catch(e=>{pending=null;throw new Error('Karaktärsmodellerna kunde inte laddas: '+e.message);});
+  .then(async([male,female])=>{installCharacterTemplates(male,female);await loadCharacterOverrides({male,female});}).catch(e=>{pending=null;templates=null;throw new Error('Karaktärsmodellerna kunde inte laddas: '+e.message);});
  return pending;
 }
 /** Clone the hierarchy AND each skeleton. Mesh buffers/textures remain shared. */
@@ -44,10 +47,12 @@ let fabric=null;
 const upperName=n=>/^(clavicle_|upperarm_|lowerarm_|hand_|thumb_|index_|middle_|ring_|pinky_)/.test(n);
 function upperClip(clip){return new T.AnimationClip('upper-'+clip.name,clip.duration,clip.tracks.filter(t=>upperName(t.name.split('.')[0])).map(t=>t.clone()));}
 function lowerClip(clip){return new T.AnimationClip('lower-'+clip.name,clip.duration,clip.tracks.filter(t=>!upperName(t.name.split('.')[0])).map(t=>t.clone()));}
-export function createAuthoredAvatar(team,id,isHostage=false){
- if(privateCharacterApplies(id)&&!isHostage)return createPrivateAvatar(id);
+export function createAuthoredAvatar(team,id,isHostage=false,options={}){
+ if(!options.ignoreOverrides&&privateCharacterApplies(id)&&!isHostage)return createPrivateAvatar(id);
+ const entry=!options.ignoreOverrides&&getCharacterOverride(isHostage?'hostage':'player',id);
+ if(entry)return createRoleAvatar(entry,id,isHostage);
  if(!templates)throw Error('Character library must be loaded before actor creation');
- const seed=hash(id),gender=seed%3===0?'female':'male',asset=templates[gender],root=cloneSkinned(asset.scene),materials=new Map(),ownedGeometry=[],bones=new Map(),meshes=[],shoes=[];
+ const seed=hash(id),gender=options.gender||(seed%3===0?'female':'male'),asset=templates[gender],root=cloneSkinned(asset.scene),materials=new Map(),ownedGeometry=[],bones=new Map(),meshes=[],shoes=[];
  const palette=isHostage?{shirt:0xe0e7e2,pants:0x334552,vest:0xe4e7df,trim:0x468e8c}:team==='analysts'?{shirt:0x22435e,pants:0x202c3b,vest:0x132d42,trim:0x5aa8cf}:{shirt:0x9b967c,pants:0x454c3b,vest:0x505b42,trim:0xc9ad65};
  fabric??=fabricTexture();
  root.traverse(o=>{
@@ -65,6 +70,7 @@ export function createAuthoredAvatar(team,id,isHostage=false){
    materials.set(o.material,m);
   }
   o.material=materials.get(o.material);
+  if(o.material.name==='boots-leather'){o.visible=false;o.userData.legacyFootwear=true;}
  });
  const standard=(color,roughness=.83,metalness=0)=>{const m=new T.MeshStandardMaterial({color,roughness,metalness});materials.set(m,m);return m;};
  const rubber=standard(0x161e24,.93),leather=standard(0x243039,.72),webbing=standard(palette.vest,.94),metal=standard(0x8b989c,.4,.65),trim=standard(palette.trim);
@@ -76,10 +82,10 @@ export function createAuthoredAvatar(team,id,isHostage=false){
  const box=(size,mat,pos,bone,name)=>attached(new T.BoxGeometry(...size),mat,new T.Vector3(...pos),bone,name);
  for(const side of ['l','r']){
   const foot=bones.get('foot_'+side),p=restPosition(foot),x=p.x;
-  const sole=attached(new RoundedBoxGeometry(.134,.035,.255,2,.012),rubber,new T.Vector3(x,.024,.044),foot,'boot-sole-'+side);
-  attached(new RoundedBoxGeometry(.13,.105,.23,2,.028),leather,new T.Vector3(x,.083,.044),foot,'boot-shell-'+side);
-  attached(new RoundedBoxGeometry(.113,.16,.125,2,.025),leather,new T.Vector3(x,.17,-.009),foot,'boot-shaft-'+side);
-  for(let i=0;i<3;i++)box([.075,.006,.007],rubber,[x,.139,.025+i*.022],foot,'boot-lace');
+  const footwear=makeFootwear();
+  const sole=attached(footwear.sole,rubber,new T.Vector3(x,0,0),foot,'boot-sole-'+side);
+  const upper=attached(footwear.upper,leather,new T.Vector3(x,0,0),foot,'shoe-upper-'+side);
+  sole.userData.footwear='low-profile-v1';upper.userData.footwear='low-profile-v1';
   sole.geometry.computeBoundingBox();shoes.push(sole);
  }
  const pelvis=bones.get('pelvis'),chest=bones.get('spine_03'),head=bones.get('Head');
@@ -134,7 +140,23 @@ export function installPrivateCharacter(asset){
 }
 export function setPrivateCharacterActors(ids){privateActorIds=new Set(ids);}
 export function privateCharacterApplies(id){return !!privateCharacter&&privateActorIds.has(id);}
-export function privateCharacterAppearance(id){return privateCharacterApplies(id)?privateViewAppearance:null;}
+export function privateCharacterAppearance(id){
+ if(privateCharacterApplies(id))return privateViewAppearance;
+ const entry=getCharacterOverride('player',id);if(!entry)return null;
+ return entry.viewAppearance??=createRuntimeViewAppearance(entry.asset,entry.contract.view);
+}
+export function characterVisualSignature(team,id){
+ if(team&&privateCharacterApplies(id))return 'private';
+ return getCharacterOverride(team?'player':'hostage',id)?.signature||'original';
+}
+function createRoleAvatar(entry,id,isHostage){
+ const asset=entry.asset,root=cloneSkinned(asset.scene),bones=new Map(),materials=new Map(),meshes=[],shoes=[];
+ root.traverse(o=>{if(o.isBone)bones.set(o.name,o);if(!o.isMesh)return;meshes.push(o);o.frustumCulled=false;o.receiveShadow=true;
+ const own=m=>{if(!materials.has(m)){const c=m.clone();delete c.userData.ownedTexture;materials.set(m,c);}return materials.get(m);};o.material=Array.isArray(o.material)?o.material.map(own):own(o.material);
+ if(o.name.startsWith('boot-sole-')){o.geometry.computeBoundingBox();shoes.push(o);}});
+ const state=finishAvatar({asset,root,bones,materials,meshes,shoes,seed:hash(id),gender:entry.contract.gender,ownedGeometry:[],isHostage,normalize:false});
+ state.overrideSignature=entry.signature;state.roleDesign=true;return state;
+}
 function createPrivateAvatar(id){
  const asset=privateCharacter,root=cloneSkinned(asset.scene),bones=new Map(),materials=new Map(),meshes=[],shoes=[];
  root.traverse(o=>{
@@ -221,7 +243,7 @@ export function disposeAvatar(state){
  state.root.traverse(o=>{if(o.isSkinnedMesh)o.skeleton.dispose();});for(const m of new Set(state.materials.values())){m.userData.ownedTexture?.dispose();m.dispose();}for(const g of state.ownedGeometry)g.dispose();live.delete(state);
 }
 export function disposeCharacterLibrary(){
- privateViewAppearance?.dispose();privateViewAppearance=null;
+ clearCharacterOverrides();privateViewAppearance?.dispose();privateViewAppearance=null;
  for(const state of [...live])disposeAvatar(state);const geometries=new Set(),materials=new Set(),textures=new Set();
  if(templates)for(const asset of [...Object.values(templates),privateCharacter].filter(Boolean))asset.scene.traverse(o=>{if(o.geometry)geometries.add(o.geometry);if(o.material)materials.add(o.material);});
  for(const m of materials){for(const value of Object.values(m))if(value?.isTexture)textures.add(value);m.dispose();}for(const g of geometries)g.dispose();for(const t of textures)t.dispose();fabric?.dispose();fabric=null;templates=null;pending=null;privateCharacter=null;

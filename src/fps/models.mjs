@@ -1,5 +1,5 @@
 import {kitWeapon} from './strike-kit-timing.mjs';
-import {makeKitWeapon,animateKitWeapon,disposeKitModels} from './strike-kit-models.mjs';
+import {makeKitWeapon,animateKitWeapon,disposeKitModels} from './strike-kit-models.mjs?v=6.1.0';
 import {upgradeViewSurfaces,disposeViewSurfaces} from './view-surface.mjs';
 /** Public model API: original meshes/mechanisms + read-only presentation upgrades.
  * model-primitives.mjs retains existing mechanisms and adds the fictional bazooka.
@@ -33,8 +33,8 @@ export function animateWeapon(model,actor,time,dt,options={}) {
   }
   return pose;
 }
-import {charactersReady} from './character-library.mjs';
-import {upgradeActor,syncAuthoredActor,authoredCorpse} from './character-actors.mjs';
+import {charactersReady} from './character-library.mjs?v=6.1.0';
+import {upgradeActor,syncAuthoredActor,authoredCorpse} from './character-actors.mjs?v=6.1.0';
 
 export function makeActor(team,id,isHostage=false) {
   const model=primitiveActor(team,id,isHostage);

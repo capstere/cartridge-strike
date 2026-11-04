@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newMatchPilot,validateMatchPilot} from './private-match.mjs';
+import {newMatchPilot,validateMatchPilot} from './private-match.mjs?v=6.1.0';
 import {inspectPrivateGLB,validCharacterId,MAX_CHARACTER_BYTES} from '../src/fps/private-character-store.mjs';
 test('pilot preserves user project and rejects unverified combinations before export',()=>{
  const p=newMatchPilot();p.creative.print.text='MIN DESIGN';p.palette.jacket='#abcdef';const before=JSON.stringify(p);assert.equal(validateMatchPilot(p),p);assert.equal(JSON.stringify(p),before);
@@ -16,6 +16,6 @@ test('saving an untouched head adds metadata but does not make it sculpted',()=>
 });
 
 test('exposed arm colour samples the original atlas with glTF UV orientation and tint',async()=>{
- const {skinColorAt}=await import('./fashion-preview.mjs');const T=await import('../vendor/three/three.module.js');const pixels={width:1,height:2,data:new Uint8Array([128,64,32,255,240,200,180,255])},tint=new T.Color(.8,.7,.6);
+ const {skinColorAt}=await import('./fashion-preview.mjs?v=6.1.0');const T=await import('../vendor/three/three.module.js');const pixels={width:1,height:2,data:new Uint8Array([128,64,32,255,240,200,180,255])},tint=new T.Color(.8,.7,.6);
  const expected=new T.Color().setRGB(128/255,64/255,32/255,T.SRGBColorSpace).multiply(tint);assert(skinColorAt(pixels,.5,0,false,tint).equals(expected));assert(skinColorAt(pixels,.5,1,true,tint).equals(expected));
 });

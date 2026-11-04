@@ -1,7 +1,8 @@
+import {dwarfPoint} from './dwarf-fit.mjs?v=6.1.0';
 import * as T from '../vendor/three/three.module.js';
 import {heightNormal} from './surface-textures.mjs?v=53';
 import {ClothSolver} from './cloth-solver.mjs?v=53';
-import {skinMatrix} from './sculpt-engine.mjs?v=53';
+import {skinMatrix} from './sculpt-engine.mjs?v=6.1.0';
 import {FABRICS} from './realism-schema.mjs?v=53';
 export function fabricMaterial(color,type='cotton'){
  const f=FABRICS[type],canvas=document.createElement('canvas');canvas.width=canvas.height=128;const c=canvas.getContext('2d');c.fillStyle='#808080';c.fillRect(0,0,128,128);for(let y=0;y<128;y+=4)for(let x=0;x<128;x+=4){c.fillStyle=(x+y)%8?'#929292':'#696969';c.fillRect(x,y,type==='denim'?3:2,3);}
@@ -22,6 +23,7 @@ export class ClothPreview{
    uv.push(u,1-v);const i=row*(cols+1)+col;if(row===0)pins.push(i);
    if(col<cols)edges.push([i,i+1]);if(row<rows)edges.push([i,i+cols+1]);if(col<cols&&row<rows){edges.push([i,i+cols+2],[i+1,i+cols+1]);indices.push(i,i+1,i+cols+1,i+1,i+cols+2,i+cols+1);}if(row<rows-1)edges.push([i,i+2*(cols+1),25]);if(col<cols-1)edges.push([i,i+2,25]);
   }
+  if(avatar.isDwarf)for(let i=0;i<vertices.length;i+=3)vertices.splice(i,3,...dwarfPoint(vertices.slice(i,i+3)));
   const g=new T.BufferGeometry();g.setAttribute('position',new T.Float32BufferAttribute(vertices,3));g.setAttribute('uv',new T.Float32BufferAttribute(uv,2));g.setIndex(indices);const js=new Uint16Array(vertices.length/3*4),ws=new Float32Array(js.length);
   // Transfer nearby original clothing weights; no new skeleton or animation names.
   for(let i=0;i<vertices.length/3;i++){let best=0,distance=Infinity;for(let k=0;k<base.length/3;k++){const d=(base[k*3]-vertices[i*3])**2+(base[k*3+1]-vertices[i*3+1])**2+(base[k*3+2]-vertices[i*3+2])**2;if(d<distance){distance=d;best=k;}}for(let k=0;k<4;k++){js[i*4+k]=source.geometry.attributes.skinIndex.getComponent(best,k);ws[i*4+k]=source.geometry.attributes.skinWeight.getComponent(best,k);}}
