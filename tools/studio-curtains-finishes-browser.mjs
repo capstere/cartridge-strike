@@ -81,8 +81,12 @@ try {
   const buf=readFileSync(await (await downloaded).path());
   await page.locator('#open').setInputFiles({name:'floor5-materials.zip',mimeType:'application/zip',buffer:buf});
   await page.waitForFunction(()=>document.querySelector('#status').textContent.startsWith('Projektet öppnat'));
-  const restored=await get();assert.equal(restored.validation.engine.ran,true);
-  before.validation=restored.validation;assert.deepEqual(restored,before,'ZIP preserves design; save adds validation');
+  const restored=await get();
+  // Since 5.7.2 ordinary saving validates source data, not game playability.
+  // Keep the real FPS rendering checks below; do not mark this save engine-tested.
+  assert.equal(restored.validation.engine.ran,false,'Saving must not claim an engine test');
+  assert.equal(restored.validation.engine.navigationSpacing,null);
+  before.validation=restored.validation;assert.deepEqual(restored,before,'ZIP preserves design; save refreshes source-only validation');
   await page.locator('#threeView').click();
   await page.locator('#walkView').click();
   await page.waitForFunction(()=>!!document.querySelector('#walkFrame').contentWindow.__walk?.renderer?.scene,{timeout:90000});

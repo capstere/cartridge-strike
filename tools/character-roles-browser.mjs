@@ -29,9 +29,19 @@ try{
   await page.locator('[data-tab="parts"]').click();await page.locator('#part-type').selectOption(v.part);await page.locator('#add-part').click();
   assert.equal(await page.locator('#pose option').count(),v.role==='dwarf'?3:11);
   await page.locator('#pose').selectOption('Walk_Loop');await page.locator('#play').click();await page.waitForTimeout(120);await page.locator('#play').click();
-  await page.locator('#export-runtime').scrollIntoViewIfNeeded();const download=page.waitForEvent('download');await page.locator('#export-runtime').click();
-  // A failed export must be actionable instead of waiting forever for a download.
-  const d=await Promise.race([download,page.waitForFunction(()=>document.querySelector('#status').textContent.startsWith('Direkt spelexport stoppades')).then(async()=>{throw Error(await page.locator('#status').innerText());})]);
+  await page.locator('#export-runtime').scrollIntoViewIfNeeded();
+  // Observe both outcomes without leaving an error poll alive after a download.
+  // A losing waitForFunction in Promise.race survives navigation to /fps/, where
+  // #status does not exist; those test-generated exceptions masked real results.
+  const download=page.waitForEvent('download').then(value=>({value}),error=>({error}));
+  await page.locator('#export-runtime').click();
+  await page.waitForFunction(()=>{
+   const main=document.querySelector('main'),status=document.querySelector('#status');
+   return main&&!main.inert&&/^(Spelpaket klart:|Direkt spelexport stoppades:)/.test(status?.textContent||'');
+  });
+  const exportStatus=await page.locator('#status').innerText();
+  if(exportStatus.startsWith('Direkt spelexport stoppades:'))throw Error(exportStatus);
+  const result=await download;if(result.error)throw result.error;const d=result.value;
   const zip=await readFile(await d.path()),read=await readRuntimePackage(zip);assert.equal(read.contract.role,v.role);assert.equal(read.contract.target,v.target);
   const report=JSON.parse(new TextDecoder().decode(read.files.get('COMPATIBILITY.json')));assert(report.sourceAnimationsPreserved);assert(report.finitePosedGeometry);assert.equal(report.clips.length,v.role==='dwarf'?3:13);if(v.role==='player')assert(report.firstPersonMaterialsMatched);
   const file=`assets/fps/custom-characters/${read.contract.sha256}.glb`;models.set(read.contract.sha256+'.glb',Buffer.from(read.bytes));registry.characters.push({file,contract:read.contract});
