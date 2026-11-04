@@ -3,8 +3,8 @@
  * used by the editor for actual placement. Highlights never create colliders.
  */
 import {wallFootprint} from './model-alignment.mjs?v=5.8.0';
-import {inferPlacementRole,proposeSmartPose} from './smart-placement.mjs?v=5.8.0';
-import {mountedSurface} from './furniture-surfaces.mjs?v=5.8.0';
+import {inferPlacementRole,proposeSmartPose} from './smart-placement.mjs?v=5.8.1';
+import {mountedSurface} from './furniture-surfaces.mjs?v=5.8.1';
 
 const finite=n=>typeof n==='number'&&Number.isFinite(n);
 const normalWall=w=>w&&!w.deleted&&w.kind==='wall';

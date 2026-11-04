@@ -11,8 +11,8 @@ import {EDITOR_VERSION,GAME_VERSION,BASE_COMMIT,DEFAULT_ROOMS,ROOM_LABELS,
 import {LIBRARY_ALL as LIBRARY,LIBRARY_MAP,LIBRARY_CATEGORIES} from './library/catalog.mjs?v=5.8.0';
 import {populateProcedural} from './library/procedural-mesh.mjs?v=5.8.0';
 import {proceduralOf,placementRole} from './library/procedural.mjs?v=5.8.0';
-import {proposeSmartPose,findSupport,inferPlacementRole} from './smart-placement.mjs?v=5.8.0';
-import {furnitureSurfaces} from './furniture-surfaces.mjs?v=5.8.0';
+import {proposeSmartPose,findSupport,inferPlacementRole} from './smart-placement.mjs?v=5.8.1';
+import {furnitureSurfaces} from './furniture-surfaces.mjs?v=5.8.1';
 import {poseOnWall,syncWallMounts,applyFurnitureAssemblyPose} from './wall-mounts.mjs?v=5.8.0';
 import {applyFurnitureAppearance} from './build/project-visuals.mjs?v=5.8.0';
 import {addModelToGroup,importLocalGLB,localLibrary,getLocalFile} from './library/models.mjs?v=5.8.0';

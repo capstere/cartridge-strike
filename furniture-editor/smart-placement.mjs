@@ -7,7 +7,7 @@ import {placementRole,proceduralOf} from './library/procedural.mjs?v=5.8.0';
 import {LIBRARY_MAP} from './library/catalog.mjs?v=5.8.0';
 import {findWallMount,wallMountProblem} from './wall-mounts.mjs?v=5.8.0';
 import {round,normalizeAngle} from './core.mjs?v=5.8.0';
-import {furnitureSurfaces} from './furniture-surfaces.mjs?v=5.8.0';
+import {furnitureSurfaces,footprintOnSurface} from './furniture-surfaces.mjs?v=5.8.1';
 
 const isSurface=o=>!o.deleted&&(!o.wallMount||proceduralOf(o)?.shape==='wall-shelf'&&Math.abs(o.wallRoll||0)<1e-6)&&(
  ['counter','desk','table','round','wall-shelf'].includes(proceduralOf(o)?.shape)||
@@ -48,12 +48,21 @@ export function findSupport(item,point,objects,{radius=.38,role=inferPlacementRo
   if(surface.id===item.id||(!shelves.length&&!isSurface(surface)))continue;
   if(role==='desk-edge'&&!['desk','table'].includes(surface.kind)&&proceduralOf(surface)?.shape!=='desk')continue;
   const profiles=shelves.length?shelves:[{x:0,z:0,y:surface.height-.008,width:surface.w,depth:surface.d}];
+  // Align a new placement to the support, but keep the user's heading when sliding it.
+  const sameSupport=item.mountId===surface.id;
+  const yaw=sameSupport&&Number.isFinite(item.yaw)?item.yaw:surface.yaw;
+  const footprint=footprintOnSurface(item,yaw-surface.yaw);
   for(const profile of profiles){
   if(profile.clearance!==null&&Number.isFinite(profile.clearance)&&item.height>profile.clearance)continue;
-  const where=local(surface,point.x,point.z),allowW=(profile.width-item.w)/2+(shelves.length?0:.08),allowD=(profile.depth-item.d)/2+(shelves.length?0:.06);
+  const marginX=shelves.length?0:.08,marginZ=shelves.length?0:.06;
+  const minAllowance=shelves.length?0:-.12;
+  // Check the same nominal fit as for a newly placed item. Its user-chosen
+  // heading affects how close its footprint can slide to the edges.
+  if((profile.width-item.w)/2+marginX<minAllowance||(profile.depth-item.d)/2+marginZ<minAllowance)continue;
+  const allowW=(profile.width-footprint.width)/2+marginX;
+  const allowD=(profile.depth-footprint.depth)/2+marginZ;
+  const where=local(surface,point.x,point.z);
   where.x-=profile.x;where.z-=profile.z;
-  if(shelves.length&&(allowW<0||allowD<0))continue;
-  if(allowW<-.12||allowD<-.12)continue;
   if(Math.abs(where.x)>Math.max(.08,allowW)+radius||Math.abs(where.z)>Math.max(.08,allowD)+radius)continue;
   const target=role==='desk-edge'?
    global(surface,profile.x+Math.max(-Math.max(0,allowW),Math.min(Math.max(0,allowW),where.x)),profile.z+profile.depth*.42):
@@ -68,7 +77,7 @@ export function findSupport(item,point,objects,{radius=.38,role=inferPlacementRo
    item.mountId===surface.id&&Number.isInteger(item.mountSurface)?Math.abs(item.mountSurface-profile.index):
    (shelves.length-1-profile.index)*.04):0;
   const priority=dist+levelPriority+Math.abs(point.x-surface.x)*.002;
-  if(priority<score){score=priority;best={...target,yaw:surface.yaw,
+  if(priority<score){score=priority;best={...target,yaw,
    mountId:surface.id,mountSurface:profile.index??null,elevation:round(elevation),snapRole:role};}
   }
  }

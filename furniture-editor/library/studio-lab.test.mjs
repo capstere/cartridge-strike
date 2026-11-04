@@ -75,6 +75,19 @@ test('scaled and elevated shelf profiles clamp shoes to their physical usable su
  assert.equal(proposeSmartPose(shoe,{x:rack.x,z:rack.z},[{...rack,deleted:true}]).mountId,null);
 });
 
+test('sliding turned shoes on an angled rack respects their actual footprint and shelf level',()=>{
+ const rack=item('studio:shoe-rack-black',1,{yaw:Math.PI/2});
+ const shoe=item('studio:shoes',2,{yaw:Math.PI,mountId:rack.id,mountSurface:1});
+ const pose=proposeSmartPose(shoe,{x:rack.x,z:rack.z-.45},[rack]);
+ assert.equal(pose.mountId,rack.id);assert.equal(pose.mountSurface,1);
+ close(pose.yaw,shoe.yaw);close(pose.elevation,.36);
+ // Rotated a quarter turn relative to the rack, the depth spans its width.
+ close(rack.z-pose.z,(.92-shoe.d)/2,.001);
+ const other={...rack,id:'other-rack',x:8,yaw:0};
+ const moved=proposeSmartPose(shoe,{x:other.x,z:other.z},[rack,other]);
+ assert.equal(moved.mountId,other.id);close(moved.yaw,other.yaw);
+});
+
 test('wall shoe shelf mounts on the wall and supports shoes at its actual upper face',()=>{
  const [shelf,shoe]=wallAssembly();
  assert.equal(inferPlacementRole(shelf),'wall');assert(shelf.wallMount);assert.equal(shelf.collision,'none');
