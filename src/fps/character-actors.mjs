@@ -1,6 +1,6 @@
 /** Bridges the authored skin to the unchanged game actor and weapon mechanisms. */
 import * as T from '../../vendor/three/three.module.js';
-import {createAuthoredAvatar,animateAuthored,posedBounds,privateCharacterApplies,disposeAvatar} from './character-library.mjs';
+import {createAuthoredAvatar,animateAuthored,posedBounds,privateCharacterApplies,characterVisualSignature,disposeAvatar} from './character-library.mjs?v=6.1.0';
 import {WEAPONS} from './config.mjs';
 const V=()=>new T.Vector3(),Q=()=>new T.Quaternion();
 export function upgradeActor(model,team,id,isHostage){
@@ -13,7 +13,7 @@ export function upgradeActor(model,team,id,isHostage){
 }
 /** A team change only replaces the cosmetic avatar; game actors and sockets survive. */
 export function refreshActorCharacter(model,team,id){
- const d=model.userData,old=d.avatar;if(!old||!!old.privateDesign===privateCharacterApplies(id))return;
+ const d=model.userData,old=d.avatar;if(!old||(old.privateDesign?'private':old.overrideSignature||'original')===characterVisualSignature(team,id))return;
  const next=createAuthoredAvatar(team||'hostage',id,!team);
  old.holder.removeFromParent();disposeAvatar(old);d.avatar=next;d.frame.add(next.holder);d.fall=null;
 }

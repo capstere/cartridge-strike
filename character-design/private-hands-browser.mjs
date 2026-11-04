@@ -2,7 +2,7 @@
 import assert from 'node:assert/strict';
 export async function verifyPrivateHands(page){
  const report=await page.evaluate(async()=>{
-  const {privateCharacterAppearance}=await import('../src/fps/character-library.mjs');
+  const {privateCharacterAppearance}=await import('../src/fps/character-library.mjs?v=6.1.0');
   const {WEAPONS}=await import('../src/fps/config.mjs');
   const profile=privateCharacterAppearance('analysts-0'),r=__fps.renderer;let g=__fps.game;
   const hand=[];r.actors.get('analysts-0').userData.avatar.root.traverse(o=>{if(o.material?.name==='gloves-leather')hand.push(o.material.color.toArray());});

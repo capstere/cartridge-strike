@@ -1,3 +1,5 @@
+import {getCharacterOverride} from './character-overrides.mjs?v=6.1.0';
+import {createDwarfAvatar,animateDwarf} from './dwarf-rig.mjs?v=6.1.0';
 /** Bounded cosmetic effects and adult fantasy dwarfs; reads authoritative hit/death state; never writes game state. */
 import {smoothstep} from './riposte-fps-math.mjs';
 import * as T from '../../vendor/three/three.module.js';
@@ -73,17 +75,18 @@ export class ActionVisuals{
   const s=game.state,t=s.time;if(t<this.time)this.clear();this.time=t;
   const ids=new Set();
   for(const a of s.wanderers||[]){
-   ids.add(a.id);let model=this.dwarfs.get(a.id);if(!model){model=cloneDwarf(this.templates[a.variant]);this.root.add(model);this.dwarfs.set(a.id,model);}
+   ids.add(a.id);let model=this.dwarfs.get(a.id);if(!model){const entry=getCharacterOverride('dwarf',a.id,a.variant);if(entry){const avatar=createDwarfAvatar(entry.asset);model=avatar.holder;model.userData.roleAvatar=avatar;model.userData.contract=entry.contract;}else model=cloneDwarf(this.templates[a.variant]);this.root.add(model);this.dwarfs.set(a.id,model);}
    model.visible=game.config.wanderers&&Math.hypot(camera.position.x-a.x,camera.position.z-a.z)<30;
    if(!model.visible)continue;
-   model.position.set(a.x,a.y||0,a.z);model.rotation.set(0,a.yaw||0,0);
+   model.position.set(a.x,a.y||0,a.z);model.rotation.set(0,(a.yaw||0)+(model.userData.roleAvatar?Math.PI:0),0);
+   if(model.userData.roleAvatar){animateDwarf(model.userData.roleAvatar,a,t);if(a.alive===false){model.position.y+=.1*smoothstep(0,.55,t-a.deathAt);model.visible=t-a.deathAt<9;}continue;}
    if(a.alive===false){const fall=smoothstep(0,.55,t-a.deathAt);model.rotation.z=fall*1.45;model.position.y=.10*fall;model.visible=t-a.deathAt<9;continue;}
    const wave=Math.sin(a.steps*13),moving=a.moving>.03?1:0;
    model.userData.legs.forEach((p,i)=>p.rotation.x=wave*(i?-1:1)*.42*moving);
    model.userData.arms.forEach((p,i)=>p.rotation.x=-wave*(i?-1:1)*.30*moving);
    model.userData.torso.position.y=moving?Math.abs(wave)*.012:Math.sin(t*1.6+a.variant)*.004;
   }
-  for(const[id,m]of this.dwarfs)if(!ids.has(id)){this.root.remove(m);this.dwarfs.delete(id);}
+  for(const[id,m]of this.dwarfs)if(!ids.has(id)){this.disposeDwarf(m);this.dwarfs.delete(id);}
   const rocketIds=new Set();
   for(const r of s.projectiles||[]){
    rocketIds.add(r.id);let mesh=this.rockets.get(r.id);if(!mesh){mesh=new T.Mesh(this.rocketGeometry,this.rocketMaterial);this.root.add(mesh);this.rockets.set(r.id,mesh);}
@@ -97,6 +100,7 @@ export class ActionVisuals{
   this.puffs.count=i;this.puffs.instanceMatrix.needsUpdate=true;if(this.puffs.instanceColor)this.puffs.instanceColor.needsUpdate=true;
   this.light.intensity=Math.max(0,(this.lightUntil-t)/.32)*13;
  }
- clear(){for(const m of this.rockets.values())this.root.remove(m);this.rockets.clear();for(const m of this.dwarfs.values())this.root.remove(m);this.dwarfs.clear();this.particles=[];this.puffs.count=0;this.light.intensity=0;this.lightUntil=-1;}
+ disposeDwarf(model){model.removeFromParent();const a=model.userData.roleAvatar;if(a){a.mixer.stopAllAction();a.mixer.uncacheRoot(a.root);a.root.traverse(n=>{if(n.isSkinnedMesh)n.skeleton.dispose();});for(const m of a.materials.values())m.dispose();}}
+ clear(){for(const m of this.rockets.values())this.root.remove(m);this.rockets.clear();for(const m of this.dwarfs.values())this.disposeDwarf(m);this.dwarfs.clear();this.particles=[];this.puffs.count=0;this.light.intensity=0;this.lightUntil=-1;}
  dispose(){this.clear();this.root.removeFromParent();const geos=new Set(),mats=new Set();for(const t of this.templates)t.traverse(o=>{if(o.isMesh){geos.add(o.geometry);mats.add(o.material);}});geos.forEach(g=>g.dispose());mats.forEach(m=>m.dispose());this.map.dispose();this.puffMaterial.dispose();this.puffs.geometry.dispose();this.puffs.dispose();this.rocketGeometry.dispose();this.rocketMaterial.dispose();}
 }

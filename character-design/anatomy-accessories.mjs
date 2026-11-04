@@ -204,7 +204,7 @@ export function fitAccessory(part,avatar){
   part.position=pos.toArray();part.dimensions=[.071,.028,.071];part.rotation=[e.x,e.y,e.z].map(x=>x*180/Math.PI);part.anchor='hand_'+side;
  }else if(type==='hair'||type==='beard'){
   const group=makeAccessory(type,part.color,avatar),b=group.userData.nativeBounds;part.position=b.center;part.dimensions=b.size.map(v=>Math.max(.01,v));part.anchor='Head';part.rotation=[0,0,0];disposeAccessory(group);
- }else if(spec){Object.assign(part,spec);part.rotation=[0,0,0];}
+ }else if(spec){if(avatar.isDwarf&&['backpack','badge'].includes(type)){spec.position[1]=type==='backpack'?.36:.39;spec.position[2]=type==='backpack'?-.14:.11;spec.dimensions=spec.dimensions.map(v=>Math.max(.01,v*.7));}Object.assign(part,spec);part.rotation=[0,0,0];}
  part.fitVersion=1;part.followsFace=true;return part;
 }
 export function disposeAccessory(root){const geometries=new Set(),materials=new Set();root.traverse(m=>{if(m.geometry)geometries.add(m.geometry);if(m.material)for(const mat of [m.material].flat())materials.add(mat);});for(const g of geometries)g.dispose();for(const m of materials)m.dispose();}

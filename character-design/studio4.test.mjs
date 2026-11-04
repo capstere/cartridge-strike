@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newProject,validateProject,addPart,mirrorPart,animationContract} from './project-schema.mjs';
-import {ensureCreative} from './creative-schema.mjs';
+import {newProject,validateProject,addPart,mirrorPart,animationContract} from './project-schema.mjs?v=6.1.0';
+import {ensureCreative} from './creative-schema.mjs?v=6.1.0';
 import {packZip} from './zip-export.mjs';
 test('v3 projects gain layer/print controls without losing existing creative decisions',()=>{
  const p=newProject();p.creative.hair='ponytail';delete p.creative.fit;delete p.creative.printTransform;

@@ -1,13 +1,14 @@
+import {dwarfPoint,dwarfJacket} from './dwarf-fit.mjs?v=6.1.0';
 /** Studio-only edits to cloned skinned geometry. Original assets/runtime stay untouched. */
 import * as T from '../vendor/three/three.module.js';
-import {makeHair,makeBeard} from './anatomy-accessories.mjs?v=53';
-import {anatomy} from './anatomy-accessories.mjs?v=53';
+import {makeHair,makeBeard} from './anatomy-accessories.mjs?v=6.1.0';
+import {anatomy} from './anatomy-accessories.mjs?v=6.1.0';
 import {makeStudioHair,makeStudioJacket,makeSkinnedHoodieShell} from './studio-foundation.mjs?v=60';
 import {applyBodyRegions,bodyRegions} from './body-proportions.mjs';
-import {makeFiberHair} from './fiber-hair.mjs?v=53';
-import {fabricMaterial} from './cloth-preview.mjs?v=53';
+import {makeFiberHair} from './fiber-hair.mjs?v=6.1.0';
+import {fabricMaterial} from './cloth-preview.mjs?v=6.1.0';
 import {FABRICS} from './realism-schema.mjs?v=53';
-import {makeCreative} from './creative-schema.mjs?v=53';
+import {makeCreative} from './creative-schema.mjs?v=6.1.0';
 const clamp=T.MathUtils.clamp;
 // The Quaternius clothing regions retain the original body-atlas UVs. Sample
 // that atlas before shirt artwork replaces the UVs, so exposed arms match skin.
@@ -54,7 +55,7 @@ export class FashionPreview{
   const chest=avatar.bones.get('spine_03'),head=avatar.bones.get('Head');
   const standard=color=>new T.MeshStandardMaterial({color,roughness:(c.roughness??85)/100});
   const solid=(g,color,name,pos,scale,bone=head,rotation=null)=>{
-   const m=new T.Mesh(g,standard(color));m.name='creative-'+name;m.position.fromArray(pos);m.position.y+=headShift;
+   const m=new T.Mesh(g,standard(color));m.name='creative-'+name;m.position.fromArray(avatar.isDwarf&&bone!==head?dwarfPoint(pos):pos);if(!avatar.isDwarf||bone===head)m.position.y+=headShift;
    if(scale)m.scale.fromArray(scale);if(rotation)m.rotation.set(...rotation);
    avatar.root.add(m);avatar.root.updateWorldMatrix(true,true);bone?.attach(m);this.parts.push(m);return m;
   };
@@ -74,12 +75,12 @@ export class FashionPreview{
      // Torso fit changes silhouette without moving wrist or hand attachments.
      const torso=1-clamp((Math.abs(x)-.17)/.15,0,1);
      pos.setXYZ(i,x*(1+(fit-1)*torso),y,z*(1+(fit-1)*torso));
-     if(c.outfit==='labcoat'&&y<1.18&&Math.abs(x)<.24)pos.setY(i,y-.25*clamp((1.18-y)/.26,0,1));
+     if(c.outfit==='labcoat'){if(avatar.isDwarf&&y<.34&&Math.abs(x)<.13)pos.setY(i,y-.08*clamp((.34-y)/.13,0,1));else if(!avatar.isDwarf&&y<1.18&&Math.abs(x)<.24)pos.setY(i,y-.25*clamp((1.18-y)/.26,0,1));}
     }
     // Short sleeves reveal skin using vertex colour on the original weighted arms.
     const colors=new Float32Array(pos.count*3),tint=new T.Color(p.skin),white=new T.Color(0xffffff),originalUV=this.originalUVs.get(mesh);
     for(let i=0;i<pos.count;i++){
-     const exposed=['tshirt','polo','vest'].includes(c.outfit)&&Math.abs(source[i*3])>.37;
+     const exposed=['tshirt','polo','vest'].includes(c.outfit)&&(avatar.isDwarf?Math.abs(source[i*3])>.13&&source[i*3+1]<.35:Math.abs(source[i*3])>.37);
      const skin=exposed&&atlas&&originalUV?skinColorAt(atlas,originalUV.getX(i),originalUV.getY(i),skinTexture.flipY,tint):tint.clone();
      (exposed?skin:white).toArray(colors,i*3);
     }
@@ -119,7 +120,8 @@ export class FashionPreview{
    if(/fabric|vest/.test(name)){mesh.material.roughness=(c.roughness??85)/100; if(c.realism?.fabric&&c.realism.fabric!=='original')mesh.material.roughness=FABRICS[c.realism?.fabric||'cotton'].roughness;}
    if(name==='vest-shell'){mesh.visible=true;mesh.material.color.set(c.vest||c.outfit==='vest'?p.vest:p.jacket);}
    // Real bind-space body geometry adjustment; no change to skeleton, UV or weights.
-   applyBodyRegions(pos,project.body,name);
+   if(avatar.isDwarf&&['jacket-fabric','trousers-fabric'].includes(name)){for(let i=0;i<pos.count;i++)pos.setXYZ(i,pos.getX(i)/.65,.98+(pos.getY(i)-.23)/.45,pos.getZ(i)/.8);applyBodyRegions(pos,project.body,name);for(let i=0;i<pos.count;i++)pos.setXYZ(i,...dwarfPoint([pos.getX(i),pos.getY(i),pos.getZ(i)]));}
+   else applyBodyRegions(pos,project.body,name);
    pos.needsUpdate=true;g.computeBoundingBox();g.computeBoundingSphere();
   }
   sculpt?.apply(project,avatar,this.sources);
@@ -129,8 +131,8 @@ export class FashionPreview{
   }
   const attach=(group,name)=>{group.name=name;avatar.root.add(group);avatar.root.updateWorldMatrix(true,true);head.attach(group);this.parts.push(group);};
   if(!['original','bald'].includes(c.hair)&&!headgear)attach(c.hair==='swept'?makeStudioHair(anatomy(avatar),p.hair,avatar.studioHairSource,avatar.anatomyPositions):c.realism?.fiberHair?makeFiberHair(avatar,c.hair,p.hair,c.realism):makeHair(avatar,c.hair,p.hair),'creative-fitted-hair');
-  if(['fieldjacket','jacket'].includes(c.outfit))for(const mesh of makeStudioJacket(avatar,p.jacket,p.accent)){avatar.root.add(mesh);this.parts.push(mesh);}
-  if(c.face.facialHair!=='Ingen'&&!project.parts.some(part=>part.visible&&part.preset==='beard'))attach(makeBeard(avatar,c.face.facialHair,p.hair),'creative-fitted-beard');
+  if(['fieldjacket','jacket'].includes(c.outfit))for(const mesh of (avatar.isDwarf?dwarfJacket(avatar,p.jacket,p.accent):makeStudioJacket(avatar,p.jacket,p.accent))){avatar.root.add(mesh);this.parts.push(mesh);}
+  if(c.face.facialHair!=='Ingen'&&!(avatar.isDwarf&&c.face.facialHair==='Helskägg')&&!project.parts.some(part=>part.visible&&part.preset==='beard'))attach(makeBeard(avatar,c.face.facialHair,p.hair),'creative-fitted-beard');
   if(c.face.freckles!=='Nej')for(const side of [-1,1])for(let i=0;i<(c.face.freckles==='Tydliga'?9:4);i++)solid(new T.SphereGeometry(.0019,5,4),'#86543d','freckle',[side*(.027+(i%3)*.013),1.653+Math.floor(i/3)*.008,.095-(i%3)*.004]);
   if(c.outfit==='hoodie'){
    solid(new T.TorusGeometry(.116,.032,8,24),p.jacket,'hood',[0,1.49,-.045],[1,.7,1],chest,[Math.PI/2,0,0]);
@@ -153,6 +155,8 @@ export class FashionPreview{
    }
    if(name==='hair'&&/eyebrow/i.test(mesh.name))mesh.visible=!mesh.userData.sculptDisabled;
    if(name==='gloves-leather')m.color.set(c.gloves==='skin'?p.skin:c.outfit==='fieldjacket'?p.boots:p.accent);
+   if(mesh.userData.legacyFootwear)mesh.visible=false;
+   if(mesh.name.startsWith('shoe-upper-'))m.color.set(p.boots);
    if(mesh.name.startsWith('boot-shaft'))mesh.visible=c.shoes!=='sneakers';
    if(mesh.name.startsWith('boot-sole'))m.color.set(c.shoes==='sneakers'?p.accent:'#161e24');
   }
@@ -167,14 +171,14 @@ export class FashionPreview{
   // Artwork is masked to the requested side and torso (never leaks onto sleeves).
   const g=shirt.geometry,source=this.sources.get(shirt),uv=new Float32Array(g.attributes.position.count*2);
   for(let i=0;i<uv.length/2;i++){
-   const x=source[i*3],y=source[i*3+1],z=source[i*3+2];
+   const x=source[i*3]/(avatar.isDwarf?.65:1),y=avatar.isDwarf?this.headShift+.90+(source[i*3+1]-.20)*2.3:source[i*3+1],z=source[i*3+2]/(avatar.isDwarf?.8:1);
    const side=p.position==='front'?z>.025:z<-.025;
    uv[i*2]=side&&Math.abs(x)<.25?(p.position==='front'?x:-x)/.52+.5:.005;
    uv[i*2+1]=side&&Math.abs(x)<.25?(y-this.headShift-.90)/.67:.005;
   }
   const ix=g.index;for(let n=0;n<(ix?ix.count:uv.length/2);n+=3){const ids=[0,1,2].map(k=>ix?ix.getX(n+k):n+k);const valid=ids.every(i=>{const x=source[i*3],z=source[i*3+2];return Math.abs(x)<.25&&(p.position==='front'?z>.025:z<-.025);});if(!valid)for(const i of ids){uv[i*2]=.005;uv[i*2+1]=.005;}}
   // Exposed skin gets its own white texel, never the shirt colour/print.
-  if(shortSleeves)for(let i=0;i<uv.length/2;i++)if(Math.abs(source[i*3])>.37){uv[i*2]=.995;uv[i*2+1]=.005;}
+  if(shortSleeves)for(let i=0;i<uv.length/2;i++)if(avatar.isDwarf?Math.abs(source[i*3])>.13&&source[i*3+1]<.35:Math.abs(source[i*3])>.37){uv[i*2]=.995;uv[i*2+1]=.005;}
   g.setAttribute('uv',new T.BufferAttribute(uv,2));
   shirt.material.map=texture;shirt.material.color.set('#ffffff');shirt.material.needsUpdate=true;
   const draw=img=>{

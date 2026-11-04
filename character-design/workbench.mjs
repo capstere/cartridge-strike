@@ -1,16 +1,18 @@
+import {roleOf,dwarfVariant} from '../src/fps/character-roles.mjs?v=6.1.0';
+import {createDwarfAsset,createDwarfAvatar} from '../src/fps/dwarf-rig.mjs?v=6.1.0';
 import {loadScan,applyScanHead} from './scan-head.mjs?v=53';
-import {ClothPreview} from './cloth-preview.mjs?v=53';
-import {SculptEngine,prepareSculptGeometry} from './sculpt-engine.mjs?v=53';
+import {ClothPreview} from './cloth-preview.mjs?v=6.1.0';
+import {SculptEngine,prepareSculptGeometry} from './sculpt-engine.mjs?v=6.1.0';
 /** Live visual preview of the original game skeleton and authored static parts. */
 import * as T from '../vendor/three/three.module.js';
-import {loadCharacterLibrary,createAuthoredAvatar,disposeAvatar} from '../src/fps/character-library.mjs';
-import {makeAccessory,fitAccessory} from './anatomy-accessories.mjs?v=53';
-import {REQUIRED_CLIPS,upgradeAccessories} from './project-schema.mjs?v=60';
+import {loadCharacterLibrary,createAuthoredAvatar,disposeAvatar} from '../src/fps/character-library.mjs?v=6.1.0';
+import {makeAccessory,fitAccessory} from './anatomy-accessories.mjs?v=6.1.0';
+import {REQUIRED_CLIPS,upgradeAccessories} from './project-schema.mjs?v=6.1.0';
 import {GLTFLoader} from '../vendor/three/addons/loaders/GLTFLoader.js';
 import {GLTFExporter} from '../vendor/three/addons/exporters/GLTFExporter.js';
 import {inspectGLB} from '../furniture-editor/library/glb-utils.mjs';
 import {dataToBytes} from './project-store.mjs?v=53';
-import {FashionPreview} from './fashion-preview.mjs?v=60';
+import {FashionPreview} from './fashion-preview.mjs?v=6.1.0';
 const RAD=Math.PI/180,SW=480,SH=680,PW=720,PH=660;
 function characterId(gender){
  for(let i=0;i<200;i++){
@@ -47,7 +49,7 @@ export class DesignWorkbench{
   await loadCharacterLibrary();
   // A shared artist-authored short silhouette, fitted to either target scalp.
   // The female source hairstyle is longer and is kept for Originalfrisyr only.
-  const hairDonor=createAuthoredAvatar('analysts',characterId('male'));
+  const hairDonor=createAuthoredAvatar('analysts',characterId('male'),false,{ignoreOverrides:true,gender:'male'});
   const donorSkin=hairDonor.meshes.find(m=>m.material?.name==='face-skin'),bounds=new T.Box3().setFromBufferAttribute(donorSkin.geometry.attributes.position);
   this.studioHairSource={geometry:hairDonor.meshes.find(m=>m.material?.name==='hair'&&!/eyebrow/i.test(m.name)).geometry.clone(),scalpBounds:{top:bounds.max.y,width:bounds.max.x-bounds.min.x,depth:bounds.max.z-bounds.min.z,centerZ:(bounds.max.z+bounds.min.z)/2}};
   disposeAvatar(hairDonor);
@@ -57,11 +59,12 @@ export class DesignWorkbench{
  update(project,{recreate=false,rebuild=false}={}){
   if(!this.initialized)return;
   const old=this.project;this.project=project;const headProfile=project.creative?.realism?.head||'original';upgradeAccessories(project);
-  if(project.kind==='character'&&(!this.avatar||recreate||this.headProfile!==headProfile||old?.base.gender!==project.base.gender||old?.base.team!==project.base.team)){
+  if(project.kind==='character'&&(!this.avatar||recreate||this.headProfile!==headProfile||old?.base.gender!==project.base.gender||old?.base.team!==project.base.team||!!this.avatar.isDwarf!==(roleOf(project)==='dwarf'))){
    this.clearParts();this.fashion.dispose();this.cloth.clear();
    if(this.avatar){this.avatar.holder.removeFromParent();disposeAvatar(this.avatar);}
-   this.avatar=createAuthoredAvatar(project.base.team==='hostage'?'analysts':project.base.team,characterId(project.base.gender),project.base.team==='hostage');
-   this.avatar.studioHairSource=this.studioHairSource;
+   this.avatar=roleOf(project)==='dwarf'?createDwarfAvatar(createDwarfAsset(dwarfVariant(project))):createAuthoredAvatar(project.base.team==='hostage'?'analysts':project.base.team,characterId(project.base.gender),roleOf(project)==='hostage',{ignoreOverrides:true,gender:project.base.gender});
+   if(this.avatar.isDwarf)this.avatar.ownedGeometry.push(...this.avatar.meshes.map(m=>m.geometry));
+   this.avatar.studioHairSource=this.avatar.isDwarf?null:this.studioHairSource;
    this.headProfile=headProfile;if(headProfile==='scan'){if(!this.scan)throw Error('Det skannade huvudet kunde inte laddas: '+this.scanError);applyScanHead(this.avatar,this.scan);for(const m of this.avatar.meshes)if(m.material?.name==='eyes'||m.material?.name==='hair'&&/eyebrow/i.test(m.name))m.userData.sculptDisabled=true;}
    this.sculptRevision=-1;prepareSculptGeometry(this.avatar);
    this.avatar.holder.rotation.y=0; // Studio canonical front is +Z (game actors face -Z).
@@ -89,7 +92,7 @@ export class DesignWorkbench{
   const seen=new Set();
   for(const mesh of this.avatar.meshes){
    const m=mesh.material,name=m?.name||'',objectName=mesh.name||'';
-   mesh.visible=!(hideTactical&&/^(continuous-(chest|back)-rig|vest-pocket|pocket-flap|shoulder-webbing|radio|radio-aerial|headset|chest-role-patch|back-role-patch)$/.test(objectName))&&!(customHair&&name==='hair')&&!(customHair&&objectName==='headset');
+   mesh.visible=!mesh.userData.legacyFootwear&&!(hideTactical&&/^(continuous-(chest|back)-rig|vest-pocket|pocket-flap|shoulder-webbing|radio|radio-aerial|headset|chest-role-patch|back-role-patch)$/.test(objectName))&&!(customHair&&name==='hair')&&!(customHair&&objectName==='headset');
    if(!m?.color||seen.has(m))continue;
    seen.add(m);
    if(name==='jacket-fabric')m.color.set(p.jacket);
@@ -101,13 +104,14 @@ export class DesignWorkbench{
   for(const mesh of this.avatar.meshes){
    const n=mesh.name||'',m=mesh.material;
    if(!m?.color)continue;
-   if(/^(boot-shell|boot-shaft)/.test(n))m.color.set(p.boots);
+   if(/^(boot-shell|boot-shaft|shoe-upper)/.test(n))m.color.set(p.boots);
    else if(n.startsWith('continuous-')||n==='vest-pocket'||n==='shoulder-webbing')m.color.set(p.vest);
    else if(n==='pocket-flap')m.color.set(p.accent);
   }
   const scale=this.avatar.scale;
   this.avatar.holder.scale.set(scale*body.width/100,scale*body.height/100,scale*body.width/100);
   this.avatar.holder.updateWorldMatrix(true,true);
+  if(this.avatar.isDwarf)for(const mesh of this.avatar.meshes){const name=mesh.material?.name;if(name==='dwarf-beard'){mesh.material.color.set(p.hair);mesh.visible=this.project.creative.face.facialHair==='Helskägg';}if(name==='dwarf-shoe')mesh.material.color.set(p.boots);if(name==='dwarf-metal')mesh.material.color.set(p.accent);if(name==='dwarf-trim'||name==='dwarf-hat-brim')mesh.material.color.set(p.vest);if(name?.startsWith('dwarf-hat')){mesh.visible=!customHair;if(name==='dwarf-hat')mesh.material.color.set(p.jacket);}}
   if(this.project.kind==='character'){this.fashion.create(this.project,this.avatar,this.sculpt);this.fashion.syncAppearance(this.project,this.avatar);}
   else this.fashion.dispose();
   if(this.avatar.scanHead)for(const m of this.avatar.meshes)if(m.userData.sculptDisabled)m.visible=false;
@@ -236,7 +240,7 @@ export class DesignWorkbench{
    if(this.focus==='shoes')return {center:new T.Vector3(0,.16,0),span:.65};
    if(this.focus==='head'&&this.sculpt.headFraming())return this.sculpt.headFraming();
    if(this.focus==='head'&&this.avatar){const v=this.avatar.bones.get('Head')?.getWorldPosition(new T.Vector3());if(v)return {center:v,span:.74};}
-   return {center:new T.Vector3(0,.90,0),span:2.43};
+   return this.avatar?.isDwarf?{center:new T.Vector3(0,.45,0),span:1.2}:{center:new T.Vector3(0,.90,0),span:2.43};
   }
   const box=new T.Box3();
   for(const mesh of this.partMeshes.values())if(mesh.visible)box.expandByObject(mesh);

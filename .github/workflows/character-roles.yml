@@ -1,0 +1,54 @@
+name: Character roles and direct game export
+on:
+  pull_request:
+    branches: [main]
+    paths: ['character-design/**', 'src/fps/**', 'assets/fps/character-overrides.json', 'tools/character-*', 'tools/install-character-package.mjs', '.github/workflows/character-roles.yml']
+  push:
+    branches: [main]
+    paths: ['character-design/**', 'src/fps/character-*.mjs', 'src/fps/dwarf-rig.mjs', 'assets/fps/character-overrides.json', 'tools/character-*', 'tools/install-character-package.mjs', '.github/workflows/character-roles.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: character-roles-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  roles:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Rig, role, ZIP, installer, footwear and old appearance regression
+        run: |
+          set -euo pipefail
+          node --experimental-loader ./tools/vendor-three-test-loader.mjs --test character-design/*.test.mjs src/fps/view-character-appearance.test.mjs
+          for file in character-design/app.mjs character-design/workbench.mjs character-design/fashion-preview.mjs tools/character-roles-browser.mjs tools/install-character-package.mjs; do node --check "$file"; done
+          node tools/verify-owner-runtime.mjs
+      - name: Install pinned Chromium and software WebGL
+        run: |
+          npm ci --prefix frontline/source/tools/dev --ignore-scripts --no-audit --no-fund
+          node frontline/source/tools/dev/node_modules/playwright-core/cli.js install chromium
+          sudo timeout 80s apt-get -o Acquire::Retries=1 -o Acquire::http::Timeout=20 install -y libgl1-mesa-dri libglx-mesa0 libegl-mesa0 xvfb
+      - name: Real studio role editing, ZIP export and FPS rendering
+        run: |
+          set -euo pipefail
+          python3 -m http.server 8765 --bind 127.0.0.1 >/tmp/character-roles-http.log 2>&1 &
+          PID=$!
+          trap 'kill "$PID" || true' EXIT
+          for i in $(seq 1 25); do
+            if curl -fsS http://127.0.0.1:8765/character-design/ >/dev/null; then break; fi
+            sleep 1
+          done
+          timeout 620s xvfb-run -a node --experimental-loader ./tools/vendor-three-test-loader.mjs tools/character-roles-browser.mjs
+      - name: Small synthetic visual evidence only
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: character-roles-proof
+          path: test-results/character-roles/
+          retention-days: 1
+          if-no-files-found: ignore
+          compression-level: 9

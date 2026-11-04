@@ -1,15 +1,19 @@
-import {newMatchPilot,validateMatchPilot} from './private-match.mjs';
+import {runtimeExport} from './runtime-export.mjs?v=6.1.0';
+import {roleOf,targetOf,ROLE_TARGETS,ROLE_NAMES,targetLabel} from '../src/fps/character-roles.mjs?v=6.1.0';
+import {createDwarfAsset} from '../src/fps/dwarf-rig.mjs?v=6.1.0';
+import {GLTFExporter} from '../vendor/three/addons/exporters/GLTFExporter.js';
+import {newMatchPilot,validateMatchPilot} from './private-match.mjs?v=6.1.0';
 import {savePrivateCharacter,characterHash} from '../src/fps/private-character-store.mjs';
 /** Easy UI for revising the FPS skeleton, authoring character props and independent 3D objects. */
 import {saveProject,loadProject,listProjects,bytesToData,dataToBytes} from './project-store.mjs?v=53';
-import {installStudioControls} from './studio-controls.mjs?v=53';
-import {DesignWorkbench} from './workbench.mjs?v=60';
-import {newProject,validateProject,PALETTES,PRESETS,SHAPES,addPart,clonePart,mirrorPart,aiBrief,animationContract,filename} from './project-schema.mjs?v=60';
+import {installStudioControls} from './studio-controls.mjs?v=6.1.0';
+import {DesignWorkbench} from './workbench.mjs?v=6.1.0';
+import {newProject,validateProject,PALETTES,PRESETS,SHAPES,addPart,clonePart,mirrorPart,aiBrief,animationContract,filename} from './project-schema.mjs?v=6.1.0';
 import {makeSpelBridge,makeSpelGuide} from './spel-bridge.mjs';
 import {packZip} from './zip-export.mjs?v=53';
 import {inspectGLB} from '../furniture-editor/library/glb-utils.mjs';
-import {installCreativeControls} from './creative-controls.mjs?v=53';
-import {ensureCreative,applyStudioFoundation} from './creative-schema.mjs?v=53';
+import {installCreativeControls} from './creative-controls.mjs?v=6.1.0';
+import {ensureCreative,applyStudioFoundation} from './creative-schema.mjs?v=6.1.0';
 
 const W=480,H=680,STORE='cartridge-strike-character-studio-v2';
 const byId=id=>document.getElementById(id);
@@ -64,7 +68,7 @@ function download(data,name,type='application/octet-stream'){
  document.body.appendChild(link);link.click();link.remove();
  setTimeout(()=>URL.revokeObjectURL(url),2000);
 }
-function projectSnapshot(){workbench.sculpt.store(project);return {...project,studioVersion:'6.0',artwork:ready?{...captureArtwork(),faceViews:creativeControls?.captureFaces()||{},portraitFraming:project.artwork?.portraitFraming||'anatomical-v5'}:project.artwork};}
+function projectSnapshot(){workbench.sculpt.store(project);return {...project,studioVersion:'6.1',artwork:ready?{...captureArtwork(),faceViews:creativeControls?.captureFaces()||{},portraitFraming:project.artwork?.portraitFraming||'anatomical-v5'}:project.artwork};}
 function refreshPrompt(){
  try{$('ai-prompt').textContent=aiBrief(project,workbench.getClips(),workbench.getBones());}
  catch(e){status('Fel i projektet: '+e.message,true);}
@@ -175,14 +179,27 @@ function setupQuickStudio(){
  $('jump-to-face').addEventListener('click',()=>document.body.classList.add('focus-show-face'),{capture:true});
  apply();
 }
+let humanPoseOptions;
 function updateModeVisual(){
+ humanPoseOptions??=[...$('pose').options].map(o=>({value:o.value,text:o.text}));
+ const poses=roleOf(project)==='dwarf'?humanPoseOptions.filter(o=>['Idle_Loop','Walk_Loop','Death01'].includes(o.value)):humanPoseOptions;
+ $('pose').replaceChildren(...poses.map(o=>new Option(o.text,o.value)));if(!poses.some(o=>o.value===project.pose))project.pose='Idle_Loop';$('pose').value=project.pose;
  const mode=project.kind==='object'?'object':project.intent==='create'?'create':'revise';
  for(const b of document.querySelectorAll('[data-mode]')){
   const on=b.dataset.mode===mode;b.classList.toggle('active',on);b.setAttribute('aria-pressed',String(on));
  }
- $('gender-wrap').hidden=project.kind==='object';
+ const role=roleOf(project);
+ $('role-wrap').hidden=$('target-wrap').hidden=project.kind==='object';
+ $('gender-wrap').hidden=project.kind==='object'||role==='dwarf';
+ $('dwarf-variant-wrap').hidden=project.kind==='object'||role!=='dwarf';
+ $('team-wrap').hidden=project.kind==='object'||role!=='player';
+ $('actor-role').value=role;$('dwarf-variant').value=project.base.variant||0;
+ $('actor-target').replaceChildren(...ROLE_TARGETS[role].map(t=>new Option(targetLabel(t),t)));$('actor-target').value=targetOf(project);
+ $('realism-head').disabled=role==='dwarf';
+ $('export-runtime').hidden=project.kind==='object';
+ $('role-export-summary').textContent=project.kind==='object'?'':`${ROLE_NAMES[role]} → ${targetLabel(targetOf(project))}. Spelexporten innehåller CHARACTER.glb och en kontrollerad rollkoppling. Animationer och spelregler hålls isär.`;
  $('template-wrap').hidden=project.kind==='object';
- $('team-wrap').hidden=project.kind==='object';
+ $('team-wrap').hidden=project.kind==='object'||role!=='player';
  $('animation-controls').hidden=project.kind==='object';
  $('animation-requests').hidden=project.kind==='object';
  $('face-detail-section').hidden=project.kind==='object';
@@ -197,8 +214,8 @@ function updateModeVisual(){
  for(const button of document.querySelectorAll('.quick-jobs [data-jump]'))button.hidden=project.kind==='object'&&!['parts','export'].includes(button.dataset.jump);
  $('character-presets').disabled=project.kind==='object';
  if(project.kind==='object'&&PRESETS[$('part-type').value])$('part-type').value='box';
- $('mode-label').textContent=project.kind==='object'?'Eget 3D-objekt':project.intent==='create'?'Ny karaktär':'Befintlig karaktär';
- $('rig-hint').textContent=project.kind==='object'?'Bygg ett eget objekt av enkla former. Exportera delarna som riktig statisk 3D-prototyp.':'Grundfiguren använder spelets verkliga skeleton, animationer och handfästen. Dina tillagda 3D-delar kan följa ett ben.';
+ $('mode-label').textContent=project.kind==='object'?'Eget 3D-objekt':ROLE_NAMES[role];
+ $('rig-hint').textContent=project.kind==='object'?'Bygg ett eget objekt av enkla former. Exportera delarna som riktig statisk 3D-prototyp.':'Grundfiguren använder en kompatibel spelrigg. Spelare/gisslan har originalets 13 animationer; dvärgen har stå, gå och falla. Extra 3D-delar följer valda ben.';
  $('export-help').textContent=project.kind==='object'?'ZIP innehåller SPEL_SOURCE.glb för Blender och en statisk prototyp. Kontrollera geometri, material och skala innan spelintegration.':'ZIP innehåller din riggade SPEL_SOURCE.glb, BASE_RIG.glb, material och en steg-för-steg-guide för Blender. SPEL måste godkänna Procreate-kompatibiliteten separat.';
  $('save-glb').disabled=!project.parts.some(p=>p.visible);
 }
@@ -339,9 +356,9 @@ async function writeZip(){
   {name:'README.txt',data:'CARTRIDGE STRIKE CHARACTER STUDIO 6.0 / BLENDER + SPEL HANDOFF\n\nSPEL_SOURCE.glb and PREVIEW.glb contain identical visible design prototypes.\nFor characters, read BLENDER_SPEL_GUIDE.md and SPEL_BRIDGE.json before import.\nBASE_RIG.glb is the unmodified original animated game skeleton.\nPROJECT.json stores editable controls and assets; AI_INSTRUCTIONS.md lists finishing requirements.\nSTATIC_PROTOTYPE.glb is a STATIC mesh of authored parts, not an animation-ready costume.\nThis handoff is NOT approved as FPS/game-ready or guaranteed SPEL Procreate-compatible.\nAll changes are local; the game runtime was not modified.\n'}
  ];
  if(project.kind==='character'){
-  const url=new URL('../assets/fps/models/'+project.base.original_glb,import.meta.url);
-  const res=await fetch(url);if(!res.ok)throw Error('Kunde inte hämta originalriggen från spelprojektet.');
-  const bytes=new Uint8Array(await res.arrayBuffer());
+  let bytes;
+  if(roleOf(project)==='dwarf'){const source=createDwarfAsset(project.base.variant||0);bytes=new Uint8Array(await new GLTFExporter().parseAsync(source.scene,{binary:true,animations:source.animations}));}
+  else{const url=new URL('../assets/fps/models/'+project.base.original_glb,import.meta.url);const res=await fetch(url);if(!res.ok)throw Error('Originalriggen saknas.');bytes=new Uint8Array(await res.arrayBuffer());}
   if(bytes.length>6*1024*1024||bytes.length<1000)throw Error('Originalriggen har oväntad storlek.');
   files.push({name:'BASE_RIG.glb',data:bytes});
   if(project.creative?.hair==='swept'&&project.base.gender==='female'){
@@ -367,7 +384,7 @@ async function writeZip(){
   if(!bytes)throw Error('Referensfil saknas: '+ref.name+'. Lägg till den igen innan export.');
   files.push({name:'REFERENCE_'+String(i+1).padStart(2,'0')+'.'+ref.type,data:bytes});
  }
- const manifest={studioVersion:'6.0',prototypeOnly:true,project:project.name,references:project.references.map((r,i)=>({originalName:r.name,file:'REFERENCE_'+String(i+1).padStart(2,'0')+'.'+r.type})),files:[]};
+ const manifest={studioVersion:'6.1',prototypeOnly:true,project:project.name,references:project.references.map((r,i)=>({originalName:r.name,file:'REFERENCE_'+String(i+1).padStart(2,'0')+'.'+r.type})),files:[]};
  for(const file of files){const bytes=typeof file.data==='string'?new TextEncoder().encode(file.data):file.data;const hash=await crypto.subtle.digest('SHA-256',bytes);manifest.files.push({name:file.name,bytes:bytes.byteLength,sha256:[...new Uint8Array(hash)].map(b=>b.toString(16).padStart(2,'0')).join('')});}
  files.push({name:'MANIFEST.json',data:JSON.stringify(manifest,null,2)});
  return packZip(files);
@@ -417,7 +434,23 @@ async function importProject(file){
   studioControls?.resetHistory();refreshSlots();status('Projektet öppnades med sparade ritningar och inbäddade tillgångar.');
  }catch(e){status('Kunde inte öppna projektet: '+e.message,true);}
 }
+async function changeActorRole(role,variant=0){
+ if(!ready)return;const main=document.querySelector('main');main.inert=true;
+ try{await saveProject(slotId||crypto.randomUUID(),projectSnapshot());studioControls?.stopSculpt();
+  slotId=null;project=newProject({role,variant,team:role==='hostage'?'hostage':'analysts',template:role==='hostage'?'civilian':'analysts',name:role==='hostage'?'Min gisslan':role==='dwarf'?'Min bot-dvärg':'Min spelkaraktär'});
+  attachments.clear();selectedPart=null;dirty=false;workbench.playing=false;clearDrawing();await creativeControls.restoreFaces({});refreshUI();visualChange({recreate:true,rebuild:true});studioControls?.resetHistory();await saveProject('autosave',projectSnapshot());await refreshSlots();status('Ny '+ROLE_NAMES[role]+'. Din tidigare design finns kvar i ateljén.');
+ }catch(e){status('Rollbytet avbröts: '+e.message,true);}finally{main.inert=false;}
+}
+async function exportRuntime(){
+ if(!ready)return;const main=document.querySelector('main');main.inert=true;status('Exporterar modellen och kontrollerar återimport, benvikter och originalrörelser…');
+ try{studioControls?.stopSculpt();const result=await runtimeExport(projectSnapshot(),workbench);download(result.zip,filename(project.name)+'-'+result.contract.target+'-spel.zip','application/zip');status('Spelpaket klart: '+targetLabel(result.contract.target)+' · '+result.report.clips.length+' animationer. Skicka hela ZIP-filen för integration.');}
+ catch(e){status('Direkt spelexport stoppades: '+e.message+' Designen finns kvar; spara projekt/Blender-paket.',true);}finally{main.inert=false;}
+}
 function installEvents(){
+ $('actor-role').onchange=e=>changeActorRole(e.target.value);
+ $('dwarf-variant').onchange=e=>changeActorRole('dwarf',Number(e.target.value));
+ $('actor-target').onchange=e=>{project.runtime={version:1,role:roleOf(project),target:e.target.value};if(roleOf(project)==='player')project.base.team=e.target.value.startsWith('counter')?'counterAnalysts':'analysts';persist();updateModeVisual();};
+ $('export-runtime').onclick=exportRuntime;
  for(const b of document.querySelectorAll('[data-mode]'))b.addEventListener('click',()=>resetMode(b.dataset.mode));
  $('open-project').addEventListener('click',()=>$('project-file').click());
  $('project-file').addEventListener('change',e=>{importProject(e.target.files?.[0]);e.target.value='';});
@@ -427,7 +460,7 @@ function installEvents(){
   project.base.gender=e.target.value;project.base.original_glb='quaternius-operator-'+e.target.value+'.glb';
   visualChange({recreate:true,rebuild:true});persist();
  });
- $('team').addEventListener('change',e=>{project.base.team=e.target.value;visualChange({recreate:true,rebuild:true});persist();});
+ $('team').addEventListener('change',e=>{project.base.team=e.target.value;project.runtime={version:1,role:e.target.value==='hostage'?'hostage':'player',target:e.target.value==='hostage'?'hostage-0':e.target.value+'-0'};visualChange({recreate:true,rebuild:true});persist();});
  $('template').addEventListener('change',e=>{
   project.base.template=e.target.value;project.palette={...PALETTES[e.target.value]};
   for(const input of document.querySelectorAll('[data-color]'))input.value=project.palette[input.dataset.color];
@@ -581,6 +614,7 @@ async function start(){
   creativeControls.syncClips();
   await restoreArtwork(project.artwork);await creativeControls.restoreFaces(project.artwork?.faceViews);
   studioControls.resetHistory();await refreshSlots();$('save-state').textContent='Projektet är öppet · automatisk sparning';
+  if(new URLSearchParams(location.search).has('test'))window.__characterStudio={get project(){return project;},workbench,runtimeExport:()=>runtimeExport(projectSnapshot(),workbench),setProject:async p=>{validateProject(p);project=structuredClone(p);restoreAttachments();await workbench.prepareAssets(project);refreshUI();visualChange({recreate:true,rebuild:true});},changeRole:changeActorRole};
   status('Studion är redo! Ändra en färg, lägg till en 3D-del eller skapa en helt ny karaktär.');
  }catch(error){
   console.error(error);status('Kunde inte starta WebGL eller ladda spelets originalmodeller: '+error.message,true);

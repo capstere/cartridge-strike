@@ -56,7 +56,7 @@ try{
   const geometry=await page.evaluate(async ({data,gender})=>{
    const T=await import('../vendor/three/three.module.js'),{GLTFLoader}=await import('../vendor/three/addons/loaders/GLTFLoader.js');const bytes=Uint8Array.from(atob(data),c=>c.charCodeAt(0)),asset=await new GLTFLoader().parseAsync(bytes.buffer,'');let face;
    asset.scene.traverse(m=>{if(m.isSkinnedMesh&&m.material.name==='face-skin')face=m;});
-   const {DesignWorkbench}=await import('./workbench.mjs?v=53'),{newProject}=await import('./project-schema.mjs?v=53');
+   const {DesignWorkbench}=await import('./workbench.mjs?v=6.1.0'),{newProject}=await import('./project-schema.mjs?v=6.1.0');
    const canvas=document.createElement('canvas');canvas.style.cssText='position:fixed;left:-3000px;width:320px;height:400px';document.body.appendChild(canvas);const fresh=new DesignWorkbench(canvas,new Map());await fresh.initialize();fresh.update(newProject({gender}),{recreate:true,rebuild:true});
    const baseline=fresh.avatar.meshes.find(m=>m.material.name==='face-skin').geometry.attributes.position.array,edited=face.geometry.attributes.position.array;let maxDelta=0;for(let i=0;i<edited.length;i++)maxDelta=Math.max(maxDelta,Math.abs(edited[i]-baseline[i]));fresh.dispose();canvas.remove();
    const paint=face.geometry.attributes.color;let nonWhite=false;for(let i=0;i<paint.count;i++)if(Math.abs(paint.getX(i)-1)>.01||Math.abs(paint.getY(i)-1)>.01){nonWhite=true;break;}
