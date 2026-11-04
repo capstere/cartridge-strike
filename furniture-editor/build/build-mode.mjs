@@ -287,7 +287,7 @@ export function createBuildMode({data,scene,canvas,camera,getZoom,getView,rayAt,
   }
   if(!wall){notify?.('Klicka på en röd/grå vägg. Affischer kan inte sitta på en dörr.');return false;}
   try{
-   if(posters.length>=POSTER_MAX)throw Error('Max 40 affischer per projekt.');
+   if(posters.length>=POSTER_MAX)throw Error(`Redigerarens resursgräns är ${POSTER_MAX} affischer. Spara en säkerhetskopia.`);
    const poster=makePoster(wall,posters,t,side);
    const before=capture();posters.push(poster);selection=poster.id;
    setTool('select');record(before);
@@ -495,12 +495,12 @@ export function createBuildMode({data,scene,canvas,camera,getZoom,getView,rayAt,
   selection=null;record(before);notify?.('Byggdelen är borttagen ur skissen. Spelet ändras inte.');}
  function duplicate(){const e=entryById(selection);if(!e)return;const before=capture();
   if(e.type){
-   if(treatments.length>=TREATMENTS_MAX){notify?.('Max 120 gardiner/persienner.');return;}
+   if(treatments.length>=TREATMENTS_MAX){notify?.(`Redigerarens resursgräns är ${TREATMENTS_MAX} gardiner/persienner. Spara en säkerhetskopia.`);return;}
    const next={...e,id:nextTreatmentId(treatments),side:e.side===1?-1:1};
    try{validateTreatment(next,entries);}catch(error){notify?.(error.message);return;}
    treatments.push(next);selection=next.id;
   }else if(e.wallId){
-   if(posters.length>=POSTER_MAX){notify?.('Max 40 affischer.');return;}
+   if(posters.length>=POSTER_MAX){notify?.(`Redigerarens resursgräns är ${POSTER_MAX} affischer. Spara en säkerhetskopia.`);return;}
    const at=locatePoster(e,entries);if(!at)return;
    const next={...e,id:posterId(posters),t:roundPosition(clamp(e.t+e.width/at.length+.03,0,1))};
    try{validatePoster(next,entries);}catch{notify?.('Det finns inte tillräckligt med väggyta bredvid affischen.');return;}
