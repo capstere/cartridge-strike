@@ -1,3 +1,4 @@
+import {buildFpsFurniture} from './project-batches.mjs';
 import {buildDoorVisuals} from './door-visuals.mjs?v=5.5.0';
 import {buildFacilityDetails} from './facility-details-view.mjs';
 import {GlassVisuals} from './glass-visuals.mjs';
@@ -60,7 +61,7 @@ export class Renderer extends EngineRenderer {
     super(canvas,visualWorld,settings);
     if(!world.newLevel){this.detailScene=buildFacilityDetails(world.details,this.registry);this.scene.add(this.detailScene.root);freezeStaticTransforms(this.detailScene.root);}
     this.glassVisuals=new GlassVisuals(this.scene,world.glass,this.registry);
-    this.visualDepth=new VisualDepth(this.renderer);this.inspectAt=-Infinity;this.inspectActor=null;
+    this.visualDepth=this.neutralLighting?null:new VisualDepth(this.renderer);this.inspectAt=-Infinity;this.inspectActor=null;
     this.onInspectKey=e=>{if(e.code==='KeyV'&&!e.repeat&&document.pointerLockElement===canvas&&this.presentationGame)this.requestInspect(this.presentationGame);};
     window.addEventListener('keydown',this.onInspectKey);
     // Intercept only the engine's world draw; recursive offscreen/composite draws
@@ -68,7 +69,8 @@ export class Renderer extends EngineRenderer {
     this.nativeRender=this.renderer.render.bind(this.renderer);this.inDepthPass=false;
     this.renderer.render=(scene,camera)=>{
       if(scene===this.scene&&!this.inDepthPass)this.doorVisuals?.update(camera,this.renderer.shadowMap.enabled?this.lights:[]);
-      if(scene===this.scene&&!this.inDepthPass&&this.settings.graphics!=='low'){
+      if(scene===this.scene&&!this.inDepthPass)this.projectBatches?.update(camera);
+      if(scene===this.scene&&!this.inDepthPass&&this.visualDepth&&this.settings.graphics!=='low'){
         this.inDepthPass=true;try{this.visualDepth.render(scene,camera);}finally{this.inDepthPass=false;}return;
       }
       if(scene===this.viewScene)this.applyInspection();
@@ -81,7 +83,19 @@ export class Renderer extends EngineRenderer {
     // Stage the field before the existing app declares its assets ready. Never bake in render().
     this.assetsReady=this.assetsReady.then(async()=>{
       if(this.presentationDisposed)return;
-      if(world.projectScene){this.projectFurniture=new THREE.Group();this.scene.add(this.projectFurniture);await buildProjectFurniture(world.projectScene.items,this.projectFurniture,{assets:world.project.assets.local});buildProjectDecorations(world.project,world.projectScene.entries,this.projectFurniture);}
+      if(world.projectScene){
+       this.projectFurniture=new THREE.Group();this.scene.add(this.projectFurniture);
+       const options={assets:world.project.assets.local,world};
+       if(this.neutralLighting)this.projectBatches=await buildFpsFurniture(world.projectScene.items,this.projectFurniture,options);
+       else await buildProjectFurniture(world.projectScene.items,this.projectFurniture,options);
+       const decorationStart=this.projectFurniture.children.length;
+       buildProjectDecorations(world.project,world.projectScene.entries,this.projectFurniture);
+       if(this.projectBatches){
+        for(const node of this.projectFurniture.children.slice(decorationStart))this.projectBatches.register(node);
+        for(const node of this.scene.children)if(node.name==='room-static-batch')this.projectBatches.register(node);
+       }
+       freezeStaticTransforms(this.projectFurniture);
+      }
       this.actionVisuals=new ActionVisuals(this.scene,world);
       await loadCharacterLibrary();
       if(this.presentationDisposed)return;
@@ -95,7 +109,7 @@ export class Renderer extends EngineRenderer {
       if(this.doorVisuals)this.scene.add(this.doorVisuals.root);if(this.riposteProps)this.scene.add(this.riposteProps.root);
       if(this.riposteProps)freezeStaticTransforms(this.riposteProps.root);
       if(this.livingScene)freezeStaticTransforms(this.livingScene.root);
-      if(!this.settings.mobile){
+      if(!this.settings.mobile&&!this.neutralLighting){
       const started=performance.now(),field=await bakeLightfield(world,this.fixtures,{maxSize:96});
       if(this.presentationDisposed)return;
       const texture=new THREE.DataTexture(field.data,field.width,field.height,THREE.RGBAFormat);
@@ -114,7 +128,7 @@ export class Renderer extends EngineRenderer {
       this.presentationReport={kind:'approximate-startup-indirect-field',width:field.width,height:field.height,
         sources:field.sources,visibilityChecks:field.checks,materials:this.presentationRestores.length,
         milliseconds:performance.now()-started,geometryChanged:false,photometricValidation:false};
-      }else{this.presentationReport={kind:'mobile-ambient-light',geometryChanged:false,photometricValidation:false};}
+      }else{this.presentationReport={kind:this.neutralLighting?'neutral-daylight':'mobile-ambient-light',geometryChanged:false,photometricValidation:false};}
       // Prepare the actual rigged models and all first-use world weapon materials.
       // Previously these only existed after Start and compiled during combat.
       const startupActors=[];
@@ -123,7 +137,12 @@ export class Renderer extends EngineRenderer {
       this.worldWeaponWarmup=new THREE.Group();this.worldWeaponWarmup.name='world-weapon-preload';
       if(!this.settings.mobile)for(const w of Object.values(WEAPONS))if(!['armor'].includes(w.slot))this.worldWeaponWarmup.add(makeWeapon(w.id,{viewmodel:false}));
       this.scene.add(this.worldWeaponWarmup);
-      if(!this.settings.mobile){
+      if(this.neutralLighting){
+       const maps=new Set();
+       this.projectFurniture.traverse(node=>{for(const material of [].concat(node.material||[]))for(const value of Object.values(material))if(value?.isTexture)maps.add(value);});
+       for(const map of maps)this.renderer.initTexture(map);
+       await this.renderer.compileAsync(this.scene,this.camera);
+      }else if(!this.settings.mobile){
       const visibility=this.lights.map(light=>light.visible),shadows=this.renderer.shadowMap.enabled,previousTarget=this.renderer.getRenderTarget();
       try {
         // Standard renders the world into a linear HDR target. Compiling only

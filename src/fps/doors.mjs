@@ -1,12 +1,14 @@
 /** Doors use the reviewed apertures, never inferred wall cuts or a second floorplan.
  * Simulation owns angles, obstruction safety and collision. Rendering only reads them.
  */
+import {createStartElevators} from './start-elevators.mjs';
 import {circleHitsBox} from './physics.mjs';
 export const DOOR_OPEN_ANGLE=Math.PI/2;
 export const DOOR_HOLD_SECONDS=2.5;
 export function createDoors(data,physics){
- const skipped=[],doors=[],boxes=[];
+ const elevators=createStartElevators(data.doors),skipped=[],doors=[],boxes=[...elevators.boxes];
  for(const source of data.doors){
+  if(source.startElevator)continue;
   const reason=source.removed?'removed-by-owner':source.lockedUntilImplemented?'fixed-'+source.doorType:source.blocked?'blocked':source.kind!=='door-aperture'||source.passageOpenConfirmed?'open-passage':null;
   if(reason){skipped.push({id:source.id,reason});continue;}
   const dx=source.b[0]-source.a[0],dz=source.b[1]-source.a[1],width=Math.hypot(dx,dz),ux=dx/width,uz=dz/width;
@@ -65,5 +67,5 @@ export function createDoors(data,physics){
  }
  function reset(){for(const d of doors){d.angle=0;d.target=0;d.holdUntil=0;d.sign=d.defaultSign;pose(d);}}
  function nearest(actor,range=2.2){let found=null,best=range;for(const d of doors){const distance=Math.hypot(d.x-actor.x,d.z-actor.z);if(distance<best){best=distance;found=d;}}return found;}
- return {doors,boxes,skipped,update,reset,request,nearest,pose,report:{installed:doors.length,leaves:boxes.length,skipped}};
+ return {doors,boxes,elevators,skipped,update,reset,request,nearest,pose,report:{installed:doors.length,leaves:boxes.length,skipped}};
 }

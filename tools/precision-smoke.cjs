@@ -21,6 +21,9 @@ async function boot(browser, mobile) {
   await page.goto(origin+'/fps/?test',{waitUntil:'domcontentloaded',timeout:60000});
   await page.waitForFunction(()=>globalThis.__fps||!document.getElementById('fatal').hidden,null,{timeout:180000});
   assert.equal(await page.locator('#fatal').isVisible(),false,'Startup error');
+  // This suite advances and draws explicit game frames. Avoid queuing a second
+  // WebGL draw loop while SwiftShader captures the scoped viewport.
+  await page.evaluate(()=>{window.requestAnimationFrame=()=>0;});
   await page.locator('#start').click();
   await page.evaluate(()=>{
     __fps.start('analysts',{mode:'endless',firefight:false,wanderers:false,botFire:false});
@@ -53,7 +56,7 @@ const equip = (page,id) => page.evaluate(id=>{
     assert.ok(scoped.fov<25&&scoped.aim>.95,'Sniper actually zooms: '+JSON.stringify(scoped));
     assert.equal(scoped.hidden,false);assert.equal(scoped.gun,false);
     fs.mkdirSync('test-results',{recursive:true});
-    await page.screenshot({path:'test-results/precision-mobile-scope.png'});
+    await page.screenshot({path:'test-results/precision-mobile-scope.png',animations:'disabled',timeout:60000});
     await page.locator('[data-tactical-aim]').tap();await advance(page);
     assert.ok(await page.evaluate(()=>__fps.renderer.camera.fov>75));
     assert.equal(await page.locator('#precision-scope').isVisible(),false);

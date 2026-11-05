@@ -40,8 +40,11 @@ async function boot(browser,mobile){
     const f=__fps,g=f.game,p=g.player;
     const {MinimapCache}=await import(origin+'/src/fps/minimap-cache.mjs');
     const {legacyMinimap}=await import(origin+'/tools/fixtures/minimap-0.15.1.mjs');
-    const a=document.createElement('canvas'),b=document.createElement('canvas');
-    const map=new MinimapCache(b);let maxDifference=0,differentChannels=0,rawMaxDifference=0,squaredError=0,pixelCount=0,changedPixels=0;const mapShots=[];
+    // Pixel readback must use the same rasterizer for the reference, the cached
+    // static layer and the destination. GPU/CPU text and subpixel coverage differ.
+    const referenceCanvas=()=>{const canvas=document.createElement('canvas');canvas.getContext('2d',{willReadFrequently:true});return canvas;};
+    const a=referenceCanvas(),b=referenceCanvas();
+    const map=new MinimapCache(b,referenceCanvas);let maxDifference=0,differentChannels=0,rawMaxDifference=0,squaredError=0,pixelCount=0,changedPixels=0;const mapShots=[];
     for(const expanded of [false,true]){
      a.width=b.width=expanded?448:224;a.height=b.height=expanded?316:158;
      legacyMinimap(a,f.world,g,expanded);map.draw(f.world,g,expanded);

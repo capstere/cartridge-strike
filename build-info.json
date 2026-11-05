@@ -465,6 +465,71 @@
       "sha256": "780a0473bc7202fae47647986918dede4598286c3e2ec95ac03710aa8d00405c"
     },
     {
+      "path": "assets/models/1c72ef12bf0604e0ece223bd1142bfcf4fcbecb0770b387461d9b3a478a6f6c7.glb",
+      "bytes": 21012,
+      "sha256": "1c72ef12bf0604e0ece223bd1142bfcf4fcbecb0770b387461d9b3a478a6f6c7"
+    },
+    {
+      "path": "assets/models/3b5d4800c66d183cc683d417d02be848bed2702ef62db6137aa07bc08463eea4.glb",
+      "bytes": 29008,
+      "sha256": "3b5d4800c66d183cc683d417d02be848bed2702ef62db6137aa07bc08463eea4"
+    },
+    {
+      "path": "assets/models/3d5497250923f7858e0693c1027462592bc066952ad0c010df28aa0cb62c24aa.glb",
+      "bytes": 15016,
+      "sha256": "3d5497250923f7858e0693c1027462592bc066952ad0c010df28aa0cb62c24aa"
+    },
+    {
+      "path": "assets/models/7ad94bef7ed7f3afc20f4fdb54e54c6c2ac12c31ccaf375bbb91808373a31131.glb",
+      "bytes": 5016,
+      "sha256": "7ad94bef7ed7f3afc20f4fdb54e54c6c2ac12c31ccaf375bbb91808373a31131"
+    },
+    {
+      "path": "assets/models/88a28fae22960ba24a74b6eaf467bd26bff34f8943e52c37be0725c9169b045f.glb",
+      "bytes": 26196,
+      "sha256": "88a28fae22960ba24a74b6eaf467bd26bff34f8943e52c37be0725c9169b045f"
+    },
+    {
+      "path": "assets/models/9ba73bd3da6869340575ce5857bcb98b8ddfdd2b9c449c3d55e94c93d47908be.glb",
+      "bytes": 48596,
+      "sha256": "9ba73bd3da6869340575ce5857bcb98b8ddfdd2b9c449c3d55e94c93d47908be"
+    },
+    {
+      "path": "assets/models/9c4b643b35b92a91a5def38040b8847b6fe2619668e8fa3830832a43c41e4249.glb",
+      "bytes": 31440,
+      "sha256": "9c4b643b35b92a91a5def38040b8847b6fe2619668e8fa3830832a43c41e4249"
+    },
+    {
+      "path": "assets/models/9e69f0d7242efd9cd38978735f89ffd899f5e12a8091a17457e1d9843fbc0611.glb",
+      "bytes": 48588,
+      "sha256": "9e69f0d7242efd9cd38978735f89ffd899f5e12a8091a17457e1d9843fbc0611"
+    },
+    {
+      "path": "assets/models/9f68f0d5fab99c2503a0b151cfce5865681937b3d06194e13c24dc1eda0fa66a.glb",
+      "bytes": 70984,
+      "sha256": "9f68f0d5fab99c2503a0b151cfce5865681937b3d06194e13c24dc1eda0fa66a"
+    },
+    {
+      "path": "assets/models/c78f8d61efd9d947ec37a76160e0cc48edd52d134312b738bcfd05729a32c980.glb",
+      "bytes": 37404,
+      "sha256": "c78f8d61efd9d947ec37a76160e0cc48edd52d134312b738bcfd05729a32c980"
+    },
+    {
+      "path": "assets/models/c8aeb532b334e63a6a5a49021111f15a27bfd444e760a12eea962701f8b20300.glb",
+      "bytes": 26220,
+      "sha256": "c8aeb532b334e63a6a5a49021111f15a27bfd444e760a12eea962701f8b20300"
+    },
+    {
+      "path": "assets/models/dadc53c65e93676065394489c251ad588c84087640f78624df9a64180df1c009.glb",
+      "bytes": 104544,
+      "sha256": "dadc53c65e93676065394489c251ad588c84087640f78624df9a64180df1c009"
+    },
+    {
+      "path": "assets/models/e445d3f7dbeee8152d0078e8729727caf4d039e3e23b21d9d4290b51c53b87c1.glb",
+      "bytes": 5160,
+      "sha256": "e445d3f7dbeee8152d0078e8729727caf4d039e3e23b21d9d4290b51c53b87c1"
+    },
+    {
       "path": "character-design/anatomy-accessories.mjs",
       "bytes": 16669,
       "sha256": "80fd4506c5515539baaf6edb63e244d07500934833ea5bc7c6dc3853ca3f1199"
@@ -566,8 +631,8 @@
     },
     {
       "path": "fps/index.html",
-      "bytes": 10962,
-      "sha256": "fff8384185fe5a37083ce2ba27f2e05364e0c5b33fcf91117285ed300565f614"
+      "bytes": 10972,
+      "sha256": "45a9be065d1f1bff4d12eddf20ce5ac996f39cbf599330715b37445a3d2ecdc2"
     },
     {
       "path": "fps/style.css",
@@ -596,8 +661,8 @@
     },
     {
       "path": "furniture-editor/build/ai-export.mjs",
-      "bytes": 5471,
-      "sha256": "cb2436fdb6acf73fcf60f468441423d8965b3761a1b93558693f22deeea607ad"
+      "bytes": 5626,
+      "sha256": "4c798a285999c3c37f428582f17e724f95036b9c1026ce1c331d52bc0d708793"
     },
     {
       "path": "furniture-editor/build/architecture-preview.mjs",
@@ -646,13 +711,13 @@
     },
     {
       "path": "furniture-editor/build/level-project.mjs",
-      "bytes": 16455,
-      "sha256": "63341e2d759777ecb6fa1bdc164f9d55791b08bc8167cf832082b29219e4dac1"
+      "bytes": 16982,
+      "sha256": "71bde9d929fcbeb1cec381da917af0cd40906b0a9e517f4a6c94b5bf7effe62f"
     },
     {
       "path": "furniture-editor/build/level-project.schema.json",
-      "bytes": 8424,
-      "sha256": "34d6beea075dad5181bbf1cce38064a1f1a5c32e6eec74e258a1f57e1806ffc4"
+      "bytes": 8942,
+      "sha256": "07e8fd2d1938d424cf78081efe853af16b8bef4a8966631a887d9666ac45a428"
     },
     {
       "path": "furniture-editor/build/paint-over-wall.mjs",
@@ -681,8 +746,8 @@
     },
     {
       "path": "furniture-editor/build/project-scene.mjs",
-      "bytes": 5681,
-      "sha256": "bd3a7919960428ca70c39d7fea44a6becdf8421d1bf3fa04d0b9024c55ebaa93"
+      "bytes": 5769,
+      "sha256": "252dd59d6d2e2d62a987d6d12133753cd665a685167ba51f4cf8d66fa1908d34"
     },
     {
       "path": "furniture-editor/build/project-visuals.mjs",
@@ -711,13 +776,13 @@
     },
     {
       "path": "furniture-editor/build/validate-level.mjs",
-      "bytes": 10624,
-      "sha256": "bb01977e3bb7c5126e3edb53d34e5e48255457a2f05a70e13fccc6753a0437c1"
+      "bytes": 11028,
+      "sha256": "74db5e80c353929af2b8b4ccf19e542ba421a9abfc84ee1574d1d9d852213e17"
     },
     {
       "path": "furniture-editor/build/walkable-spaces.mjs",
-      "bytes": 2560,
-      "sha256": "3ce2f96e7bee0dbee626d6c9731848cb9a709f670b97fa686c4ad25dcd146759"
+      "bytes": 3484,
+      "sha256": "c04615c65810969f311ee76c8fa9c4d31a63b1cdec71bb6e970adc1219238742"
     },
     {
       "path": "furniture-editor/build/wall-joints.mjs",
@@ -2465,9 +2530,14 @@
       "sha256": "851822b26e7424b066fc99d2f2ccca16ea4a5bba09b963d152a0cd714c268dda"
     },
     {
+      "path": "levels/floor5-prepared.json",
+      "bytes": 1702970,
+      "sha256": "a0188482610ffa8e9d134f6bbfbe55c660bb7ec45dd832a1a88698d2ac2bdd30"
+    },
+    {
       "path": "levels/manifest.json",
-      "bytes": 157,
-      "sha256": "c3761949b66ccf0a7b4e6055434ad9a170fdb92cdfbe5551ce09a3bdd1fdf0a9"
+      "bytes": 381,
+      "sha256": "057c2b53d412e1a2f33905269328b2bd51c35d1104aa032e90cd2da956dafdf0"
     },
     {
       "path": "levels/synthetic-demo.json",
@@ -2586,8 +2656,8 @@
     },
     {
       "path": "src/fps/app.mjs",
-      "bytes": 32222,
-      "sha256": "2f6ada75bce995a15d7578677db182e128008b469a3697f75a3406509290d26e"
+      "bytes": 32265,
+      "sha256": "e98258e772300bcb1996c095412ad3dbb2e765ea0b9cbf016fc20e55d660b7c2"
     },
     {
       "path": "src/fps/audio.mjs",
@@ -2691,13 +2761,13 @@
     },
     {
       "path": "src/fps/door-visuals.mjs",
-      "bytes": 7607,
-      "sha256": "946aa9c8aa4612ca8ceaf5010357836afdef7a2289aa4a84da1439b248a0b3ca"
+      "bytes": 8250,
+      "sha256": "c553cfbbf7661403ddaa10c9b829b0857125379a8ae3a93f6b7e470f1dbdd253"
     },
     {
       "path": "src/fps/doors.mjs",
-      "bytes": 4717,
-      "sha256": "7a1bbabf81830c134f53f664cece1214fa79ef0f662182a5652ad0cb78d6c25b"
+      "bytes": 4884,
+      "sha256": "be8052b51f1793fd09257c37824cf63653c08ebf9b9d64cb58c2b87158fe4f6b"
     },
     {
       "path": "src/fps/dwarf-rig.mjs",
@@ -2751,8 +2821,8 @@
     },
     {
       "path": "src/fps/game.mjs",
-      "bytes": 39650,
-      "sha256": "bbc9eb146457cb139e00839f56c3479953ddf30e43b07e4b3a566630592ed008"
+      "bytes": 39827,
+      "sha256": "463ac5e2de60fb6e55b3ff12d190b0554cf95049cd324b03fbaabdfdef5f8d42"
     },
     {
       "path": "src/fps/glass-visuals.mjs",
@@ -2776,8 +2846,8 @@
     },
     {
       "path": "src/fps/level-adapter.mjs",
-      "bytes": 4682,
-      "sha256": "03afd5fa2307a35a23cb97bea0c7629b74cd8ccb9664dc9544b6fd31d82f807c"
+      "bytes": 5175,
+      "sha256": "c7a3bc2ea1b628472562aa9ff3e05a02e2a4a970dd6ec475a43933e4473a86d5"
     },
     {
       "path": "src/fps/living-floor-art.mjs",
@@ -2821,8 +2891,8 @@
     },
     {
       "path": "src/fps/navigation.mjs",
-      "bytes": 5967,
-      "sha256": "a51487ed00d9314e70d509025850e7444dceca231d97dabbb7a5905fcecf79a8"
+      "bytes": 6060,
+      "sha256": "7cc6ad12d2c63f02114605db52af262b0242d322f3d86960f01da3f72e81b383"
     },
     {
       "path": "src/fps/physics.mjs",
@@ -2850,19 +2920,29 @@
       "sha256": "ad83bcc112bfb646ecffc39aa14f9928cc416f2eba9dbb3609641a5cf2a827d8"
     },
     {
+      "path": "src/fps/project-batches.mjs",
+      "bytes": 6236,
+      "sha256": "c710525887a5321fabb99a0b798e98677db025d3014b1b5cf50347657afc3559"
+    },
+    {
+      "path": "src/fps/project-visibility.mjs",
+      "bytes": 1970,
+      "sha256": "017d0a78a0674a213ddecebe2e56c292d3700252368d7800013162053a64f422"
+    },
+    {
       "path": "src/fps/render-budget.mjs",
       "bytes": 1064,
       "sha256": "81bbbdd55d26b2b152f71dba77aa898ac4d2682290983d360da2df7041a0c383"
     },
     {
       "path": "src/fps/render-engine.mjs",
-      "bytes": 30465,
-      "sha256": "3189220105159543f52f6415e40added72fa7750e8d6a2535148acb52deccef3"
+      "bytes": 31057,
+      "sha256": "fdd2e05b67eb3ebee1d97946bfb4e6998106a417dc1ac9e647785e9510480e82"
     },
     {
       "path": "src/fps/render.mjs",
-      "bytes": 15854,
-      "sha256": "f98a89cb2a9c757d39732451ff84879b530eaf2db3387184d112ae90bdd98658"
+      "bytes": 17074,
+      "sha256": "b644991f6a6e2840c2eb1fd838e6e5794fd697f97b7579c8176dc475e6989227"
     },
     {
       "path": "src/fps/riposte-audio.mjs",
@@ -2908,6 +2988,11 @@
       "path": "src/fps/skinned-clone.mjs",
       "bytes": 752,
       "sha256": "f2d8f10c03cfccf08d11128ca40eee3bdfc7f7eeb50b3a392207638dc9463dec"
+    },
+    {
+      "path": "src/fps/start-elevators.mjs",
+      "bytes": 2526,
+      "sha256": "b23e866b245439e2553a07ea66ebc38d1f16012287697c86c292bac53b220d12"
     },
     {
       "path": "src/fps/static-asset-library.mjs",
@@ -2991,13 +3076,13 @@
     },
     {
       "path": "src/fps/world.mjs",
-      "bytes": 8804,
-      "sha256": "039984a4af97fe39efeb656f868d1e9107b56d5bd69529055589282b937ff1e1"
+      "bytes": 9191,
+      "sha256": "f6e70c9217f4369df084799d44158fee5d95f5115b81d7f1ca84cbfdb479abfd"
     },
     {
       "path": "src/world.js",
-      "bytes": 19575,
-      "sha256": "ceb5d3530a1658fda41ccc61b13b8573ffdba2622a6b9a03285312cce4054548"
+      "bytes": 19593,
+      "sha256": "f9e28dce106b9e5fcbcf3060e79d84d91c373d86d6e02ea9b001b305f26c369e"
     },
     {
       "path": "studio/index.html",
@@ -3055,7 +3140,7 @@
       "sha256": "9b0c24534a47f2e1c9549a63a5e00a850577e22fe8d18dbc7a532008a027cb89"
     }
   ],
-  "bytes": 30339282,
+  "bytes": 32537626,
   "sourceDirectoriesExcluded": [
     "references",
     "reviews",
@@ -3442,9 +3527,10 @@
     "compatibleWith": [
       "0.18.0"
     ],
-    "defaultLevel": "floor5",
+    "defaultLevel": "floor5-prepared",
     "publicLevels": [
-      "synthetic-demo"
+      "synthetic-demo",
+      "floor5-prepared"
     ],
     "modelUnitsVerifiedAsMetres": false,
     "privatePreview": "browser-local"

@@ -83,6 +83,7 @@ export function createNavigation(data,physics,{spacing=.70,radius=ACTOR_RADIUS+.
       let next=current+1;
       // A bounded lookahead smooths routes without expensive full-map visibility sweeps.
       for(let i=Math.min(raw.length-1,current+32);i>current+1;i--)if(clear(raw[current],raw[i],ACTOR_RADIUS+.001)){next=i;break;}
+      if(physics.dynamicPassages?.()&&!clear(raw[current],raw[next],ACTOR_RADIUS))return [];
       path.push(raw[next]);current=next;
     }
     return path;

@@ -13,7 +13,7 @@ await page.addInitScript(()=>{localStorage.setItem('cartridge-settings',JSON.str
 const check=(name,ok)=>{report.checks.push({name,ok:!!ok});console.log(name,!!ok);if(!ok)throw Error(name);};
 async function capture(name){const b=await page.evaluate(()=>{__fps.render();return __fps.renderer.renderer.domElement.toDataURL('image/png').split(',')[1];});await writeFile(resolve(out,name+'.png'),Buffer.from(b,'base64'));}
 try{
- await page.goto(origin+'/fps/?test=1');await page.waitForFunction(()=>window.__fps||!document.querySelector('#fatal').hidden,null,{timeout:240000,polling:100});check('startup has no fatal error',await page.locator('#fatal').isHidden());
+ await page.goto(origin+'/fps/?level=classic-floor5&test=1');await page.waitForFunction(()=>window.__fps||!document.querySelector('#fatal').hidden,null,{timeout:240000,polling:100});check('startup has no fatal error',await page.locator('#fatal').isHidden());
  check('menu version 0.17.0',(await page.locator('#game-version').textContent()).includes('0.17.0'));
  await page.locator('#start').click();await page.evaluate(()=>{__fps.start('analysts',{mode:'endless',botFire:false,botSpeed:0,wanderers:false});__fps.step({},1/60);});
  report.details=await page.evaluate(()=>({...__fps.world.details.counts,panes:__fps.world.glass.panes.size}));check('12 toilets, 12 basins, appliances and glass panes present',report.details.toilets===12&&report.details.basins===12&&report.details.kitchen===7&&report.details.panes>100);

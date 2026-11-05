@@ -103,6 +103,7 @@ export class Game {
     s.bomb = { status: 'carried', carrierId: carrier.id, x: carrier.x, y: 0, z: carrier.z, deadline: Infinity, nextBeep: Infinity };
     for (const actor of this.actors) if (actor.bot) actor.bot.shop();
     prepareActionRound(this);
+    this.world.setElevatorProgress?.(s.phase==='buy'?0:1);
     initializeCombat(this);
     this.emit('round', null, { round: s.round });
   }
@@ -125,6 +126,8 @@ export class Game {
     s.time += dt;
     if (s.phase === 'result') { if (s.time + EPS >= s.resultDeadline) this.beginRound(); return; }
     if (s.phase === 'buy') {
+      const remaining=s.buyDeadline-s.time;
+      this.world.setElevatorProgress?.(remaining<=EPS?1:1-remaining/1.5);
       if (Number.isFinite(input.yaw)) this.player.yaw = input.yaw;
       if (Number.isFinite(input.pitch)) this.player.pitch = clamp(input.pitch, -1.49, 1.49);
       if (s.time + EPS < s.buyDeadline) return;

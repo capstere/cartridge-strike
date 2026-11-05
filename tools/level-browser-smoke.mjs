@@ -20,7 +20,8 @@ try{
  await page.locator('[data-move="right"]').click();
  assert((await page.evaluate(()=>__levelStudio.viewState.planCenter.x))>centered.x,'On-screen right control moves the plan');
  const beforeKeys=await page.evaluate(()=>__levelStudio.viewState.planCenter.z);
- await page.keyboard.down('w');await page.waitForTimeout(180);await page.keyboard.up('w');
+ await page.keyboard.down('w');
+ try{await page.waitForFunction(z=>__levelStudio.viewState.planCenter.z<z,beforeKeys);}finally{await page.keyboard.up('w');}
  assert((await page.evaluate(()=>__levelStudio.viewState.planCenter.z))<beforeKeys,'W moves forward in the plan');
  const planBox=await page.locator('#plan').boundingBox(),beforePan=await page.evaluate(()=>__levelStudio.viewState.planCenter.x);
  await page.mouse.move(planBox.x+planBox.width*.65,planBox.y+planBox.height*.55);await page.mouse.down({button:'right'});
@@ -173,7 +174,7 @@ try{
  console.log('Published synthetic demo booted in Chromium/WebGL PASS');
  await published.close();
  const unsafe=await context.newPage();await unsafe.goto(origin+'/fps/?level=..%2F..%2Fsecret&test=1',{waitUntil:'domcontentloaded'});await unsafe.waitForFunction(()=>!document.querySelector('#fatal').hidden);assert.match(await unsafe.locator('#fatal').innerText(),/Ogiltigt nivå-ID/);await unsafe.close();
- const old=await context.newPage();track(old);await old.goto(origin+'/fps/?test=1',{waitUntil:'domcontentloaded'});await old.waitForFunction(()=>window.__fps||!document.querySelector('#fatal').hidden);
+ const old=await context.newPage();track(old);await old.goto(origin+'/fps/?level=classic-floor5&test=1',{waitUntil:'domcontentloaded'});await old.waitForFunction(()=>window.__fps||!document.querySelector('#fatal').hidden);
  assert(await old.locator('#fatal').isHidden(),await old.locator('#fatal').innerText());assert.equal(await old.evaluate(()=>__fps.world.data.__custom),undefined);
  await old.close();
  const edit=await context.newPage();track(edit);await edit.goto(origin+'/furniture-editor/new.html?mode=edit-floor5',{waitUntil:'domcontentloaded'});

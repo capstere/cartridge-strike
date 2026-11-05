@@ -186,7 +186,7 @@
     segmentBox(d.id+'-threshold',a,b,.012,.024,.13,[.62,.52,.33],'metal');
     for(const [i,p] of [a,b].entries())box(d.id+'-jamb'+i,p[0],1.15,p[1],.065,2.3,.065,d.doorStyle==='office'?[.45,.44,.43]:'trim');
     segmentBox(d.id+'-lintel',a,b,2.57,.56,.12,d.doorStyle==='office'?[.55,.53,.52]:'wall');
-    if(d.doorType==='elevator'){
+    if(d.doorType==='elevator'&&!d.startElevator){
      segmentBox(d.id+'-sealed-leaf',a,b,1.14,2.28,.08,'metal','metal');
      // Two brushed-metal sliding panels; no imaginary open shaft or floor travel.
      const yaw=-Math.atan2(b[1]-a[1],b[0]-a[0]);

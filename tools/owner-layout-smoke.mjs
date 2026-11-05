@@ -17,7 +17,7 @@ await page.addInitScript(()=>{localStorage.setItem('cartridge-settings',JSON.str
 const check=(name,ok)=>{report.checks.push({name,ok:!!ok});console.log(name,!!ok);if(!ok)throw Error(name);};
 async function capture(name){const data=await page.evaluate(()=>{__fps.render();return __fps.renderer.renderer.domElement.toDataURL('image/png').split(',')[1];});await writeFile(resolve(out,name+'.png'),Buffer.from(data,'base64'));}
 try{
- await page.goto(origin+'/fps/?test=1');await page.waitForFunction(()=>window.__fps||!document.querySelector('#fatal').hidden,null,{timeout:240000,polling:100});check('scene and shaders load',await page.locator('#fatal').isHidden());
+ await page.goto(origin+'/fps/?level=classic-floor5&test=1');await page.waitForFunction(()=>window.__fps||!document.querySelector('#fatal').hidden,null,{timeout:240000,polling:100});check('scene and shaders load',await page.locator('#fatal').isHidden());
  await page.locator('#start').click();
  await page.evaluate(async()=>{__fps.start('analysts',{mode:'endless',botFire:false,botSpeed:0,wanderers:false});await __fps.audio.unlock();});
  check('original game actors, hostages and audio preserved',await page.evaluate(()=>__fps.game.actors.length===10&&__fps.game.hostages.length===2&&__fps.audio.context.state==='running'));

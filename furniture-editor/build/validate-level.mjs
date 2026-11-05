@@ -61,7 +61,8 @@ export function validateLevel(input,{engine=false}={}){
    add('V08','warn','Möbeln överlappar en vägg eller glasyta.',o.id,'Flytta möbeln från väggen.');
   for(const d of world.data.doors.filter(d=>!d.blocked))if(segmentIntersectsRectangle(d.a,d.b,o,.35))
    add('V07','fail','Möbeln blockerar dörrens fria zon.',o.id,'Flytta möbeln minst 0,35 från dörren.');
-  for(const other of furniture)if(other.id<o.id&&o.mountId!==other.id&&other.mountId!==o.id&&intersects(footprint,corners(other)))
+  for(const other of furniture)if(other.id<o.id&&o.mountId!==other.id&&other.mountId!==o.id&&
+   (other.elevation||0)+other.height>(o.elevation||0)+.001&&(o.elevation||0)+o.height>(other.elevation||0)+.001&&intersects(footprint,corners(other)))
    add('V08','warn',`Möbeln överlappar ${other.id}.`,o.id,'Separera möblerna eller använd ett giltigt smart fäste.');
   if(o.mountId&&!furniture.some(s=>s.id===o.mountId&&o.elevation>=.3))add('V08','fail','Smart fäste saknas eller har ogiltig höjd.',o.id,'Placera på ett befintligt bord eller en bänk.');
  }
@@ -93,9 +94,15 @@ export function validateLevel(input,{engine=false}={}){
  if(!results.some(r=>r.check==='V01'))add('V01','pass',`${play.spawns.length} startpunkter når alla ${targets.length} mål i navigationsmotorn.`);
  for(const d of world.data.doors.filter(d=>!d.blocked&&!d.lockedUntilImplemented&&(p.mode==='new-level'||p.architecture.added.some(e=>e.id===d.id)||p.architecture.edits.some(e=>e.id===d.id)))){
   const dx=d.b[0]-d.a[0],dz=d.b[1]-d.a[1],len=Math.hypot(dx,dz),nx=-dz/len,nz=dx/len;
-  const a={x:d.center[0]+nx*.85,z:d.center[1]+nz*.85},b={x:d.center[0]-nx*.85,z:d.center[1]-nz*.85};
-  if(!world.staticCanOccupy(a.x,a.z,.20)||!world.staticCanOccupy(b.x,b.z,.20)||
-   !world.findPath(a,b).length||!world.findPath(b,a).length)
+  // Sweep through the actual aperture. A neighbouring open leaf may cover a
+  // centreline approach while leaving a full capsule-width lane alongside it.
+  const limit=Math.max(0,len/2-.22);
+  const across=[0,-.12,.12,-.24,.24].filter(offset=>Math.abs(offset)<=limit).some(offset=>{
+   const x=d.center[0]+dx/len*offset,z=d.center[1]+dz/len*offset;
+   const a={x:x+nx*.85,z:z+nz*.85},b={x:x-nx*.85,z:z-nz*.85};
+   return world.navigation.clear(a,b,.20)&&world.findPath(a,b).length&&world.findPath(b,a).length;
+  });
+  if(!across)
    add('V06','fail','Motorns kapsel/navigering når inte igenom dörren i båda riktningar.',d.id,'Rensa dörrzonen och pröva bredare öppning.');
  }
  if(!results.some(r=>r.check==='V06'&&r.status==='fail'))add('V06','pass','Båda riktningar genom aktiva dörrar testade med motorns kapsel och navigering.');

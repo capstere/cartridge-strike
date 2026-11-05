@@ -1,5 +1,5 @@
 import {applyFloorEdits} from './floor-edge.mjs?v=5.7.3';
-import {closedAreas} from './walkable-spaces.mjs?v=5.8.0';
+import {closedAreas,cabinExclusions} from './walkable-spaces.mjs?v=5.8.0';
 /** Resolve editable geometry once for the studio, collision export and FPS adapter. */
 import '../../src/floor5-data.js';
 import '../../src/world.js?v=5.5.0';
@@ -50,7 +50,7 @@ export function resolveProjectScene(project){
  const extra=project.architecture.floors.filter(f=>!project.ground.floors.some(g=>g.id===f.id)).map(f=>({...f,role:'room',surface:'carpet'}));
  const fixed=project.legacyPatch?.emptyFixed?[]:base.data.obstacles.filter(o=>!EDITABLE_KINDS[o.kind]&&o.kind!=='uncertain-area');
 
- return {entries,items,closed:closed.filter(r=>!opened.has(r.id)),floors:[...applyFloorEdits(zones,project.ground.floorEdits).map(finish),...project.ground.floors.map(rectangle).map(finish),...extra.map(rectangle).map(finish)],fixed,
+ return {entries,items,closed:cabinExclusions(closed.filter(r=>!opened.has(r.id)),project.gameplay?.startElevators,project.ground.floors),floors:[...applyFloorEdits(zones,project.ground.floorEdits).map(finish),...project.ground.floors.map(rectangle).map(finish),...extra.map(rectangle).map(finish)],fixed,
   baselineEntries:base.entries,baselineItems:base.items};
 }
 export function writeProjectScene(project,scene){

@@ -16,6 +16,8 @@ export function collisionExport(p,{geometryRevision=2}={}){
   staticWalls:projectWallPieces(segments,{glazingClearance:geometryRevision===1?.015:0}).map(w=>({id:w.id,kind:w.kind,glazingStyle:w.glazingStyle||null,a:w.a,b:w.b,height:w.height,thickness:w.thickness,sill:w.kind==='window'?w.sill:null,collision:w.kind==='window'||w.kind==='glazed'?'glass':'solid'})),
   passages:segments.filter(e=>isDoor(e.kind)).map(e=>({id:e.id,kind:e.kind,a:e.a,b:e.b,width:Math.hypot(e.b[0]-e.a[0],e.b[1]-e.a[1]),collision:e.kind==='opening'?'none':'dynamic-door-leaf'})),
   furniture:scene.items.map(o=>({id:o.id,kind:o.kind,assetName:o.assetName||null,assetId:o.assetId||null,x:o.x,z:o.z,yaw:o.yaw,mirrored:!!o.mirrored,wallRoll:o.wallRoll||0,wallFacing:o.wallFacing||null,modelSize:o.modelSize||null,w:o.w,d:o.d,height:o.height,elevation:o.elevation||0,mountId:o.mountId||null,wallMount:o.wallMount||null,snapRole:o.snapRole||null,collision:o.collision||'solid'})),
+  ...(p.gameplay.startElevators?.length?{startElevators:p.gameplay.startElevators,
+   closedAreas:scene.closed.map(r=>({id:r.id,polygon:r.polygon}))}:{}),
   spawns:p.gameplay.spawns.map(s=>({id:s.id,team:s.team,x:s.x,z:s.z,yaw:s.yaw})),
   objectives:p.gameplay.objectives,fixedObstacles:scene.fixed,floor5Inherited:p.mode==='edit-floor5'};
 }
