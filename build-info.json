@@ -631,8 +631,8 @@
     },
     {
       "path": "fps/index.html",
-      "bytes": 10972,
-      "sha256": "45a9be065d1f1bff4d12eddf20ce5ac996f39cbf599330715b37445a3d2ecdc2"
+      "bytes": 10977,
+      "sha256": "63a6ba3fedfb2110f6358b50afccff867d6c6d75a276fc8bed4bec539f824c29"
     },
     {
       "path": "fps/style.css",
@@ -641,13 +641,13 @@
     },
     {
       "path": "fps/walk.html",
-      "bytes": 1790,
-      "sha256": "18b49077de18892d1809a64aadb69924feb2f6adf19a9f5a65e179517298af10"
+      "bytes": 1805,
+      "sha256": "63a412cf83674d84cbd72378cc8bd106cc06316046190bb350b7c97e8b6a3581"
     },
     {
       "path": "fps/walk.mjs",
-      "bytes": 4731,
-      "sha256": "e7f14d2657601b5ffdb9f884612ad9974986a39b6b6c53294e79b31498b2167f"
+      "bytes": 4746,
+      "sha256": "680f521f1c04dfc28c897650defff0beeea5d2e144999d8300f3837058f6239c"
     },
     {
       "path": "furniture-editor/adjacent-room.mjs",
@@ -700,6 +700,21 @@
       "sha256": "3e4fdbe957811475db94cfbb7b4d504690c27e4cdc77037d2722586c990e1443"
     },
     {
+      "path": "furniture-editor/build/environment-art.mjs",
+      "bytes": 9451,
+      "sha256": "a4fdb74d97ec6a2d62f864fb6a5b94f1616f5ea54f5f476dc66c863447db082e"
+    },
+    {
+      "path": "furniture-editor/build/environment-layout.mjs",
+      "bytes": 3688,
+      "sha256": "6cb5f2ff8c2f66cb09580e9bf1da6f48b680715985ad131850616f630142c725"
+    },
+    {
+      "path": "furniture-editor/build/environment-visuals.mjs",
+      "bytes": 12605,
+      "sha256": "1c691e2a134a6c4351be2eb9d188d8b91f267845818c0f3d4ea774e4d6851e82"
+    },
+    {
       "path": "furniture-editor/build/floor-edge.mjs",
       "bytes": 7412,
       "sha256": "f78768a66ce93693bc5d05dd52bc337979af898b260d7104614ae984c1ac22ed"
@@ -711,13 +726,13 @@
     },
     {
       "path": "furniture-editor/build/level-project.mjs",
-      "bytes": 16982,
-      "sha256": "71bde9d929fcbeb1cec381da917af0cd40906b0a9e517f4a6c94b5bf7effe62f"
+      "bytes": 17158,
+      "sha256": "f4569b53f6c2f08dcb363f14af323121909b8978dd926dadb3dc5be0516e5c25"
     },
     {
       "path": "furniture-editor/build/level-project.schema.json",
-      "bytes": 8942,
-      "sha256": "07e8fd2d1938d424cf78081efe853af16b8bef4a8966631a887d9666ac45a428"
+      "bytes": 9417,
+      "sha256": "7bc7cbc2d3581742019d8cacd613c012281ce7734f4dc3afa34e2119b039a456"
     },
     {
       "path": "furniture-editor/build/paint-over-wall.mjs",
@@ -2482,12 +2497,12 @@
     {
       "path": "furniture-editor/new.html",
       "bytes": 24840,
-      "sha256": "f596e51dc3949a17be05b96582f2808b57df53c1be9536dd492d090718ba6a70"
+      "sha256": "12b73f6daabe4ef75767de0425cc2ade8f6aafb466867ab4ba48dbd562535cb9"
     },
     {
       "path": "furniture-editor/new.mjs",
-      "bytes": 123546,
-      "sha256": "0dfbfe1fd52745ad0a1be6717baeb4a2016a6458b969da7114361cfde27ab5bc"
+      "bytes": 124728,
+      "sha256": "970f3b6c3190b3332a1219eaf1866189f0d4646f674e6df3d3bf3be736fe604b"
     },
     {
       "path": "furniture-editor/project-limits.mjs",
@@ -2531,8 +2546,8 @@
     },
     {
       "path": "levels/floor5-prepared.json",
-      "bytes": 1702970,
-      "sha256": "a0188482610ffa8e9d134f6bbfbe55c660bb7ec45dd832a1a88698d2ac2bdd30"
+      "bytes": 1762455,
+      "sha256": "495d3b0fc2d0310ef562a27872620e3c117930a82e31fb0556a7a4e35ee0301f"
     },
     {
       "path": "levels/manifest.json",
@@ -2656,8 +2671,8 @@
     },
     {
       "path": "src/fps/app.mjs",
-      "bytes": 32265,
-      "sha256": "e98258e772300bcb1996c095412ad3dbb2e765ea0b9cbf016fc20e55d660b7c2"
+      "bytes": 32396,
+      "sha256": "e050dea82064611595eec85f90b7f6d2e0a6a64662e9552c49f1ceb7c9b2f0d0"
     },
     {
       "path": "src/fps/audio.mjs",
@@ -2941,8 +2956,8 @@
     },
     {
       "path": "src/fps/render.mjs",
-      "bytes": 17074,
-      "sha256": "b644991f6a6e2840c2eb1fd838e6e5794fd697f97b7579c8176dc475e6989227"
+      "bytes": 17725,
+      "sha256": "a0f97ddafd478dc6555aaf39d67e4d77fee96537c380e4ec0dd5df9df8d923fd"
     },
     {
       "path": "src/fps/riposte-audio.mjs",
@@ -3140,7 +3155,7 @@
       "sha256": "9b0c24534a47f2e1c9549a63a5e00a850577e22fe8d18dbc7a532008a027cb89"
     }
   ],
-  "bytes": 32537626,
+  "bytes": 32625505,
   "sourceDirectoriesExcluded": [
     "references",
     "reviews",

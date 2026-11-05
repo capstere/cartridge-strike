@@ -1,3 +1,4 @@
+import {buildEnvironment} from '../../furniture-editor/build/environment-visuals.mjs';
 import {buildFpsFurniture} from './project-batches.mjs';
 import {buildDoorVisuals} from './door-visuals.mjs?v=5.5.0';
 import {buildFacilityDetails} from './facility-details-view.mjs';
@@ -69,7 +70,10 @@ export class Renderer extends EngineRenderer {
     this.nativeRender=this.renderer.render.bind(this.renderer);this.inDepthPass=false;
     this.renderer.render=(scene,camera)=>{
       if(scene===this.scene&&!this.inDepthPass)this.doorVisuals?.update(camera,this.renderer.shadowMap.enabled?this.lights:[]);
-      if(scene===this.scene&&!this.inDepthPass)this.projectBatches?.update(camera);
+      if(scene===this.scene&&!this.inDepthPass){
+        this.projectBatches?.update(camera);
+        this.floorEnvironment?.update(camera,this.presentationGame?.state.time||0,this.settings,world);
+      }
       if(scene===this.scene&&!this.inDepthPass&&this.visualDepth&&this.settings.graphics!=='low'){
         this.inDepthPass=true;try{this.visualDepth.render(scene,camera);}finally{this.inDepthPass=false;}return;
       }
@@ -93,6 +97,12 @@ export class Renderer extends EngineRenderer {
        if(this.projectBatches){
         for(const node of this.projectFurniture.children.slice(decorationStart))this.projectBatches.register(node);
         for(const node of this.scene.children)if(node.name==='room-static-batch')this.projectBatches.register(node);
+       }
+       if(world.project.environment){
+        const environment=await buildEnvironment(world.project,world.projectScene.entries,world.projectScene.items);
+        if(this.presentationDisposed){environment.dispose();return;}
+        this.floorEnvironment=environment;this.projectFurniture.add(environment.root);
+        for(const cell of environment.root.children)this.projectBatches?.register(cell);
        }
        freezeStaticTransforms(this.projectFurniture);
       }
@@ -214,7 +224,7 @@ export class Renderer extends EngineRenderer {
   }
   dispose(){
     if(this.presentationDisposed)return;this.presentationDisposed=true;
-    this.glassVisuals?.dispose();this.detailScene?.dispose();this.doorVisuals?.dispose();this.riposteProps?.dispose();
+    this.floorEnvironment?.dispose();this.glassVisuals?.dispose();this.detailScene?.dispose();this.doorVisuals?.dispose();this.riposteProps?.dispose();
     this.focusLighting?.dispose();this.facilityScene?.dispose();
     for(const restore of this.presentationRestores||[])restore();
      for(const m of this.floor5PatternMaterials?.values()||[])m.dispose();this.floor5PatternMaterials?.clear();
