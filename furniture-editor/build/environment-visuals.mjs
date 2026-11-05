@@ -173,8 +173,13 @@ export async function buildEnvironment(project,entries,items){
   for(let i=0;i<steps;i++){const t=(i+.5)/steps;
    locate('facade',transform(a[0]+dx*t,0,a[1]+dz*t,Math.atan2(-dz*side,dx*side)));make(length/steps);}
  }
- for(let i=0;i<facade.outline.length;i++)strip(facade.outline[i],facade.outline[(i+1)%facade.outline.length],1,w=>{
-  draw.box(0,2.905,0,w+.004,.11,.17,facade.color);draw.box(0,-.075,0,w+.004,.15,.15,facade.color);
+ // Keep the edging outside the envelope and clear of the interior ceiling/floor planes.
+ const area=facade.outline.reduce((sum,[x,z],i)=>{
+  const next=facade.outline[(i+1)%facade.outline.length];return sum+x*next[1]-next[0]*z;
+ },0);
+ const exteriorSide=area>0?-1:1;
+ for(let i=0;i<facade.outline.length;i++)strip(facade.outline[i],facade.outline[(i+1)%facade.outline.length],exteriorSide,w=>{
+  draw.box(0,2.915,.09,w+.004,.11,.15,facade.color);draw.box(0,-.085,.09,w+.004,.15,.15,facade.color);
  });
  for(const edge of facade.edges){
   const wall=wallById.get(edge.wallId);if(!wall)continue;

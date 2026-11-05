@@ -68928,17 +68928,6 @@
         "subtitle": "5.527 · Repro"
       },
       {
-        "id": "ENV-047",
-        "roomId": "I31",
-        "kind": "room",
-        "wallId": "WALL-174",
-        "t": 0.8660714,
-        "side": -1,
-        "y": 1.61,
-        "title": "ENTRÉ 7",
-        "subtitle": "5.531 · Hisshall"
-      },
-      {
         "id": "ENV-048",
         "roomId": "I12",
         "kind": "reader",
@@ -69379,7 +69368,7 @@
         "side": -1,
         "y": 1.79,
         "title": "ENTRÉ 7",
-        "subtitle": "HISSHALL   /   LOBBY"
+        "subtitle": "5.531   ·   HISSHALL / LOBBY"
       }
     ],
     "background": [

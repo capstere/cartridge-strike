@@ -711,8 +711,8 @@
     },
     {
       "path": "furniture-editor/build/environment-visuals.mjs",
-      "bytes": 12605,
-      "sha256": "1c691e2a134a6c4351be2eb9d188d8b91f267845818c0f3d4ea774e4d6851e82"
+      "bytes": 12889,
+      "sha256": "6d2e301d4fa55472669030d3ffde3cc7e3c229abbf479a862e64cee915861ae0"
     },
     {
       "path": "furniture-editor/build/floor-edge.mjs",
@@ -2546,8 +2546,8 @@
     },
     {
       "path": "levels/floor5-prepared.json",
-      "bytes": 1762455,
-      "sha256": "495d3b0fc2d0310ef562a27872620e3c117930a82e31fb0556a7a4e35ee0301f"
+      "bytes": 1762211,
+      "sha256": "c38ca807f1a36860c233a37151f03e19f42714150830e15a40e5ade4d6a15887"
     },
     {
       "path": "levels/manifest.json",
@@ -3155,7 +3155,7 @@
       "sha256": "9b0c24534a47f2e1c9549a63a5e00a850577e22fe8d18dbc7a532008a027cb89"
     }
   ],
-  "bytes": 32625505,
+  "bytes": 32625545,
   "sourceDirectoriesExcluded": [
     "references",
     "reviews",
