@@ -1,3 +1,4 @@
+import {buildEnvironment} from './build/environment-visuals.mjs';
 import {makeFloorTape,drawPlanTape} from './build/floor-tape.mjs?v=5.9.0';
 import {authoringStatus} from './project-limits.mjs?v=5.7.3';
 import {draftText,createDraftStore,readDraftZip} from './build/draft-save.mjs?v=5.7.2';
@@ -666,6 +667,21 @@ function animateMovement(now){movementFrame=0;if(!heldMovement.size||view==='wal
  movementFrame=requestAnimationFrame(animateMovement);
 }
 function stopMovement(){heldMovement.clear();if(movementFrame)cancelAnimationFrame(movementFrame);movementFrame=0;}
+let detailLayer=null,detailSignature='',detailRevision=0;
+function refreshEnvironment(){
+ const project=p(),env=project.environment;
+ const hosts=new Set(env?.displays.map(d=>d.host));
+ const signature=env?JSON.stringify([env,arch(),objects().filter(o=>hosts.has(o.id))]):'';
+ const show=()=>{for(const cell of detailLayer?.root.children||[])if(cell.name.startsWith('environment-facade/'))cell.visible=!$('cutaway').checked;};
+ if(detailSignature===signature){show();return;}
+ const revision=++detailRevision;detailSignature=signature;detailLayer?.dispose();detailLayer=null;
+ if(!env)return;
+ buildEnvironment(project,arch(),objects()).then(layer=>{
+  if(detailRevision!==revision){layer.dispose();return;}
+  detailLayer=layer;scene.add(layer.root);show();if(view==='3d')renderer.render(scene,camera);
+ }).catch(error=>{if(detailRevision===revision){detailSignature='';$('status').textContent='Miljödekoren kunde inte visas: '+error.message;}});
+}
+window.addEventListener('pagehide',event=>{if(!event.persisted){detailRevision++;detailSignature='';detailLayer?.dispose();detailLayer=null;}});
 function draw3D(){if(!ensureRenderer())return;group.traverse(o=>{if(o.isMesh||o.isLineSegments){o.geometry?.dispose();if(o.material?.userData?.studioOwned){if(!o.material.map?.userData?.studioShared)o.material.map?.dispose();o.material.dispose();}}});group.clear();
  group.add(architecturePreview(p(),{...model(),floors:floors()},{lowWalls:$('cutaway').checked,openDoors:doorPreviewOpen,selected}));
  if($('showPhysics').checked)for(const area of spaces()){
@@ -692,7 +708,7 @@ function draw3D(){if(!ensureRenderer())return;group.traverse(o=>{if(o.isMesh||o.
    const mat=new T.MeshBasicMaterial({color:0xffffff,side:T.DoubleSide,depthTest:false});mat.userData.studioOwned=true;const arrow=new T.Mesh(new T.ShapeGeometry(shape),mat);arrow.position.set(q.x,.15,q.z);arrow.rotation.set(-Math.PI/2,0,q.axis===1?Math.PI/2:0);arrow.renderOrder=21;arrow.userData={editId:chosen.id,editHandle:handle};group.add(arrow);
   }
  }
- refreshFurnitureVisuals();
+ refreshFurnitureVisuals();refreshEnvironment();
  buildProjectDecorations(p(),arch(),group,()=>renderer.render(scene,camera));
  position3DCamera();
  const r=$('scene3d').getBoundingClientRect();renderer.setSize(Math.max(1,r.width),Math.max(1,r.height),false);camera.aspect=r.width/r.height;camera.updateProjectionMatrix();update3DPreview();

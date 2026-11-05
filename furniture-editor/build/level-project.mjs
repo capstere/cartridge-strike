@@ -7,6 +7,7 @@ import {validateOpenedAreas,closedAreas} from './walkable-spaces.mjs?v=5.8.0';
 import {validModelAlignment} from '../model-alignment.mjs?v=5.8.0';
 /** Versioned level document. Parsing is deliberately independent of the renderer. */
 import {BASE_COMMIT,GAME_VERSION,PATCH_FORMAT,PATCH_SCHEMA} from '../core.mjs?v=5.8.0';
+import {validateEnvironment} from './environment-layout.mjs';
 import {validateEntry,validateFloorRect} from './architecture.mjs?v=5.8.0';
 import {assetHash} from '../library/glb-utils.mjs';
 import {makeZip,readZip,PROJECT_ZIP_MAX_BYTES} from '../library/zip.mjs?v=5.7.2';
@@ -32,7 +33,7 @@ const counts=()=>({analysts:5,counterAnalysts:5});
 
 export function exportProject({mode='new-level',projectId='lvl-new-level',name='Min bana',ground,
  architecture=emptyArchitecture(),furniture={placements:[],added:[],removed:[]},gameplay,
- navHints=[],intent={},validation={},assets={library:[],local:[],posters:[]},agentBrief={},legacyPatch,
+ navHints=[],intent={},validation={},assets={library:[],local:[],posters:[]},agentBrief={},legacyPatch,environment,
  createdAt=new Date().toISOString(),migrationNotes=[]}={}){
  const project={format:LEVEL_FORMAT,schemaVersion:LEVEL_SCHEMA,editorVersion:LEVEL_EDITOR_VERSION,createdAt,
   projectId,name,game:{repository:'capstere/cartridge-strike',version:LEVEL_GAME_VERSION,
@@ -42,6 +43,7 @@ export function exportProject({mode='new-level',projectId='lvl-new-level',name='
   ground:ground||{bounds:{x0:-40,z0:-40,x1:40,z1:40},wallHeightDefault:2.85,floors:[]},
   architecture,furniture,gameplay:gameplay||{mode:'classic',counts:counts(),spawns:[],objectives:{bomb:null,rescue:null,hostages:[]}},
   navHints,intent,validation,assets,agentBrief};
+ if(environment!==undefined)project.environment=environment;
  if(legacyPatch)project.legacyPatch=legacyPatch;
  if(migrationNotes.length)project.migrationNotes=migrationNotes;
  return parseProject(project,{allowLegacy:false});
@@ -149,6 +151,7 @@ export function parseProject(input,{allowLegacy=true}={}){
  }
  if(!Array.isArray(input.navHints)||input.navHints.length>250||typeof input.intent!=='object'||typeof input.validation!=='object'||typeof input.agentBrief!=='object')fail('metadata');
  for(const hint of input.navHints)if(typeof hint.id!=='string'||hint.id.length>100||!Array.isArray(hint.points)||hint.points.length<2||hint.points.length>1000||hint.points.some(p=>!Array.isArray(p)||p.length!==2||!p.every(within)))fail('navigationspunkter');
+ validateEnvironment(input.environment);
  const assets=input.assets;if(!assets||!Array.isArray(assets.library)||!Array.isArray(assets.local)||!Array.isArray(assets.posters)||assets.local.length>49||assets.posters.length>100)fail('tillgångar');
  for(const row of assets.local){if(!/^local:[a-f0-9]{64}$/.test(row.assetId)||row.file!==`assets/models/${row.assetId.slice(6)}.glb`||
   !Number.isInteger(row.bytes)||row.bytes<0||row.bytes>20e6)fail('modellfil');}

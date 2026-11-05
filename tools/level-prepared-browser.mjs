@@ -6,7 +6,7 @@ import {chromium} from '../frontline/source/tools/dev/node_modules/playwright-co
 
 const origin=process.env.FPS_TEST_ORIGIN||'http://127.0.0.1:8765';
 const browser=await chromium.launch({headless:true,...(process.env.PLAYWRIGHT_EXECUTABLE_PATH?{executablePath:process.env.PLAYWRIGHT_EXECUTABLE_PATH}:{}),
- args:['--use-gl=angle','--use-angle=swiftshader','--enable-unsafe-swiftshader','--ignore-gpu-blocklist','--no-sandbox']});
+ args:['--use-gl=angle','--use-angle='+(process.env.FPS_TEST_ANGLE||'swiftshader'),'--enable-unsafe-swiftshader','--ignore-gpu-blocklist','--no-sandbox']});
 try{
  const page=await browser.newPage({viewport:{width:880,height:510}}),errors=[],loads=[];
  page.on('pageerror',e=>errors.push(e.message));
@@ -21,8 +21,10 @@ try{
  assert.equal(await page.locator('#fatal').isVisible(),false,await page.locator('#fatal').textContent());
  assert.equal(await page.evaluate(()=>__fps.world.project.projectId),'lvl-floor5-preppad-20261105');
  const screen=async name=>{if(process.env.FPS_SCREENSHOTS){await mkdir(process.env.FPS_SCREENSHOTS,{recursive:true});
-  await page.locator('#game').screenshot({path:join(process.env.FPS_SCREENSHOTS,name+'.jpg')});}};
+  await page.screenshot({path:join(process.env.FPS_SCREENSHOTS,name+'.jpg'),animations:'disabled',timeout:60000});}};
  const before=loads.length;assert.equal(new Set(loads.filter(u=>/\/assets\/models\/[a-f0-9]{64}\.glb$/.test(u))).size,13);
+ // Simulation steps and draws below explicitly control the captured frame.
+ await page.evaluate(()=>__fps.stopFrameLoop());
  await page.locator('#start').click();
  for(const team of ['analysts','counterAnalysts']){
   if(team==='counterAnalysts')await page.evaluate(()=>__fps.start('counterAnalysts',{buyTime:2},false));
@@ -59,5 +61,24 @@ try{
   },room);
   assert(printer);await screen(room+'-ricoh');
  }
+ // Inspect an actual monitor face. Only the two shared signal variants are animated.
+ const details=await page.evaluate(()=>{
+  const {game,renderer,world}=__fps,layer=renderer.floorEnvironment,root=layer.root;
+  const signal=root.getObjectByName('environment-signal').material.map;
+  const camera=renderer.camera.clone();camera.position.set(20.64,1.60,14.183);
+  camera.lookAt(22.39,1.80,14.62);camera.updateMatrixWorld();
+  const normal={graphics:'standard',reducedMotion:false};
+  const tick=(time,settings=normal)=>{renderer.projectBatches.update(camera);layer.update(camera,time,settings,world);return signal.offset.y;};
+  const a=tick(20.125),held=tick(20.20),next=tick(20.251);
+  camera.lookAt(19,1.6,13.9);camera.updateMatrixWorld();
+  const hidden=tick(20.5),reduced=tick(21,{...normal,reducedMotion:true}),low=tick(21.25,{...normal,graphics:'low'});
+  game.beginRound();
+  return {a,held,next,hidden,reduced,low,reused:renderer.floorEnvironment.root===root,
+   hasLab:root.children.some(cell=>cell.name.startsWith('environment-X21/')),
+   hasFacade:root.children.some(cell=>cell.name.startsWith('environment-facade/'))};
+ });
+ assert.equal(details.a,details.held);assert.notEqual(details.next,details.a);
+ assert.equal(details.next,details.hidden);assert.equal(details.reduced,0);assert.equal(details.low,0);
+ assert(details.reused&&details.hasLab&&details.hasFacade);
  assert.deepEqual(errors,[]);console.log('Default Floor 5 WebGL, model preloading and both printer rooms passed.');
 }finally{await browser.close();}
