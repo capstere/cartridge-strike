@@ -21,7 +21,7 @@ async function boot(browser,mobile){
  await page.waitForTimeout(650);
  const idle=await page.evaluate(()=>__fps.renderBudget.stats.idle);
  assert.ok(idle>before&&idle-before<=8,'Menus should redraw without a full-rate render loop');
- await page.evaluate(()=>{window.requestAnimationFrame=()=>0;});
+ await page.evaluate(()=>__fps.stopFrameLoop());
  await page.locator('#start').click();
  await page.evaluate(()=>{
   __fps.start('analysts',{mode:'endless',firefight:false,botFire:false,wanderers:false,loadout:'smg'});
@@ -105,7 +105,29 @@ async function boot(browser,mobile){
    const opened=await page.evaluate(()=>({draws:__fps.minimapCache.stats.draws,width:document.getElementById('minimap').width,
     visible:!!document.querySelector('.map-panel').getClientRects().length}));
    assert.equal(opened.width,448);assert.equal(opened.visible,true);assert.ok(opened.draws>0);
-   await page.screenshot({path:`test-results/perf-${mobile?'mobile':'desktop'}.png`,timeout:60000});
+   // Capture the real GPU frame immediately, before its drawing buffer is discarded.
+   // Keep the actual expanded map, full HUD, original CSS and viewport in the proof image.
+   // SwiftShader can otherwise stall in DevTools while copying a live WebGL surface.
+   const restoreSurface=await page.evaluateHandle(async()=>{
+    const canvases=[__fps.renderer.renderer.domElement,document.getElementById('minimap')];
+    __fps.render();
+    const surfaces=canvases.map(canvas=>{
+     const still=new Image();
+     for(const attribute of canvas.attributes)still.setAttribute(attribute.name,attribute.value);
+     still.src=canvas.toDataURL('image/png');
+     return {canvas,still};
+    });
+    await Promise.all(surfaces.map(({still})=>still.decode()));
+    if(surfaces.some(({canvas,still})=>still.naturalWidth!==canvas.width||still.naturalHeight!==canvas.height))throw Error('Incomplete canvas capture');
+    for(const {canvas,still} of surfaces)canvas.replaceWith(still);
+    return ()=>{for(const {canvas,still} of surfaces)still.replaceWith(canvas);};
+   });
+   try{
+    await page.screenshot({path:`test-results/perf-${mobile?'mobile':'desktop'}.png`,animations:'disabled',timeout:60000});
+   }finally{
+    await restoreSurface.evaluate(restore=>restore());
+    await restoreSurface.dispose();
+   }
    assert.deepEqual(errors,[]);assert.equal(await page.locator('#fatal').isVisible(),false);
    report[mobile?'mobile':'desktop']={...result,idleFrames};
    if(!mobile){

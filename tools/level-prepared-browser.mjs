@@ -24,7 +24,7 @@ try{
   await page.screenshot({path:join(process.env.FPS_SCREENSHOTS,name+'.jpg'),animations:'disabled',timeout:60000});}};
  const before=loads.length;assert.equal(new Set(loads.filter(u=>/\/assets\/models\/[a-f0-9]{64}\.glb$/.test(u))).size,13);
  // Simulation steps and draws below explicitly control the captured frame.
- await page.evaluate(()=>{window.requestAnimationFrame=()=>0;});
+ await page.evaluate(()=>__fps.stopFrameLoop());
  await page.locator('#start').click();
  for(const team of ['analysts','counterAnalysts']){
   if(team==='counterAnalysts')await page.evaluate(()=>__fps.start('counterAnalysts',{buyTime:2},false));
