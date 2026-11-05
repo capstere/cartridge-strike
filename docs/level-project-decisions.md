@@ -7,7 +7,7 @@
 - The existing engine renders window parapets, but Floor 5 uses special case dimensions. New levels must use `sill` for visible and physical geometry. Glass is solid before breakage; opening has no leaf or wall collision. The project must not claim free traversal through glazed or window segments.
 - Canonical new ZIP paths are `project.json`, `assets/models/<sha256>.glb`, `assets/posters/<safe-id>.webp`, optional `preview/plan.png`, `preview/view3d.png`, and `AGENT_BRIEF.md`. Legacy `projekt.json` plus `models/` is accepted only as an input.
 - A version 1 patch is retained verbatim under `legacyPatch` when migrated. This preserves emptyFixed, architecture, posters, treatments, dimensions, mounts and old metadata; normalization must not destroy the original.
-- The public example must be synthetic. Private plan data and unverified local models are never added to a public level manifest.
+- The synthetic example remains the portable test fixture. The owner-approved Floor 5 release uses the complete inherited project, a hash-specific asset review and an explicit `--default-floor5` publish step. Private drafts continue to use browser-local preview.
 
 Baseline: `node tools/owner-door-traversal.mjs` passed 102 directional cases; `node tools/verify-owner-runtime.mjs` passed 195 SHA-256 entries. The broad Node suite requires a local `three` resolution shim for vendored addon imports; without it six files fail at module resolution before assertions run.
 

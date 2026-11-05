@@ -51,9 +51,17 @@ export async function buildDoorVisuals(system){
   mesh.instanceMatrix.setUsage(T.DynamicDrawUsage);root.add(mesh);batches.push(mesh);
   if(name==='panel')for(let i=0;i<leaves.length;i++)mesh.setColorAt(i,new T.Color(leaves[i].door.studioColor||(leaves[i].door.doorStyle==='wc'?0xf3f3ef:leaves[i].door.accessCard?0x527b80:0xc4c3af)));
  }
+ const sliderMaterial=system.elevators?.boxes.length?new T.MeshStandardMaterial({color:0xadb5b6,metalness:.42,roughness:.4}):null;
+ const sliders=(system.elevators?.boxes||[]).map(box=>{
+  const mesh=new T.Mesh(new T.BoxGeometry(box.w,box.h,box.d),sliderMaterial);
+  mesh.name=box.id;root.add(mesh);
+  const seam=new T.Mesh(new T.BoxGeometry(.009,box.h,.074),rubber);
+  seam.position.x=-box.side*(box.w/2-.005);mesh.add(seam);return {mesh,box};
+ });
  const transform=new T.Object3D(),frustum=new T.Frustum(),projection=new T.Matrix4(),sphere=new T.Sphere();
  const colors=leaves.map(l=>new T.Color(l.door.studioColor||(l.door.doorStyle==='wc'?0xf3f3ef:l.door.accessCard?0x527b80:0xc4c3af)));let lastSignature='',visibleCount=leaves.length;
  function update(camera=null,lights=[]){
+  for(const {mesh,box} of sliders){mesh.position.set(box.x,box.y,box.z);mesh.rotation.y=box.angle;}
   for(const {leaf,group} of glassGroups){group.position.set(leaf.x,0,leaf.z);group.rotation.y=leaf.box.angle;}
   for(const {leaf,group} of officeGroups){group.position.set(leaf.x,0,leaf.z);group.rotation.y=leaf.box.angle;}
    for(const {leaf,group} of wcBadges){group.position.set(leaf.x,0,leaf.z);group.rotation.y=leaf.box.angle;}
@@ -73,5 +81,5 @@ export async function buildDoorVisuals(system){
   for(const batch of batches){batch.count=visible.length;batch.instanceMatrix.needsUpdate=true;}
   if(batches[0].instanceColor)batches[0].instanceColor.needsUpdate=true;return true;
  }
- update();return {root,update,get visibleCount(){return visibleCount+glassGroups.length+wcBadges.length+officeGroups.length;},report:system.report,dispose(){root.removeFromParent();for(const b of batches){b.geometry.dispose();b.dispose();}for(const h of handles)h.release();rubber.dispose();for(const {group,frame} of glassGroups){group.children.forEach(m=>m.geometry.dispose());frame.dispose();}for(const badge of wcBadges)badge.dispose();for(const o of officeGroups){o.group.traverse(m=>m.geometry?.dispose());o.panelMaterial.dispose();o.hardware.dispose();}glass?.dispose();pbr.dispose();}};
+ update();return {root,update,get visibleCount(){return visibleCount+glassGroups.length+wcBadges.length+officeGroups.length;},report:system.report,dispose(){root.removeFromParent();for(const {mesh} of sliders)mesh.traverse(o=>o.geometry.dispose());sliderMaterial?.dispose();for(const b of batches){b.geometry.dispose();b.dispose();}for(const h of handles)h.release();rubber.dispose();for(const {group,frame} of glassGroups){group.children.forEach(m=>m.geometry.dispose());frame.dispose();}for(const badge of wcBadges)badge.dispose();for(const o of officeGroups){o.group.traverse(m=>m.geometry?.dispose());o.panelMaterial.dispose();o.hardware.dispose();}glass?.dispose();pbr.dispose();}};
 }

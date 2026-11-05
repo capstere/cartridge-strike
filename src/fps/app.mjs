@@ -56,13 +56,14 @@ async function preparePrivateCharacter(){
  }catch(e){if(rehearsalMode)throw e;characterSelectionFailed=true;privateCharacterDraft=null;characterMenu.error(e.message);}
 }
 async function selectedLevel(){
- const id=new URLSearchParams(location.search).get('level');if(id===null)return null;
+ let id=new URLSearchParams(location.search).get('level');if(id==='classic-floor5')return null;
  if(id==='preview'){
   const saved=localStorage.getItem('cartridge-level-preview');if(!saved)throw Error('Ingen privat förhandsvisning finns i den här webbläsaren.');
   return parseProject(saved);
  }
- if(!/^[a-z0-9-]{1,48}$/.test(id))throw Error('Ogiltigt nivå-ID.');
  const manifest=await (await fetch('../levels/manifest.json',{cache:'no-store'})).json();
+ id??=manifest.defaultLevel;
+ if(!/^[a-z0-9-]{1,48}$/.test(id||''))throw Error('Ogiltigt nivå-ID.');
  const entry=manifest.levels?.find(row=>row.id===id);
  if(!entry||entry.file!==`levels/${id}.json`)throw Error('Nivån finns inte i det publicerade manifestet.');
  const response=await fetch('../'+entry.file);if(!response.ok)throw Error('Nivåfilen saknas.');

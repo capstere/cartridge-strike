@@ -25,3 +25,18 @@ export function floorGaps(floors,walkable=[],blocked=[]){
  return result;
 }
 export function gapFloor(gap,id){return {id,name:'Anslutning mellan golv',role:'corridor',surface:'carpet',x0:gap.x0,z0:gap.z0,x1:gap.x1,z1:gap.z1};}
+
+// The north freight facade backs onto one rectangular excluded service volume.
+// Subtract exactly the authored cabin footprint, keeping every surrounding point excluded.
+export function cabinExclusions(rooms,configs,floors){
+ if(!configs?.length)return rooms;
+ return rooms.map(room=>{
+  const cfg=configs.find(c=>c.excludedAreaId===room.id);if(!cfg)return room;
+  const floor=floors.find(f=>f.id===cfg.floorId),xs=room.polygon.map(p=>p[0]),zs=room.polygon.map(p=>p[1]);
+  const x0=Math.min(...xs),x1=Math.max(...xs),z0=Math.min(...zs),z1=Math.max(...zs);
+  if(!floor||new Set(xs).size!==2||new Set(zs).size!==2||room.polygon.length!==4||
+     floor.x0<=x0||floor.x1>=x1||floor.z0<=z0||floor.z0>=z1||floor.z1<z1)throw Error('Hisskorgen passar inte mot serviceutrymmets gräns.');
+  return {...room,polygon:[[x0,z0],[x1,z0],[x1,z1],[floor.x1,z1],[floor.x1,floor.z0],
+   [floor.x0,floor.z0],[floor.x0,z1],[x0,z1]]};
+ });
+}

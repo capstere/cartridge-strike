@@ -132,6 +132,13 @@ export function parseProject(input,{allowLegacy=true}={}){
  const play=input.gameplay;if(play?.mode!=='classic'||!play.counts||!Array.isArray(play.spawns)||play.spawns.length>10||
   !play.objectives||!Array.isArray(play.objectives.hostages))fail('spelregler');
  for(const team of ['analysts','counterAnalysts'])if(!Number.isInteger(play.counts[team])||play.counts[team]<1||play.counts[team]>5)fail('lagstorlek');
+ if(play.startElevators!==undefined){
+  const list=play.startElevators;
+  if(input.mode!=='edit-floor5'||!Array.isArray(list)||list.length>2||new Set(list.map(c=>c?.team)).size!==list.length||
+   new Set(list.map(c=>c?.doorId)).size!==list.length||list.some(c=>!c||!['analysts','counterAnalysts'].includes(c.team)||
+    !/^I\d{2}$/.test(c.lobbyId)||!/^D\d{2}$|^BYGG-D-\d{1,5}$/.test(c.doorId)||!g.floors.some(f=>f.id===c.floorId)||
+    c.excludedAreaId!==undefined&&!/^X\d{2}$/.test(c.excludedAreaId)))fail('startkabiner');
+ }
  for(const p of play.spawns){if(!/^SP-[AC]-\d{2}$/.test(p.id)||!['analysts','counterAnalysts'].includes(p.team)||
   !Number.isInteger(p.index)||p.index<0||p.index>4||![p.x,p.z,p.yaw].every(Number.isFinite)||!within(p.x)||!within(p.z)||Math.abs(p.yaw)>Math.PI+.001)fail('spawn');unique(p.id);}
  if(new Set(play.spawns.map(p=>p.team+':'+p.index)).size!==play.spawns.length)fail('dubbelt spawnindex');

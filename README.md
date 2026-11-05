@@ -16,13 +16,15 @@ Designstudion 5.8.0 bygger banprojekt i schema 2 för spelversion 0.18.0. Arkite
 
 Placera först skostället eller vägghyllan och därefter skorna med **Smart placering** påslagen. Markera ett par för att välja **Skornas färg** och **Hyllplan**. Skorna följer sin hylla när den flyttas, och färg, hyllplan och väggfästen sparas i JSON/ZIP och visas i FPS-promenaden. BINDER-vakuumugnen är en ny lågpolymodell; den separata torkugnen är återhämtad från onboard. [Användning](furniture-editor/README.md) · [FPS-objektens ursprung](docs/fps-furniture-library.md) · [Whiteboard och Ricoh](licenses/studio-office-models.md).
 
+Standardmatchen börjar i två hissar på våning 5. Analysts startar i godshissen på norrväggen i I12 och Counter Analysts i Hiss 10 vid ENTRÉ 7. Dörrarna öppnas under köpperiodens sista 1,5 sekunder. I Endless är utgångarna öppna från start. Den tidigare grundbanan finns på [Floor 5 Classic](https://capstere.github.io/cartridge-strike/fps/?level=classic-floor5).
+
 ## Hitta i repot
 
 | Plats | Innehåll |
 | --- | --- |
 | `furniture-editor/new.*`, `furniture-editor/build/` | Ny Designstudio, projektformat, byggverktyg och validering. |
 | `furniture-editor/library/` | Granskat möbelbibliotek, procedurmodeller och importstöd. |
-| `src/fps/`, `fps/` | Spelmotor och webbgränssnitt. Utan nivåparameter används Floor 5. |
+| `src/fps/`, `fps/` | Spelmotor och webbgränssnitt. Vanlig spelstart läser den möblerade Floor 5-banan från nivåmanifestet. |
 | `src/world.js`, `src/floor5-data.js` | Befintligt Floor 5-spår. |
 | `levels/` | Tillåtna publika banor och nivåmanifest. |
 | `assets/`, `vendor/`, `licenses/` | Publika spelresurser och licensinformation. |
