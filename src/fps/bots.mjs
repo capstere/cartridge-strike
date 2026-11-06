@@ -317,7 +317,8 @@ export class BotController {
     }
     const destination = outbound && this.routePlan?.gates.length ? this.routePlan.gates[0] : this.goal;
     if (this.routePlan && (game.bomb.status === 'planted' || game.hostages.some(h => h.escortId === actor.id) || this.mode === 'objective' && this.goal?.x > -15)) this.routePlan.gates = [];
-    if (game.state.time >= this.nextPath) {
+    if (game.state.time >= this.nextPath || this.navigationRevision !== (game.world.navigation?.revision||0)) {
+      this.navigationRevision=game.world.navigation?.revision||0;
       this.path = game.world.findPath(actor, destination); this.nextPath = game.state.time + 1.1;
     }
     while (this.path.length && distance(actor, this.path[0]) < .055) this.path.shift();

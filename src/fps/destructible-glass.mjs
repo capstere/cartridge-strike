@@ -14,7 +14,7 @@ export function prepareGlass(description,data){
 export function createGlassState(plan,physics,invalidate=()=>{}){
  const panes=new Map(plan.specs.map(s=>[s.id,{...s,broken:false}])),byBox=new Map();let revision=0;
  const actual=physics.staticBoxes.filter(b=>b.glassId);for(const b of actual)byBox.set(b.id,panes.get(b.glassId));
- function breakAt(hit){const pane=byBox.get(hit?.id);if(!pane||pane.broken)return null;pane.broken=true;for(const b of actual)if(b.glassId===pane.id)b.disabled=true;revision++;invalidate();return {paneId:pane.id,x:hit.point?.x??pane.x,y:hit.point?.y??pane.y,z:hit.point?.z??pane.z,normal:hit.normal||{x:0,y:0,z:1}};}
- function reset(){if(![...panes.values()].some(p=>p.broken))return false;for(const p of panes.values())p.broken=false;for(const b of actual)b.disabled=false;revision++;invalidate();return true;}
+ function breakAt(hit){const pane=byBox.get(hit?.id);if(!pane||pane.broken)return null;pane.broken=true;for(const b of actual)if(b.glassId===pane.id)b.disabled=true;revision++;physics.updateGlassPassages?.();invalidate({pane});return {paneId:pane.id,x:hit.point?.x??pane.x,y:hit.point?.y??pane.y,z:hit.point?.z??pane.z,normal:hit.normal||{x:0,y:0,z:1}};}
+ function reset(){if(![...panes.values()].some(p=>p.broken))return false;for(const p of panes.values())p.broken=false;for(const b of actual)b.disabled=false;revision++;physics.updateGlassPassages?.();invalidate({reset:true});return true;}
  return {panes,breakAt,reset,get revision(){return revision;},get brokenCount(){let n=0;for(const p of panes.values())if(p.broken)n++;return n;}};
 }

@@ -47,7 +47,7 @@ function createLevelWorld(project,{fresh=false}={}){
   !doors.elevators.boxes.some(b=>circleHitsBox(x,z,r,b))};
  const navigation=createNavigation(data,navPhysics),roomAt=(x,z)=>[...data.rooms,...data.corridors].find(r=>insidePolygon(x,z,r.polygon))||null;
  physics.setDynamicBoxes(doors.boxes);
- const glass=createGlassState(glassPlan,physics,()=>navigation.invalidate());
+ const glass=createGlassState(glassPlan,physics,change=>navigation.updateGlass(change));
  const setElevatorProgress=t=>{if(doors.elevators.cabins.length&&doors.elevators.setProgress(t))navigation.invalidate();};
  const world={setElevatorProgress,newLevel:true,project,projectScene:scene,description,data,anchors,doors,glass,details:null,living:null,furnishings:{instances:[],boxes:[]},tactical:null,
   roomAt,materialAt:(x,z)=>roomAt(x,z)?.surface||'carpet',...physics,findPath:navigation.findPath,navigation,
@@ -117,7 +117,7 @@ export function createWorld({fresh=false,levelProject=null}={}){
   );
   const materialAt=(x,z)=>{const r=roomAt(x,z);return r&&(['I01','I02','I03','I04','I29'].includes(r.id)||/RESTROOM|STÄD|PENTRY/.test(r.name))?'vinyl':'carpet';};
   physics.setDynamicBoxes(doors.boxes);
-  const glass=createGlassState(glassPlan,physics,()=>navigation.invalidate());
+  const glass=createGlassState(glassPlan,physics,change=>navigation.updateGlass(change));
   const world={doors,glass,details,description,data,anchors,tactical,furnishings,living,roomAt,materialAt,...physics,findPath:navigation.findPath,navigation,statistics:{...physics.statistics,navigation:navigation.statistics,furnishings:furnishings.instances.length}};
   if(!fresh)sharedWorld=world;
   return world;

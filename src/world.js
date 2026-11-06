@@ -20,7 +20,7 @@
  function build(s){
   const key=geometryKey(s);if(cachedScene&&key===cachedKey)return cachedScene;
   const scene={boxes:[],surfaces:[],labels:[],colliders:[],rooms:D.rooms,doors:D.doors,walls:D.walls,blockedPolygons:[],floorPolygons:D.floorPolygons};
-  const box=(id,x,y,z,w,h,d,color,material='wall',angle=0)=>scene.boxes.push({id,x,y,z,w,h,d,color:palette[color]||color,material,angle});
+  const box=(id,x,y,z,w,h,d,color,material='wall',angle=0)=>scene.boxes.push({id,x,y,z,w,h,d,color:palette[color]||color,material,angle,...(/-curtain\d+$/.test(id)?{decorative:true}:{})});
   const segmentBox=(id,a,b,y,h,thickness,color,material='wall')=>{const dx=b[0]-a[0],dz=b[1]-a[1];box(id,(a[0]+b[0])/2,y,(a[1]+b[1])/2,Math.hypot(dx,dz),h,thickness,color,material,-Math.atan2(dz,dx));};
   D.floorPolygons.forEach((p,i)=>{scene.surfaces.push({id:'floor-'+i,polygon:p,y:0,color:palette.floor,material:'carpet'},{id:'ceiling-'+i,polygon:p,y:H,color:palette.ceiling,material:'ceiling'});});
   [...D.rooms.filter(r=>r.status!=='uncertain'),...(D.__custom?D.corridors:[])].forEach(r=>scene.surfaces.push({id:'finish-'+r.id,polygon:r.polygon,y:.006,color:roomColor(r),material:D.__custom?r.surface:labRoom(r)||/RESTROOM|STÄD|PENTRY/.test(r.name)?'vinyl':'carpet'}));

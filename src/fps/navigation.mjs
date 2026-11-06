@@ -1,5 +1,5 @@
 import { AStar, Graph, NavNode, NavEdge, Vector3 } from '../../vendor/yuka/yuka.module.js';
-import { ACTOR_RADIUS, SpatialIndex, polygonBounds } from './physics.mjs';
+import { ACTOR_RADIUS, STANDING_HEIGHT, SpatialIndex, polygonBounds } from './physics.mjs';
 
 /** Yuka navigation graph generated from accepted routes + collision-validated floor samples.
  * All edges are swept with the actor footprint. The old reviewed routes provide samples
@@ -59,15 +59,19 @@ export function createNavigation(data,physics,{spacing=.70,radius=ACTOR_RADIUS+.
     const neighbors=[...index.nearby(n.x,n.z,1.04)].filter(m=>m.id<n.id&&Math.hypot(m.x-n.x,m.z-n.z)<=1.04);
     for(const other of neighbors)connect(n.id,other.id);
   }
-  // Label connected components once; an impossible objective must fail loudly, never teleport.
-  const component=new Int32Array(nodes.length).fill(-1),out=[];let components=0;
-  for(const n of nodes)if(component[n.id]<0){const queue=[n.id];component[n.id]=components;for(let q=0;q<queue.length;q++){graph.getEdgesOfNode(queue[q],out);for(const e of out)if(component[e.to]<0){component[e.to]=components;queue.push(e.to);}}components++;}
+  // Relabel only at construction and glass events; impossible routes never teleport.
+  let component,components=0,revision=0;
+  function labelComponents(){
+    component=new Int32Array(nodes.length).fill(-1);components=0;const out=[];
+    for(const n of nodes)if(component[n.id]<0){const queue=[n.id];component[n.id]=components;for(let q=0;q<queue.length;q++){graph.getEdgesOfNode(queue[q],out);for(const e of out)if(component[e.to]<0){component[e.to]=components;queue.push(e.to);}}components++;}
+  }
+  labelComponents();
   // Construction performs many one-off probes; only retain live path queries.
   cacheClearance=true;
   function nearest(point){
     for(const distance of [1.2,2.6,5.2,10]){
       const choices=[...index.nearby(point.x,point.z,distance)].sort((a,b)=>Math.hypot(a.x-point.x,a.z-point.z)-Math.hypot(b.x-point.x,b.z-point.z));
-      for(const n of choices)if(clear(point,n,ACTOR_RADIUS))return n;
+      for(const n of choices)if((n.id<baseNodeCount||activeGlassNodes.has(n.id))&&clear(point,n,ACTOR_RADIUS))return n;
     }
     return null;
   }
@@ -89,5 +93,27 @@ export function createNavigation(data,physics,{spacing=.70,radius=ACTOR_RADIUS+.
     return path;
   }
   const invalidate=()=>{cache.clear();clearanceCache.clear();clearanceStats.size=0;};
-  return {findPath,clear,nearest,nodes,graph,invalidate,statistics:{nodes:nodes.length,edges:edgeKeys.size,components,buildMs:Math.round(performance.now()-started),clearance:clearanceStats,library:'Yuka Graph/NavNode/NavEdge/AStar'}};
+  const baseEdges=new Set(edgeKeys),addedEdges=new Map(),baseNodeCount=nodes.length,activeGlassNodes=new Set();
+  const statistics={nodes:nodes.length,edges:edgeKeys.size,components,buildMs:Math.round(performance.now()-started),clearance:clearanceStats,glassUpdates:0,library:'Yuka Graph/NavNode/NavEdge/AStar'};
+  function updateGlass({pane,reset=false}={}){
+    invalidate();
+    if(reset){
+      for(const [key,edge]of addedEdges){graph.removeEdge(edge);edgeKeys.delete(key);}addedEdges.clear();activeGlassNodes.clear();
+    }else if(pane&&pane.y-pane.h/2<=.12&&pane.h>=STANDING_HEIGHT){
+      const c=Math.cos(pane.angle),s=Math.sin(pane.angle),width=Math.max(0,pane.w/2-radius-.01);
+      // Reuse these nodes on later rounds. Only collision-valid samples/edges
+      // near the broken pane are added; no full-map resampling on a shot/frame.
+      for(const along of [-width,0,width])for(const normal of [-.5,0,.5])add(pane.x+c*along+s*normal,pane.z-s*along+c*normal);
+      const nearby=[...index.nearby(pane.x,pane.z,pane.w/2+1.1)];
+      for(const n of nearby)for(const other of index.nearby(n.x,n.z,1.04))if(other.id<n.id&&Math.hypot(n.x-other.x,n.z-other.z)<=1.04){
+        const key=`${other.id}:${n.id}`;connect(other.id,n.id);
+        if(edgeKeys.has(key)&&!baseEdges.has(key)&&!addedEdges.has(key)){
+          addedEdges.set(key,graph.getEdge(other.id,n.id));
+          if(n.id>=baseNodeCount)activeGlassNodes.add(n.id);if(other.id>=baseNodeCount)activeGlassNodes.add(other.id);
+        }
+      }
+    }
+    labelComponents();revision++;statistics.glassUpdates++;Object.assign(statistics,{nodes:nodes.length,edges:edgeKeys.size,components});
+  }
+  return {findPath,clear,nearest,nodes,graph,invalidate,updateGlass,get revision(){return revision;},statistics};
 }

@@ -2696,8 +2696,8 @@
     },
     {
       "path": "src/fps/bots.mjs",
-      "bytes": 21832,
-      "sha256": "09cbda3b567d985fe1b257e185663e8531e3c0c5d52ec557fd1e6526b483c6c4"
+      "bytes": 21966,
+      "sha256": "ccad17137c5b441d777f718ae708c174544699c94df4d58f78b6688f59b10ad4"
     },
     {
       "path": "src/fps/business-hostage.mjs",
@@ -2786,8 +2786,8 @@
     },
     {
       "path": "src/fps/destructible-glass.mjs",
-      "bytes": 2380,
-      "sha256": "a0fb86803f9272f89da7c325d022229d37e77a7074e9b8e5b1d4cf4e6279d569"
+      "bytes": 2462,
+      "sha256": "6aec04483c8a6d68f38c717348fdc12d6086d5d5d115ea06adc896faec5ccec7"
     },
     {
       "path": "src/fps/door-visuals.mjs",
@@ -2926,13 +2926,13 @@
     },
     {
       "path": "src/fps/navigation.mjs",
-      "bytes": 6060,
-      "sha256": "7cc6ad12d2c63f02114605db52af262b0242d322f3d86960f01da3f72e81b383"
+      "bytes": 7752,
+      "sha256": "135951d479386251b97ebf364555585161a8a2a595ce4de0ca05b54d48ca05cd"
     },
     {
       "path": "src/fps/physics.mjs",
-      "bytes": 19507,
-      "sha256": "eeacb42a32740d3937e69f10cd95bdaa9c989a0fbe12bd25fd564539d1edb7f7"
+      "bytes": 21514,
+      "sha256": "b114917e71bdb54ee9aeb6f9b36a357b7c4dd1c10e316c1096d9d830521f56ec"
     },
     {
       "path": "src/fps/player-names.mjs",
@@ -3121,13 +3121,13 @@
     },
     {
       "path": "src/fps/world.mjs",
-      "bytes": 9185,
-      "sha256": "ea4ee40b45700b8f1add263637410f58b8f69dd678bc8eccf1e70528ef4e1402"
+      "bytes": 9207,
+      "sha256": "45aea0740244b99eb783d361cde45f8754c3cde864cc56e70b12d3173126e608"
     },
     {
       "path": "src/world.js",
-      "bytes": 19627,
-      "sha256": "fe884a0ab97ea8cd251f9afc62fc0924bb9d43fa86139232e9ce750c0fa8a1f7"
+      "bytes": 19677,
+      "sha256": "1ebcd89ac4e7f803e6a11633877cdb57fc1bdb635a72716d222b465677e39a77"
     },
     {
       "path": "studio/index.html",
