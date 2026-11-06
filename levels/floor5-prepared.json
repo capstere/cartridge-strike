@@ -4,7 +4,7 @@
   "editorVersion": "5.9.0",
   "createdAt": "2026-11-02T06:08:03.247Z",
   "projectId": "lvl-floor5-preppad-20261105",
-  "name": "Floor 5 – preppad 2026-11-05",
+  "name": "Unit 05",
   "game": {
     "repository": "capstere/cartridge-strike",
     "version": "0.18.0",
@@ -42,7 +42,7 @@
     "floors": [
       {
         "id": "BYGG-G-0001",
-        "name": "Korridor 70",
+        "name": "Connecting Passage",
         "role": "corridor",
         "surface": "carpet",
         "x0": 40.2,
@@ -52,7 +52,7 @@
       },
       {
         "id": "BYGG-G-41001",
-        "name": "Godshiss 12",
+        "name": "Cargo Lift",
         "role": "room",
         "surface": "vinyl",
         "x0": -22.241,
@@ -62,7 +62,7 @@
       },
       {
         "id": "BYGG-G-41002",
-        "name": "Hiss 10 · Entré 7",
+        "name": "Transit Lift",
         "role": "room",
         "surface": "vinyl",
         "x0": 27.06554,
@@ -6702,8 +6702,8 @@
         "side": 1,
         "width": 0.7,
         "height": 0.95,
-        "text": "Instill trust",
-        "subtitle": "",
+        "text": "Explore the unknown",
+        "subtitle": "UNIT 05",
         "color": "orange"
       },
       {
@@ -6714,8 +6714,8 @@
         "side": -1,
         "width": 0.7,
         "height": 0.95,
-        "text": "Best team wins",
-        "subtitle": "",
+        "text": "Stay in formation",
+        "subtitle": "UNIT 05",
         "color": "blue"
       },
       {
@@ -6726,8 +6726,8 @@
         "side": 1,
         "width": 0.7,
         "height": 0.95,
-        "text": "Deliver results",
-        "subtitle": "",
+        "text": "Chart a new path",
+        "subtitle": "UNIT 05",
         "color": "navy"
       },
       {
@@ -6738,8 +6738,8 @@
         "side": -1,
         "width": 0.7,
         "height": 0.95,
-        "text": "Apply insights",
-        "subtitle": "",
+        "text": "Follow the signal",
+        "subtitle": "UNIT 05",
         "color": "blue"
       },
       {
@@ -6750,8 +6750,8 @@
         "side": -1,
         "width": 0.7,
         "height": 0.95,
-        "text": "27 BAGS!",
-        "subtitle": "",
+        "text": "SUPPLIES READY",
+        "subtitle": "UNIT 05",
         "color": "orange"
       },
       {
@@ -6762,8 +6762,8 @@
         "side": -1,
         "width": 0.7,
         "height": 0.95,
-        "text": "0 BAGS!",
-        "subtitle": "",
+        "text": "STORAGE CLEAR",
+        "subtitle": "UNIT 05",
         "color": "navy"
       },
       {
@@ -6774,8 +6774,8 @@
         "side": 1,
         "width": 0.7,
         "height": 0.95,
-        "text": "MATERIAL",
-        "subtitle": "HÄMTA • LÄMNA • RETUR",
+        "text": "SUPPLY HUB",
+        "subtitle": "Technical Storage",
         "color": "white"
       },
       {
@@ -6786,8 +6786,8 @@
         "side": 1,
         "width": 0.7,
         "height": 0.95,
-        "text": "QDIP",
-        "subtitle": "SAFETY • QUALITY • DELIVERY",
+        "text": "MISSION BOARD",
+        "subtitle": "SECTORS / SUPPLIES / SIGNALS",
         "color": "blue"
       },
       {
@@ -6798,8 +6798,8 @@
         "side": 1,
         "width": 0.7,
         "height": 0.95,
-        "text": "FLOOR 5",
-        "subtitle": "VÄLKOMMEN",
+        "text": "UNIT 05",
+        "subtitle": "WELCOME",
         "color": "navy"
       },
       {
@@ -6810,8 +6810,8 @@
         "side": 1,
         "width": 0.7,
         "height": 0.95,
-        "text": "SORTERA RÄTT",
-        "subtitle": "MATERIAL • ÅTERVINNING",
+        "text": "RECOVERY POINT",
+        "subtitle": "SUPPLIES / RECOVERY",
         "color": "white"
       },
       {
@@ -6822,8 +6822,8 @@
         "side": 1,
         "width": 0.75,
         "height": 1.05,
-        "text": "VÅRA VÄRDEORD",
-        "subtitle": "Skriv ditt värdeord här",
+        "text": "FOLLOW THE SIGNAL",
+        "subtitle": "ORIGINAL GAME ART",
         "color": "navy"
       },
       {
@@ -6834,8 +6834,8 @@
         "side": 1,
         "width": 0.75,
         "height": 1.05,
-        "text": "VÅRA VÄRDEORD",
-        "subtitle": "Skriv ditt värdeord här",
+        "text": "STAY TOGETHER",
+        "subtitle": "ORIGINAL GAME ART",
         "color": "navy"
       },
       {
@@ -6846,8 +6846,8 @@
         "side": 1,
         "width": 0.75,
         "height": 1.05,
-        "text": "VÅRA VÄRDEORD",
-        "subtitle": "Skriv ditt värdeord här",
+        "text": "EXPLORE THE UNKNOWN",
+        "subtitle": "ORIGINAL GAME ART",
         "color": "navy"
       },
       {
@@ -6858,8 +6858,8 @@
         "side": 1,
         "width": 0.75,
         "height": 1.05,
-        "text": "VÅRA VÄRDEORD",
-        "subtitle": "Skriv ditt värdeord här",
+        "text": "CHART A NEW PATH",
+        "subtitle": "ORIGINAL GAME ART",
         "color": "navy"
       },
       {
@@ -6870,8 +6870,8 @@
         "side": 1,
         "width": 0.75,
         "height": 1.05,
-        "text": "VÅRA VÄRDEORD",
-        "subtitle": "Skriv ditt värdeord här",
+        "text": "CHECK YOUR ROUTE",
+        "subtitle": "ORIGINAL GAME ART",
         "color": "navy"
       },
       {
@@ -6882,8 +6882,8 @@
         "side": 1,
         "width": 0.75,
         "height": 1.05,
-        "text": "VÅRA VÄRDEORD",
-        "subtitle": "Skriv ditt värdeord här",
+        "text": "UNIT 05",
+        "subtitle": "ORIGINAL GAME ART",
         "color": "navy"
       }
     ],
@@ -10069,7 +10069,7 @@
         "id": "NY-OBJ-0081",
         "kind": "prop",
         "assetId": "hissrum12:creformTallRack",
-        "assetName": "CREFORM-vagn 900 × 600 × H1800",
+        "assetName": "Supply Cart",
         "roomId": "I12",
         "x": -22.2,
         "z": -24.2,
@@ -15296,7 +15296,7 @@
         "id": "NY-OBJ-0006",
         "kind": "prop",
         "assetId": "genexpert:infinity80",
-        "assetName": "Cepheid GeneXpert Infinity-80",
+        "assetName": "Analysis Array",
         "x": -37,
         "z": -8.2,
         "yaw": -3.141592653589793,
@@ -15319,7 +15319,7 @@
         "id": "NY-OBJ-0007",
         "kind": "prop",
         "assetId": "genexpert:infinity80",
-        "assetName": "Cepheid GeneXpert Infinity-80",
+        "assetName": "Analysis Array",
         "x": -37,
         "z": -9.9,
         "yaw": -3.141592653589793,
@@ -15342,7 +15342,7 @@
         "id": "NY-OBJ-0010",
         "kind": "prop",
         "assetId": "genexpert:infinity80",
-        "assetName": "Cepheid GeneXpert Infinity-80",
+        "assetName": "Analysis Array",
         "x": -31.55,
         "z": -10.3,
         "yaw": 0,
@@ -15385,7 +15385,7 @@
         "id": "NY-OBJ-0005",
         "kind": "prop",
         "assetId": "genexpert:infinity80",
-        "assetName": "Cepheid GeneXpert Infinity-80",
+        "assetName": "Analysis Array",
         "x": -13.25,
         "z": -5.1,
         "yaw": 0,
@@ -15408,7 +15408,7 @@
         "id": "NY-OBJ-0009",
         "kind": "prop",
         "assetId": "genexpert:infinity80",
-        "assetName": "Cepheid GeneXpert Infinity-80",
+        "assetName": "Analysis Array",
         "x": -13.4,
         "z": -6.8,
         "yaw": -3.141592653589793,
@@ -15448,7 +15448,7 @@
         "id": "NY-OBJ-0028",
         "kind": "prop",
         "assetId": "genexpert:gx16",
-        "assetName": "Cepheid GeneXpert 16 Module",
+        "assetName": "Analysis Console",
         "x": -14.464124,
         "z": -8.385876000000001,
         "yaw": 0.7853981633974483,
@@ -15472,7 +15472,7 @@
         "id": "NY-OBJ-0370",
         "kind": "prop",
         "assetId": "genexpert:gx16",
-        "assetName": "Cepheid GeneXpert 16 Module",
+        "assetName": "Analysis Console",
         "x": -13.335876,
         "z": -8.385876000000001,
         "yaw": -0.7853981633974483,
@@ -15549,7 +15549,7 @@
         "id": "NY-OBJ-0373",
         "kind": "prop",
         "assetId": "genexpert:gx16",
-        "assetName": "Cepheid GeneXpert 16 Module",
+        "assetName": "Analysis Console",
         "x": -31.064,
         "z": -5.286,
         "yaw": 0.7853981633974493,
@@ -15573,7 +15573,7 @@
         "id": "NY-OBJ-0374",
         "kind": "prop",
         "assetId": "genexpert:gx16",
-        "assetName": "Cepheid GeneXpert 16 Module",
+        "assetName": "Analysis Console",
         "x": -29.936,
         "z": -5.286,
         "yaw": -0.785398163397449,
@@ -15650,7 +15650,7 @@
         "id": "NY-OBJ-0378",
         "kind": "prop",
         "assetId": "genexpert:gx16",
-        "assetName": "Cepheid GeneXpert 16 Module",
+        "assetName": "Analysis Console",
         "x": -32.864,
         "z": -5.286,
         "yaw": 0.7853981633974492,
@@ -15674,7 +15674,7 @@
         "id": "NY-OBJ-0379",
         "kind": "prop",
         "assetId": "genexpert:gx16",
-        "assetName": "Cepheid GeneXpert 16 Module",
+        "assetName": "Analysis Console",
         "x": -31.736,
         "z": -5.286,
         "yaw": -0.785398163397449,
@@ -16118,7 +16118,7 @@
         "id": "NY-OBJ-0386",
         "kind": "prop",
         "assetId": "genexpert:gx16",
-        "assetName": "Cepheid GeneXpert 16 Module",
+        "assetName": "Analysis Console",
         "x": -32.6,
         "z": -6.2,
         "yaw": 0.2617993877991494,
@@ -16142,7 +16142,7 @@
         "id": "NY-OBJ-0387",
         "kind": "prop",
         "assetId": "genexpert:gx16",
-        "assetName": "Cepheid GeneXpert 16 Module",
+        "assetName": "Analysis Console",
         "x": -31.7,
         "z": -6.1,
         "yaw": -0.2617993877991494,
@@ -16166,7 +16166,7 @@
         "id": "NY-OBJ-0388",
         "kind": "prop",
         "assetId": "genexpert:gx16",
-        "assetName": "Cepheid GeneXpert 16 Module",
+        "assetName": "Analysis Console",
         "x": -29.9,
         "z": -6.2,
         "yaw": 0.5235987755982988,
@@ -16190,7 +16190,7 @@
         "id": "NY-OBJ-0389",
         "kind": "prop",
         "assetId": "genexpert:gx16",
-        "assetName": "Cepheid GeneXpert 16 Module",
+        "assetName": "Analysis Console",
         "x": -30.8,
         "z": -6.1,
         "yaw": -0.2617993877991494,
@@ -17809,7 +17809,7 @@
         "id": "NY-OBJ-0453",
         "kind": "prop",
         "assetId": "genexpert:infinity80",
-        "assetName": "Cepheid GeneXpert Infinity-80",
+        "assetName": "Analysis Array",
         "x": 18,
         "z": -17.8,
         "yaw": 0,
@@ -18476,7 +18476,7 @@
         "id": "NY-OBJ-0479",
         "kind": "prop",
         "assetId": "fps:binder-vacuum-oven",
-        "assetName": "BINDER-vakuumugn",
+        "assetName": "Thermal Chamber",
         "x": -18.235,
         "z": -8.054,
         "yaw": -1.570796326794898,
@@ -18496,7 +18496,7 @@
         "id": "NY-OBJ-0480",
         "kind": "prop",
         "assetId": "fps:binder-vacuum-oven",
-        "assetName": "BINDER-vakuumugn",
+        "assetName": "Thermal Chamber",
         "x": -18.199,
         "z": -7.061,
         "yaw": -1.570796326794898,
@@ -18588,7 +18588,7 @@
         "id": "NY-OBJ-0021",
         "kind": "prop",
         "assetId": "fps:binder-vacuum-oven",
-        "assetName": "BINDER-vakuumugn",
+        "assetName": "Thermal Chamber",
         "x": -7.875,
         "z": -9.923,
         "yaw": -1.5707963267948961,
@@ -18608,7 +18608,7 @@
         "id": "NY-OBJ-0022",
         "kind": "prop",
         "assetId": "fps:binder-vacuum-oven",
-        "assetName": "BINDER-vakuumugn",
+        "assetName": "Thermal Chamber",
         "x": -7.835,
         "z": -8.983,
         "yaw": -1.5707963267948961,
@@ -20656,7 +20656,7 @@
         "id": "NY-OBJ-0080",
         "kind": "prop",
         "assetId": "hissrum12:creformTallRack",
-        "assetName": "CREFORM-vagn 900 × 600 × H1800",
+        "assetName": "Supply Cart",
         "roomId": "I12",
         "x": -22.2,
         "z": -25.2,
@@ -20769,7 +20769,7 @@
         "id": "NY-OBJ-0559",
         "kind": "prop",
         "assetId": "hissrum12:creformIptCart",
-        "assetName": "IPT CREFORM-vagn 750 × 450",
+        "assetName": "Supply Cart",
         "x": -18.1,
         "z": -26.7,
         "yaw": 1.5707963267948963,
@@ -20792,7 +20792,7 @@
         "id": "NY-OBJ-0558",
         "kind": "prop",
         "assetId": "hissrum12:creformLowRack",
-        "assetName": "CREFORM-vagn 800 × 400, 3 plan",
+        "assetName": "Supply Cart",
         "x": -22.1,
         "z": -22.4,
         "yaw": 0,
@@ -21556,7 +21556,7 @@
         "id": "NY-OBJ-0589",
         "kind": "prop",
         "assetId": "fps:binder-vacuum-oven",
-        "assetName": "BINDER-vakuumugn",
+        "assetName": "Thermal Chamber",
         "x": -17.2,
         "z": -10.7,
         "yaw": 1.5707963267948961,
@@ -21826,7 +21826,7 @@
         "id": "NY-OBJ-0601",
         "kind": "prop",
         "assetId": "hissrum12:cart",
-        "assetName": "IPT-vagn",
+        "assetName": "Supply Cart",
         "x": -36.6,
         "z": -7.3,
         "yaw": 0,
@@ -21849,7 +21849,7 @@
         "id": "NY-OBJ-0602",
         "kind": "prop",
         "assetId": "hissrum12:cart",
-        "assetName": "IPT-vagn",
+        "assetName": "Supply Cart",
         "x": -14,
         "z": -5.9,
         "yaw": 0,
@@ -21895,7 +21895,7 @@
         "id": "NY-OBJ-0604",
         "kind": "prop",
         "assetId": "hissrum12:cart",
-        "assetName": "IPT-vagn",
+        "assetName": "Supply Cart",
         "x": -14.1,
         "z": 6.7,
         "yaw": 0,
@@ -29550,7 +29550,7 @@
         "id": "NY-OBJ-41001",
         "kind": "prop",
         "assetId": "office:ricoh-printer",
-        "assetName": "Ricoh skrivare / kopiator",
+        "assetName": "Print Unit",
         "x": 35.74,
         "z": 11.05,
         "yaw": -1.5707963267948966,
@@ -29572,7 +29572,7 @@
         "id": "NY-OBJ-41002",
         "kind": "prop",
         "assetId": "office:ricoh-printer",
-        "assetName": "Ricoh skrivare / kopiator",
+        "assetName": "Print Unit",
         "x": 40.72,
         "z": -3.68,
         "yaw": -1.5707963267948966,
@@ -41771,7 +41771,7 @@
         "id": "NY-OBJ-0081",
         "kind": "prop",
         "assetId": "hissrum12:creformTallRack",
-        "assetName": "CREFORM-vagn 900 × 600 × H1800",
+        "assetName": "Supply Cart",
         "roomId": "I12",
         "x": -22.2,
         "z": -24.2,
@@ -46998,7 +46998,7 @@
         "id": "NY-OBJ-0006",
         "kind": "prop",
         "assetId": "genexpert:infinity80",
-        "assetName": "Cepheid GeneXpert Infinity-80",
+        "assetName": "Analysis Array",
         "x": -37,
         "z": -8.2,
         "yaw": -3.141592653589793,
@@ -47021,7 +47021,7 @@
         "id": "NY-OBJ-0007",
         "kind": "prop",
         "assetId": "genexpert:infinity80",
-        "assetName": "Cepheid GeneXpert Infinity-80",
+        "assetName": "Analysis Array",
         "x": -37,
         "z": -9.9,
         "yaw": -3.141592653589793,
@@ -47044,7 +47044,7 @@
         "id": "NY-OBJ-0010",
         "kind": "prop",
         "assetId": "genexpert:infinity80",
-        "assetName": "Cepheid GeneXpert Infinity-80",
+        "assetName": "Analysis Array",
         "x": -31.55,
         "z": -10.3,
         "yaw": 0,
@@ -47087,7 +47087,7 @@
         "id": "NY-OBJ-0005",
         "kind": "prop",
         "assetId": "genexpert:infinity80",
-        "assetName": "Cepheid GeneXpert Infinity-80",
+        "assetName": "Analysis Array",
         "x": -13.25,
         "z": -5.1,
         "yaw": 0,
@@ -47110,7 +47110,7 @@
         "id": "NY-OBJ-0009",
         "kind": "prop",
         "assetId": "genexpert:infinity80",
-        "assetName": "Cepheid GeneXpert Infinity-80",
+        "assetName": "Analysis Array",
         "x": -13.4,
         "z": -6.8,
         "yaw": -3.141592653589793,
@@ -47150,7 +47150,7 @@
         "id": "NY-OBJ-0028",
         "kind": "prop",
         "assetId": "genexpert:gx16",
-        "assetName": "Cepheid GeneXpert 16 Module",
+        "assetName": "Analysis Console",
         "x": -14.464124,
         "z": -8.385876000000001,
         "yaw": 0.7853981633974483,
@@ -47174,7 +47174,7 @@
         "id": "NY-OBJ-0370",
         "kind": "prop",
         "assetId": "genexpert:gx16",
-        "assetName": "Cepheid GeneXpert 16 Module",
+        "assetName": "Analysis Console",
         "x": -13.335876,
         "z": -8.385876000000001,
         "yaw": -0.7853981633974483,
@@ -47251,7 +47251,7 @@
         "id": "NY-OBJ-0373",
         "kind": "prop",
         "assetId": "genexpert:gx16",
-        "assetName": "Cepheid GeneXpert 16 Module",
+        "assetName": "Analysis Console",
         "x": -31.064,
         "z": -5.286,
         "yaw": 0.7853981633974493,
@@ -47275,7 +47275,7 @@
         "id": "NY-OBJ-0374",
         "kind": "prop",
         "assetId": "genexpert:gx16",
-        "assetName": "Cepheid GeneXpert 16 Module",
+        "assetName": "Analysis Console",
         "x": -29.936,
         "z": -5.286,
         "yaw": -0.785398163397449,
@@ -47352,7 +47352,7 @@
         "id": "NY-OBJ-0378",
         "kind": "prop",
         "assetId": "genexpert:gx16",
-        "assetName": "Cepheid GeneXpert 16 Module",
+        "assetName": "Analysis Console",
         "x": -32.864,
         "z": -5.286,
         "yaw": 0.7853981633974492,
@@ -47376,7 +47376,7 @@
         "id": "NY-OBJ-0379",
         "kind": "prop",
         "assetId": "genexpert:gx16",
-        "assetName": "Cepheid GeneXpert 16 Module",
+        "assetName": "Analysis Console",
         "x": -31.736,
         "z": -5.286,
         "yaw": -0.785398163397449,
@@ -47820,7 +47820,7 @@
         "id": "NY-OBJ-0386",
         "kind": "prop",
         "assetId": "genexpert:gx16",
-        "assetName": "Cepheid GeneXpert 16 Module",
+        "assetName": "Analysis Console",
         "x": -32.6,
         "z": -6.2,
         "yaw": 0.2617993877991494,
@@ -47844,7 +47844,7 @@
         "id": "NY-OBJ-0387",
         "kind": "prop",
         "assetId": "genexpert:gx16",
-        "assetName": "Cepheid GeneXpert 16 Module",
+        "assetName": "Analysis Console",
         "x": -31.7,
         "z": -6.1,
         "yaw": -0.2617993877991494,
@@ -47868,7 +47868,7 @@
         "id": "NY-OBJ-0388",
         "kind": "prop",
         "assetId": "genexpert:gx16",
-        "assetName": "Cepheid GeneXpert 16 Module",
+        "assetName": "Analysis Console",
         "x": -29.9,
         "z": -6.2,
         "yaw": 0.5235987755982988,
@@ -47892,7 +47892,7 @@
         "id": "NY-OBJ-0389",
         "kind": "prop",
         "assetId": "genexpert:gx16",
-        "assetName": "Cepheid GeneXpert 16 Module",
+        "assetName": "Analysis Console",
         "x": -30.8,
         "z": -6.1,
         "yaw": -0.2617993877991494,
@@ -49511,7 +49511,7 @@
         "id": "NY-OBJ-0453",
         "kind": "prop",
         "assetId": "genexpert:infinity80",
-        "assetName": "Cepheid GeneXpert Infinity-80",
+        "assetName": "Analysis Array",
         "x": 18,
         "z": -17.8,
         "yaw": 0,
@@ -50178,7 +50178,7 @@
         "id": "NY-OBJ-0479",
         "kind": "prop",
         "assetId": "fps:binder-vacuum-oven",
-        "assetName": "BINDER-vakuumugn",
+        "assetName": "Thermal Chamber",
         "x": -18.235,
         "z": -8.054,
         "yaw": -1.570796326794898,
@@ -50198,7 +50198,7 @@
         "id": "NY-OBJ-0480",
         "kind": "prop",
         "assetId": "fps:binder-vacuum-oven",
-        "assetName": "BINDER-vakuumugn",
+        "assetName": "Thermal Chamber",
         "x": -18.199,
         "z": -7.061,
         "yaw": -1.570796326794898,
@@ -50290,7 +50290,7 @@
         "id": "NY-OBJ-0021",
         "kind": "prop",
         "assetId": "fps:binder-vacuum-oven",
-        "assetName": "BINDER-vakuumugn",
+        "assetName": "Thermal Chamber",
         "x": -7.875,
         "z": -9.923,
         "yaw": -1.5707963267948961,
@@ -50310,7 +50310,7 @@
         "id": "NY-OBJ-0022",
         "kind": "prop",
         "assetId": "fps:binder-vacuum-oven",
-        "assetName": "BINDER-vakuumugn",
+        "assetName": "Thermal Chamber",
         "x": -7.835,
         "z": -8.983,
         "yaw": -1.5707963267948961,
@@ -52358,7 +52358,7 @@
         "id": "NY-OBJ-0080",
         "kind": "prop",
         "assetId": "hissrum12:creformTallRack",
-        "assetName": "CREFORM-vagn 900 × 600 × H1800",
+        "assetName": "Supply Cart",
         "roomId": "I12",
         "x": -22.2,
         "z": -25.2,
@@ -52471,7 +52471,7 @@
         "id": "NY-OBJ-0559",
         "kind": "prop",
         "assetId": "hissrum12:creformIptCart",
-        "assetName": "IPT CREFORM-vagn 750 × 450",
+        "assetName": "Supply Cart",
         "x": -18.1,
         "z": -26.7,
         "yaw": 1.5707963267948963,
@@ -52494,7 +52494,7 @@
         "id": "NY-OBJ-0558",
         "kind": "prop",
         "assetId": "hissrum12:creformLowRack",
-        "assetName": "CREFORM-vagn 800 × 400, 3 plan",
+        "assetName": "Supply Cart",
         "x": -22.1,
         "z": -22.4,
         "yaw": 0,
@@ -53258,7 +53258,7 @@
         "id": "NY-OBJ-0589",
         "kind": "prop",
         "assetId": "fps:binder-vacuum-oven",
-        "assetName": "BINDER-vakuumugn",
+        "assetName": "Thermal Chamber",
         "x": -17.2,
         "z": -10.7,
         "yaw": 1.5707963267948961,
@@ -53528,7 +53528,7 @@
         "id": "NY-OBJ-0601",
         "kind": "prop",
         "assetId": "hissrum12:cart",
-        "assetName": "IPT-vagn",
+        "assetName": "Supply Cart",
         "x": -36.6,
         "z": -7.3,
         "yaw": 0,
@@ -53551,7 +53551,7 @@
         "id": "NY-OBJ-0602",
         "kind": "prop",
         "assetId": "hissrum12:cart",
-        "assetName": "IPT-vagn",
+        "assetName": "Supply Cart",
         "x": -14,
         "z": -5.9,
         "yaw": 0,
@@ -53597,7 +53597,7 @@
         "id": "NY-OBJ-0604",
         "kind": "prop",
         "assetId": "hissrum12:cart",
-        "assetName": "IPT-vagn",
+        "assetName": "Supply Cart",
         "x": -14.1,
         "z": 6.7,
         "yaw": 0,
@@ -61252,7 +61252,7 @@
         "id": "NY-OBJ-41001",
         "kind": "prop",
         "assetId": "office:ricoh-printer",
-        "assetName": "Ricoh skrivare / kopiator",
+        "assetName": "Print Unit",
         "x": 35.74,
         "z": 11.05,
         "yaw": -1.5707963267948966,
@@ -61274,7 +61274,7 @@
         "id": "NY-OBJ-41002",
         "kind": "prop",
         "assetId": "office:ricoh-printer",
-        "assetName": "Ricoh skrivare / kopiator",
+        "assetName": "Print Unit",
         "x": 40.72,
         "z": -3.68,
         "yaw": -1.5707963267948966,
@@ -67221,8 +67221,8 @@
           "side": 1,
           "width": 0.7,
           "height": 0.95,
-          "text": "Instill trust",
-          "subtitle": "",
+          "text": "Explore the unknown",
+          "subtitle": "UNIT 05",
           "color": "orange"
         },
         {
@@ -67233,8 +67233,8 @@
           "side": -1,
           "width": 0.7,
           "height": 0.95,
-          "text": "Best team wins",
-          "subtitle": "",
+          "text": "Stay in formation",
+          "subtitle": "UNIT 05",
           "color": "blue"
         },
         {
@@ -67245,8 +67245,8 @@
           "side": 1,
           "width": 0.7,
           "height": 0.95,
-          "text": "Deliver results",
-          "subtitle": "",
+          "text": "Chart a new path",
+          "subtitle": "UNIT 05",
           "color": "navy"
         },
         {
@@ -67257,8 +67257,8 @@
           "side": -1,
           "width": 0.7,
           "height": 0.95,
-          "text": "Apply insights",
-          "subtitle": "",
+          "text": "Follow the signal",
+          "subtitle": "UNIT 05",
           "color": "blue"
         },
         {
@@ -67269,8 +67269,8 @@
           "side": -1,
           "width": 0.7,
           "height": 0.95,
-          "text": "27 BAGS!",
-          "subtitle": "",
+          "text": "SUPPLIES READY",
+          "subtitle": "UNIT 05",
           "color": "orange"
         },
         {
@@ -67281,8 +67281,8 @@
           "side": -1,
           "width": 0.7,
           "height": 0.95,
-          "text": "0 BAGS!",
-          "subtitle": "",
+          "text": "STORAGE CLEAR",
+          "subtitle": "UNIT 05",
           "color": "navy"
         },
         {
@@ -67293,8 +67293,8 @@
           "side": 1,
           "width": 0.7,
           "height": 0.95,
-          "text": "MATERIAL",
-          "subtitle": "HÄMTA • LÄMNA • RETUR",
+          "text": "SUPPLY HUB",
+          "subtitle": "Technical Storage",
           "color": "white"
         },
         {
@@ -67305,8 +67305,8 @@
           "side": 1,
           "width": 0.7,
           "height": 0.95,
-          "text": "QDIP",
-          "subtitle": "SAFETY • QUALITY • DELIVERY",
+          "text": "MISSION BOARD",
+          "subtitle": "SECTORS / SUPPLIES / SIGNALS",
           "color": "blue"
         },
         {
@@ -67317,8 +67317,8 @@
           "side": 1,
           "width": 0.7,
           "height": 0.95,
-          "text": "FLOOR 5",
-          "subtitle": "VÄLKOMMEN",
+          "text": "UNIT 05",
+          "subtitle": "WELCOME",
           "color": "navy"
         },
         {
@@ -67329,8 +67329,8 @@
           "side": 1,
           "width": 0.7,
           "height": 0.95,
-          "text": "SORTERA RÄTT",
-          "subtitle": "MATERIAL • ÅTERVINNING",
+          "text": "RECOVERY POINT",
+          "subtitle": "SUPPLIES / RECOVERY",
           "color": "white"
         },
         {
@@ -67341,8 +67341,8 @@
           "side": 1,
           "width": 0.75,
           "height": 1.05,
-          "text": "VÅRA VÄRDEORD",
-          "subtitle": "Skriv ditt värdeord här",
+          "text": "FOLLOW THE SIGNAL",
+          "subtitle": "ORIGINAL GAME ART",
           "color": "navy"
         },
         {
@@ -67353,8 +67353,8 @@
           "side": 1,
           "width": 0.75,
           "height": 1.05,
-          "text": "VÅRA VÄRDEORD",
-          "subtitle": "Skriv ditt värdeord här",
+          "text": "STAY TOGETHER",
+          "subtitle": "ORIGINAL GAME ART",
           "color": "navy"
         },
         {
@@ -67365,8 +67365,8 @@
           "side": 1,
           "width": 0.75,
           "height": 1.05,
-          "text": "VÅRA VÄRDEORD",
-          "subtitle": "Skriv ditt värdeord här",
+          "text": "EXPLORE THE UNKNOWN",
+          "subtitle": "ORIGINAL GAME ART",
           "color": "navy"
         },
         {
@@ -67377,8 +67377,8 @@
           "side": 1,
           "width": 0.75,
           "height": 1.05,
-          "text": "VÅRA VÄRDEORD",
-          "subtitle": "Skriv ditt värdeord här",
+          "text": "CHART A NEW PATH",
+          "subtitle": "ORIGINAL GAME ART",
           "color": "navy"
         },
         {
@@ -67389,8 +67389,8 @@
           "side": 1,
           "width": 0.75,
           "height": 1.05,
-          "text": "VÅRA VÄRDEORD",
-          "subtitle": "Skriv ditt värdeord här",
+          "text": "CHECK YOUR ROUTE",
+          "subtitle": "ORIGINAL GAME ART",
           "color": "navy"
         },
         {
@@ -67401,8 +67401,8 @@
           "side": 1,
           "width": 0.75,
           "height": 1.05,
-          "text": "VÅRA VÄRDEORD",
-          "subtitle": "Skriv ditt värdeord här",
+          "text": "UNIT 05",
+          "subtitle": "ORIGINAL GAME ART",
           "color": "navy"
         }
       ],
@@ -68814,8 +68814,8 @@
         "t": 0.1064442,
         "side": 1,
         "y": 1.61,
-        "title": "GX LAB 5",
-        "subtitle": "5.501 · Enhet Argon"
+        "title": "North Laboratory",
+        "subtitle": "UNIT 05"
       },
       {
         "id": "ENV-037",
@@ -68825,8 +68825,8 @@
         "t": 0.75,
         "side": 1,
         "y": 1.61,
-        "title": "PQC",
-        "subtitle": "5.502 · Enhet Prisma"
+        "title": "Analysis Chamber",
+        "subtitle": "UNIT 05"
       },
       {
         "id": "ENV-038",
@@ -68836,8 +68836,8 @@
         "t": 0.2315388,
         "side": 1,
         "y": 1.61,
-        "title": "NEG LAB PQC",
-        "subtitle": "5.504 · Station Delta"
+        "title": "Isolation Laboratory",
+        "subtitle": "UNIT 05"
       },
       {
         "id": "ENV-039",
@@ -68847,8 +68847,8 @@
         "t": 0.9173508,
         "side": 1,
         "y": 1.61,
-        "title": "HISSRUM 12",
-        "subtitle": "5.512 · Godsmottagning"
+        "title": "Technical Storage",
+        "subtitle": "UNIT 05"
       },
       {
         "id": "ENV-040",
@@ -68858,8 +68858,8 @@
         "t": 0.8371692,
         "side": -1,
         "y": 1.61,
-        "title": "LUNCHRUM",
-        "subtitle": "5.509 · Kaffegruppen"
+        "title": "Commons",
+        "subtitle": "UNIT 05"
       },
       {
         "id": "ENV-041",
@@ -68869,8 +68869,8 @@
         "t": 0.1071937,
         "side": 1,
         "y": 1.61,
-        "title": "DRACO",
-        "subtitle": "5.514 · Projekt Komet"
+        "title": "Meeting Room A",
+        "subtitle": "UNIT 05"
       },
       {
         "id": "ENV-042",
@@ -68880,8 +68880,8 @@
         "t": 0.2193061,
         "side": -1,
         "y": 1.61,
-        "title": "KENTAUREN",
-        "subtitle": "5.517 · Projekt Vega"
+        "title": "Meeting Room C",
+        "subtitle": "UNIT 05"
       },
       {
         "id": "ENV-043",
@@ -68891,8 +68891,8 @@
         "t": 0.4186562,
         "side": -1,
         "y": 1.61,
-        "title": "ORION",
-        "subtitle": "5.523 · Projekt Nova"
+        "title": "Meeting Room E",
+        "subtitle": "UNIT 05"
       },
       {
         "id": "ENV-044",
@@ -68902,8 +68902,8 @@
         "t": 0.0405405,
         "side": -1,
         "y": 1.61,
-        "title": "QA / QC / PQC",
-        "subtitle": "5.526 · Enhet Lumen"
+        "title": "Operations Office",
+        "subtitle": "UNIT 05"
       },
       {
         "id": "ENV-045",
@@ -68913,8 +68913,8 @@
         "t": 0.1363636,
         "side": -1,
         "y": 1.61,
-        "title": "PRINT COPY",
-        "subtitle": "5.518 · Öst"
+        "title": "Print Hub A",
+        "subtitle": "UNIT 05"
       },
       {
         "id": "ENV-046",
@@ -68924,8 +68924,8 @@
         "t": 0.8610663,
         "side": 1,
         "y": 1.61,
-        "title": "PRINT ROOM",
-        "subtitle": "5.527 · Repro"
+        "title": "Print Hub B",
+        "subtitle": "UNIT 05"
       },
       {
         "id": "ENV-048",
@@ -69237,7 +69237,7 @@
         "t": 0.6967356,
         "side": -1,
         "y": 2.12,
-        "title": "ENTRÉ 5",
+        "title": "South Atrium",
         "target": "I11",
         "arrow": "right"
       },
@@ -69249,7 +69249,7 @@
         "t": 0.4219041,
         "side": 1,
         "y": 2.12,
-        "title": "ENTRÉ 5",
+        "title": "South Atrium",
         "target": "I11",
         "arrow": "right"
       },
@@ -69261,7 +69261,7 @@
         "t": 0.4913793,
         "side": 1,
         "y": 2.12,
-        "title": "ENTRÉ 5",
+        "title": "South Atrium",
         "target": "I11",
         "arrow": "right"
       },
@@ -69273,7 +69273,7 @@
         "t": 0.3652085,
         "side": -1,
         "y": 2.12,
-        "title": "ENTRÉ 5",
+        "title": "South Atrium",
         "target": "I11",
         "arrow": "right"
       },
@@ -69285,7 +69285,7 @@
         "t": 0.8175189,
         "side": -1,
         "y": 2.12,
-        "title": "ENTRÉ 7",
+        "title": "Main Atrium",
         "target": "I31",
         "arrow": "right"
       },
@@ -69297,7 +69297,7 @@
         "t": 0.0694429,
         "side": 1,
         "y": 2.12,
-        "title": "ENTRÉ 7",
+        "title": "Main Atrium",
         "target": "I31",
         "arrow": "right"
       },
@@ -69309,7 +69309,7 @@
         "t": 0.5390457,
         "side": -1,
         "y": 2.12,
-        "title": "ENTRÉ 7",
+        "title": "Main Atrium",
         "target": "I31",
         "arrow": "left"
       },
@@ -69321,7 +69321,7 @@
         "t": 0.3409091,
         "side": 1,
         "y": 2.12,
-        "title": "ENTRÉ 7",
+        "title": "Main Atrium",
         "target": "I31",
         "arrow": "right"
       },
@@ -69333,7 +69333,7 @@
         "t": 0.0962099,
         "side": 1,
         "y": 2.12,
-        "title": "ENTRÉ 7",
+        "title": "Main Atrium",
         "target": "I31",
         "arrow": "left"
       },
@@ -69345,8 +69345,8 @@
         "t": 0.5,
         "side": 1,
         "y": 1.79,
-        "title": "LABBSTRÅKET",
-        "subtitle": "GX LAB 5   /   PQC"
+        "title": "Laboratory Wing",
+        "subtitle": "North Laboratory / Analysis Chamber"
       },
       {
         "id": "ENV-090",
@@ -69356,8 +69356,8 @@
         "t": 0.458339,
         "side": -1,
         "y": 1.79,
-        "title": "MÖTESSTRÅKET",
-        "subtitle": "RIGEL   /   ORION"
+        "title": "Meeting Wing",
+        "subtitle": "Meeting Room D / Meeting Room E"
       },
       {
         "id": "ENV-091",
@@ -69367,8 +69367,8 @@
         "t": 0.7232143,
         "side": -1,
         "y": 1.79,
-        "title": "ENTRÉ 7",
-        "subtitle": "5.531   ·   HISSHALL / LOBBY"
+        "title": "Main Atrium",
+        "subtitle": "UNIT 05"
       }
     ],
     "background": [

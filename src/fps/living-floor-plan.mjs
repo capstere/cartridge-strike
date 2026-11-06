@@ -4,12 +4,12 @@
  */
 import { insidePolygon, distanceSegment } from './physics.mjs';
 export const LIVING_VERSION='living-floor-1';
-// Exact user-selected game text. The two BAGS signs are jokes, not corporate claims.
+// Original fictional wall slogans. Stable slots keep all wall placement unchanged.
 export const WALL_TEXTS=Object.freeze([
- 'Instill trust','Best team wins','Deliver results','Apply insights','27 BAGS!','0 BAGS!'
+ 'Explore the unknown','Stay in formation','Chart a new path','Follow the signal','SUPPLIES READY','STORAGE CLEAR'
 ]);
 export const CORE_VALUES=WALL_TEXTS; // Compatibility for existing callers; not an official values register.
-export const VALUE_SOURCE='Jespers uttryckliga skylttexter, 2026-10-22';
+export const VALUE_SOURCE='Original fictional game slogans';
 export const CREForm=Object.freeze({
  ipt:{w:.82,d:.52,h:1.12,innerW:.75,innerD:.45,levels:[.34,.93]},
  jars:{w:.87,d:.47,h:1.04,innerW:.80,innerD:.40,levels:[.10,.55,.995]},

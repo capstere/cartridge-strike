@@ -84,7 +84,7 @@ function binderOven(){
  // Controller, buttons, label and lower ventilation slots are all inexpensive.
  box(-.12,.735,.215,.205,.08,.015,screen);box(-.12,.748,.224,.167,.036,.004,lcd);
  for(let i=0;i<5;i++)box(-.191+i*.035,.709,.226,.019,.012,.005,white);
- b.add(new T.PlaneGeometry(.16,.04),labelMaterial('BINDER'),.165,.747,.222);
+ b.add(new T.PlaneGeometry(.16,.04),labelMaterial('UNIT 05'),.165,.747,.222);
  cylinder(.238,.698,.222,.012,.01,dark,{x:Math.PI/2});
  for(let i=0;i<11;i++)box(-.226+i*.045,.068,.21,.027,.006,.005,dark);
  for(const x of[-.267,.267])for(const z of[-.195,.17])box(x,.015,z,.055,.03,.055,dark);

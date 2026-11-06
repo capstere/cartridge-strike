@@ -53,7 +53,7 @@ function screen(c,w,h,art){
   line(c,[[20,h*.31],[w-20,h*.31]],'#35525c',1);label(c,'NO SIGNAL',40,h*.56,29,'#b9ccd0','500');
   label(c,'INPUT 02     •     VILOLÄGE',49,h*.78,11,'#88a4a8');return;
  }
- label(c,art==='instrument'?'ANALYS  /  KANAL B':'NORD  /  DRIFTÖVERSIKT',11,20,13,cyan);
+ label(c,art==='instrument'?'ANALYS  /  KANAL B':'UNIT 05 / STATUS',11,20,13,cyan);
  for(let i=0;i<5;i++)line(c,[[12,36+i*15],[166,36+i*15]],'#28444d',1);
  const pts=Array.from({length:28},(_,i)=>[12+i*5.5,70-13*Math.sin(i*.52)-(i%9===4?16:0)]);
  line(c,pts,cyan,2);label(c,art==='instrument'?'pH 7,2':'98,4 %',177,59,17,warm);
@@ -80,7 +80,7 @@ function artwork(c,w,h,r){
  if(r.kind==='notice'||r.kind==='rota'){
   paper(c,w,h,'#ece7d8');c.fillStyle='#497b82';c.fillRect(0,0,w,13);
   label(c,r.title||(r.art==='coffee'?'MEDDELANDE / REPRO':'FRÅN FIKARÅDET'),14,54,21,ink);
-  const rows=r.kind==='rota'?['MÅN    Nora','TIS      Kim','ONS    Alex','TOR    Lo','FRE    Alla?']:(r.art==='coffee'?['Skrivaren känner av','brådska. Andas ut.','Försök sedan igen.']:['Försvunnen tesked','Sågs senast vid','kaffemaskinen.','Hittelön: en påtår.']);
+  const rows=r.kind==='rota'?['MÅN    TEAM A','TIS      TEAM B','ONS    TEAM C','TOR    TEAM D','FRE    TEAM E']:(r.art==='coffee'?['Skrivaren känner av','brådska. Andas ut.','Försök sedan igen.']:['Försvunnen tesked','Sågs senast vid','kaffemaskinen.','Hittelön: en påtår.']);
   rows.forEach((t,i)=>{const y=88+i*30;label(c,t,18,y,16,ink,'500');line(c,[[16,y+7],[234,y+7]],'#c3cac1',1);});
   c.fillStyle='#c47c62';c.fillRect(w-28,17,12,12);return;
  }
@@ -106,7 +106,7 @@ function artwork(c,w,h,r){
  if(r.kind==='vent'){paper(c,w,h,'#9ba6a5');for(let i=0;i<6;i++)line(c,[[7,8+i*(h-12)/6],[248,8+i*(h-12)/6]],'#43565a',3);return;}
  if(r.kind==='callpoint'){paper(c,w,h,red);c.fillStyle='#eee5cd';c.fillRect(43,h*.34,170,h*.47);label(c,'BRANDLARM',21,h*.23,29,'white','700',214);line(c,[[90,h*.56],[168,h*.56]],red,8);return;}
  if(r.kind==='thermostat'){paper(c,w,h,'#d5d6c9');c.fillStyle='#536962';c.fillRect(24,22,208,h*.53);label(c,'21,0°',40,h*.52,44,'#e4ead6');return;}
- paper(c,w,h,'#d8dcca');label(c,r.title||'F5 / SERVICE',10,h*.64,Math.min(31,h*.42),ink,'700');
+ paper(c,w,h,'#d8dcca');label(c,r.title||'UNIT 05 / SERVICE',10,h*.64,Math.min(31,h*.42),ink,'700');
 }
 
 export function artKey(r){return JSON.stringify([r.kind,r.art,r.title,r.subtitle,r.arrow]);}

@@ -2,45 +2,45 @@
 <html lang="sv">
 <head>
   <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover,user-scalable=no">
-  <meta name="color-scheme" content="dark"><title>Cartridge Strike · Våning 5</title>
+  <meta name="color-scheme" content="dark"><title>Cartridge-Strike · Unit 05</title>
   <link rel="icon" href="data:,"><link rel="stylesheet" href="style.css">
   <link rel="stylesheet" href="focus-hud.css">
   <script type="importmap">{"imports":{"three":"../vendor/three/three.module.js","three/addons/":"../vendor/three/addons/"}}</script>
 <meta name="robots" content="noindex,nofollow"></head>
 <body>
-  <canvas id="game" aria-label="Cartridge Strike spelvy"></canvas>
-  <div id="loading">Bygger våning 5…</div>
+  <canvas id="game" aria-label="Cartridge-Strike spelvy"></canvas>
+  <div id="loading">Bygger Unit 05…</div>
   <main id="menu" class="panel-screen">
     <div class="menu-layout">
       <section class="intro">
-        <p class="eyebrow"><span class="status-dot"></span> VÅNING 5 / LOKALT 5 MOT 5</p>
-        <h1>CARTRIDGE<br><span>STRIKE</span><i>05</i></h1>
+        <p class="eyebrow"><span class="status-dot"></span> UNIT 05 / LOKALT 5 MOT 5</p>
+        <h1>CARTRIDGE-<br><span>STRIKE</span><i>05</i></h1>
         <p class="lead">Två lag. En våning.<br>Klassiska uppdrag eller oändlig action.</p>
-        <div class="mission-strip"><div><b>01</b><span>GX LAB 5<br><strong>Plantera / försvara</strong></span></div><div><b>12</b><span>HISSRUM 12<br><strong>Eskortera / bevaka</strong></span></div></div>
+        <div class="mission-strip"><div><b>01</b><span>North Laboratory<br><strong>Plantera / försvara</strong></span></div><div><b>12</b><span>Technical Storage<br><strong>Eskortera / bevaka</strong></span></div></div>
         <p class="small">Fiktivt spel på våningens accepterade planlösning.<br>Du + fyra botar mot fem botar · Välj ditt spelläge.</p>
         <a class="text-link" href="../studio/">Öppna designstudion ↗</a> <a class="text-link" href="../credits.html" target="_blank" rel="noopener">Källor och licenser ↗</a>
       </section>
       <section class="selection card">
-        <div class="mode-picker"><label for="game-mode">SPELLÄGE</label><select id="game-mode" aria-label="Spelläge"><option value="classic">Klassiska rundor · bomb och gisslan</option><option value="endless">Endless Action · oändlig auto-respawn</option></select><p id="mode-description">Klassiska rundor. Först till fem vinster.</p><label id="loadout-row" hidden>Startvapen <select id="loadout" aria-label="Startvapen"><option value="smg">Vector C</option><option value="shotgun">Pump 8</option><option value="sniper">Scope 5</option><option value="bazooka">Bazooka</option></select></label></div>
+        <div class="mode-picker"><label for="game-mode">SPELLÄGE</label><select id="game-mode" aria-label="Spelläge"><option value="classic">Klassiska rundor · bomb och gisslan</option><option value="endless">Endless Action · oändlig auto-respawn</option></select><p id="mode-description">Klassiska rundor. Först till fem vinster.</p><label id="loadout-row" hidden>Startvapen <select id="loadout" aria-label="Startvapen"><option value="smg">Pulse SMG</option><option value="shotgun">Breach Shotgun</option><option value="sniper">Scout Rifle</option><option value="bazooka">Rocket Launcher</option></select></label></div>
         <div id="character-picker" class="mode-picker">
           <label for="player-character">MIN KARAKTÄR</label><select id="player-character" aria-describedby="character-status"><option value="">Originalkaraktär</option></select>
           <p id="character-status" role="status"></p><div class="character-actions"><a class="text-link" href="../character-design/">Öppna karaktärsstudion ↗</a>
           <button id="delete-character" type="button" class="text-link" hidden>Ta bort spelkopian</button></div>
         </div>
         <div class="card-top"><span>VÄLJ DITT LAG</span><span>5 V 5</span></div>
-        <button class="team-option selected" data-team="analysts" aria-pressed="true"><span class="team-icon analysts">A</span><span><strong>Analysts</strong><small>Start i PQC · I02</small><em>Försvara, stoppa räddningen och desarmera.</em></span><span class="radio-dot"></span></button>
-        <button class="team-option" data-team="counterAnalysts" aria-pressed="false"><span class="team-icon counter">CA</span><span><strong>Counter Analysts</strong><small>Start vid D06</small><em>Plantera i GX LAB 5 eller rädda båda gisslan.</em></span><span class="radio-dot"></span></button>
+        <button class="team-option selected" data-team="analysts" aria-pressed="true"><span class="team-icon analysts">A</span><span><strong>Analysts</strong><small>Start i Cargo Lift</small><em>Försvara, stoppa räddningen och desarmera.</em></span><span class="radio-dot"></span></button>
+        <button class="team-option" data-team="counterAnalysts" aria-pressed="false"><span class="team-icon counter">CA</span><span><strong>Counter Analysts</strong><small>Start i Transit Lift</small><em>Plantera i North Laboratory eller rädda båda gisslan.</em></span><span class="radio-dot"></span></button>
         <label class="seed-row">Matchseed <input id="seed" type="number" value="42" min="1" max="999999" aria-label="Matchseed"></label>
         <button id="start" class="primary" disabled>STARTA MATCH <span>→</span></button>
         <p class="small start-note">Dator: högerklick för sikte. Mobil: SIKTA eller dubbeltryck till höger. Esc / PAUS pausar.</p>
         <div id="menu-settings"></div><details><summary>Kontroller</summary><div class="controls-list"><span>WASD <b>Rör dig</b></span><span>Shift <b>Smyg</b></span><span>Ctrl / Space <b>Huka / hoppa</b></span><span>Mus / R <b>Skjut / ladda om</b></span><span>Högerklick / F <b>Siktesläge / zoom</b></span><span>E <b>Uppdrag</b></span><span>B / Tab <b>Köp / resultat</b></span><span>1–5 / Q <b>Utrustning / senaste</b></span><span>G / M <b>Släpp / taktisk karta</b></span><span>V <b>Inspektera vapnet</b></span></div></details>
       </section>
     </div>
-    <footer><span id="game-version">CARTRIDGE STRIKE / VERSION 0.18.0</span><span>HYBRID · BOMB + RÄDDNING</span><span>FRISTÅENDE BOTSPEL</span></footer>
+    <footer><span id="game-version">CARTRIDGE-STRIKE / VERSION 0.18.0</span><span>HYBRID · BOMB + RÄDDNING</span><span>FRISTÅENDE BOTSPEL</span></footer>
   </main>
   <div id="hud" hidden>
     <div class="top-hud"><div class="score analysts"><strong id="score-a">0</strong><span>ANALYSTS <small id="alive-a">5 kvar</small></span></div><div class="round-clock"><small id="round-label">RUNDA 1</small><b id="timer">0:15</b><small id="phase">KÖPFAS</small></div><div class="score counter"><span>COUNTER ANALYSTS <small id="alive-ca">5 kvar</small></span><strong id="score-ca">0</strong></div></div>
-    <div class="map-panel"><p id="location">Våning 5</p><canvas id="minimap" width="224" height="158" aria-label="Karta med lagkamrater och uppdrag"></canvas><small>M taktiska vägar · B köp</small></div>
+    <div class="map-panel"><p id="location">Unit 05</p><canvas id="minimap" width="224" height="158" aria-label="Karta med lagkamrater och uppdrag"></canvas><small>M taktiska vägar · B köp</small></div>
     <div id="killfeed" aria-live="polite"></div>
     <div id="objectives"><span id="bomb-status"></span><span id="hostage-status"></span></div>
     <div id="crosshair"><i></i><i></i><i></i><i></i></div><div id="hitmarker">×</div>
@@ -76,6 +76,6 @@
     <button type="button" class="mobile-button mobile-drop" data-mobile-action="drop" aria-label="Släpp föremål">SLÄPP</button>
     <div class="mobile-portrait-note">Vrid telefonen till liggande läge för bättre spelkontroll</div>
   </div>
-  <div id="fatal" hidden><h2>Spelet kunde inte startas</h2><pre></pre><p>Ladda om sidan och öppna spelet i en separat Chrome- eller Edge-flik på datorn.</p></div>
+  <div id="fatal" hidden><h2>Spelet kunde inte startas</h2><pre></pre><p>Ladda om sidan och öppna spelet i en separat webbläsarflik på datorn.</p></div>
   <script type="module" src="../src/fps/app.mjs?v=floor5-environment-1"></script>
 </body></html>

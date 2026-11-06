@@ -175,7 +175,7 @@
     }
    }
   }
-  const named={D06:'VÅNING 5',D08:'LABBOMRÅDE',D13:'PQC / GX LAB 5',D14:'GX LAB 5  ↔  PQC',D16:'NEG LAB PQC',D56:'FÖRRÅD 2',D07:'KONTOR · QA/QC/PQC'};
+  const named={D06:'South Atrium',D08:'North Laboratory',D13:'Analysis Chamber',D14:'North Laboratory ↔ Analysis Chamber',D16:'Isolation Laboratory',D56:'Supply Storage',D07:'Operations Office'};
   for(const d of D.doors){
    if(d.removed)continue;
    const [a,b]=[d.a,d.b],width=d.width||Math.hypot(b[0]-a[0],b[1]-a[1]),dx=(b[0]-a[0])/width,dz=(b[1]-a[1])/width,n=[-dz,dx],c=d.center;
@@ -210,7 +210,7 @@
    }
    if(named[d.id]||d.blocked){
     const title=named[d.id]||(d.blocked?'EJ TILLGÄNGLIGT':'');
-    for(const side of [-1,1])scene.labels.push({text:title+'\n'+d.id+(d.accessCardConfirmed?' · PASSERKORT':''),x:c[0]+n[0]*.095*side,y:2.45,z:c[1]+n[1]*.095*side,yaw:Math.atan2(n[0]*side,n[1]*side),width:Math.max(1.05,Math.min(2.2,width+.55)),height:.35,color:'#ecf2eb',accent:d.blocked?'#536360':'#245b57'});
+    for(const side of [-1,1])scene.labels.push({text:title+'\n'+(d.accessCardConfirmed?'ACCESS':'PASSAGE'),x:c[0]+n[0]*.095*side,y:2.45,z:c[1]+n[1]*.095*side,yaw:Math.atan2(n[0]*side,n[1]*side),width:Math.max(1.05,Math.min(2.2,width+.55)),height:.35,color:'#ecf2eb',accent:d.blocked?'#536360':'#245b57'});
    }
   }
   if(!D.__custom||!D.shellOnly){

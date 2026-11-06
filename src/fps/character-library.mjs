@@ -106,7 +106,7 @@ export function createAuthoredAvatar(team,id,isHostage=false,options={}){
   }
  }
  if(typeof document!=='undefined'){
-  const c=document.createElement('canvas');c.width=512;c.height=256;const g=c.getContext('2d');g.fillStyle='#172a37';g.fillRect(0,0,512,256);g.fillStyle=isHostage?'#dbeae5':team==='analysts'?'#b3d8ec':'#eddfb9';g.fillRect(18,18,8,220);g.textAlign='center';g.font='bold 56px Arial';g.fillText(isHostage?'VISITOR':team==='analysts'?'ANALYSTS':'COUNTER',272,105);g.font='bold 43px Arial';g.fillText(isHostage?'05 / LAB':team==='analysts'?'QC / 05':'ANALYSTS',272,174);
+  const c=document.createElement('canvas');c.width=512;c.height=256;const g=c.getContext('2d');g.fillStyle='#172a37';g.fillRect(0,0,512,256);g.fillStyle=isHostage?'#dbeae5':team==='analysts'?'#b3d8ec':'#eddfb9';g.fillRect(18,18,8,220);g.textAlign='center';g.font='bold 56px Arial';g.fillText(isHostage?'VISITOR':team==='analysts'?'ANALYSTS':'COUNTER',272,105);g.font='bold 43px Arial';g.fillText(isHostage?'05 / LAB':team==='analysts'?'UNIT 05':'ANALYSTS',272,174);
   const tex=new T.CanvasTexture(c);tex.colorSpace=T.SRGBColorSpace;const m=standard(0xffffff);m.map=tex;m.userData.ownedTexture=tex;
   attached(new T.PlaneGeometry(.205,.103),m,new T.Vector3(0,1.36,.177),chest,'chest-role-patch');
   const back=attached(new T.PlaneGeometry(.22,.11),m,new T.Vector3(0,1.37,-.145),chest,'back-role-patch');back.quaternion.copy(chest.getWorldQuaternion(new T.Quaternion()).invert().multiply(new T.Quaternion().setFromAxisAngle(new T.Vector3(0,1,0),Math.PI)));

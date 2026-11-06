@@ -1,3 +1,4 @@
+import {roomDisplayName} from './player-names.mjs';
 /** Map-derived neutral first contact. No changed topology, starts or hidden enemy data. */
 export function routeLength(from,route){let length=0,previous=from;for(const p of route){length+=Math.hypot(p.x-previous.x,p.z-previous.z);previous=p;}return length;}
 export function neutralOpening(world){
@@ -16,6 +17,6 @@ export function neutralOpening(world){
  }
  if(!best||best.difference>6)return null; // fail back to known room zones rather than inventing geometry
  const room=world.roomAt(best.p.x,best.p.z);if(!room)return null;
- return {id:'neutral-opening',name:`${room.name} · MÖTESPUNKT`,x:best.p.x,y:0,z:best.p.z,radius:2.5,
+ return {id:'neutral-opening',name:`${roomDisplayName(room)} · MÖTESPUNKT`,x:best.p.x,y:0,z:best.p.z,radius:2.5,
    deployment:{analysts:best.da,counterAnalysts:best.db,source:'existing-walkable-shortest-routes',verifiedMetricScale:false}};
 }

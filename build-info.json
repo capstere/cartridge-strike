@@ -631,8 +631,8 @@
     },
     {
       "path": "fps/index.html",
-      "bytes": 10977,
-      "sha256": "63a6ba3fedfb2110f6358b50afccff867d6c6d75a276fc8bed4bec539f824c29"
+      "bytes": 11012,
+      "sha256": "9769f19ac95aca5d902c4fadc6f941718895165198bd9ca04cf80d663dad1ba1"
     },
     {
       "path": "fps/style.css",
@@ -642,7 +642,7 @@
     {
       "path": "fps/walk.html",
       "bytes": 1805,
-      "sha256": "63a412cf83674d84cbd72378cc8bd106cc06316046190bb350b7c97e8b6a3581"
+      "sha256": "0782c68b51c8b5bd8becc08c5a606fd306160f46b960a9415dd53cf3a48916ad"
     },
     {
       "path": "fps/walk.mjs",
@@ -701,8 +701,8 @@
     },
     {
       "path": "furniture-editor/build/environment-art.mjs",
-      "bytes": 9451,
-      "sha256": "a4fdb74d97ec6a2d62f864fb6a5b94f1616f5ea54f5f476dc66c863447db082e"
+      "bytes": 9461,
+      "sha256": "f951d33f7f70adbafe861a7e52f5193614b81ad5be7d8a7ed829c785c74c1928"
     },
     {
       "path": "furniture-editor/build/environment-layout.mjs",
@@ -856,8 +856,8 @@
     },
     {
       "path": "furniture-editor/library/fps-mesh.mjs",
-      "bytes": 11781,
-      "sha256": "67df593e0ed84b6930985861ec5b33797c7e7847e649db1a195a3ab4f1af6f9c"
+      "bytes": 11782,
+      "sha256": "c64150579069a3b270d2992e6cef3f6b39e03eca30bb5f8d569e732da726dbf0"
     },
     {
       "path": "furniture-editor/library/genexpert-catalog.mjs",
@@ -886,8 +886,8 @@
     },
     {
       "path": "furniture-editor/library/models.mjs",
-      "bytes": 6503,
-      "sha256": "321b8b46a52f02e39a1d40398470d4bdb30474c3f46661857f82bd09e2fc8ee3"
+      "bytes": 6931,
+      "sha256": "9357a27c35b8762dd2a5c9cc0c9b094614f9ae4cf4356e1d228f6b80f39eccae"
     },
     {
       "path": "furniture-editor/library/models/fps/laboratory-drying-oven.glb",
@@ -2547,12 +2547,12 @@
     {
       "path": "index.html",
       "bytes": 619,
-      "sha256": "851822b26e7424b066fc99d2f2ccca16ea4a5bba09b963d152a0cd714c268dda"
+      "sha256": "648aa0d051068e296709604d58fe697881592a671d92684335106af39fe9fc6e"
     },
     {
       "path": "levels/floor5-prepared.json",
-      "bytes": 1762211,
-      "sha256": "c38ca807f1a36860c233a37151f03e19f42714150830e15a40e5ade4d6a15887"
+      "bytes": 1761561,
+      "sha256": "89283f437623457a10da37be29a282a41591f202270051ba940549ba01b4b050"
     },
     {
       "path": "levels/manifest.json",
@@ -2676,8 +2676,8 @@
     },
     {
       "path": "src/fps/app.mjs",
-      "bytes": 32446,
-      "sha256": "4fecb717cf980f5c0db0bb36fac06e96af2c7fb2d50ff63e617657e3bd7857a8"
+      "bytes": 33328,
+      "sha256": "3d104ace29c893deb6381963790039d4e0425323ef663d0d1fb1e65d9ba859d7"
     },
     {
       "path": "src/fps/audio.mjs",
@@ -2717,7 +2717,7 @@
     {
       "path": "src/fps/character-library.mjs",
       "bytes": 20837,
-      "sha256": "95a8c3e2192eb9eb10cdcb60c0dd4e522fd85e6086ce5594f940e7602d94b935"
+      "sha256": "bf7a7f2b140cde5959f6dc5d066c0b404df2a337fa5615dc91c1112c2a9cde11"
     },
     {
       "path": "src/fps/character-overrides.mjs",
@@ -2746,8 +2746,8 @@
     },
     {
       "path": "src/fps/combat-flow.mjs",
-      "bytes": 8232,
-      "sha256": "f633e147e9de6c29f8fa5783312f3269a3f75fa748a2e99b6e3926953c725665"
+      "bytes": 8296,
+      "sha256": "97dc4a767de80ec7097c03bb9b99559be8d62a8448c0b14562e84a82db3295e6"
     },
     {
       "path": "src/fps/combat-hud.mjs",
@@ -2761,18 +2761,18 @@
     },
     {
       "path": "src/fps/config.mjs",
-      "bytes": 5706,
-      "sha256": "9fbdba54b70d6d4c8f29c215b0d4d5df142c0e5121672329d2ec1094b410201c"
+      "bytes": 5737,
+      "sha256": "5636c73871d5ff7fdcedf951b7e14214c44be767c2baea5778413f947485ee98"
     },
     {
       "path": "src/fps/control-deployment.mjs",
-      "bytes": 1814,
-      "sha256": "12050e9680208d869788441805571b1aafd04b6c9071d973a953baf0b0084228"
+      "bytes": 1878,
+      "sha256": "4c96540a060739261fef709d0d68170e0009f03fd003c8315fea8c230c5b0f33"
     },
     {
       "path": "src/fps/decor.mjs",
-      "bytes": 11281,
-      "sha256": "a544018c51ba6112a733746424537d9bc8cef8a964c66d51f72054d8424abf64"
+      "bytes": 11278,
+      "sha256": "8c38d27a61c24d6e218d37ef4c7214cc6db4d1cd1c56ed909cc4219e64ddfd36"
     },
     {
       "path": "src/fps/destructible-glass.mjs",
@@ -2816,8 +2816,13 @@
     },
     {
       "path": "src/fps/facility-scene.mjs",
-      "bytes": 12238,
-      "sha256": "72d0e3bd0cb73082cb07e542af1d24d7f8820d712841dee6653dd35d7961a35d"
+      "bytes": 12245,
+      "sha256": "29356e62d31a167610da191b70aef6f6c16aeb804df067eb80403cddfce3ee18"
+    },
+    {
+      "path": "src/fps/fictional-equipment.mjs",
+      "bytes": 4417,
+      "sha256": "69b310d51123b57397c46503752b0a4f462f38474ffb8175bdf923546f7b1d66"
     },
     {
       "path": "src/fps/focus-hud.mjs",
@@ -2841,8 +2846,8 @@
     },
     {
       "path": "src/fps/game.mjs",
-      "bytes": 39827,
-      "sha256": "463ac5e2de60fb6e55b3ff12d190b0554cf95049cd324b03fbaabdfdef5f8d42"
+      "bytes": 39899,
+      "sha256": "4e096387c52350c488027cb9e9a8706443c58a84a89d75849d9871511e9852b7"
     },
     {
       "path": "src/fps/glass-visuals.mjs",
@@ -2871,18 +2876,18 @@
     },
     {
       "path": "src/fps/living-floor-art.mjs",
-      "bytes": 8469,
-      "sha256": "a70c83a4f6723c8a8ed42911e397f3f69cdb0a0e8c23755bc69523b9abcbf21a"
+      "bytes": 8450,
+      "sha256": "e9a938aaccc9f944dc145baf112338254520e61a7e1056560ab65aba3633c185"
     },
     {
       "path": "src/fps/living-floor-plan.mjs",
-      "bytes": 11841,
-      "sha256": "cee35cfaf26547244acd35ffa7a6f1006634fd288dae5446763a925583c52038"
+      "bytes": 11852,
+      "sha256": "a661a978ce20f924baaf54c642cd36ce985709b1541573897b4ad94a076d5fc6"
     },
     {
       "path": "src/fps/living-floor-scene.mjs",
-      "bytes": 19684,
-      "sha256": "f1a62e50916c701dbe644df3ebe3aedd3d3f0740a9fa160c88a30e86007f5264"
+      "bytes": 19689,
+      "sha256": "38662126d1790b787d2fa3b13eeba814d3594be3f3042a33e89d53978085db13"
     },
     {
       "path": "src/fps/materials.mjs",
@@ -2901,8 +2906,8 @@
     },
     {
       "path": "src/fps/model-primitives.mjs",
-      "bytes": 51530,
-      "sha256": "436c80929e147ce000fd0fd0a8dfcd37dfeabce41c29228384e362d914b0b3c6"
+      "bytes": 51532,
+      "sha256": "724721bb078b65282e9000be48aae0e9ed8497953276335a91996fe584c45661"
     },
     {
       "path": "src/fps/models.mjs",
@@ -2918,6 +2923,11 @@
       "path": "src/fps/physics.mjs",
       "bytes": 19507,
       "sha256": "eeacb42a32740d3937e69f10cd95bdaa9c989a0fbe12bd25fd564539d1edb7f7"
+    },
+    {
+      "path": "src/fps/player-names.mjs",
+      "bytes": 1795,
+      "sha256": "f7eb15649c66f1acd9854a9798b074f9508a0b3c36cc24686e94de87d9732493"
     },
     {
       "path": "src/fps/presentation-hands.mjs",
@@ -2956,8 +2966,8 @@
     },
     {
       "path": "src/fps/render-engine.mjs",
-      "bytes": 31057,
-      "sha256": "fdd2e05b67eb3ebee1d97946bfb4e6998106a417dc1ac9e647785e9510480e82"
+      "bytes": 31047,
+      "sha256": "865eaac10c6ca09b6a1faa85cefea10da12788647e24b6d5ca173216790ed8a7"
     },
     {
       "path": "src/fps/render.mjs",
@@ -3001,8 +3011,8 @@
     },
     {
       "path": "src/fps/room-visuals.mjs",
-      "bytes": 17965,
-      "sha256": "894486f3975d6ff12d616dc3394c3f14a3284b647cced41a5e75667096db572d"
+      "bytes": 18028,
+      "sha256": "b800a92e5fd5e45a630a1d9097ab2f161529ad76f9ccd214ded7c390fbf5c9ee"
     },
     {
       "path": "src/fps/skinned-clone.mjs",
@@ -3056,8 +3066,8 @@
     },
     {
       "path": "src/fps/tactical-map.mjs",
-      "bytes": 3557,
-      "sha256": "c3fefb08b9bef35ab5d238ea537cc8ca1cf07f715b62c4f6e162247ff23bbb75"
+      "bytes": 3532,
+      "sha256": "1339964627c320e3f79c752a52113b4ba07c539f2054ae68be3d83578e1e5fda"
     },
     {
       "path": "src/fps/tactical-rules.mjs",
@@ -3101,13 +3111,13 @@
     },
     {
       "path": "src/fps/world.mjs",
-      "bytes": 9191,
-      "sha256": "f6e70c9217f4369df084799d44158fee5d95f5115b81d7f1ca84cbfdb479abfd"
+      "bytes": 9185,
+      "sha256": "ea4ee40b45700b8f1add263637410f58b8f69dd678bc8eccf1e70528ef4e1402"
     },
     {
       "path": "src/world.js",
-      "bytes": 19593,
-      "sha256": "f9e28dce106b9e5fcbcf3060e79d84d91c373d86d6e02ea9b001b305f26c369e"
+      "bytes": 19627,
+      "sha256": "fe884a0ab97ea8cd251f9afc62fc0924bb9d43fa86139232e9ce750c0fa8a1f7"
     },
     {
       "path": "studio/index.html",

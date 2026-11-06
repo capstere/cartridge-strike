@@ -157,7 +157,7 @@ function makeBag() {
     tube(bag, [[-.118, -.13, side * .063], [0, -.137, side * .067], [.118, -.13, side * .063]], .0024, seams);
     for (let i = 0; i < 4; i++) tube(bag, [[-.1 + i * .065, .12, side * .055], [-.08 + i * .058, .04, side * .069], [-.1 + i * .065, -.10, side * .065]], .0011, seams);
   }
-  label(bag, 'Cepheid\ncartridges', 0, .045, -.071, .18, .065, { yaw: Math.PI, background: '#e5ece8', foreground: '#244955' });
+  label(bag, 'SUPPLY\nCARTRIDGES', 0, .045, -.071, .18, .065, { yaw: Math.PI, background: '#e5ece8', foreground: '#244955' });
   // Consolidate only the film/seams. Cartridge templates are shared by all bags
   // and must never be baked/disposed as per-actor private geometry.
   consolidateRigidTree(bag);bag.add(makeBagCartridges());return bag;
@@ -270,7 +270,7 @@ function pistol(root, id, p, {refined=false}={}) {
   bevel(slide, refined?.0225:.026, .046, -.054, .003, .008, .032, p.edge, .001);
   if(refined){sight(slide,-.188,.0775,p,false,.011);bevel(slide,0,.0775,.018,.039,.011,.016,p.black,.002);for(const side of [-1,1])bevel(slide,side*.011,.080,.027,.004,.004,.002,p.paint,.0005);}
   else{sight(slide, -.188, .081, p, false, .011); sight(slide, .024, .081, p, true, .011);}
-  label(slide, heavy ? 'P12  /  COUNTER' : 'P9  /  ANALYST', refined?-.0215:-.025, .045, -.094, refined?.088:.100, refined?.015:.019, { yaw: -Math.PI / 2, background: heavy ? '#7b8588' : '#44515a', foreground: '#c7ccca' });
+  label(slide, heavy ? 'SIDEARM B' : 'SIDEARM A', refined?-.0215:-.025, .045, -.094, refined?.088:.100, refined?.015:.019, { yaw: -Math.PI / 2, background: heavy ? '#7b8588' : '#44515a', foreground: '#c7ccca' });
   bevel(mag, 0, -.012, .014, .033, .105, .042, p.steel, .003);
   bevel(mag, 0, -.065, .014, .048, .013, .054, p.black, .004);
   consolidate(body); consolidate(slide); consolidate(mag);
@@ -351,7 +351,7 @@ function rifle(root, id, p) {
     cylinder(bolt, [.028, .035, -.071], [.063, .035, -.071], .006, .007, p.black);
   }
   for (const z of [-.20, -.025]) cylinder(body, [.028, -.009, z], [.032, -.009, z], .006, .006, p.edge, 8);
-  label(body, id.toUpperCase(), -.031, .015, -.12, .105, .021, { yaw: -Math.PI / 2, background: '#44515a', foreground: '#bfc6c5' });
+  label(body, WEAPONS[id]?.name||'EQUIPMENT', -.031, .015, -.12, .105, .021, { yaw: -Math.PI / 2, background: '#44515a', foreground: '#bfc6c5' });
   consolidate(body); consolidate(mag); consolidate(bolt);
   return { magazine: mag, slide: bolt, muzzle: new THREE.Vector3(0, .044, -length - .047), support: new THREE.Vector3(-.018, -.028, short ? -.29 : -.385), grip: new THREE.Vector3(.023, -.106, .033) };
 }

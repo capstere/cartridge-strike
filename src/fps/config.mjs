@@ -39,14 +39,14 @@ export const CONFIG = Object.freeze({
 const pistol = { slot: 'pistol', cost: 0, range: 65, pellets: 1, spread: .010, movingSpread: .047, recoil: .018, reload: 1.55, automatic: false };
 const primary = { slot: 'primary', range: 85, pellets: 1, spread: .006, movingSpread: .036, recoil: .020, automatic: true };
 export const WEAPONS = Object.freeze({
-  p9: { ...pistol, id: 'p9', name: 'P9 Analyst', team: 'analysts', magazine: 20, reserve: 80, damage: 23, interval: .23 },
-  p12: { ...pistol, id: 'p12', name: 'P12 Counter', team: 'counterAnalysts', magazine: 12, reserve: 72, damage: 29, interval: .29 },
-  ar47: { ...primary, id: 'ar47', name: 'AR-47', team: 'analysts', cost: 2700, magazine: 30, reserve: 90, damage: 34, interval: .105, reload: 2.3 },
-  cr4: { ...primary, id: 'cr4', name: 'CR-4', team: 'counterAnalysts', cost: 3100, magazine: 30, reserve: 90, damage: 29, interval: .095, reload: 2.1 },
-  smg: { ...primary, id: 'smg', name: 'Vector C', cost: 1250, magazine: 30, reserve: 120, damage: 18, interval: .075, reload: 1.8, movingSpread: .027 },
-  shotgun: { ...primary, id: 'shotgun', name: 'Pump 8', cost: 1800, magazine: 8, reserve: 32, damage: 13, pellets: 8, interval: .85, reload: 2.6, range: 30, spread: .055, movingSpread: .075, automatic: false },
-  sniper: { ...primary, id: 'sniper', name: 'Scope 5', cost: 4750, magazine: 5, reserve: 25, damage: 105, interval: 1.25, reload: 2.9, range: 130, spread: .001, movingSpread: .095, automatic: false },
-  bazooka: { ...primary, id: 'bazooka', name: 'Bazooka', cost: 3600, magazine: 1, reserve: 5, damage: 150, interval: 1.1, reload: 2.8, range: 88, spread: 0, movingSpread: 0, automatic: false, recoil: .06, projectile: true },
+  p9: { ...pistol, id: 'p9', name: 'Sidearm A', team: 'analysts', magazine: 20, reserve: 80, damage: 23, interval: .23 },
+  p12: { ...pistol, id: 'p12', name: 'Sidearm B', team: 'counterAnalysts', magazine: 12, reserve: 72, damage: 29, interval: .29 },
+  ar47: { ...primary, id: 'ar47', name: 'Arc Rifle', team: 'analysts', cost: 2700, magazine: 30, reserve: 90, damage: 34, interval: .105, reload: 2.3 },
+  cr4: { ...primary, id: 'cr4', name: 'Pulse Carbine', team: 'counterAnalysts', cost: 3100, magazine: 30, reserve: 90, damage: 29, interval: .095, reload: 2.1 },
+  smg: { ...primary, id: 'smg', name: 'Pulse SMG', cost: 1250, magazine: 30, reserve: 120, damage: 18, interval: .075, reload: 1.8, movingSpread: .027 },
+  shotgun: { ...primary, id: 'shotgun', name: 'Breach Shotgun', cost: 1800, magazine: 8, reserve: 32, damage: 13, pellets: 8, interval: .85, reload: 2.6, range: 30, spread: .055, movingSpread: .075, automatic: false },
+  sniper: { ...primary, id: 'sniper', name: 'Scout Rifle', cost: 4750, magazine: 5, reserve: 25, damage: 105, interval: 1.25, reload: 2.9, range: 130, spread: .001, movingSpread: .095, automatic: false },
+  bazooka: { ...primary, id: 'bazooka', name: 'Rocket Launcher', cost: 3600, magazine: 1, reserve: 5, damage: 150, interval: 1.1, reload: 2.8, range: 88, spread: 0, movingSpread: 0, automatic: false, recoil: .06, projectile: true },
   knife: { id: 'knife', name: 'Kniv', slot: 'knife', cost: 0, damage: 45, range: 1.65, interval: .6, pellets: 1, spread: 0, movingSpread: 0, recoil: .035 },
   smoke: { id: 'smoke', name: 'Smoke Cartridge', slot: 'grenade', cost: 300, limit: 1, interval: .6 },
   flash: { id: 'flash', name: 'Flash Cartridge', slot: 'grenade', cost: 200, limit: 2, interval: .6 },

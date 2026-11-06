@@ -1,4 +1,5 @@
-/** Editor-only lazy 3D model management. No game-runtime dependencies. */
+import {applyEquipmentArt,releaseEquipmentArt} from '../../src/fps/fictional-equipment.mjs';
+/** Shared lazy 3D model management. Original source resources stay immutable. */
 import * as T from '../../vendor/three/three.module.js';
 import {GLTFLoader} from '../../vendor/three/addons/loaders/GLTFLoader.js';
 import {LIBRARY_MAP} from './catalog.mjs?v=5.8.0';
@@ -29,38 +30,40 @@ function positiveDimensions(s){return [s.x,s.y,s.z].every(v=>Number.isFinite(v)&
 export async function readLibraryAsset(id){
  if(sourceCache.has(id))return sourceCache.get(id);
  const promise=(async()=>{
-  let object;
+  let object,gltf;
   if(id.startsWith('local:')){
    let row=locals.get(id)||await assetGet(id);
    if(!row)throw Error('Egen GLB saknas. Importera den på nytt eller öppna ZIP-projektet.');
    locals.set(id,row);inspectGLB(row.data);
-   object=(await loader.parseAsync(row.data.slice(0), '')).scene;
+   gltf=await loader.parseAsync(row.data.slice(0), '');object=gltf.scene;
   }else{
    const e=LIBRARY_MAP.get(id);if(!e)throw Error('Okänt katalogobjekt.');
    const url=new URL(e.url,new URL('../',import.meta.url));
    // Model URLs must be audited same-origin paths, never external configuration.
    if(url.origin!==location.origin)throw Error('Externa 3D-källor är blockerade.');
-   object=(await loader.loadAsync(url.href)).scene;
+   gltf=await loader.loadAsync(url.href);object=gltf.scene;
    // Normalize a catalogued model's native axis without changing its GLB bytes.
    if(e.modelYaw){const aligned=new T.Group();aligned.rotation.y=e.modelYaw;aligned.add(object);object=aligned;}
   }
   if(!object)throw Error('3D-modellen kunde inte öppnas.');
   object.updateWorldMatrix(true,true);const b=new T.Box3().setFromObject(object);
   const size=b.getSize(new T.Vector3());if(!positiveDimensions(size))throw Error('Modellen har en ogiltig storlek.');
-  return {scene:object,originalBounds:b,originalSize:size};
+  const materialSlots=new Map();object.traverse(node=>{for(const m of [].concat(node.material||[])){const slot=gltf.parser.associations.get(m)?.materials;if(slot!==undefined)materialSlots.set(m,slot);}});
+  return {scene:object,originalBounds:b,originalSize:size,materialSlots};
  })().catch(e=>{sourceCache.delete(id);throw e;});
  sourceCache.set(id,promise);return promise;
 }
 export async function addModelToGroup(item,group,onReady){
  const assetId=item.assetId;
  try{
-  const {scene,originalBounds,originalSize}=await readLibraryAsset(assetId);
+  const {scene,originalBounds,originalSize,materialSlots}=await readLibraryAsset(assetId);
   // A disposed/replaced preview group must not be resurrected on async load.
   if(!group.parent||group.userData.editId!==item.id)return false;
   const scale=isTable(item)?modelScale(originalSize,item):null;
   const scalar=scale?null:Math.min(item.w/originalSize.x,item.d/originalSize.z,item.height/originalSize.y);
   if(!scale&&(!Number.isFinite(scalar)||scalar<=0))throw Error('Modellen kunde inte skalas.');
   const clone=new T.Group();clone.add(scene.clone(true));
+  applyEquipmentArt(clone,assetId,materialSlots);
   if(scale)clone.scale.set(scale.x,scale.y,scale.z);
   else clone.scale.setScalar(scalar);
   const center=originalBounds.getCenter(new T.Vector3());
@@ -95,6 +98,7 @@ export async function localLibrary(){
 }
 export async function getLocalFile(id){return locals.get(id)||await assetGet(id);}
 export function releaseModelResources(){
+ releaseEquipmentArt();
  for(const prom of sourceCache.values())prom.then(({scene})=>scene.traverse(o=>{if(o.isMesh){o.geometry?.dispose();(Array.isArray(o.material)?o.material:[o.material]).forEach(m=>m?.dispose());}})).catch(()=>{});
  sourceCache.clear();locals.clear();
 }
