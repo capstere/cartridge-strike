@@ -2,10 +2,10 @@ name: Character roles and direct game export
 on:
   pull_request:
     branches: [main]
-    paths: ['character-design/**', 'src/fps/**', 'assets/fps/character-overrides.json', 'tools/character-*', 'tools/install-character-package.mjs', 'tools/studio-curtains-finishes-browser.mjs', '.github/workflows/character-roles.yml']
+    paths: ['Business_Man_Quaternius_Anims.glb', 'character-design/**', 'src/fps/**', 'assets/fps/character-overrides.json', 'tools/character-*', 'tools/install-character-package.mjs', 'tools/studio-curtains-finishes-browser.mjs', '.github/workflows/character-roles.yml']
   push:
     branches: [main]
-    paths: ['character-design/**', 'src/fps/character-*.mjs', 'src/fps/dwarf-rig.mjs', 'assets/fps/character-overrides.json', 'tools/character-*', 'tools/install-character-package.mjs', 'tools/studio-curtains-finishes-browser.mjs', '.github/workflows/character-roles.yml']
+    paths: ['Business_Man_Quaternius_Anims.glb', 'character-design/**', 'src/fps/character-*.mjs', 'src/fps/dwarf-rig.mjs', 'assets/fps/character-overrides.json', 'tools/character-*', 'tools/install-character-package.mjs', 'tools/studio-curtains-finishes-browser.mjs', '.github/workflows/character-roles.yml']
   workflow_dispatch:
 permissions:
   contents: read
@@ -44,13 +44,15 @@ jobs:
           done
           timeout 620s xvfb-run -a node --experimental-loader ./tools/vendor-three-test-loader.mjs tools/character-roles-browser.mjs
           timeout 300s xvfb-run -a node tools/studio-curtains-finishes-browser.mjs
-      - name: Small synthetic visual evidence only
+          timeout 300s xvfb-run -a node tools/character-hostage-browser.mjs
+      - name: Small character visual evidence
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: character-roles-proof
           path: |
             test-results/character-roles/
+            test-results/business-hostages/
             test-results/studio-curtains-finishes/result.json
           retention-days: 1
           if-no-files-found: ignore

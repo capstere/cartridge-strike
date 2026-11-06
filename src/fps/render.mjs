@@ -22,7 +22,7 @@ import {CombatVisuals} from './combat-visuals.mjs';
  */
 import * as THREE from '../../vendor/three/three.module.js';
 import { Renderer as EngineRenderer } from './render-engine.mjs?v=6.1.2';
-import {loadCharacterLibrary,disposeCharacterLibrary} from './character-library.mjs?v=6.1.2';
+import {loadCharacterLibrary,loadDefaultHostages,disposeCharacterLibrary} from './character-library.mjs?v=6.1.2';
 import { bakeLightfield } from './presentation-lightfield.mjs';
 import {ActionVisuals} from './action-visuals.mjs?v=6.1.2';
 import { buildLivingScene } from './living-floor-scene.mjs';
@@ -110,7 +110,7 @@ export class Renderer extends EngineRenderer {
        freezeStaticTransforms(this.projectFurniture);
       }
       this.actionVisuals=new ActionVisuals(this.scene,world);
-      await loadCharacterLibrary();
+      await Promise.all([loadCharacterLibrary(),loadDefaultHostages()]);
       if(this.presentationDisposed)return;
       this.facilityScene=world.newLevel?null:await buildFacilityScene(world,settings);
       if(this.presentationDisposed){this.facilityScene?.dispose();return;}
