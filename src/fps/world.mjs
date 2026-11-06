@@ -6,6 +6,7 @@ import { createDoors } from './doors.mjs?v=5.1.0';
 import { createNavigation } from './navigation.mjs';
 import { createFurnishings } from './furnishings.mjs';
 import { createTacticalMap } from './tactical-map.mjs';
+import {createFloorTactics} from './bot-tactics.mjs';
 import { createLivingPlan } from './living-floor-plan.mjs';
 import {createFacilityDetails} from './facility-details.mjs';
 import {prepareGlass,createGlassState} from './destructible-glass.mjs';
@@ -49,7 +50,7 @@ function createLevelWorld(project,{fresh=false}={}){
  physics.setDynamicBoxes(doors.boxes);
  const glass=createGlassState(glassPlan,physics,change=>navigation.updateGlass(change));
  const setElevatorProgress=t=>{if(doors.elevators.cabins.length&&doors.elevators.setProgress(t))navigation.invalidate();};
- const world={setElevatorProgress,newLevel:true,project,projectScene:scene,description,data,anchors,doors,glass,details:null,living:null,furnishings:{instances:[],boxes:[]},tactical:null,
+ const world={setElevatorProgress,newLevel:true,project,projectScene:scene,description,data,anchors,doors,glass,details:null,living:null,furnishings:{instances:[],boxes:[]},tactical:createFloorTactics(navigation,anchors),
   roomAt,materialAt:(x,z)=>roomAt(x,z)?.surface||'carpet',...physics,findPath:navigation.findPath,navigation,
   statistics:{...physics.statistics,navigation:navigation.statistics,furnishings:0}};
  if(!fresh){levelCacheKey=key;levelCache=world;}

@@ -1,0 +1,36 @@
+name: Floor 5 bot tactics
+on:
+  pull_request:
+    paths: ['src/fps/**', 'tools/bot-tactics*', '.github/workflows/bot-tactics.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  tactics:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Routes, fairness, traffic, objectives and round resets
+        run: |
+          node --experimental-loader ./tools/vendor-three-test-loader.mjs --test tools/bot-tactics*.test.mjs tools/glass-passages.test.mjs src/fps/player-names.test.mjs src/fps/prepared-floor5.test.mjs
+          node tools/verify-owner-runtime.mjs
+      - name: Install pinned Chromium
+        run: |
+          npm ci --prefix frontline/source/tools/dev --ignore-scripts --no-audit --no-fund
+          node frontline/source/tools/dev/node_modules/playwright-core/cli.js install chromium
+      - name: Six rounds in the actual FPS renderer
+        run: |
+          python3 -m http.server 8765 --bind 127.0.0.1 >/tmp/tactics-http.log 2>&1 &
+          PID=$!
+          trap 'kill "$PID" || true' EXIT
+          timeout 420s node tools/bot-tactics-browser.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: bot-tactics
+          path: test-results/bot-tactics/
+          retention-days: 1

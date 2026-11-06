@@ -4,6 +4,7 @@ import { shotSpread } from './tactical-rules.mjs';
 import {initializeCombat,tickCombat,combatEvent} from './combat-flow.mjs';
 import { CONFIG, TEAMS, WEAPONS, PRIORITY, seededRandom, DIFFICULTIES, DEFAULT_DIFFICULTY, TEAMMATE_DIFFICULTY } from './config.mjs';
 import { BotController } from './bots.mjs';
+import {SquadTactics} from './bot-tactics.mjs';
 import {prepareActionRound,tickActionState,recordActionDeath,sendRadio,launchRocket,updateRockets,isEndless} from './action-rules.mjs';
 export { CONFIG, TEAMS, WEAPONS, DIFFICULTIES, DEFAULT_DIFFICULTY };
 
@@ -87,7 +88,7 @@ export class Game {
     this.config.difficulty = s.difficulty;
     s.round++; s.phase = 'buy'; s.result = null; s.buyDeadline = s.time + this.config.buyTime; s.roundStartedAt = s.buyDeadline;
     s.deadline = s.buyDeadline + this.config.roundTime; s.grenades = []; s.smokes = []; s.drops = [];
-    this.soundEvents = []; this.roundCandidates = []; this.pendingDamage = [];
+    this.soundEvents = []; this.tacticalContacts=[]; this.roundCandidates = []; this.pendingDamage = [];
     for (const actor of this.actors) {
       if (!actor.alive) { actor.inventory = this.startInventory(actor.team); actor.armor = 0; }
       const spawn = this.world.anchors[actor.team][actor.index];
@@ -106,6 +107,7 @@ export class Game {
     prepareActionRound(this);
     this.world.setElevatorProgress?.(s.phase==='buy'?0:1);
     initializeCombat(this);
+    this.squadTactics=new SquadTactics(this);
     this.emit('round', null, { round: s.round });
   }
   radio(id, actor=this.player) { return sendRadio(this,id,actor); }
