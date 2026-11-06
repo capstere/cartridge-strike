@@ -112,8 +112,8 @@ export function createWorld({fresh=false,levelProject=null}={}){
   const tactical=createTacticalMap(data,physics,navigation,anchors);
   for(const point of [...analysts,...counterAnalysts,bomb,...hostages])if(!navigation.findPath(point,rescue).length)throw new Error(`Disconnected FPS anchor at ${point.x},${point.z}`);
   description.labels.push(
-    {text:'GX LAB 5 · I01\nCARTRIDGE SITE',x:bomb.x,y:.025,z:bomb.z,yaw:0,width:1.8,height:.50,color:'#ffd580',accent:'#624821',floor:true},
-    {text:'D06 · RESCUE / BUY',x:rescue.x,y:.025,z:rescue.z,yaw:0,width:2,height:.48,color:'#92e8e4',accent:'#164b53',floor:true}
+    {text:'North Laboratory\nOBJECTIVE',x:bomb.x,y:.025,z:bomb.z,yaw:0,width:1.8,height:.50,color:'#ffd580',accent:'#624821',floor:true},
+    {text:'RESCUE / SUPPLIES',x:rescue.x,y:.025,z:rescue.z,yaw:0,width:2,height:.48,color:'#92e8e4',accent:'#164b53',floor:true}
   );
   const materialAt=(x,z)=>{const r=roomAt(x,z);return r&&(['I01','I02','I03','I04','I29'].includes(r.id)||/RESTROOM|STÄD|PENTRY/.test(r.name))?'vinyl':'carpet';};
   physics.setDynamicBoxes(doors.boxes);

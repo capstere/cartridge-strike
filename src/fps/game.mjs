@@ -1,3 +1,4 @@
+import {missionRoomName} from './player-names.mjs';
 import { grenadeLaunch, advanceGrenade } from './grenade-physics.mjs';
 import { shotSpread } from './tactical-rules.mjs';
 import {initializeCombat,tickCombat,combatEvent} from './combat-flow.mjs';
@@ -471,7 +472,7 @@ export class Game {
     if (this.phase === 'buy') return 'B · köp utrustning';
     const action = this.interaction(actor);
     if (!action) return '';
-    return { plant: 'Håll E · plantera i GX LAB 5', defuse: 'Håll E · desarmera', pickupBomb: 'E · ta upp uppdragsbomb', escort: action.target.escortId ? 'E · stoppa eskort' : 'E · starta eskort', pickupWeapon: `E · ta upp ${WEAPONS[action.target.item?.id]?.name ?? 'vapen'}` }[action.type];
+    return { plant: 'Håll E · plantera i '+missionRoomName(this.world), defuse: 'Håll E · desarmera', pickupBomb: 'E · ta upp uppdragsbomb', escort: action.target.escortId ? 'E · stoppa eskort' : 'E · starta eskort', pickupWeapon: `E · ta upp ${WEAPONS[action.target.item?.id]?.name ?? 'vapen'}` }[action.type];
   }
   interact(actor, input) {
     const interaction = input.interact ? this.interaction(actor, input.interactTarget) : null;

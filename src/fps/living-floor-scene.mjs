@@ -72,7 +72,7 @@ export function buildLivingScene(world,registry,{replacedProps=[],refinedFreight
    const s=CREForm[p.variant],px=(s.innerW+.028)/2,pz=(s.innerD+.028)/2;
    for(const y of[...s.levels,h-.04])for(const u of[-px,px])for(const v of[-pz,pz])box(x+u,y,z+v,.043,.048,.043,0x28333c,paint,0,.005);
    const top=s.levels.at(-1),label=p.variant==='ipt'?0:p.variant==='jars'?1:2;
-   text(x,top-.11,z+d/2+.005,w*.77,.14,['IPT SAMPLE POINTS','180 ml BURKAR','REKVISITION'][label]);
+   text(x,top-.11,z+d/2+.005,w*.77,.14,['SAMPLE SUPPLIES','SAMPLE VESSELS','SUPPLY REQUEST'][label]);
    for(let i=0;i<2;i++){const cx=x+(i-.5)*.30;// Tote bodies are already rendered from their physical records.
    box(cx,top+.196,z,.245,.006,Math.min(.32,d-.10),0xe5e8db);for(let k=0;k<3;k++)box(cx-.075+k*.075,top+.209,z,.045,.02,.16,0xd5dfd8);}
   }else if(type==='bins'){
@@ -153,7 +153,7 @@ export function buildLivingScene(world,registry,{replacedProps=[],refinedFreight
   for(const side of[-1,1]){
    const dx=liftX+side*.70;box(dx,1.31,z+.045,1.365,2.52,.055,0x315c73,metal,0,.014);box(dx,.30,z+.080,1.30,.43,.009,0xaeb9b8,metal);
    if(!refinedFreight)box(dx,2.12,z+.078,.50,.08,.035,0xdbdfd7,paint);rod([dx-side*.40,1.04,z+.105],[dx-side*.40,1.35,z+.105],.014,0xb7c3c5,metal);
-   if(!refinedFreight)text(dx,1.77,z+.08,.65,.20,side<0?'GODSHISS':'HISS 12');
+   if(!refinedFreight)text(dx,1.77,z+.08,.65,.20,side<0?'CARGO LIFT':'TRANSIT LIFT');
    for(const y of[.22,1.30,2.35])box(dx+side*.60,y,z+.09,.055,.14,.030,0xb9c3c5,metal);
   }
   // Focused freight front: separated inner panels, recessed seams, rubber seals
@@ -170,8 +170,8 @@ export function buildLivingScene(world,registry,{replacedProps=[],refinedFreight
   box(liftX,2.63,z+.10,2.96,.065,.07,0x879ba2,metal,0,.008);
   box(liftX,.025,z+.16,2.97,.028,.20,0xa9b4b6,metal,0,.004);
   for(let k=0;k<8;k++)box(liftX,.042,z+.085+k*.022,2.83,.002,.005,0x3a4e59);
-  if(!refinedFreight){text(cx-3.0,1.92,z+.04,.72,.48,'12',0,'#e7e5dc','#264b61');
-    text(cx-3.0,1.52,z+.04,1.10,.12,'MATERIAL / VÅNING 5',0,'#e7e5dc','#264b61');}
+  if(!refinedFreight){text(cx-3.0,1.92,z+.04,.72,.48,'05',0,'#e7e5dc','#264b61');
+    text(cx-3.0,1.52,z+.04,1.10,.12,'UNIT 05 / SUPPLIES',0,'#e7e5dc','#264b61');}
   box(liftX,2.71,z+.08,.46,.20,.045,0x20343e);text(liftX,2.71,z+.105,.31,.16,'5',0,'#152730','#8fdbb8');
   box(liftX+1.67,1.31,z,.16,.44,.07,0xc1c5bd,metal);for(const y of[1.22,1.37])add(new THREE.SphereGeometry(.023,8,6),glow,liftX+1.67,y,z+.055,{},y<1.3?0x70c39d:0xcf5547);
   for(const yy of[2.45,2.57])for(let xx=x0+.55;xx<x1-.35;xx+=.78){box(xx,yy,z0+.15,.04,.07,.04,0x687c80,metal,0,.005);}
@@ -198,13 +198,13 @@ export function buildLivingScene(world,registry,{replacedProps=[],refinedFreight
   // A floor lane is clipped to I12, not interpreted as a validated escape route.
   const laneX=liftX;
   for(let iz=z0+1;iz<z1-1;iz+=.45)for(const side of[-1,1])box(laneX+side*.62,.018,iz,.025,.003,.23,0x6bb9b0);
-  text(cx,2.42,z1-.075,2.4,.28,'HISSRUM 12  /  MATERIAL',Math.PI,'#153e54','#f0f1e5');
+  text(cx,2.42,z1-.075,2.4,.28,'Technical Storage',Math.PI,'#153e54','#f0f1e5');
  }
  // The existing D38 approach receives a restrained wayfinding/header band.
  const freightDoor=world.data.doors.find(d=>d.id==='D38');
  if(freightDoor){const [x,z]=freightDoor.center,alongX=Math.abs(freightDoor.b[0]-freightDoor.a[0])>.1,yaw=alongX?0:Math.PI/2;
   const nx=Math.sin(yaw),nz=Math.cos(yaw);
-  text(x+nx*.105,2.54,z+nz*.105,freightDoor.width+.42,.15,'12 / MATERIAL',yaw,'#264b61','#f0efe4');
+  text(x+nx*.105,2.54,z+nz*.105,freightDoor.width+.42,.15,'Technical Storage',yaw,'#264b61','#f0efe4');
   for(const side of[-1,1]){
    const dx=x+Math.cos(yaw)*side*(freightDoor.width/2+.045),dz=z-Math.sin(yaw)*side*(freightDoor.width/2+.045);
    box(dx,1.18,dz,.055,2.36,.085,0x597382,metal,yaw,.006);

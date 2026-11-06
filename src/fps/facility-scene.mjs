@@ -89,7 +89,7 @@ export async function buildFacilityScene(world,settings){
   // One shared sign atlas. The exact user-selected values remain untouched.
   const atlas=document.createElement('canvas');atlas.width=1024;atlas.height=512;
   const ctx=atlas.getContext('2d');ctx.fillStyle='#18333f';ctx.fillRect(0,0,1024,512);
-  const titles=['HISSRUM 12','12  ←  MATERIAL','VÅNING 5  /  MATERIAL','12'];
+  const titles=['Technical Storage','← Technical Storage','UNIT 05 / SUPPLIES','05'];
   for(let i=0;i<4;i++){const y=i*128;ctx.fillStyle='#ddb55e';ctx.fillRect(0,y,9,128);ctx.fillStyle='#eef2eb';ctx.font=`600 ${i===3?100:58}px Arial`;ctx.textAlign=i===3?'center':'left';ctx.textBaseline='middle';if(i===3){ctx.save();ctx.translate(512,y+65);ctx.scale(4.8,1);ctx.fillText(titles[i],0,0);ctx.restore();}else ctx.fillText(titles[i],44,y+65,920);}
   const atlasTexture=new T.CanvasTexture(atlas);atlasTexture.colorSpace=T.SRGBColorSpace;atlasTexture.anisotropy=8;
   const sign=new T.MeshStandardMaterial({map:atlasTexture,roughness:.8});sign.name='facility-wayfinding';owned.push(sign);

@@ -1,3 +1,4 @@
+import {ROOM_NAMES} from './player-names.mjs';
 /** Render-only study of PQC/GX. Every panel is supported by an existing face.
  * Source geometry, collision, navigation and light count are never modified.
  * Generic instrument markings are fictional game dressing, not equipment records.
@@ -158,14 +159,14 @@ function atlas(){
   c.fillStyle=green?'#49675f':'#486375';c.fillRect(x,y,512,170);
   c.fillStyle=green?'#b4c3ad':'#b8cbd0';c.fillRect(x,y+153,512,17);
   c.fillStyle='#f0f0e7';c.textBaseline='middle';
-  if(tile<2){c.font='bold 64px sans-serif';c.fillText(tile?'GX LAB 5':'PQC',x+27,y+66);c.font='24px sans-serif';c.fillText(tile?'CARTRIDGE / 05':'ANALYSTS / 05',x+30,y+124);}
+  if(tile<2){c.font='bold 39px sans-serif';c.fillText(tile?ROOM_NAMES.I01:ROOM_NAMES.I02,x+27,y+66);c.font='24px sans-serif';c.fillText(tile?'CARTRIDGE / 05':'ANALYSTS / 05',x+30,y+124);}
   else if(tile<4){
    c.fillStyle='#1b2c32';c.fillRect(x+16,y+18,283,125);c.strokeStyle='#63878c';c.lineWidth=2;c.strokeRect(x+17,y+19,281,123);
    c.fillStyle='#b8cfc6';c.font='bold 22px monospace';c.fillText('LAB / STANDBY',x+34,y+47);
    c.fillStyle='#72968f';for(let n=0;n<5;n++)c.fillRect(x+35,y+75+n*10,92+n*23,3);
    for(let n=0;n<4;n++){c.fillStyle=n===0?'#b2bb87':'#7d9696';c.beginPath();c.arc(x+345+n*39,y+58,9,0,Math.PI*2);c.fill();}
    c.fillStyle='#ced5ce';c.font='18px monospace';c.fillText('DEMO',x+338,y+118);
-  }else{c.font='bold 52px sans-serif';c.fillText(green?'GX / CARTRIDGE':'PQC / ANALYSTS',x+23,y+78);}
+  }else{c.font='bold 52px sans-serif';c.fillText(green?'ANALYSIS UNIT':'ANALYSTS / UNIT 05',x+23,y+78);}
  }
  const map=new THREE.CanvasTexture(canvas);map.colorSpace=THREE.SRGBColorSpace;return map;
 }

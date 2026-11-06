@@ -1,3 +1,4 @@
+import {roomDisplayName} from './player-names.mjs';
 import {neutralOpening} from './control-deployment.mjs';
 /** Authoritative, bounded session scoring and optional public-area objective.
  * No hidden enemy tracking, damage multipliers, real identities or persistent accounts. */
@@ -22,7 +23,7 @@ export function createControlZones(world){
   const centre={x:nodes.reduce((s,n)=>s+n.x,0)/nodes.length,z:nodes.reduce((s,n)=>s+n.z,0)/nodes.length};
   nodes.sort((a,b)=>distance(a,centre)-distance(b,centre));
   const node=nodes.find(n=>distance(n,home)>3&&distance(n,other)>3&&world.findPath(home,n).length&&world.findPath(other,n).length);
-  if(node)zones.push({id,name:world.roomAt(node.x,node.z).name,x:node.x,y:0,z:node.z,radius:2.8});
+  if(node)zones.push({id,name:roomDisplayName(world.roomAt(node.x,node.z)),x:node.x,y:0,z:node.z,radius:2.8});
  }
  const opening=neutralOpening(world);if(opening)zones.unshift(opening);
  return zones;
