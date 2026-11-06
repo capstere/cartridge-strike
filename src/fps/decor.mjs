@@ -4,6 +4,7 @@
  */
 import * as THREE from '../../vendor/three/three.module.js';
 import { mergeGeometries } from '../../vendor/three/addons/utils/BufferGeometryUtils.js';
+import {planSmokeDetectors} from './smoke-detectors.mjs';
 import { applyMetreUV } from './materials.mjs';
 
 const bounds=p=>[Math.min(...p.map(v=>v[0])),Math.min(...p.map(v=>v[1])),Math.max(...p.map(v=>v[0])),Math.max(...p.map(v=>v[1]))];
@@ -22,14 +23,14 @@ function paperAtlas(){return canvasMap(c=>{for(let k=0;k<4;k++){const x=k*256;c.
 
 export function buildDecor(world,registry){
  const group=new THREE.Group();group.name='cosmetic-room-details';
- const batches=new Map(),ownedMaterials=new Set(),ownedTextures=new Set(),counts={screens:0,cups:0,files:0,coats:0,cables:0,cartridgeBoxes:0,whiteboards:0,scuffs:0};
+ const batches=new Map(),ownedMaterials=new Set(),ownedTextures=new Set(),counts={screens:0,cups:0,files:0,coats:0,cables:0,cartridgeBoxes:0,whiteboards:0,scuffs:0,smokeDetectors:0};
  const own=(params)=>{const m=new THREE.MeshStandardMaterial(params);ownedMaterials.add(m);return m;};
  const maps={screen:screenAtlas(),paper:paperAtlas()};Object.values(maps).forEach(t=>ownedTextures.add(t));
  const mats={white:registry.get('table'),dark:registry.get('polymer'),steel:registry.get('metal'),
   cup:registry.get('table',{color:0xabb7aa,roughness:.29}),coffee:registry.get('polymer',{color:0x37251b,roughness:.22}),
   folder:registry.get('table',{color:0x567881,roughness:.86}),coat:registry.get('fabric',{color:0x6b6154}),
   paper:own({map:maps.paper,roughness:.94}),screen:own({map:maps.screen,emissiveMap:maps.screen,emissive:0xffffff,emissiveIntensity:.32,roughness:.35}),
-  scuff:own({color:0x505e61,transparent:true,opacity:.10,roughness:.98,depthWrite:false,polygonOffset:true,polygonOffsetFactor:-1})};
+  scuff:own({color:0x505e61,transparent:true,opacity:.035,roughness:.98,depthWrite:false,polygonOffset:true,polygonOffsetFactor:-1})};
  function append(room,geometry,material,x,y,z,rotation={}){
   let g=geometry.index?geometry.toNonIndexed():geometry; if(g!==geometry)geometry.dispose();
   const matrix=new THREE.Matrix4().compose(new THREE.Vector3(x,y,z),new THREE.Quaternion().setFromEuler(new THREE.Euler(rotation.x||0,rotation.y||0,rotation.z||0)),new THREE.Vector3(1,1,1));g.applyMatrix4(matrix);
@@ -74,13 +75,6 @@ export function buildDecor(world,registry){
    folder(room,x-w*.20,.79,z+.08,seed%3,-.12);if(w>.8)cup(room,x+w*.27,.79,z-.13);
   }
  }
- for(const o of world.data.obstacles.filter(o=>['I01','I02','I04'].includes(o.roomId)&&o.kind!=='uncertain-area')){
-  const [x0,z0,x1,z1]=bounds(o.polygon),w=x1-x0,d=z1-z0,seed=hash(o.id);
-  // Do not place boxes on top of the tall GX instruments or PQC enclosures.
-  if(w<.6||d<.4||boxes.some(b=>b.id.startsWith(o.id+'-')&&b.y+b.h/2>1.6))continue;
-  const x=x0+.18,z=z1-.15;
-  for(let i=0;i<1+seed%2;i++){box(o.roomId,x+i*.23,.955,z,.20,.15,.21,mats.white);plane(o.roomId,x+i*.23,.958,z+.106,.17,.11,mats.paper,2);box(o.roomId,x+i*.23,1.032,z,.20,.006,.21,registry.get('table',{color:0x68968a}));counts.cartridgeBoxes++;}
- }
  // Jackets follow existing chair back planes; the footprint remains unchanged.
  for(const b of boxes.filter(b=>b.id.endsWith('-back')&&b.material==='fabric'&&hash(b.id)%7===0)){
   const room=b.roomId||world.roomAt(b.x,b.z)?.id||'I26',yaw=b.angle||0;
@@ -106,16 +100,28 @@ export function buildDecor(world,registry){
  // Restrained sole scuffs beside furniture and at accepted door approaches, on real floor only.
  for(const d of world.data.doors.filter(d=>hash(d.id)%3===0)){
   const x=d.center[0],z=d.center[1];if(!world.canOccupy(x,z,.16))continue;
-  const room=world.roomAt(x,z)?.id||'C01';for(let i=0;i<3;i++){
-   const g=new THREE.PlaneGeometry(.025,.19);append(room,g,mats.scuff,x+(i-1)*.05,.012,z+i*.065,{x:-Math.PI/2,z:.35});counts.scuffs++;
-  }
+  const room=world.roomAt(x,z)?.id||'C01',g=new THREE.PlaneGeometry(.025,.19);
+  append(room,g,mats.scuff,x-.05,.012,z,{x:-Math.PI/2,z:.35});counts.scuffs++;
  }
+ // Two shared low-poly white shells and a recessed vent ring, merged with room decor.
+ // Their top is flush to existing ceilings; nothing reaches player height.
+ const detectorPlan=planSmokeDetectors(world),detectorWhite=registry.get('table',{color:0xf1f1eb,roughness:.72});
+ const detectorParts=[
+  {geometry:new THREE.CylinderGeometry(.13,.13,.022,12),material:detectorWhite,drop:.011},
+  {geometry:new THREE.CylinderGeometry(.108,.096,.025,12),material:mats.dark,drop:.0345},
+  {geometry:new THREE.CylinderGeometry(.10,.086,.025,12),material:detectorWhite,drop:.0495}
+ ];
+ for(const p of detectorPlan){
+  for(const part of detectorParts)append(p.roomId,part.geometry.clone(),part.material,p.x,p.y-part.drop,p.z);
+  counts.smokeDetectors++;
+ }
+ detectorParts.forEach(p=>p.geometry.dispose());
  let triangles=0;
  for(const {room,material,parts} of batches.values()){
   const geometry=mergeGeometries(parts,false);parts.forEach(g=>g.dispose());if(!geometry)continue;
   geometry.computeBoundingSphere();const mesh=new THREE.Mesh(geometry,material);mesh.name=`decor-${room}`;mesh.receiveShadow=true;mesh.castShadow=material!==mats.scuff&&material!==mats.screen;
   group.add(mesh);triangles+=geometry.getAttribute('position').count/3;
  }
- group.userData={cosmetic:true,counts,drawCalls:group.children.length,triangles,dispose(){for(const child of group.children)child.geometry.dispose();for(const mat of ownedMaterials)mat.dispose();for(const tex of ownedTextures)tex.dispose();group.clear();}};
+ group.userData={cosmetic:true,counts,detectorPlan,drawCalls:group.children.length,triangles,dispose(){for(const child of group.children)child.geometry.dispose();for(const mat of ownedMaterials)mat.dispose();for(const tex of ownedTextures)tex.dispose();group.clear();}};
  return group;
 }

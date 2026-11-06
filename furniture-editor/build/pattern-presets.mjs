@@ -9,4 +9,4 @@ export const PATTERN_SPECS=Object.freeze({
 });
 export const hasPattern=type=>Object.hasOwn(PATTERN_SPECS,type);
 export const floorBaseColor=surface=>PATTERN_SPECS[surface]?.color||
- (surface==='office-carpet'?'#6e6765':surface==='vinyl'?'#b7d6d0':'#d8cbbb');
+ (['office-carpet','carpet'].includes(surface)?'#42494f':surface==='vinyl'?'#b7d6d0':'#d8cbbb');
