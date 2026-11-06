@@ -8,10 +8,10 @@ import {chairColors} from '../appearance.mjs?v=5.8.0';
 import {populateLabFurniture} from './lab-furniture-mesh.mjs?v=5.8.0';
 import {populateFpsFurniture} from './fps-mesh.mjs?v=5.8.0';
 const circle=new T.CylinderGeometry(.5,.5,1,24);
-const metallic=new T.MeshStandardMaterial({color:0xaab6bd,metalness:.57,roughness:.43});
-const white=new T.MeshStandardMaterial({color:0xf5f7f6,metalness:.05,roughness:.76});
-const dark=new T.MeshStandardMaterial({color:0x30373c,metalness:.22,roughness:.54});
-const navy=new T.MeshStandardMaterial({color:0x285b9e,metalness:.04,roughness:.89});
+const metallic=new T.MeshStandardMaterial({color:0xa6afb0,metalness:.85,roughness:.40});
+const white=new T.MeshStandardMaterial({color:0xe7e9e4,metalness:0,roughness:.48});
+const dark=new T.MeshStandardMaterial({color:0x272e32,metalness:0,roughness:.76});
+const navy=new T.MeshStandardMaterial({color:0x35556d,metalness:0,roughness:.98});
 const screenGlass=new T.MeshStandardMaterial({color:0x161f23,metalness:.13,roughness:.45});
 const chairMaterials=new Map();
 function chairMaterial(color){if(!chairMaterials.has(color))chairMaterials.set(color,new T.MeshStandardMaterial({color}));return chairMaterials.get(color);}

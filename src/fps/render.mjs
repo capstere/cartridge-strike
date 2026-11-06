@@ -1,3 +1,5 @@
+import {preparedFloorFinish} from '../../furniture-editor/build/floor5-appearance.mjs';
+import {microFinishMaterial} from '../../furniture-editor/build/pattern-materials.mjs?v=5.6.1';
 import {buildEnvironment} from '../../furniture-editor/build/environment-visuals.mjs';
 import {buildFpsFurniture} from './project-batches.mjs';
 import {buildDoorVisuals} from './door-visuals.mjs?v=5.5.0';
@@ -95,6 +97,7 @@ export class Renderer extends EngineRenderer {
        const decorationStart=this.projectFurniture.children.length;
        buildProjectDecorations(world.project,world.projectScene.entries,this.projectFurniture);
        if(this.projectBatches){
+        for(const node of this.decor.children)this.projectBatches.register(node);
         for(const node of this.projectFurniture.children.slice(decorationStart))this.projectBatches.register(node);
         for(const node of this.scene.children)if(node.name==='room-static-batch')this.projectBatches.register(node);
        }
@@ -198,6 +201,14 @@ export class Renderer extends EngineRenderer {
     }
   }
   materialFor(b){
+    const finish=b.id?.startsWith('finish-')&&preparedFloorFinish(this.world.project||{},b.id.slice(7),b.material);
+    if(finish){
+      this.floor5PatternMaterials||=new Map();const key=finish+':'+(b.studioColor||'');
+      if(!this.floor5PatternMaterials.has(key))this.floor5PatternMaterials.set(key,microFinishMaterial(finish,b.studioColor));
+      return this.floor5PatternMaterials.get(key);
+    }
+    if(this.world.newLevel&&b.material==='metal'&&b.studioColor)return this.registry.get('paintedMetal',{color:b.studioColor,side:THREE.DoubleSide});
+    if(this.world.newLevel&&b.material==='blue-graphic')return this.registry.get('table',{color:0x7c959d,roughness:.85});
     const pattern=b.studioPattern||b.material;
     if(this.world.newLevel&&!b.studioColor&&hasPattern(pattern)){
       this.floor5PatternMaterials||=new Map();

@@ -9,15 +9,15 @@ import {LAB_FURNITURE_MAP} from './lab-furniture.mjs?v=5.8.0';
 
 const templates=new Map();
 const finishes={
- white:{color:0xf1f3ee,roughness:.65,metalness:.12},
- blue:{color:0x367eb4,roughness:.48,metalness:.16},
- steel:{color:0xb4c0c5,roughness:.38,metalness:.72},
- frame:{color:0x242d37,roughness:.58,metalness:.45},
- black:{color:0x191d23,roughness:.62,metalness:.28},
+ white:{color:0xdee3df,roughness:.48,metalness:0},
+ blue:{color:0x35556d,roughness:.53,metalness:0},
+ steel:{color:0xa6afb0,roughness:.40,metalness:.85},
+ frame:{color:0x454b4b,roughness:.60,metalness:0},
+ black:{color:0x272e32,roughness:.76,metalness:0},
  rubber:{color:0x2e3234,roughness:.94,metalness:0},
- dark:{color:0x24323c,roughness:.46,metalness:.10},
+ dark:{color:0x263238,roughness:.34,metalness:0},
  light:{color:0xf4ffff,emissive:0xc9f2ff,emissiveIntensity:.65,roughness:.35},
- glass:{color:0xafd6df,transparent:true,opacity:.15,depthWrite:false,roughness:.15,metalness:.04},
+ glass:{color:0xafd6df,transparent:true,opacity:.15,depthWrite:false,roughness:.15,metalness:0},
  sole:{color:0xe5e8e3,roughness:.87,metalness:0},
  tread:{color:0xa7b1b0,roughness:.96,metalness:0},
  upper:{color:0xf2f3ef,roughness:.83,metalness:0},

@@ -5,19 +5,20 @@
 import * as THREE from '../../vendor/three/three.module.js';
 
 export const MATERIAL_LIBRARY = Object.freeze({
-  carpet: { source: 'Fabric045', metres: [.65,.65], color: 0x496179, roughness: 1, normal: .38 },
-  'office-carpet': {source:'Fabric045',metres:[.50,.50],color:0x6e6765,roughness:1,normal:.23,colorMapStrength:.18},
-  fabric: { source: 'Fabric045', metres: [.38,.38], color: 0x334c63, roughness: 1, normal: .24 },
+  carpet: { source: 'Fabric045', metres: [.65,.65], color: 0x42494f, roughness: .98, normal: .14, colorMapStrength: .12 },
+  'office-carpet': {source:'Fabric045',metres:[.50,.50],color:0x42494f,roughness:.98,normal:.14,colorMapStrength:.12},
+  fabric: { source: 'Fabric045', metres: [.38,.38], color: 0x35556d, roughness: .98, normal: .12, colorMapStrength: .12 },
   vinyl: { source: 'Concrete034', metres: [1.1,.55], color: 0xd6dfd7, roughness: .52, normal: .11 },
   labVinyl: { source: 'Concrete034', metres: [1.1,.55], color: 0xb9c9ca, roughness: .67, normal: .055, colorMapStrength: .24 },
-  wall: { source: 'WhitePlaster02', metres: [1,1], color: 0xe8e3d6, roughness: .88, normal: .10, colorMapStrength: .14 },
-  ceiling: { source: 'WhitePlaster02', metres: [.6,.6], color: 0xd9dedb, roughness: .95, normal: .07, colorMapStrength: .10 },
+  wall: { source: 'WhitePlaster02', metres: [1,1], color: 0xe8e7e1, roughness: .84, normal: .05, colorMapStrength: .14 },
+  ceiling: { source: 'WhitePlaster02', metres: [.6,.6], color: 0xe1e3df, roughness: .96, normal: .04, colorMapStrength: .10 },
   wood: { source: 'Wood051', metres: [.8,.8], color: 0xffffff, roughness: .73, normal: .16 },
-  table: { color: 0xebe9df, roughness: .46 },
-  metal: { color: 0xa3adb0, roughness: .34, metalness: .8 },
-  polymer: { color: 0x222b30, roughness: .66 },
-  glass: { color: 0x9eb8b4, roughness: .17, metalness: .08, transparent: true, opacity: .16, depthWrite: false },
-  frostedGlass: { color: 0xc7d5cf, roughness: .74, transparent: true, opacity: .58, depthWrite: false },
+  table: { color: 0xe7e9e4, roughness: .48 },
+  metal: { color: 0xa6afb0, roughness: .40, metalness: .85 },
+  paintedMetal: { color: 0x858e90, roughness: .57, metalness: 0 },
+  polymer: { color: 0x272e32, roughness: .76 },
+  glass: { color: 0xccd8d8, roughness: .19, metalness: 0, transparent: true, opacity: .16, depthWrite: false },
+  frostedGlass: { color: 0xd5ddda, roughness: .78, transparent: true, opacity: .50, depthWrite: false },
 });
 
 export function createMaterialRegistry(renderer, settings = {}) {
@@ -47,6 +48,15 @@ export function createMaterialRegistry(renderer, settings = {}) {
       params.normalMap = texture(spec.source,'NormalGL',spec.metres);
       params.roughnessMap = texture(spec.source,'Roughness',spec.metres);
       params.normalScale = new THREE.Vector2(spec.normal,spec.normal);
+    }
+    if(category==='metal'){
+      // Fine directional brushing in gloss, shared by all exposed-steel variants.
+      if(!textureCache.has('steel-brush')){
+        const c=document.createElement('canvas');c.width=c.height=128;const ctx=c.getContext('2d');
+        for(let y=0;y<128;y++){const v=240+(y*17%15);ctx.fillStyle=`rgb(${v},${v},${v})`;ctx.fillRect(0,y,128,1);}
+        const t=new THREE.CanvasTexture(c);t.wrapS=t.wrapT=THREE.RepeatWrapping;t.anisotropy=anisotropy;t.name='fine-steel-brushing';textureCache.set('steel-brush',t);
+      }
+      params.roughnessMap=textureCache.get('steel-brush');
     }
     const material = new THREE.MeshStandardMaterial({...params,...options});
     // A fresh paint coat retains microtexture while suppressing bare plaster mottling.

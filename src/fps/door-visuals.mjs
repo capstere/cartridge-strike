@@ -32,7 +32,7 @@ export async function buildDoorVisuals(system){
  const frosted=system.doors.filter(d=>d.doorStyle==='frosted').flatMap(d=>d.leaves),glass=frosted.length?frostedGlassMaterial():null;
  const officeGroups=system.doors.filter(d=>d.doorStyle==='office').flatMap(d=>d.leaves.map(leaf=>{
   const group=new T.Group();group.name=leaf.door.id+'-office';
-  const panelMaterial=new T.MeshStandardMaterial({color:leaf.door.studioColor||0x817c78,roughness:.79,metalness:.02});
+  const panelMaterial=new T.MeshStandardMaterial({color:leaf.door.studioColor||0x858e90,roughness:.60,metalness:0});
   const hardware=new T.MeshStandardMaterial({color:0xa0a3a2,metalness:.72,roughness:.33});
   const body=new T.Mesh(new RoundedBoxGeometry(leaf.w,2.23,.065,2,.006),panelMaterial);
   body.position.set(leaf.w/2,1.15,0);body.castShadow=true;body.receiveShadow=true;body.name='office-panel';group.add(body);
@@ -43,7 +43,7 @@ export async function buildDoorVisuals(system){
   root.add(group);return {leaf,group,panelMaterial,hardware};
  }));
  const wcBadges=system.doors.filter(d=>d.doorStyle==='wc').flatMap(d=>d.leaves.map(leaf=>{const badge=createWcDoorBadge(leaf.w);badge.group.name=leaf.door.id+'-wc-badge';root.add(badge.group);return {leaf,...badge};}));
- const glassGroups=frosted.map(leaf=>{const group=new T.Group();group.name=leaf.door.id+'-frosted';const frame=new T.MeshStandardMaterial({color:leaf.door.studioColor||0x87989e,roughness:.4,metalness:.5});
+ const glassGroups=frosted.map(leaf=>{const group=new T.Group();group.name=leaf.door.id+'-frosted';const frame=new T.MeshStandardMaterial({color:leaf.door.studioColor||0x6d777a,roughness:.60,metalness:0});
   for(const p of frostedDoorParts(leaf.w)){const mesh=new T.Mesh(new T.BoxGeometry(p.w,p.h,p.d),p.part==='glass'?glass:frame);mesh.name=p.part;mesh.position.set(p.x,p.y,p.z);mesh.castShadow=p.part!=='glass';mesh.receiveShadow=true;group.add(mesh);}root.add(group);return {leaf,group,frame};});
  for(const [name,parts,material] of [['panel',body,paint],['hardware',metal,steel],['seal',seals,rubber]]){
   const non=parts.map(g=>g.index?g.toNonIndexed():g),merged=mergeGeometries(non),geometry=mergeVertices(merged,1e-8);merged.dispose();parts.forEach(g=>g.dispose());non.forEach(g=>g.dispose());
@@ -51,7 +51,7 @@ export async function buildDoorVisuals(system){
   mesh.instanceMatrix.setUsage(T.DynamicDrawUsage);root.add(mesh);batches.push(mesh);
   if(name==='panel')for(let i=0;i<leaves.length;i++)mesh.setColorAt(i,new T.Color(leaves[i].door.studioColor||(leaves[i].door.doorStyle==='wc'?0xf3f3ef:leaves[i].door.accessCard?0x527b80:0xc4c3af)));
  }
- const sliderMaterial=system.elevators?.boxes.length?new T.MeshStandardMaterial({color:0xadb5b6,metalness:.42,roughness:.4}):null;
+ const sliderMaterial=system.elevators?.boxes.length?new T.MeshStandardMaterial({color:0x52788a,metalness:0,roughness:.53}):null;
  const sliders=(system.elevators?.boxes||[]).map(box=>{
   const mesh=new T.Mesh(new T.BoxGeometry(box.w,box.h,box.d),sliderMaterial);
   mesh.name=box.id;root.add(mesh);

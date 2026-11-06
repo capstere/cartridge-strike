@@ -59,3 +59,40 @@ export function patternMaterial(type){
  });
  material.userData.studioOwned=true;return material;
 }
+
+/** Tiny shared, deterministic maps: no concrete cracks or plank seams in lab/service vinyl.
+ * Grain is confined to albedo +/- one code value and gloss; work surfaces stay clean.
+ */
+export function microFinishMaterial(type,color){
+ const specs={'service-vinyl':['#4d5555',.58], 'lab-vinyl':['#c5cbc7',.62], 'cold-lab-vinyl':['#bdc9cb',.65]};
+ if(type==='quiet-stone'){
+  const key='quiet-stone';
+  if(!patterns.has(key)){
+   const c=canvasPattern('dark-large-stone'),g=c.getContext('2d');
+   // Retain the existing tile layout, narrow the joint and reduce its contrast.
+   g.fillStyle='#747c7d';g.fillRect(0,0,S,S);
+   for(let row=-1;row<=2;row++)for(let col=-2;col<=2;col++){
+    const x=col*S+(row%2?S/2:0),y=row*S/2;
+    g.fillStyle=['#444b4e','#464d50','#42494c'][(Math.abs(row)+Math.abs(col))%3];g.fillRect(x+1,y+1,S-2,S/2-2);
+   }
+   const t=new T.CanvasTexture(c);t.colorSpace=T.SRGBColorSpace;t.wrapS=t.wrapT=T.RepeatWrapping;t.userData.studioShared=true;patterns.set(key,t);
+  }
+  const m=new T.MeshStandardMaterial({map:patterns.get(key),color:color||0xffffff,roughness:.70,side:T.DoubleSide});m.userData.studioOwned=true;return m;
+ }
+ const spec=specs[type];if(!spec)return null;
+ if(!patterns.has('vinyl-grain')){
+  for(const channel of ['grain','roughness']){
+   const c=document.createElement('canvas');c.width=c.height=128;const g=c.getContext('2d'),pixels=g.createImageData(128,128);let seed=7183;
+   for(let y=0;y<128;y++)for(let x=0;x<128;x++){
+    seed=(Math.imul(seed,1664525)+1013904223)>>>0;
+    // Broad, very faint polishing only changes roughness. No new decal geometry.
+    const v=channel==='grain'?254+seed%2:Math.round(244+5*Math.sin(x/128*Math.PI*2)*Math.sin(y/128*Math.PI*2)+seed%4);
+    const i=(y*128+x)*4;pixels.data[i]=pixels.data[i+1]=pixels.data[i+2]=v;pixels.data[i+3]=255;
+   }
+   g.putImageData(pixels,0,0);const t=new T.CanvasTexture(c);t.name='floor5-vinyl-'+channel;t.colorSpace=channel==='grain'?T.SRGBColorSpace:T.NoColorSpace;
+   t.wrapS=t.wrapT=T.RepeatWrapping;t.anisotropy=4;t.userData.studioShared=true;patterns.set('vinyl-'+channel,t);
+  }
+ }
+ const m=new T.MeshStandardMaterial({map:patterns.get('vinyl-grain'),roughnessMap:patterns.get('vinyl-roughness'),color:color||spec[0],roughness:spec[1],metalness:0,side:T.DoubleSide});
+ m.userData.studioOwned=true;return m;
+}
