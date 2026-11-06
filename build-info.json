@@ -15,6 +15,11 @@
       "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
     },
     {
+      "path": "Business_Man_Quaternius_Anims.glb",
+      "bytes": 10179392,
+      "sha256": "8848008569ae5a35733f1ecc9456cd90a6c505cf3ccde375de7e228bd4a264d4"
+    },
+    {
       "path": "assets/fps/audio/action-backup.ogg",
       "bytes": 8228,
       "sha256": "fef76af35ab2311c58622ca8a84dc2cac56e806f8c627fdbce05b49a4cd26c16"
@@ -616,8 +621,8 @@
     },
     {
       "path": "credits.html",
-      "bytes": 13735,
-      "sha256": "0410bf84bc8b31e68b55f59c68d8a54f3702e5eb17644aec68420fa6a496e259"
+      "bytes": 14024,
+      "sha256": "da1d5f099b091f243c9260e6c49e8bceea2d09543e54bb306533864a74560dbe"
     },
     {
       "path": "docs/fps-furniture-library.md",
@@ -2695,6 +2700,11 @@
       "sha256": "09cbda3b567d985fe1b257e185663e8531e3c0c5d52ec557fd1e6526b483c6c4"
     },
     {
+      "path": "src/fps/business-hostage.mjs",
+      "bytes": 1299,
+      "sha256": "e8ea9e68528058576e7fa11446a7cd5f79d773e1c8e74b99a90313f4e84a45a3"
+    },
+    {
       "path": "src/fps/cartridge-props.mjs",
       "bytes": 9065,
       "sha256": "11c5227e48c858dc35c75285d98bd47f5bc11434a61ee962c8f88c0fcf60ca4e"
@@ -2716,8 +2726,8 @@
     },
     {
       "path": "src/fps/character-library.mjs",
-      "bytes": 20837,
-      "sha256": "bf7a7f2b140cde5959f6dc5d066c0b404df2a337fa5615dc91c1112c2a9cde11"
+      "bytes": 23145,
+      "sha256": "1f11cf5b57ea17ee629e19b649986c891a04487343027cd3abe9da93ee7ba228"
     },
     {
       "path": "src/fps/character-overrides.mjs",
@@ -2971,8 +2981,8 @@
     },
     {
       "path": "src/fps/render.mjs",
-      "bytes": 18667,
-      "sha256": "5f421c918e5b7705cefa50a92f4e4bc0e4dd72a00766f74ff131807c94ac8747"
+      "bytes": 18724,
+      "sha256": "c7bdd2d2a4f91ecbe9711a95a5b1d260f730c77179b55e57fced4af11a4608e2"
     },
     {
       "path": "src/fps/riposte-audio.mjs",
@@ -3175,7 +3185,7 @@
       "sha256": "9b0c24534a47f2e1c9549a63a5e00a850577e22fe8d18dbc7a532008a027cb89"
     }
   ],
-  "bytes": 32625595,
+  "bytes": 42823601,
   "sourceDirectoriesExcluded": [
     "references",
     "reviews",

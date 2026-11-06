@@ -10,7 +10,9 @@ import * as T from '../../vendor/three/three.module.js';
 import {RoundedBoxGeometry} from '../../vendor/three/addons/geometries/RoundedBoxGeometry.js';
 import {WEAPONS} from './config.mjs';
 import {GLTFLoader} from '../../vendor/three/addons/loaders/GLTFLoader.js';
+import {BUSINESS_HOSTAGE_FILE,prepareBusinessHostage} from './business-hostage.mjs';
 let templates=null,pending=null,privateCharacter=null,privateViewAppearance=null;
+let hostageTemplate=null,hostagePending=null,hostageSupport=null;
 let privateActorIds=new Set(['analysts-0','analysts-1']);
 const live=new Set();
 export function charactersReady(){return !!templates;}
@@ -28,6 +30,16 @@ export async function loadCharacterLibrary(){
  pending=Promise.all(['male','female'].map(name=>loader.loadAsync(new URL(`../../assets/fps/models/quaternius-operator-${name}.glb`,import.meta.url).href)))
   .then(async([male,female])=>{installCharacterTemplates(male,female);await loadCharacterOverrides({male,female});}).catch(e=>{pending=null;templates=null;throw new Error('Karaktärsmodellerna kunde inte laddas: '+e.message);});
  return pending;
+}
+/** Separate from the studio's operator reference rig; fetched once for FPS use. */
+export function installDefaultHostageTemplate(asset){
+ const support=prepareBusinessHostage(asset);hostageTemplate=asset;hostageSupport=support;
+}
+export async function loadDefaultHostages(){
+ if(hostagePending)return hostagePending;if(hostageTemplate)return;
+ hostagePending=new GLTFLoader().loadAsync(new URL('../../'+BUSINESS_HOSTAGE_FILE,import.meta.url).href)
+  .then(installDefaultHostageTemplate).catch(e=>{hostagePending=null;throw new Error('Gisslanmodellen kunde inte laddas: '+e.message);});
+ return hostagePending;
 }
 /** Clone the hierarchy AND each skeleton. Mesh buffers/textures remain shared. */
 function cloneSkinned(source){
@@ -51,6 +63,7 @@ export function createAuthoredAvatar(team,id,isHostage=false,options={}){
  if(!options.ignoreOverrides&&privateCharacterApplies(id)&&!isHostage)return createPrivateAvatar(id);
  const entry=!options.ignoreOverrides&&getCharacterOverride(isHostage?'hostage':'player',id);
  if(entry)return createRoleAvatar(entry,id,isHostage);
+ if(isHostage&&!options.ignoreOverrides&&hostageTemplate)return createBusinessHostage(id);
  if(!templates)throw Error('Character library must be loaded before actor creation');
  const seed=hash(id),gender=options.gender||(seed%3===0?'female':'male'),asset=templates[gender],root=cloneSkinned(asset.scene),materials=new Map(),ownedGeometry=[],bones=new Map(),meshes=[],shoes=[];
  const palette=isHostage?{shirt:0xe0e7e2,pants:0x334552,vest:0xe4e7df,trim:0x468e8c}:team==='analysts'?{shirt:0x22435e,pants:0x202c3b,vest:0x132d42,trim:0x5aa8cf}:{shirt:0x9b967c,pants:0x454c3b,vest:0x505b42,trim:0xc9ad65};
@@ -113,13 +126,24 @@ export function createAuthoredAvatar(team,id,isHostage=false,options={}){
  }
  return finishAvatar({asset,root,bones,materials,meshes,shoes,seed,gender,ownedGeometry,isHostage,normalize:true});
 }
-function finishAvatar({asset,root,bones,materials,meshes,shoes,seed,gender,ownedGeometry,isHostage,normalize}){
+function finishAvatar({asset,root,bones,materials,meshes,shoes,footSamples=[],seed,gender,ownedGeometry,isHostage,normalize}){
  const mixer=new T.AnimationMixer(root),clips=new Map(asset.animations.map(c=>[c.name,c]));
  const base=new Map(),upper=new Map();for(const [name,clip]of clips){base.set(name,mixer.clipAction(isHostage?clip:lowerClip(clip)));if(!isHostage)upper.set(name,mixer.clipAction(upperClip(clip)));}
  const idle=base.get('Idle_Loop');idle.play();if(!isHostage)upper.get('Pistol_Idle_Loop').play();mixer.update(0);root.updateMatrixWorld(true);root.traverse(o=>{if(o.isSkinnedMesh)o.skeleton.update();});
  const holder=new T.Group();holder.name='authored-humanoid-'+gender;holder.rotation.y=Math.PI;holder.add(root);
  const bounds=posedBounds(root),scale=normalize?1.69/(bounds.max.y-bounds.min.y):1;holder.scale.setScalar(scale);holder.position.y=-bounds.min.y*scale+.004;
- const state={holder,root,bones,mixer,base,upper,clips,materials,meshes,shoes,scale,seed,gender,ownedGeometry,activeBase:'Idle_Loop',activeUpper:isHostage?null:'Pistol_Idle_Loop',time:null,x:null,z:null,motionSpeed:0,groundOffset:holder.position.y,isHostage,disposed:false,groundInverse:new T.Matrix4(),groundMatrix:new T.Matrix4(),hitBase:new T.Quaternion(),hitRotation:new T.Quaternion(),hitEuler:new T.Euler(),hitApplied:false};live.add(state);return state;
+ const state={holder,root,bones,mixer,base,upper,clips,materials,meshes,shoes,footSamples,scale,seed,gender,ownedGeometry,activeBase:'Idle_Loop',activeUpper:isHostage?null:'Pistol_Idle_Loop',time:null,x:null,z:null,motionSpeed:0,groundOffset:holder.position.y,isHostage,disposed:false,groundInverse:new T.Matrix4(),groundMatrix:new T.Matrix4(),hitBase:new T.Quaternion(),hitRotation:new T.Quaternion(),hitEuler:new T.Euler(),hitApplied:false};live.add(state);return state;
+}
+function createBusinessHostage(id){
+ const asset=hostageTemplate,root=cloneSkinned(asset.scene),bones=new Map(),meshes=[],footSamples=[];
+ root.traverse(o=>{if(o.isBone)bones.set(o.name,o);if(!o.isMesh)return;
+  meshes.push(o);o.castShadow=false;o.receiveShadow=true;o.frustumCulled=false;
+  const indices=hostageSupport.get(o.geometry);if(indices)footSamples.push({mesh:o,indices});
+ });
+ // Aliases serve the existing bag/hit presentation; native animation targets stay intact.
+ bones.set('pelvis',bones.get('Hips'));bones.set('spine_03',bones.get('Chest'));
+ const state=finishAvatar({asset,root,bones,materials:new Map(),meshes,shoes:[],footSamples,seed:hash(id),gender:'business',ownedGeometry:[],isHostage:true,normalize:true});
+ state.defaultHostage=true;return state;
 }
 /** Called only after local hash/source/GLB checks, for a rehearsal or menu selection. */
 export function installPrivateCharacter(asset){
@@ -222,7 +246,8 @@ export function animateAuthored(state,actor,time,options={}){
  }
  state.time=time;state.x=actor.x;state.z=actor.z;
  state.holder.scale.setScalar(state.scale);state.holder.rotation.set(0,Math.PI,0);state.holder.position.set(0,0,0);
- state.holder.updateWorldMatrix(true,true);const rootInverse=state.groundInverse;rootInverse.identity();if(state.holder.parent)rootInverse.copy(state.holder.parent.matrixWorld).invert();let bottom=Infinity;
+ // updateMatrixWorld also refreshes attached skins' bind inverses before sampling.
+ state.holder.updateWorldMatrix(true,false);state.holder.updateMatrixWorld(true);const rootInverse=state.groundInverse;rootInverse.identity();if(state.holder.parent)rootInverse.copy(state.holder.parent.matrixWorld).invert();let bottom=Infinity;
  for(const shoe of state.shoes){
   // Boot bounds are immutable. Transform only their lower support extent, with
   // cached matrices; do not rescan rounded-box vertices every actor/frame.
@@ -231,8 +256,13 @@ export function animateAuthored(state,actor,time,options={}){
   const lower=e[1]*centreX+e[5]*centreY+e[9]*centreZ+e[13]-Math.abs(e[1])*(b.max.x-b.min.x)*.5-Math.abs(e[5])*(b.max.y-b.min.y)*.5-Math.abs(e[9])*(b.max.z-b.min.z)*.5;
   bottom=Math.min(bottom,lower);
  }
+ // Only the cached, foot-weighted support vertices (243 in the source asset).
+ // Both hostages share the index lists, geometry, clips and materials, not bones.
+ for(const {mesh,indices}of state.footSamples)for(const i of indices){
+  mesh.getVertexPosition(i,v).applyMatrix4(mesh.matrixWorld).applyMatrix4(rootInverse);bottom=Math.min(bottom,v.y);
+ }
  if(Number.isFinite(bottom))state.holder.position.y=.004-bottom;
- state.holder.updateWorldMatrix(true,true);state.root.traverse(o=>{if(o.isSkinnedMesh)o.skeleton.update();});
+ state.holder.updateWorldMatrix(true,false);state.holder.updateMatrixWorld(true);state.root.traverse(o=>{if(o.isSkinnedMesh)o.skeleton.update();});
 }
 export function disposeAvatar(state){
  if(!state||state.disposed)return;state.disposed=true;state.mixer.stopAllAction();state.mixer.uncacheRoot(state.root);
@@ -241,6 +271,6 @@ export function disposeAvatar(state){
 export function disposeCharacterLibrary(){
  clearCharacterOverrides();privateViewAppearance?.dispose();privateViewAppearance=null;
  for(const state of [...live])disposeAvatar(state);const geometries=new Set(),materials=new Set(),textures=new Set();
- if(templates)for(const asset of [...Object.values(templates),privateCharacter].filter(Boolean))asset.scene.traverse(o=>{if(o.geometry)geometries.add(o.geometry);if(o.material)materials.add(o.material);});
- for(const m of materials){for(const value of Object.values(m))if(value?.isTexture)textures.add(value);m.dispose();}for(const g of geometries)g.dispose();for(const t of textures)t.dispose();fabric?.dispose();fabric=null;templates=null;pending=null;privateCharacter=null;
+ for(const asset of [...Object.values(templates||{}),privateCharacter,hostageTemplate].filter(Boolean))asset.scene.traverse(o=>{if(o.geometry)geometries.add(o.geometry);for(const m of [o.material].flat().filter(Boolean))materials.add(m);if(o.isSkinnedMesh)o.skeleton.dispose();});
+ for(const m of materials){for(const value of Object.values(m))if(value?.isTexture)textures.add(value);m.dispose();}for(const g of geometries)g.dispose();for(const t of textures)t.dispose();fabric?.dispose();fabric=null;templates=null;pending=null;privateCharacter=null;hostageTemplate=null;hostagePending=null;hostageSupport=null;
 }
