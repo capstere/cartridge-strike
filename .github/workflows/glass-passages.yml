@@ -1,0 +1,36 @@
+name: Broken glass passages
+on:
+  pull_request:
+    paths: ['src/fps/**', 'src/world.js', 'tools/glass-passages*', '.github/workflows/glass-passages.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  glass:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Physics, navigation, scope and round reset
+        run: |
+          node --experimental-loader ./tools/vendor-three-test-loader.mjs --test tools/glass-passages.test.mjs tools/facility-details.test.mjs src/fps/level-adapter.test.mjs src/fps/player-names.test.mjs
+          node tools/verify-owner-runtime.mjs
+      - name: Install pinned Chromium
+        run: |
+          npm ci --prefix frontline/source/tools/dev --ignore-scripts --no-audit --no-fund
+          node frontline/source/tools/dev/node_modules/playwright-core/cli.js install chromium
+      - name: Actual FPS with curtain and blind
+        run: |
+          python3 -m http.server 8765 --bind 127.0.0.1 >/tmp/glass-http.log 2>&1 &
+          PID=$!
+          trap 'kill "$PID" || true' EXIT
+          timeout 300s node tools/glass-passages-browser.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: glass-passages
+          path: test-results/glass-passages/
+          retention-days: 1

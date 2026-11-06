@@ -96,10 +96,20 @@ export function createPhysics(description,data){
   const decorativeIds=data.__custom?new Set(data.obstacles.filter(o=>o.collision==='none').map(o=>o.id)):new Set();
   const staticBoxes=description.boxes.filter(b=>b.w>0&&b.h>0&&b.d>0&&!decorativeIds.has(b.id)&&!b.decorative).map(b=>({...b,cos:Math.cos(b.angle||0),sin:Math.sin(b.angle||0)}));
   for(const b of staticBoxes)boxIndex.insert(b,boxBounds(b));
+  // Low glazing rails stay physical, but can be stepped over inside a broken,
+  // standing-height pane. Keep them out of the immutable triangle tree.
+  const glassRails=new Map(),activeGlassRails=new Set(),railIndex=new SpatialIndex(),railScratch=[];
+  const glassWalls=new Map();
+  for(const b of staticBoxes)if(b.glassId&&b.material==='glass'&&b.y-b.h/2<=.12&&b.h>=STANDING_HEIGHT){
+    const id=b.glassId.split('/pane-')[0];if(!glassWalls.has(id))glassWalls.set(id,[]);glassWalls.get(id).push(b);
+  }
+  for(const [id,panes]of glassWalls)for(const b of staticBoxes)if([id+'-base',id+'-skirt',id+'-sill'].includes(b.id)&&b.y+b.h/2<=.12)glassRails.set(b,panes);
+  for(const rail of glassRails.keys())railIndex.insert(rail,boxBounds(rail));
+  function updateGlassPassages(){activeGlassRails.clear();for(const [rail,panes]of glassRails)if(panes.some(p=>p.disabled))activeGlassRails.add(rail);}
   let dynamicBoxes=[],dynamicIndex=new SpatialIndex();
   const dynamicScratch=[],motionScratch=[];
   const scopeScratch=[],obstacleScratch=[],boxScratch=[];
-  const setDynamicBoxes=boxes=>{dynamicBoxes=[...boxes,...staticBoxes.filter(b=>b.glassId)];dynamicIndex=new SpatialIndex();for(const b of dynamicBoxes)dynamicIndex.insert(b,b.broadphaseBounds||boxBounds(b));};
+  const setDynamicBoxes=boxes=>{dynamicBoxes=[...boxes,...staticBoxes.filter(b=>b.glassId||glassRails.has(b))];dynamicIndex=new SpatialIndex();for(const b of dynamicBoxes)dynamicIndex.insert(b,b.broadphaseBounds||boxBounds(b));};
   let lastFloor=null;
   function onFloor(x,z){
     // Consecutive capsule-ring and path samples usually stay in one polygon.
@@ -116,8 +126,26 @@ export function createPhysics(description,data){
     for(const p of scopeIndex.query(x,z,r,scopeScratch))if(touchesPolygon(x,z,r,p))return false;
     return true;
   }
+  function glassStepHeight(x,z,r,y){
+    let top=y;
+    if(!activeGlassRails.size||y>.121)return top;
+    for(const rail of railIndex.query(x,z,r,railScratch)){
+      const panes=glassRails.get(rail);if(!activeGlassRails.has(rail)||!circleHitsBox(x,z,r,rail))continue;
+      for(const pane of panes){
+        if(!pane.disabled)continue;
+        const dx=x-pane.x,dz=z-pane.z,along=pane.cos*dx-pane.sin*dz;
+        if(Math.abs(along)+r>pane.w/2+.001)continue;
+        const offset=Math.max(.35,rail.d/2+r+.01);
+        // Never grant new floor: both landings and the crossing remain in scope.
+        if(!scopeAllowed(x+pane.sin*offset,z+pane.cos*offset,r)||!scopeAllowed(x-pane.sin*offset,z-pane.cos*offset,r))continue;
+        top=Math.max(top,rail.y+rail.h/2+.00001);
+      }
+    }
+    return top;
+  }
   function canOccupy(x,z,r=ACTOR_RADIUS,height=STANDING_HEIGHT,y=0,staticOnly=false){
     if(!scopeAllowed(x,z,r))return false;
+    y=glassStepHeight(x,z,r,y);
     // Accepted furniture footprints stay outside the navigation surface. At jumping
     // height movement uses the exact visible geometry; no furniture is a scope shortcut.
     if(y<.1)for(const p of navObstacleIndex.query(x,z,r,obstacleScratch))if(touchesPolygon(x,z,r,p))return false;
@@ -137,7 +165,7 @@ export function createPhysics(description,data){
   const transform=new Matrix4(),rotation=new Matrix4(),scale=new Matrix4();
   for(const b of staticBoxes){
     // Millimetre-scale threshold trim is walkable; rendered height and ray hits stay exact.
-    if(b.y+b.h/2<=.035||b.glassId)continue;
+    if(b.y+b.h/2<=.035||b.glassId||glassRails.has(b))continue;
     transform.makeTranslation(b.x,b.y,b.z).multiply(rotation.makeRotationY(b.angle||0)).multiply(scale.makeScale(b.w,b.h,b.d));
     for(let i=0;i<vertices.count;i+=3){const vs=[0,1,2].map(k=>new Vector3().fromBufferAttribute(vertices,i+k).applyMatrix4(transform));const t=new Triangle(...vs);t.objectId=b.id;octree.addTriangle(t);}
   }
@@ -203,6 +231,8 @@ export function createPhysics(description,data){
         if(scopeAllowed(actor.x,nz,r))actor.z=nz;
       }
       actor.y+=dy/n;
+      if(dy<=0){const step=glassStepHeight(actor.x,actor.z,r,actor.y);
+        if(step>actor.y&&step+h<=CEILING_HEIGHT&&canOccupy(actor.x,actor.z,r,h,step)){actor.y=step;result.onGround=true;if(actor.vy<0)actor.vy=0;}}
       setCapsule(actor,h);
       for(let j=0;j<3;j++){
         const collision=octree.capsuleIntersect(capsule);if(!collision||collision.depth<1e-7)break;
@@ -279,5 +309,5 @@ export function createPhysics(description,data){
     return hit;
   }
   function segmentClear(from,to,options={}){const dx=to.x-from.x,dy=(to.y??1.5)-(from.y??1.5),dz=to.z-from.z,d=Math.hypot(dx,dy,dz);return d<EPS||!raycast({...from,y:from.y??1.5},{x:dx,y:dy,z:dz},Math.max(0,d-.015),options);}
-  return {canOccupy,staticCanOccupy:(x,z,r,h,y)=>canOccupy(x,z,r,h,y,true),setDynamicBoxes,scopeAllowed,onFloor,canStand,move,raycast,segmentClear,octree,staticBoxes,statistics:{staticBoxes:staticBoxes.length,collisionSurfaces:surfaces.length,source:'Three.js Capsule + Octree; source boxes and polygons'}};
+  return {canOccupy,updateGlassPassages,staticCanOccupy:(x,z,r,h,y)=>canOccupy(x,z,r,h,y,true),setDynamicBoxes,scopeAllowed,onFloor,canStand,move,raycast,segmentClear,octree,staticBoxes,statistics:{staticBoxes:staticBoxes.length,collisionSurfaces:surfaces.length,source:'Three.js Capsule + Octree; source boxes and polygons'}};
 }
