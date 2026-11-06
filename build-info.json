@@ -2695,9 +2695,14 @@
       "sha256": "a061ad5d251ec2247dd9ca2d5bb979a32692f6f45815e9437cc708a74eb78fbe"
     },
     {
+      "path": "src/fps/bot-tactics.mjs",
+      "bytes": 5949,
+      "sha256": "b107fc0990be37a8acd168d1aaab5f03490c2f33ad50191b2497d470a0f3c043"
+    },
+    {
       "path": "src/fps/bots.mjs",
-      "bytes": 21966,
-      "sha256": "ccad17137c5b441d777f718ae708c174544699c94df4d58f78b6688f59b10ad4"
+      "bytes": 31493,
+      "sha256": "de7ad789473cf78002844eedd7c91378d34606d46870b9bd361c966dd34f4b33"
     },
     {
       "path": "src/fps/business-hostage.mjs",
@@ -2856,8 +2861,8 @@
     },
     {
       "path": "src/fps/game.mjs",
-      "bytes": 39899,
-      "sha256": "4e096387c52350c488027cb9e9a8706443c58a84a89d75849d9871511e9852b7"
+      "bytes": 40019,
+      "sha256": "f74e58f4295675a6075d1280446c7c48e8673ebae6b9ed1099072e5c67233c75"
     },
     {
       "path": "src/fps/glass-visuals.mjs",
@@ -2926,8 +2931,8 @@
     },
     {
       "path": "src/fps/navigation.mjs",
-      "bytes": 7752,
-      "sha256": "135951d479386251b97ebf364555585161a8a2a595ce4de0ca05b54d48ca05cd"
+      "bytes": 9704,
+      "sha256": "1f122eae8cb8ddc4c3c52b7cf1338c3c9a5d40342110a9540197d3b2366c2229"
     },
     {
       "path": "src/fps/physics.mjs",
@@ -3121,8 +3126,8 @@
     },
     {
       "path": "src/fps/world.mjs",
-      "bytes": 9207,
-      "sha256": "45aea0740244b99eb783d361cde45f8754c3cde864cc56e70b12d3173126e608"
+      "bytes": 9295,
+      "sha256": "0e2262dddad71641434b36c636805c6d6e646217174c439ed05a233d8322e27e"
     },
     {
       "path": "src/world.js",
