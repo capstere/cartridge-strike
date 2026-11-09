@@ -15,11 +15,6 @@
       "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
     },
     {
-      "path": "Business_Man_Quaternius_Anims.glb",
-      "bytes": 10179392,
-      "sha256": "8848008569ae5a35733f1ecc9456cd90a6c505cf3ccde375de7e228bd4a264d4"
-    },
-    {
       "path": "assets/fps/audio/action-backup.ogg",
       "bytes": 8228,
       "sha256": "fef76af35ab2311c58622ca8a84dc2cac56e806f8c627fdbce05b49a4cd26c16"
@@ -170,14 +165,14 @@
       "sha256": "ac4071825b15d6c612791ccbf1d6588e89384e83706b5214137a2d01ec0f4be8"
     },
     {
-      "path": "assets/fps/audio/riposte-f_knife-1.mp3",
-      "bytes": 2517,
-      "sha256": "0619b408af2f73a7d88920c677f27e4926aa23fbe10ae3bb01a71606cc542ac7"
-    },
-    {
       "path": "assets/fps/audio/riposte-f_knife_hit-1.mp3",
       "bytes": 3453,
       "sha256": "23262da97855db49c7b447ef452a1831f52c493c38099809ae61921e26a4d536"
+    },
+    {
+      "path": "assets/fps/audio/riposte-f_knife-1.mp3",
+      "bytes": 2517,
+      "sha256": "0619b408af2f73a7d88920c677f27e4926aa23fbe10ae3bb01a71606cc542ac7"
     },
     {
       "path": "assets/fps/audio/riposte-f_pickup-1.mp3",
@@ -320,36 +315,6 @@
       "sha256": "33f128a7adca7e9f42c9b95790ce31a5611e0ec1b831778bd4290c1fff4fddaf"
     },
     {
-      "path": "assets/fps/materials/WhitePlaster02/WhitePlaster02_1K-JPG_Color.jpg",
-      "bytes": 527219,
-      "sha256": "a1ebbe091bd1ae93d2abd5de8d69f9003a8d0ee6532bcf9a87c2492c97051f23"
-    },
-    {
-      "path": "assets/fps/materials/WhitePlaster02/WhitePlaster02_1K-JPG_NormalGL.jpg",
-      "bytes": 652310,
-      "sha256": "eb572ca3630d5bfde72e2601b1f02412da23ca005cd19384dced8690be4cb783"
-    },
-    {
-      "path": "assets/fps/materials/WhitePlaster02/WhitePlaster02_1K-JPG_Roughness.jpg",
-      "bytes": 295900,
-      "sha256": "4ff1fe957cd161b07f721fe6c28a9459c8c2e8ec65627a26c16e483a07c80d85"
-    },
-    {
-      "path": "assets/fps/materials/Wood051/Wood051_1K-JPG_Color.jpg",
-      "bytes": 871537,
-      "sha256": "f3c6c5456457e8d05c1fee4d2f186f41d0aea2b8a06859b69ce2934e11aa8798"
-    },
-    {
-      "path": "assets/fps/materials/Wood051/Wood051_1K-JPG_NormalGL.jpg",
-      "bytes": 1583401,
-      "sha256": "9078dc50c43b55831ae322460fc96b62df68c7a148400bd7755ab2788fec1708"
-    },
-    {
-      "path": "assets/fps/materials/Wood051/Wood051_1K-JPG_Roughness.jpg",
-      "bytes": 680793,
-      "sha256": "b5736b940d721b49922cb14eebd52fd34f134b7ef99331ecf28565ce40358098"
-    },
-    {
       "path": "assets/fps/materials/riposte/paintwood/map.webp",
       "bytes": 10220,
       "sha256": "fde5a948c16580f30fc4a603854cd333c75f7297e2b57eecf58ebecc3eeec496"
@@ -393,6 +358,36 @@
       "path": "assets/fps/materials/riposte/timber/rough.webp",
       "bytes": 7486,
       "sha256": "c39dac1088336d7f94af5c06e233d0efd7a377eebf9096e0893a02f023b4f312"
+    },
+    {
+      "path": "assets/fps/materials/WhitePlaster02/WhitePlaster02_1K-JPG_Color.jpg",
+      "bytes": 527219,
+      "sha256": "a1ebbe091bd1ae93d2abd5de8d69f9003a8d0ee6532bcf9a87c2492c97051f23"
+    },
+    {
+      "path": "assets/fps/materials/WhitePlaster02/WhitePlaster02_1K-JPG_NormalGL.jpg",
+      "bytes": 652310,
+      "sha256": "eb572ca3630d5bfde72e2601b1f02412da23ca005cd19384dced8690be4cb783"
+    },
+    {
+      "path": "assets/fps/materials/WhitePlaster02/WhitePlaster02_1K-JPG_Roughness.jpg",
+      "bytes": 295900,
+      "sha256": "4ff1fe957cd161b07f721fe6c28a9459c8c2e8ec65627a26c16e483a07c80d85"
+    },
+    {
+      "path": "assets/fps/materials/Wood051/Wood051_1K-JPG_Color.jpg",
+      "bytes": 871537,
+      "sha256": "f3c6c5456457e8d05c1fee4d2f186f41d0aea2b8a06859b69ce2934e11aa8798"
+    },
+    {
+      "path": "assets/fps/materials/Wood051/Wood051_1K-JPG_NormalGL.jpg",
+      "bytes": 1583401,
+      "sha256": "9078dc50c43b55831ae322460fc96b62df68c7a148400bd7755ab2788fec1708"
+    },
+    {
+      "path": "assets/fps/materials/Wood051/Wood051_1K-JPG_Roughness.jpg",
+      "bytes": 680793,
+      "sha256": "b5736b940d721b49922cb14eebd52fd34f134b7ef99331ecf28565ce40358098"
     },
     {
       "path": "assets/fps/models/bookcaseClosedDoors.glb",
@@ -535,6 +530,11 @@
       "sha256": "e445d3f7dbeee8152d0078e8729727caf4d039e3e23b21d9d4290b51c53b87c1"
     },
     {
+      "path": "Business_Man_Quaternius_Anims.glb",
+      "bytes": 10179392,
+      "sha256": "8848008569ae5a35733f1ecc9456cd90a6c505cf3ccde375de7e228bd4a264d4"
+    },
+    {
       "path": "character-design/anatomy-accessories.mjs",
       "bytes": 16669,
       "sha256": "80fd4506c5515539baaf6edb63e244d07500934833ea5bc7c6dc3853ca3f1199"
@@ -636,8 +636,8 @@
     },
     {
       "path": "fps/index.html",
-      "bytes": 11012,
-      "sha256": "9769f19ac95aca5d902c4fadc6f941718895165198bd9ca04cf80d663dad1ba1"
+      "bytes": 11195,
+      "sha256": "f121e59ebd62c6860160d3cf930443f86856124c00d53d611ecf862680e03799"
     },
     {
       "path": "fps/style.css",
@@ -1250,14 +1250,14 @@
       "sha256": "69dae02fa49d4782f2c09978c25e1c74228f5076f16ae9531f0ce8a751c68fb9"
     },
     {
-      "path": "furniture-editor/library/models/house-interior/Kitchen_Oven.glb",
-      "bytes": 15808,
-      "sha256": "02ce4e2fd259eaae9cb65a81daf6af205e57d4f948310156b3d47333e23bf3ef"
-    },
-    {
       "path": "furniture-editor/library/models/house-interior/Kitchen_Oven_Large.glb",
       "bytes": 15680,
       "sha256": "4c43ca7ed8e2915c80029016812a4a70ee836856f48648c9b257d3b585ad8af3"
+    },
+    {
+      "path": "furniture-editor/library/models/house-interior/Kitchen_Oven.glb",
+      "bytes": 15808,
+      "sha256": "02ce4e2fd259eaae9cb65a81daf6af205e57d4f948310156b3d47333e23bf3ef"
     },
     {
       "path": "furniture-editor/library/models/house-interior/Kitchen_Sink.glb",
@@ -2055,14 +2055,14 @@
       "sha256": "5fb1a17403bc5502c5c4a3a049f830eb8a3a30661bae901222b73671a7a14933"
     },
     {
-      "path": "furniture-editor/library/thumbs/house-interior/Kitchen_Oven.webp",
-      "bytes": 3602,
-      "sha256": "233e6180dc574e0b1744dd00b25c9639917aa8ec9b6f791e1ba2668c357fc0da"
-    },
-    {
       "path": "furniture-editor/library/thumbs/house-interior/Kitchen_Oven_Large.webp",
       "bytes": 3806,
       "sha256": "3d5275c5120d0974382e3d1edbfd5eb57661ea3faee2514e1d12bf203d0bc2dc"
+    },
+    {
+      "path": "furniture-editor/library/thumbs/house-interior/Kitchen_Oven.webp",
+      "bytes": 3602,
+      "sha256": "233e6180dc574e0b1744dd00b25c9639917aa8ec9b6f791e1ba2668c357fc0da"
     },
     {
       "path": "furniture-editor/library/thumbs/house-interior/Kitchen_Sink.webp",
@@ -2681,8 +2681,8 @@
     },
     {
       "path": "src/fps/app.mjs",
-      "bytes": 33328,
-      "sha256": "3d104ace29c893deb6381963790039d4e0425323ef663d0d1fb1e65d9ba859d7"
+      "bytes": 33744,
+      "sha256": "004bf94072c939f89e6b0b3aba04fcd0b619939789b6b02870f76330a52e3cdb"
     },
     {
       "path": "src/fps/audio.mjs",
@@ -2731,8 +2731,8 @@
     },
     {
       "path": "src/fps/character-library.mjs",
-      "bytes": 23145,
-      "sha256": "1f11cf5b57ea17ee629e19b649986c891a04487343027cd3abe9da93ee7ba228"
+      "bytes": 27272,
+      "sha256": "b8bb60152a178f0ea09cf7073981373e7db5b1e70a5f0e9f6fc15a8bd4a6b3db"
     },
     {
       "path": "src/fps/character-overrides.mjs",
@@ -2751,8 +2751,8 @@
     },
     {
       "path": "src/fps/character-selection.mjs",
-      "bytes": 3257,
-      "sha256": "be20b77ef515e1d637705ec501ef1abf0d28e518e019d4e0d0958645f7a51228"
+      "bytes": 4675,
+      "sha256": "2609df99a5d6360286b4ec7e4f32239e440fd9c22c84acf672a46e232169f698"
     },
     {
       "path": "src/fps/combat-audio.mjs",
@@ -2813,6 +2813,11 @@
       "path": "src/fps/effects.mjs",
       "bytes": 9005,
       "sha256": "ab2e836a9470113ce16e6db31cedb4aee0700efc3638c8523d9a1306d21d3324"
+    },
+    {
+      "path": "src/fps/external-character-store.mjs",
+      "bytes": 6194,
+      "sha256": "fe3b1c76763d22cedf1b9409c7f0836e20e73cef2d7095f94fea76f52be38dd0"
     },
     {
       "path": "src/fps/facility-assets.mjs",
@@ -3106,8 +3111,8 @@
     },
     {
       "path": "src/fps/view-character-appearance.mjs",
-      "bytes": 6814,
-      "sha256": "2fc650a267cf82147a7f4c6a6ba24ae8f42ddc90f37a02b4a5a0e247efc01b6b"
+      "bytes": 7878,
+      "sha256": "16581b0cf8c3177b371aee85f1adb1fb4f1c823f830c2d4633fc9b385324c8fa"
     },
     {
       "path": "src/fps/view-surface.mjs",
@@ -3190,7 +3195,7 @@
       "sha256": "9b0c24534a47f2e1c9549a63a5e00a850577e22fe8d18dbc7a532008a027cb89"
     }
   ],
-  "bytes": 42823601,
+  "bytes": 42858626,
   "sourceDirectoriesExcluded": [
     "references",
     "reviews",

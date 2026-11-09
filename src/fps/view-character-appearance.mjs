@@ -85,3 +85,18 @@ export function createRuntimeViewAppearance(asset,{shortSleeves=false}={}){
  glove.name='runtime-character-hands';sleeve.name='runtime-character-long-sleeves';for(const m of [glove,sleeve]){delete m.userData.ownedTexture;m.userData.sharedWeapon=true;}
  return {glove,sleeve,shortSleeves:false,cloth:cloth.toArray(),skin:skin.color.toArray(),dispose(){glove.dispose();sleeve.dispose();}};
 }
+
+/** A full-sleeve, dark-glove FPS appearance from the imported model's materials.
+ * This is a material match, not a separately rigged first-person body.
+ */
+export function createExternalViewAppearance(asset){
+ const materials=[];
+ asset.scene.traverse(o=>{if(o.isMesh)for(const m of [o.material].flat().filter(Boolean))materials.push(m);});
+ const pick=(pattern)=>materials.find(m=>pattern.test(m.name))||materials[0];
+ const gloveSource=pick(/glossy blak|armor black|mat black/i),sleeveSource=pick(/costume black|mat black/i);
+ if(!gloveSource?.isMeshStandardMaterial||!sleeveSource?.isMeshStandardMaterial)throw Error('Vader-modellens material kunde inte matchas.');
+ const copy=material=>{const m=new T.MeshStandardMaterial({color:material.color.clone(),roughness:material.roughness,metalness:material.metalness});m.userData.sharedWeapon=true;return m;};
+ const glove=copy(gloveSource),sleeve=copy(sleeveSource);
+ glove.name='imported-vader-gloves';sleeve.name='imported-vader-sleeves';
+ return {glove,sleeve,dispose(){glove.dispose();sleeve.dispose();}};
+}
