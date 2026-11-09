@@ -25,7 +25,7 @@
         <div id="character-picker" class="mode-picker">
           <label for="player-character">MIN KARAKTÄR</label><select id="player-character" aria-describedby="character-status"><option value="">Originalkaraktär</option></select>
           <p id="character-status" role="status"></p><div class="character-actions"><a class="text-link" href="../character-design/">Öppna karaktärsstudion ↗</a>
-          <button id="delete-character" type="button" class="text-link" hidden>Ta bort spelkopian</button></div>
+          <button id="import-external-button" type="button" class="text-link">Importera Vader-GLB</button><input id="external-character-file" type="file" accept=".glb,model/gltf-binary" hidden><button id="delete-character" type="button" class="text-link" hidden>Ta bort spelkopian</button></div>
         </div>
         <div class="card-top"><span>VÄLJ DITT LAG</span><span>5 V 5</span></div>
         <button class="team-option selected" data-team="analysts" aria-pressed="true"><span class="team-icon analysts">A</span><span><strong>Analysts</strong><small>Start i Cargo Lift</small><em>Försvara, stoppa räddningen och desarmera.</em></span><span class="radio-dot"></span></button>
@@ -77,5 +77,5 @@
     <div class="mobile-portrait-note">Vrid telefonen till liggande läge för bättre spelkontroll</div>
   </div>
   <div id="fatal" hidden><h2>Spelet kunde inte startas</h2><pre></pre><p>Ladda om sidan och öppna spelet i en separat webbläsarflik på datorn.</p></div>
-  <script type="module" src="../src/fps/app.mjs?v=floor5-environment-1"></script>
+  <script type="module" src="../src/fps/app.mjs?v=external-character-1"></script>
 </body></html>
