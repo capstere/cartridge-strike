@@ -20,3 +20,10 @@ test('legacy copies with the same name remain distinguishable without exposing I
  assert.notEqual(characterOptionLabel(rows[0],rows),characterOptionLabel(rows[1],rows));
  assert.match(characterOptionLabel(rows[0],rows),/kopia 1$/);assert.equal(characterOptionLabel(rows[0],[rows[0]]),'Min design');
 });
+
+test('verified external character has an explicit menu route without treating URLs as files',()=>{
+ const url=new URL(characterMenuURL(base,'darth-vader-glb',{team:'analysts',seed:42}));
+ assert.equal(url.searchParams.get('avatar'),'darth-vader-glb');
+ assert.equal(url.searchParams.get('level'),'synthetic-demo');
+ assert.throws(()=>characterMenuURL(base,'darth-vader.glb'),/Ogiltig/);
+});

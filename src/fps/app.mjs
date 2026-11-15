@@ -1,7 +1,8 @@
 import {GAME_NAME,COMPLEX_NAME,roomDisplayName,missionRoomName} from './player-names.mjs';
 import {setupCharacterMenu} from './character-selection.mjs';
 import {loadPrivateCharacter,characterHash} from './private-character-store.mjs';
-import {loadCharacterLibrary,installPrivateCharacter,setPrivateCharacterActors} from './character-library.mjs?v=6.1.2';
+import {EXTERNAL_CHARACTER_ID,loadExternalCharacter} from './external-character-store.mjs';
+import {loadCharacterLibrary,installPrivateCharacter,installExternalCharacter,setPrivateCharacterActors} from './character-library.mjs?v=6.1.2';
 import {GLTFLoader} from '../../vendor/three/addons/loaders/GLTFLoader.js';
 import { RenderBudget } from './render-budget.mjs';
 import { MinimapCache } from './minimap-cache.mjs';
@@ -43,6 +44,13 @@ async function preparePrivateCharacter(){
  if(rehearsalMode)document.getElementById('character-picker').hidden=true;
  else{characterMenu=await setupCharacterMenu({getTeam:()=>team,getSeed:()=>$('seed').value});id=characterMenu.id;if(!id){characterMenu.loaded();return;}}
  try{
+ if(!rehearsalMode&&id===EXTERNAL_CHARACTER_ID){
+  const bytes=await loadExternalCharacter();
+  await loadCharacterLibrary();
+  installExternalCharacter(await new GLTFLoader().parseAsync(bytes.slice(0),''));
+  setPrivateCharacterActors([team+'-0']);
+  characterMenu.loaded('Darth Vader');return;
+ }
  privateCharacterDraft=await loadPrivateCharacter(id);
  const original=await fetch(new URL('../../assets/fps/models/quaternius-operator-male.glb',import.meta.url));
  if(!original.ok||await characterHash(await original.arrayBuffer())!==privateCharacterDraft.sourceHash)throw Error('Originalkaraktären har uppdaterats. Öppna studion och välj Spara för spelet igen.');

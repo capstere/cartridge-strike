@@ -26,6 +26,7 @@ jobs:
           set -euo pipefail
           node --experimental-loader ./tools/vendor-three-test-loader.mjs --test character-design/*.test.mjs src/fps/view-character-appearance.test.mjs
           for file in character-design/app.mjs character-design/workbench.mjs character-design/fashion-preview.mjs tools/character-roles-browser.mjs tools/install-character-package.mjs tools/studio-curtains-finishes-browser.mjs; do node --check "$file"; done
+          node --test src/fps/external-character-store.test.mjs src/fps/character-selection.test.mjs
           node tools/verify-owner-runtime.mjs
       - name: Install pinned Chromium and software WebGL
         run: |

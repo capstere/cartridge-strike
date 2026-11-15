@@ -1,5 +1,5 @@
 import {getCharacterOverride,loadCharacterOverrides,clearCharacterOverrides} from './character-overrides.mjs?v=6.1.2';
-import {createRuntimeViewAppearance} from './view-character-appearance.mjs?v=6.1.2';
+import {createRuntimeViewAppearance,createExternalViewAppearance} from './view-character-appearance.mjs?v=6.1.2';
 import {makeFittedFootwear} from './character-footwear.mjs?v=6.1.2';
 /** Authored CC0 skinned actors, loaded locally before the Start button enables.
  * Original models: Quaternius. Uniform geometry and rest-space retargeting are
@@ -12,6 +12,7 @@ import {WEAPONS} from './config.mjs';
 import {GLTFLoader} from '../../vendor/three/addons/loaders/GLTFLoader.js';
 import {BUSINESS_HOSTAGE_FILE,prepareBusinessHostage} from './business-hostage.mjs';
 let templates=null,pending=null,privateCharacter=null,privateViewAppearance=null;
+let externalCharacter=null,externalViewAppearance=null;
 let hostageTemplate=null,hostagePending=null,hostageSupport=null;
 let privateActorIds=new Set(['analysts-0','analysts-1']);
 const live=new Set();
@@ -60,6 +61,7 @@ const upperName=n=>/^(clavicle_|upperarm_|lowerarm_|hand_|thumb_|index_|middle_|
 function upperClip(clip){return new T.AnimationClip('upper-'+clip.name,clip.duration,clip.tracks.filter(t=>upperName(t.name.split('.')[0])).map(t=>t.clone()));}
 function lowerClip(clip){return new T.AnimationClip('lower-'+clip.name,clip.duration,clip.tracks.filter(t=>!upperName(t.name.split('.')[0])).map(t=>t.clone()));}
 export function createAuthoredAvatar(team,id,isHostage=false,options={}){
+ if(!options.ignoreOverrides&&!isHostage&&externalCharacterApplies(id))return createExternalAvatar(id);
  if(!options.ignoreOverrides&&privateCharacterApplies(id)&&!isHostage)return createPrivateAvatar(id);
  const entry=!options.ignoreOverrides&&getCharacterOverride(isHostage?'hostage':'player',id);
  if(entry)return createRoleAvatar(entry,id,isHostage);
@@ -158,14 +160,64 @@ export function installPrivateCharacter(asset){
  asset.scene.traverse(o=>{if(o.isMesh){const p=o.geometry.attributes.position;if(!p||Array.from(p.array).some(v=>!Number.isFinite(v)))throw Error('Provkaraktären har ogiltig geometri.');if(o.isSkinnedMesh&&o.skeleton.bones.some(b=>bones.get(b.name)!==b))throw Error('Provkaraktärens benkoppling är ogiltig.');}});
  const appearance=createPrivateViewAppearance(asset);privateViewAppearance?.dispose();privateViewAppearance=appearance;privateCharacter=asset;
 }
+
+/** A deliberately separate, exact-file import route for the 23-bone Vader rig.
+ * Studio packages continue to require the untouched Quaternius 65-bone skeleton.
+ */
+export function installExternalCharacter(asset){
+ if(!templates)throw Error('Spelets originalkaraktärer måste laddas före import.');
+ const clips=new Set(asset.animations.map(a=>a.name));
+ const required=['Idle_Loop','Walk_Loop','Jog_Fwd_Loop','Sprint_Loop','Crouch_Fwd_Loop','Crouch_Idle_Loop','Jump_Loop','Jump_Land','Death01','Hit_Chest','Pistol_Idle_Loop','Pistol_Reload','Pistol_Shoot'];
+ if(clips.size!==13||required.some(n=>!clips.has(n)))throw Error('Den importerade modellen saknar FPS-animationer.');
+ const bones=new Map();let skins=0,vertices=0;
+ asset.scene.traverse(o=>{
+  if(o.isBone){if(bones.has(o.name))throw Error('Duplicerat skelettben: '+o.name);bones.set(o.name,o);}
+  if(!o.isSkinnedMesh)return;skins++;const p=o.geometry.attributes.position,j=o.geometry.attributes.skinIndex,w=o.geometry.attributes.skinWeight;
+  if(!p||!j||!w||j.count!==p.count||w.count!==p.count)throw Error('Den importerade modellen saknar kompletta benvikter.');
+  vertices+=p.count;
+  if(o.skeleton.bones.some(b=>!b?.isBone))throw Error('Skelettet har ogiltiga benreferenser.');
+  for(let i=0;i<p.count;i++){let total=0;for(let k=0;k<4;k++){const index=j.getComponent(i,k),weight=w.getComponent(i,k);if(!Number.isInteger(index)||!o.skeleton.bones[index]||!Number.isFinite(weight)||weight<0||weight>1.001)throw Error('Ogiltig benvikt.');total+=weight;}if(Math.abs(1-total)>.002)throw Error('Ej normaliserade benvikter.');}
+ });
+ if(bones.size!==23||!skins||vertices>50000||['root','pelvis','spine_03','Head','upperarm_l','lowerarm_l','hand_l','upperarm_r','lowerarm_r','hand_r','foot_l','foot_r'].some(n=>!bones.has(n)))throw Error('Den importerade modellen är inte kompatibel med FPS-riggen.');
+ const appearance=createExternalViewAppearance(asset);
+ externalViewAppearance?.dispose();externalViewAppearance=appearance;externalCharacter=asset;
+}
+function externalCharacterApplies(id){return !!externalCharacter&&privateActorIds.has(id);}
+function createExternalAvatar(id){
+ const asset=externalCharacter,root=cloneSkinned(asset.scene),bones=new Map(),materials=new Map(),meshes=[],footSamples=[];
+ root.traverse(o=>{
+  if(o.isBone)bones.set(o.name,o);
+  if(!o.isMesh)return;
+  meshes.push(o);o.frustumCulled=false;o.castShadow=false;o.receiveShadow=true;
+  const own=m=>{if(!materials.has(m)){const copy=m.clone();materials.set(m,copy);}return materials.get(m);};
+  o.material=Array.isArray(o.material)?o.material.map(own):own(o.material);
+  if(!o.isSkinnedMesh)return;
+  // Sample the actual deformed boots each frame. Unlike studio outfits,
+  // this GLB does not include the separate boot-sole-l/r attachment nodes.
+  const {position,skinIndex,skinWeight}=o.geometry.attributes;
+  const footBones=new Set(o.skeleton.bones.map((b,i)=>/^(foot|ball)_[lr]$/.test(b.name)?i:-1).filter(i=>i>=0));
+  const indices=[];
+  for(let i=0;i<position.count;i++){
+   if(position.getY(i)>.18)continue;
+   let weight=0;for(let j=0;j<4;j++)if(footBones.has(skinIndex.getComponent(i,j)))weight+=skinWeight.getComponent(i,j);
+   if(weight>.35)indices.push(i);
+  }
+  if(indices.length){const step=Math.max(1,Math.ceil(indices.length/80));footSamples.push({mesh:o,indices:indices.filter((_,i)=>i%step===0)});}
+ });
+ if(!footSamples.length)throw Error('Vader-modellens fotgeometri kunde inte identifieras.');
+ const state=finishAvatar({asset,root,bones,materials,meshes,shoes:[],footSamples,seed:hash(id),gender:'vader',ownedGeometry:[],isHostage:false,normalize:true});
+ state.externalDesign=true;state.overrideSignature='external-vader-v1';return state;
+}
 export function setPrivateCharacterActors(ids){privateActorIds=new Set(ids);}
 export function privateCharacterApplies(id){return !!privateCharacter&&privateActorIds.has(id);}
 export function privateCharacterAppearance(id){
+ if(externalCharacterApplies(id))return externalViewAppearance;
  if(privateCharacterApplies(id))return privateViewAppearance;
  const entry=getCharacterOverride('player',id);if(!entry)return null;
  return entry.viewAppearance??=createRuntimeViewAppearance(entry.asset,entry.contract.view);
 }
 export function characterVisualSignature(team,id){
+ if(team&&externalCharacterApplies(id))return 'external-vader-v1';
  if(team&&privateCharacterApplies(id))return 'private';
  return getCharacterOverride(team?'player':'hostage',id)?.signature||'original';
 }
@@ -269,8 +321,8 @@ export function disposeAvatar(state){
  state.root.traverse(o=>{if(o.isSkinnedMesh)o.skeleton.dispose();});for(const m of new Set(state.materials.values())){m.userData.ownedTexture?.dispose();m.dispose();}for(const g of state.ownedGeometry)g.dispose();live.delete(state);
 }
 export function disposeCharacterLibrary(){
- clearCharacterOverrides();privateViewAppearance?.dispose();privateViewAppearance=null;
+ clearCharacterOverrides();privateViewAppearance?.dispose();privateViewAppearance=null;externalViewAppearance?.dispose();externalViewAppearance=null;
  for(const state of [...live])disposeAvatar(state);const geometries=new Set(),materials=new Set(),textures=new Set();
- for(const asset of [...Object.values(templates||{}),privateCharacter,hostageTemplate].filter(Boolean))asset.scene.traverse(o=>{if(o.geometry)geometries.add(o.geometry);for(const m of [o.material].flat().filter(Boolean))materials.add(m);if(o.isSkinnedMesh)o.skeleton.dispose();});
- for(const m of materials){for(const value of Object.values(m))if(value?.isTexture)textures.add(value);m.dispose();}for(const g of geometries)g.dispose();for(const t of textures)t.dispose();fabric?.dispose();fabric=null;templates=null;pending=null;privateCharacter=null;hostageTemplate=null;hostagePending=null;hostageSupport=null;
+ for(const asset of [...Object.values(templates||{}),privateCharacter,externalCharacter,hostageTemplate].filter(Boolean))asset.scene.traverse(o=>{if(o.geometry)geometries.add(o.geometry);for(const m of [o.material].flat().filter(Boolean))materials.add(m);if(o.isSkinnedMesh)o.skeleton.dispose();});
+ for(const m of materials){for(const value of Object.values(m))if(value?.isTexture)textures.add(value);m.dispose();}for(const g of geometries)g.dispose();for(const t of textures)t.dispose();fabric?.dispose();fabric=null;templates=null;pending=null;privateCharacter=null;externalCharacter=null;hostageTemplate=null;hostagePending=null;hostageSupport=null;
 }
